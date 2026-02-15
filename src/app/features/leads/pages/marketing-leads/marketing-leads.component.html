@@ -1,0 +1,148 @@
+<div class="flex-1">
+  <div class="mb-6">
+    <div class="flex items-center gap-3 mb-2">
+      <h2 class="text-3xl fw-bold">إدارة العملاء المحتملين</h2>
+    </div>
+    <p class="text-muted">مرحباً بك! إليك ما يحدث اليوم.</p>
+  </div>
+  <div>
+    <div class="mb-6">
+      <div class="d-flex align-items-center justify-content-between mb-6">
+        <div>
+          <h3>قائمة العملاء المحتملين</h3>
+          <p class="text-muted">إدارة جميع العملاء المحتملين من التسويق</p>
+        </div>
+        <button class="btn btn-view active" (click)="goToAddLead()">
+          <i class="fas fa-plus ml-2"></i> إضافة عميل محتمل جديد
+        </button>
+      </div>
+      <div class="card mb-6">
+        <div class="card-body pt-6">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="input-group mb-3">
+                <input type="text" class="form-control" placeholder="ابحث بالاسم أو رقم الهاتف..."
+                  [(ngModel)]="searchQuery" (input)="filterLeads()">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <select class="form-select" [(ngModel)]="selectedSource" (change)="filterLeads()">
+                <option value="">جميع المصادر</option>
+                <option value="فيسبوك">فيسبوك</option>
+                <option value="إنستغرام">إنستغرام</option>
+                <!-- أضف المزيد -->
+              </select>
+            </div>
+            <div class="col-md-3">
+              <select class="form-select" [(ngModel)]="selectedStatus" (change)="filterLeads()">
+                <option value="">جميع الحالات</option>
+                <option value="جديد">جديد</option>
+                <option value="معين لفريق المبيعات">معين لفريق المبيعات</option>
+                <!-- أضف المزيد -->
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header">
+        <h4 class="card-title d-flex align-items-center justify-content-between">
+          <h5 class="mt-2">إجمالي العملاء المحتملين: {{ filteredLeads.length }}</h5>
+          <button class="btn btn-view"><i class="fas fa-filter ml-2"></i>تصدير</button>
+        </h4>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>اسم العميل</th>
+                <th>رقم الهاتف</th>
+                <th>المصدر</th>
+                <th>الحملة</th>
+                <th>الخدمة المهتم بها</th>
+                <th>الحالة</th>
+                <th>مندوب المبيعات</th>
+                <th>تاريخ الإنشاء</th>
+                <th>الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let lead of filteredLeads">
+                <td>{{ lead.name }}</td>
+                <td>{{ lead.phone }}</td>
+                <td>{{ lead.source }}</td>
+                <td>{{ lead.campaign }}</td>
+                <td>{{ lead.service }}</td>
+                <td><span class="badge"
+                    [ngClass]="{'bg-primary': lead.status === 'جديد', 'bg-success': lead.status === 'معين لفريق المبيعات', 'bg-warning': lead.status === 'تم الاتصال'}">{{
+                    lead.status }}</span></td>
+                <td>{{ lead.salesRep || '-' }}</td>
+                <td>{{ lead.createdDate }}</td>
+                <td>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-view" title="تعيين لفريق المبيعات"
+                      (click)="openModal(lead)"><i class="fas fa-user-plus"></i></button>
+                    <button class="btn btn-sm btn-outline-secondary" title="تعديل"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" title="حذف"><i class="fas fa-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  @if (showAssignModal) {
+  <div class="modal fade show d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content rounded-3">
+
+        <div class="modal-header justify-content-between">
+          <div>
+            <h5>تعيين العميل المحتمل لفريق المبيعات</h5>
+            <h6 class="text-muted">
+              اختر مندوب مبيعات لتعيين هذا العميل المحتمل له.
+            </h6>
+          </div>
+          <button class="btn-close" (click)="closeModal()"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="lead-preview">
+            <p class="fw-500 mb-1">{{ selectedLead?.name }}</p>
+            <p class="text-muted mb-0">{{ selectedLead?.phone }}</p>
+            <p class="text-muted mb-0">{{ selectedLead?.service }}</p>
+          </div>
+
+          <div class="mt-3">
+            <label class="form-label fw-500">اختر مندوب المبيعات</label>
+            <select class="form-select">
+              <option value="">اختر مندوب المبيعات</option>
+              <option>عمر حسن الشهري</option>
+              <option>فاطمة علي الدوسري</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" (click)="closeModal()">
+            إلغاء
+          </button>
+          <button class="btn btn-view active">
+            تعيين لفريق المبيعات
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Backdrop -->
+  <div class="modal-backdrop fade show"></div>
+  }
+
+
+</div>

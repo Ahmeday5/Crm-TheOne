@@ -1,0 +1,48 @@
+.badge {
+  background: var(--main-color);
+  color: var(--third-color);
+}
+
+.active {
+  background: var(--second-color);
+  color: var(--main-color);
+  border: none;
+}
+
+.border-r-indicator.red {
+  border-right: 4px solid #dc3545;
+}
+
+.task-content {
+  flex: 1;
+}
+
+.progress-bar {
+  background-color: var(--second-color);
+}
+
+.task-details {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+}
+
+.time-details span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.time-details i {
+  font-size: 0.75rem;
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.project-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: #6b7280;
+}

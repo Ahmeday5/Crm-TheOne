@@ -1,0 +1,85 @@
+<div class="flex-1">
+  <div class="mb-6">
+    <div class="d-flex align-items-center gap-3">
+      <h2 class="text-2xl fw-bold">إدارة العملاء المحتملين</h2>
+    </div>
+    <p class="text-muted">مرحباً بك! إليك ما يحدث اليوم.</p>
+  </div>
+  <div>
+    <button class="btn btn-view mb-4" (click)="goBack()">
+      <i class="fas fa-arrow-right ml-2"></i> العودة لقائمة العملاء المحتملين
+    </button>
+    <div class="card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="fas fa-user-plus w-6 h-6"></i>
+        <h5 class="mt-2">إضافة عميل محتمل جديد</h5>
+      </div>
+      <div class="card-body">
+        <form (ngSubmit)="addLead()" #addForm="ngForm">
+          <div class="row">
+            <div class="col-md-6 form-group mb-3">
+              <label class="form-label" for="fullName">الاسم الكامل *</label>
+              <input type="text" class="form-control" id="fullName" [(ngModel)]="newLead.fullName" name="fullName"
+                required placeholder="أدخل الاسم الكامل">
+            </div>
+            <div class="col-md-6 form-group mb-3">
+              <label class="form-label" for="phoneNumber">رقم الهاتف *</label>
+              <input type="text" class="form-control" id="phoneNumber" [(ngModel)]="newLead.phoneNumber"
+                name="phoneNumber" required placeholder="+966 50 000 0000">
+            </div>
+            <div class="col-md-6 form-group mb-3">
+              <label class="form-label" for="email">البريد الإلكتروني</label>
+              <input type="email" class="form-control" id="email" [(ngModel)]="newLead.email" name="email"
+                placeholder="example@email.com">
+            </div>
+            <div class="col-md-6 form-group mb-3">
+              <label class="form-label" for="companyName">اسم الشركة</label>
+              <input type="text" class="form-control" id="companyName" [(ngModel)]="newLead.companyName"
+                name="companyName" placeholder="أدخل اسم الشركة">
+            </div>
+            <div class="col-md-6 form-group mb-3">
+              <label class="form-label" for="leadSource">مصدر العميل المحتمل *</label>
+              <select class="form-select" id="leadSource" [(ngModel)]="newLead.leadSource" name="leadSource" required>
+                <option value="" disabled selected>اختر المصدر</option>
+                <option value="فيسبوك">فيسبوك</option>
+                <option value="إنستغرام">إنستغرام</option>
+                <option value="إعلانات جوجل">إعلانات جوجل</option>
+                <option value="الموقع الإلكتروني">الموقع الإلكتروني</option>
+                <option value="إحالة">إحالة</option>
+                <option value="لينكد إن">لينكد إن</option>
+              </select>
+            </div>
+            <div class="col-md-6 form-group mb-3">
+              <label class="form-label" for="campaignName">اسم الحملة</label>
+              <input type="text" class="form-control" id="campaignName" [(ngModel)]="newLead.campaignName"
+                name="campaignName" placeholder="أدخل اسم الحملة">
+            </div>
+            <div class="col-md-12 form-group mb-3">
+              <label class="form-label" for="interestedService">الخدمة المهتم بها</label>
+              <select class="form-select" id="interestedService" [(ngModel)]="newLead.interestedService"
+                name="interestedService">
+                <option value="" disabled selected>اختر الخدمة</option>
+                <option value="برنامج محاسبي">برنامج محاسبي</option>
+                <option value="تطبيق جوال">تطبيق جوال</option>
+                <option value="موقع إلكتروني">موقع إلكتروني</option>
+                <option value="منصة تجارة إلكترونية">منصة تجارة إلكترونية</option>
+                <option value="نظام إدارة علاقات العملاء">نظام إدارة علاقات العملاء</option>
+              </select>
+            </div>
+            <div class="col-md-12 form-group mb-3">
+              <label class="form-label" for="notes">ملاحظات</label>
+              <textarea class="form-control" id="notes" [(ngModel)]="newLead.notes" name="notes" rows="4"
+                placeholder="أي ملاحظات إضافية..."></textarea>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end gap-3 pt-4 border-top">
+            <button type="button" class="btn btn-outline-secondary" (click)="goBack()">إلغاء</button>
+            <button type="submit" class="btn btn-view"><i class="fas fa-save ml-2"></i>حفظ فقط</button>
+            <button type="button" class="btn btn-view active" (click)="saveAndAssign()"><i
+                class="fas fa-user-plus ml-2"></i>حفظ وتعيين لفريق المبيعات</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

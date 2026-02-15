@@ -1,0 +1,69 @@
+<aside class="sidebar" [class.sidebar-open]="isSidebarOpen" [class.sidebar-mini]="isCollapsed" dir="rtl">
+
+  <nav class="sidebar-nav">
+    <!-- رأس الـ Sidebar -->
+    <div class="sidebar-header d-flex align-items-center justify-content-center">
+      <div class="search-container flex-grow-1">
+        <input #searchInput id="Search" type="text" class="form-control" placeholder="ابحث في القائمة..."
+          aria-label="Search">
+        <i class="fas fa-search search-icon"></i>
+      </div>
+
+      <div class="collapse-toggle">
+        <button class="btn desktop-minimize-btn" [class.minimized]="isCollapsed" (click)="toggleCollapse()"
+          title="{{ isCollapsed ? 'تكبير القائمة' : 'تصغير القائمة' }}">
+          <i class="fa-solid" [ngClass]="isCollapsed ? 'fa-angles-left' : 'fa-angles-right'"></i>
+        </button>
+
+        <button class="btn close-btn" *ngIf="isSidebarOpen && isMobile" (click)="closeSidebar()">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <!-- الأقسام الرئيسية -->
+    <div class="nav-sections">
+      @for (section of filteredMenuItems; track sectionIndex; let sectionIndex = $index) {
+      <div class="menu-section mb-4">
+        <h6>{{ section.title || 'القسم' }}</h6>
+        <ul class="nav-menu list-unstyled">
+          @for (item of section.items; track itemIndex; let itemIndex = $index) {
+          <li class="nav-item" [ngClass]="{'has-submenu': item.submenu, 'open': item.isOpen}">
+            @if (item.submenu) {
+            <a href="#" class="sidebar-btn nav-link d-flex align-items-center justify-content-between"
+              (click)="toggleSubmenu(sectionIndex, itemIndex); $event.preventDefault()">
+
+              <div class="d-flex align-items-center gap-3 flex-grow-1">
+                <i [class]="item.icons"></i>
+                <span>{{ item.label }}</span>
+              </div>
+
+              <i class="fa-solid fa-chevron-down submenu-arrow" [ngClass]="{'fa-chevron-up': item.isOpen}"></i>
+            </a>
+
+            <ul class="submenu list-unstyled ps-4" [ngClass]="{'open': item.isOpen}">
+              @for (subItem of item.submenu; track subItemIndex; let subItemIndex = $index) {
+              <li>
+                <a [routerLink]="subItem.path" class="sidebar-btn nav-link" routerLinkActive="active"
+                  [routerLinkActiveOptions]="{ exact: true }">
+                  <i [class]="subItem.icon"></i>
+                  <span>{{ subItem.key }}</span>
+                </a>
+              </li>
+              }
+            </ul>
+            } @else {
+            <!-- العناصر العادية بدون submenu -->
+            <a [routerLink]="item.path" class="sidebar-btn nav-link" routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }">
+              <i [class]="item.icons"></i>
+              <span>{{ item.label }}</span>
+            </a>
+            }
+          </li>
+          }
+        </ul>
+      </div>
+      }
+    </div>
+  </nav>
+</aside>

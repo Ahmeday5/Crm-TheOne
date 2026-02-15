@@ -1,0 +1,22 @@
+.nav-link {
+  border: 1px solid #999 !important;
+  border-radius: 5px !important;
+}
+
+.nav-link:hover {
+  border: none;
+  background: var(--second-color);
+  color: var(--main-color);
+}
+
+.nav-link:focus {
+  border: var(--second-color);
+  background: var(--second-color);
+  color: var(--main-color);
+}
+
+.nav-link.active {
+  background: var(--second-color);
+  color: var(--main-color);
+  border: none;
+}

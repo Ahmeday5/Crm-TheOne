@@ -1,0 +1,395 @@
+<div class="flex-grow-1">
+  <!-- العنوان الرئيسي -->
+  <div class="mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <h1 class="fw-bold">لوحة التحكم</h1>
+    </div>
+    <p class="text-muted fs-5">مرحباً بك! إليك ما يحدث اليوم.</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="row g-4">
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1 small">المشاريع النشطة</p>
+            <p class="fs-5 fw-bold">8</p>
+          </div>
+          <div class="p-3 bg-purple-subtle text-purple rounded-3">
+            <i class="fas fa-folder"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1 small">المهام المعينة</p>
+            <p class="fs-5 fw-bold">14</p>
+          </div>
+          <div class="p-3 bg-primary-subtle text-primary rounded-3">
+            <i class="fas fa-tasks"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1 small">المهام المنجزة</p>
+            <p class="fs-5 fw-bold">150</p>
+          </div>
+          <div class="p-3 bg-success-subtle text-success rounded-3">
+            <i class="fas fa-check-circle"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1 small">مواعيد نهاية اليوم</p>
+            <p class="fs-5 fw-bold">6</p>
+          </div>
+          <div class="p-3 bg-danger-subtle text-danger rounded-3">
+            <i class="fas fa-clock"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mt-1">
+    <div class="col-lg-8">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header p-3 border-0">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0">مهامي</h6>
+            <div class="badges-container">
+              <span class="badge blue">4 قيد التنفيذ</span>
+              <span class="badge gray">2 للإنجاز</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-3" style="max-height:680px; overflow-y:auto;">
+          <div class="recent-item p-4 mb-3 border-r-indicator">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+              <div class="task-content">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <p class="fw-medium mb-0">تطوير نظام المصادقة والتفويض</p>
+                  <span class="badge bg-warning-subtle text-warning">عالية</span>
+                </div>
+                <p class="small mb-1">نظام TheOne CRM</p>
+                <div class="text-end d-flex flex-wrap gap-2">
+                  <span class="badge">الخلفية</span>
+                  <span class="badge">أمان</span>
+                </div>
+              </div>
+              <span class="badge blue">قيد التنفيذ</span>
+            </div>
+            <div class="mb-3">
+              <div class="d-flex justify-content-between small mb-1">
+                <span class="text-muted">التقدم</span>
+                <span class="fw-medium">75%</span>
+              </div>
+              <div class="progress">
+                <div class="progress-bar" role="progressbar" style="width: 75%;" aria-valuenow="75" aria-valuemin="0"
+                  aria-valuemax="100"></div>
+              </div>
+            </div>
+            <div class="task-details d-flex justify-content-between align-items-center mt-2">
+              <div class="time-details d-flex align-items-center gap-2">
+                <span><i class="fas fa-clock"></i>12 ساعة / 16 ساعة</span>
+                <span class="text-danger"><i class="fas fa-calendar"></i>الموعد: اليوم</span>
+              </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-view btn-sm active">تحديث الحالة</button>
+              <button class="btn btn-view btn-sm">تسجيل الوقت</button>
+              <button class="btn btn-view btn-sm">عرض التفاصيل</button>
+            </div>
+          </div>
+
+          <div class="recent-item p-4 mb-3 border-r-indicator">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+              <div class="task-content">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <p class="fw-medium mb-0">تطوير نظام المصادقة والتفويض</p>
+                  <span class="badge bg-danger-subtle text-danger">حرجة</span>
+                </div>
+                <p class="small mb-1">نظام TheOne CRM</p>
+                <div class="text-end d-flex flex-wrap gap-2">
+                  <span class="badge">الخلفية</span>
+                  <span class="badge">أمان</span>
+                </div>
+              </div>
+              <span class="badge gray">للإنجاز</span>
+            </div>
+            <div class="mb-3">
+              <div class="d-flex justify-content-between small mb-1">
+                <span class="text-muted">التقدم</span>
+                <span class="fw-medium">50%</span>
+              </div>
+              <div class="progress">
+                <div class="progress-bar" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0"
+                  aria-valuemax="50"></div>
+              </div>
+            </div>
+            <div class="task-details d-flex justify-content-between align-items-center mt-2">
+              <div class="time-details d-flex align-items-center gap-2">
+                <span><i class="fas fa-clock"></i>12 ساعة / 16 ساعة</span>
+                <span class="text-danger"><i class="fas fa-calendar"></i>الموعد: اليوم</span>
+              </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-view btn-sm active">تحديث الحالة</button>
+              <button class="btn btn-view btn-sm">تسجيل الوقت</button>
+              <button class="btn btn-view btn-sm">عرض التفاصيل</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Right Sidebar -->
+    <div class="col-lg-4">
+      <!-- Deadlines Card -->
+      <div class="card shadow-sm border-0">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold mb-0">المواعيد النهائية اليوم</h6>
+        </div>
+        <div class="card-body">
+          <div class="recent-item p-3 mb-3 border-r-indicator red bg-danger-subtle">
+            <p class="small mb-1 text-danger">6:00 مساءً</p>
+            <p class="small mb-1">تطوير نظام المصادقة والتفويض</p>
+            <p class="small mb-1 text-muted">نظام TheOne CRM</p>
+          </div>
+          <div class="recent-item p-4 mb-3 border-r-indicator red bg-danger-subtle">
+            <p class="small mb-1 text-danger">6:00 مساءً</p>
+            <p class="small mb-1">إصلاح خطأ: مشكلة تحميل لوحة التحكم</p>
+            <p class="small mb-1 text-muted">نظام TheOne CRM</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sprint Performance Chart -->
+      <div class="card border-0 shadow-sm rounded-3 mt-3">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold">أداء السبرنت</h6>
+        </div>
+        <div class="card-body p-0">
+          <apx-chart [series]="conversionChartOptions.series" [chart]="conversionChartOptions.chart"
+            [xaxis]="conversionChartOptions.xaxis" [plotOptions]="conversionChartOptions.plotOptions"
+            [dataLabels]="conversionChartOptions.dataLabels" [tooltip]="conversionChartOptions.tooltip"
+            [colors]="conversionChartOptions.colors">
+          </apx-chart>
+        </div>
+      </div>
+    </div>
+    <!-- تذاكر الدعم المفتوحة -->
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold mb-0">المشاريع النشطة</h6>
+        </div>
+        <div class="card-body p-3">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="recent-item p-4 mb-3">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-1">
+                  <div>
+                    <div class="align-items-center mb-1">
+                      <p class="fw-medium mb-0">نظام TheOne CRM</p>
+                      <p class="text-muted small mb-0">منتج داخلي</p>
+                    </div>
+                    <p class="text-muted small mb-1 mt-1">مشكلة تكامل مع API</p>
+                  </div>
+                  <span class="badge bg-success-subtle text-success">على المسار</span>
+                </div>
+                <div class="mb-1">
+                  <div class="d-flex justify-content-between small mb-1">
+                    <span class="text-muted">32 / 45 مهمة</span>
+                    <span class="fw-medium">71%</span>
+                  </div>
+                  <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 65%;" aria-valuenow="65"
+                      aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                </div>
+                <div class="project-footer mt-2">
+                  <span class="mb-0"><i class="fas fa-users"></i> 5 أعضاء فريق</span>
+                  <span class="mb-0"><i class="fas fa-calendar-alt"></i> 31 يناير 2026</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="recent-item p-4 mb-3">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-1">
+                  <div>
+                    <div class="align-items-center mb-1">
+                      <p class="fw-medium mb-0">نظام TheOne CRM</p>
+                      <p class="text-muted small mb-0">منتج داخلي</p>
+                    </div>
+                    <p class="text-muted small mb-1 mt-1">مشكلة تكامل مع API</p>
+                  </div>
+                  <span class="badge bg-success-subtle text-success">على المسار</span>
+                </div>
+                <div class="mb-1">
+                  <div class="d-flex justify-content-between small mb-1">
+                    <span class="text-muted">32 / 45 مهمة</span>
+                    <span class="fw-medium">71%</span>
+                  </div>
+                  <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 65%;" aria-valuenow="65"
+                      aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                </div>
+                <div class="project-footer mt-2">
+                  <span class="mb-0"><i class="fas fa-users"></i> 5 أعضاء فريق</span>
+                  <span class="mb-0"><i class="fas fa-calendar-alt"></i> 31 يناير 2026</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="recent-item p-4 mb-3">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-1">
+                  <div>
+                    <div class="align-items-center mb-1">
+                      <p class="fw-medium mb-0">نظام TheOne CRM</p>
+                      <p class="text-muted small mb-0">منتج داخلي</p>
+                    </div>
+                    <p class="text-muted small mb-1 mt-1">مشكلة تكامل مع API</p>
+                  </div>
+                  <span class="badge bg-danger-subtle text-danger">في خطر</span>
+                </div>
+                <div class="mb-1">
+                  <div class="d-flex justify-content-between small mb-1">
+                    <span class="text-muted">32 / 45 مهمة</span>
+                    <span class="fw-medium">71%</span>
+                  </div>
+                  <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 65%;" aria-valuenow="65"
+                      aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                </div>
+                <div class="project-footer mt-2">
+                  <span class="mb-0"><i class="fas fa-users"></i> 5 أعضاء فريق</span>
+                  <span class="mb-0"><i class="fas fa-calendar-alt"></i> 31 يناير 2026</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="recent-item p-4 mb-3">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-1">
+                  <div>
+                    <div class="align-items-center mb-1">
+                      <p class="fw-medium mb-0">نظام TheOne CRM</p>
+                      <p class="text-muted small mb-0">منتج داخلي</p>
+                    </div>
+                    <p class="text-muted small mb-1 mt-1">مشكلة تكامل مع API</p>
+                  </div>
+                  <span class="badge bg-success-subtle text-success">على المسار</span>
+                </div>
+                <div class="mb-1">
+                  <div class="d-flex justify-content-between small mb-1">
+                    <span class="text-muted">32 / 45 مهمة</span>
+                    <span class="fw-medium">71%</span>
+                  </div>
+                  <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 65%;" aria-valuenow="65"
+                      aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                </div>
+                <div class="project-footer mt-2">
+                  <span class="mb-0"><i class="fas fa-users"></i> 5 أعضاء فريق</span>
+                  <span class="mb-0"><i class="fas fa-calendar-alt"></i> 31 يناير 2026</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 mt-1">
+              <button class="btn btn-view w-100">عرض جميع المشاريع</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <!-- Monthly Summary -->
+      <div class="card shadow-sm performance-summary">
+        <div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
+          <h4 class="mb-0 text-purple-900">ملخص الأداء التسويقي - الشهر الحالي</h4>
+        </div>
+        <div class="card-body px-4 pb-4">
+          <div class="row text-center g-4">
+            <div class="col-6 col-md-3">
+              <p class="text-value-xl text-primary mb-0">40</p>
+              <p class="text-muted small mt-1">ساعات عمل</p>
+            </div>
+            <div class="col-6 col-md-3">
+              <p class="text-value-xl text-success mb-0">18</p>
+              <p class="text-muted small mt-1">مهام منجزة</p>
+            </div>
+            <div class="col-6 col-md-3">
+              <p class="text-value-xl text-warning mb-0">94%</p>
+              <p class="text-muted small mt-1">معدل الانجاز</p>
+            </div>
+            <div class="col-6 col-md-3">
+              <p class="text-value-xl text-purple mb-0">0</p>
+              <p class="text-muted small mt-1">أخطاء مفتوحة</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <!-- Quick Actions -->
+      <div class="card shadow-sm">
+        <div class="card-header p-3 border-0">
+          <h4 class="mb-0">الإجراءات السريعة</h4>
+        </div>
+        <div class="card-body px-4 pb-4">
+          <div class="row g-3">
+            <div class="col-lg-4 col-md-6">
+              <button class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center active">
+                <i class="fas fa-tasks"></i>
+               تحديث المهمة
+              </button>
+            </div>
+            <div class="col-lg-4 col-md-6">
+              <button class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-clock"></i>
+               تسجيل الوقت
+              </button>
+            </div>
+            <div class="col-lg-4 col-md-6">
+              <button class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-plus"></i>
+               إنشاء مهمة
+              </button>
+            </div>
+            <div class="col-lg-4 col-md-6">
+              <button class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-th-large"></i>
+               لوحة سبرنت
+              </button>
+            </div>
+            <div class="col-lg-4 col-md-6">
+              <button class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-chart-bar"></i>
+              تقارير الوقت
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

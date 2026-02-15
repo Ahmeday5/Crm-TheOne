@@ -1,0 +1,218 @@
+<div>
+  <!-- العنوان الرئيسي -->
+  <div class="mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <h1 class="fw-bold">لوحة التحكم</h1>
+    </div>
+    <p class="text-muted fs-5">مرحباً بك! إليك ما يحدث اليوم.</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="row g-4">
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1">العملاء المتعاقدين</p>
+            <p class="fs-5 fw-bold">10</p>
+            <p class="text-success small">↑ 12.5% من الشهر الماضي</p>
+          </div>
+          <div class="p-3 bg-primary-subtle text-primary rounded-3">
+            <i class="fas fa-dollar-sign fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1">العملاء غير المتعاقدين</p>
+            <p class="fs-5 fw-bold">1,234</p>
+            <p class="text-success small">↑ 8.2% من الشهر الماضي</p>
+          </div>
+          <div class="p-3 bg-primary-subtle text-primary rounded-3">
+            <i class="fas fa-users fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1">المشاريع النشطة</p>
+            <p class="fs-5 fw-bold">24</p>
+            <p class="text-success small">↑ 15.3% من الشهر الماضي</p>
+          </div>
+          <div class="p-3 bg-primary-subtle text-primary rounded-3">
+            <i class="fas fa-briefcase fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1">المهام المعلقة</p>
+            <p class="fs-5 fw-bold">156</p>
+            <p class="text-danger small">↓ 5.1% من الشهر الماضي</p>
+          </div>
+          <div class="p-3 bg-primary-subtle text-primary rounded-3">
+            <i class="fas fa-tasks fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <p class="mb-1">إيرادات العقود</p>
+            <h5 class="badge bg-primary">0 عقد نشط</h5>
+          </div>
+          <div class="row mt-2">
+            <div class="col-md-4">
+              <p class="text-muted mb-1">إجمالي قيمة العقود</p>
+              <p class="fs-5 fw-bold">5000 ج.م</p>
+              <h6 class="text-muted">عقود سارية حالياً</h6>
+            </div>
+            <div class="col-md-4">
+              <p class="text-muted mb-1">قيمة العقود النشطة</p>
+              <p class="fs-5 fw-bold text-success">3000 ج.م</p>
+              <h6 class="text-muted">جميع العقود في النظام</h6>
+            </div>
+            <div class="col-md-4">
+              <p class="text-muted mb-1">متوسط قيمة العقد</p>
+              <p class="fs-5 fw-bold text-primary">2000 ج.م</p>
+              <h6 class="text-muted">للعقد الواحد</h6>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الشارتات -->
+  <div class="row g-4 mt-3">
+    <!-- Line Chart -->
+    <div class="col-lg-6 m-0">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold">نظرة عامة على الإيرادات</h6>
+        </div>
+        <div class="card-body">
+          <apx-chart [series]="revenueChartOptions.series" [chart]="revenueChartOptions.chart"
+            [xaxis]="revenueChartOptions.xaxis" [yaxis]="revenueChartOptions.yaxis"
+            [stroke]="revenueChartOptions.stroke" [tooltip]="revenueChartOptions.tooltip"></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bar Chart -->
+    <div class="col-lg-6 m-0">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold">معدل تحويل المبيعات</h6>
+        </div>
+        <div class="card-body">
+          <apx-chart [series]="conversionChartOptions.series" [chart]="conversionChartOptions.chart"
+            [xaxis]="conversionChartOptions.xaxis" [yaxis]="conversionChartOptions.yaxis"
+            [plotOptions]="conversionChartOptions.plotOptions" [tooltip]="conversionChartOptions.tooltip"></apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pie Chart + Lists -->
+  <div class="row g-4 mt-3">
+    <!-- Pie Chart -->
+    <div class="col-lg-6 m-0">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold">مصادر العملاء المحتملين</h6>
+        </div>
+        <div class="card-body">
+          <apx-chart [series]="leadsSourcesChartOptions.series" [chart]="leadsSourcesChartOptions.chart"
+            [labels]="leadsSourcesChartOptions.labels" [legend]="leadsSourcesChartOptions.legend"
+            [responsive]="leadsSourcesChartOptions.responsive"></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Leads List -->
+    <div class="col-lg-6 m-0">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold">العملاء المحتملين الجدد</h6>
+        </div>
+        <div class="card-body">
+          <div class="list-group">
+            <a href="#"
+              class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <div>
+                <p class="fw-medium mb-1">أحمد محمد</p>
+                <p class="text-muted small mb-0">فيسبوك • 2026-01-08</p>
+              </div>
+              <span class="badge bg-primary-subtle text-primary rounded-5">جديد</span>
+            </a>
+            <a href="#"
+              class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <div>
+                <p class="fw-medium mb-1">سارة علي</p>
+                <p class="text-muted small mb-0">إنستجرام • 2026-01-08</p>
+              </div>
+              <span class="badge bg-success-subtle text-success rounded-5">تم الاتصال</span>
+            </a>
+            <a href="#"
+              class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              <div>
+                <p class="fw-medium mb-1">محمد حسن</p>
+                <p class="text-muted small mb-0">إعلانات جوجل • 2026-01-08</p>
+              </div>
+              <span class="badge bg-info-subtle text-info rounded-5">مؤهل</span>
+            </a>
+          </div>
+          <button class="btn btn-view w-100 mt-4">عرض جميع العملاء المحتملين</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card border-0 shadow-sm rounded-3 mt-4">
+    <div class="card-header p-3 border-0">
+      <h6 class="fw-bold">تذاكر الدعم الفني</h6>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>رقم التذكرة</th>
+              <th>العميل</th>
+              <th>المشكلة</th>
+              <th>الأولوية</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>#101</td>
+              <td>شركة ABC</td>
+              <td>مشكلة تكامل</td>
+              <td><span class="badge bg-danger-subtle text-danger">عالي</span></td>
+              <td><span class="badge bg-primary-subtle text-primary">مفتوحة</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button class="btn btn-view w-100 mt-4">عرض جميع التذاكر</button>
+    </div>
+  </div>
+</div>

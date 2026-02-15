@@ -1,0 +1,289 @@
+<div class="flex-grow-1">
+  <!-- العنوان الرئيسي -->
+  <div class="mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <h1 class="fw-bold">لوحة التحكم</h1>
+    </div>
+    <p class="text-muted fs-5">مرحباً بك! إليك ما يحدث اليوم.</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="row g-4">
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1">إجمالي العملاء المحتملين</p>
+            <p class="fs-5 fw-bold">1,234</p>
+          </div>
+          <div class="p-3 bg-success-subtle text-success rounded-3">
+            <i class="fas fa-users fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1">عملاء اليوم</p>
+            <p class="fs-5 fw-bold">120</p>
+          </div>
+          <div class="p-3 bg-primary-subtle text-primary rounded-3">
+            <i class="fas fa-arrow-trend-up fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1 fs-6">الحملات النشطة</p>
+            <p class="fs-5 fw-bold">24</p>
+          </div>
+          <div class="p-3 bg-purple-subtle text-purple rounded-3">
+            <i class="fas fa-bullseye fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1 fs-6">المهام المعلقة</p>
+            <p class="fs-5 fw-bold">20</p>
+          </div>
+          <div class="p-3 bg-warning-subtle text-warning rounded-3">
+            <i class="fas fa-dollar-sign fa-2x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الشارتات -->
+  <div class="row g-4 mt-3">
+    <!-- Bar Chart -->
+    <div class="col-lg-6">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold">العملاء المحتملين حسب المنصة</h6>
+        </div>
+        <div class="card-body p-0">
+          <apx-chart [series]="conversionChartOptions.series" [chart]="conversionChartOptions.chart"
+            [xaxis]="conversionChartOptions.xaxis" [plotOptions]="conversionChartOptions.plotOptions"
+            [dataLabels]="conversionChartOptions.dataLabels" [tooltip]="conversionChartOptions.tooltip"
+            [colors]="conversionChartOptions.colors">
+          </apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <!-- Line Chart -->
+    <div class="col-lg-6">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold">عدد العملاء اليومي (آخر 7 أيام)</h6>
+        </div>
+        <div class="card-body">
+          <apx-chart [series]="revenueChartOptions.series" [chart]="revenueChartOptions.chart"
+            [xaxis]="revenueChartOptions.xaxis" [stroke]="revenueChartOptions.stroke"
+            [tooltip]="revenueChartOptions.tooltip"></apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mt-3">
+    <div class="col-lg-6">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold">آخر العملاء المضافين</h6>
+        </div>
+        <div class="card-body" style="max-height:420px; overflow-y:auto;">
+          <div class="recent-item p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-medium">نور أحمد الشهري</span>
+              <span class="badge bg-primary-subtle text-primary">جديد</span>
+            </div>
+            <div class="text-muted small">
+              فيسبوك • عروض الصيف 2026
+              <br>منذ دقيقتين
+            </div>
+          </div>
+
+          <div class="recent-item p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-medium">يوسف محمد القحطاني</span>
+              <span class="badge bg-success-subtle text-success">معيّن</span>
+            </div>
+            <div class="text-muted small">
+              إنستغرام • إطلاق المنتج
+              <br>منذ 15 دقيقة
+            </div>
+          </div>
+        </div>
+        <div class="card-footer border-0 px-4 pb-4 pt-0 mt-2">
+          <button class="btn btn-view w-100">عرض جميع العملاء المحتملين</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold">أداء الحملات</h6>
+        </div>
+        <div class="card-body" style="max-height:420px; overflow-y:auto;">
+          <div class="recent-item p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-medium">عروض الصيف 2026</span>
+              <span class="badge bg-success-subtle text-success">نشطة</span>
+            </div>
+            <div class="text-muted small mb-2">فيسبوك</div>
+            <div class="row row-cols-2 row-cols-md-4 g-2 small">
+              <div><span class="text-muted d-block">الميزانية</span>18,750 ر.س</div>
+              <div><span class="text-muted d-block">المنفق</span>12,000 ر.س</div>
+              <div><span class="text-muted d-block">العملاء</span>245</div>
+              <div><span class="text-success d-block">العائد</span>145%</div>
+            </div>
+          </div>
+          <div class="recent-item p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-medium">عروض الصيف 2026</span>
+              <span class="badge bg-success-subtle text-success">نشطة</span>
+            </div>
+            <div class="text-muted small mb-2">انستجرام</div>
+            <div class="row row-cols-2 row-cols-md-4 g-2 small">
+              <div><span class="text-muted d-block">الميزانية</span>18,750 ر.س</div>
+              <div><span class="text-muted d-block">المنفق</span>12,000 ر.س</div>
+              <div><span class="text-muted d-block">العملاء</span>245</div>
+              <div><span class="text-success d-block">العائد</span>145%</div>
+            </div>
+          </div>
+          <div class="recent-item p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-medium">عروض الصيف 2026</span>
+              <span class="badge bg-success-subtle text-success">نشطة</span>
+            </div>
+            <div class="text-muted small mb-2">تويتر</div>
+            <div class="row row-cols-2 row-cols-md-4 g-2 small">
+              <div><span class="text-muted d-block">الميزانية</span>18,750 ر.س</div>
+              <div><span class="text-muted d-block">المنفق</span>12,000 ر.س</div>
+              <div><span class="text-muted d-block">العملاء</span>245</div>
+              <div><span class="text-success d-block">العائد</span>145%</div>
+            </div>
+          </div>
+          <div class="recent-item p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-medium">عروض الصيف 2026</span>
+              <span class="badge bg-success-subtle text-success">نشطة</span>
+            </div>
+            <div class="text-muted small mb-2">لينكد ان</div>
+            <div class="row row-cols-2 row-cols-md-4 g-2 small">
+              <div><span class="text-muted d-block">الميزانية</span>18,750 ر.س</div>
+              <div><span class="text-muted d-block">المنفق</span>12,000 ر.س</div>
+              <div><span class="text-muted d-block">العملاء</span>245</div>
+              <div><span class="text-success d-block">العائد</span>145%</div>
+            </div>
+          </div>
+          <div class="recent-item p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-medium">عروض الصيف 2026</span>
+              <span class="badge bg-success-subtle text-success">نشطة</span>
+            </div>
+            <div class="text-muted small mb-2">سناب شات</div>
+            <div class="row row-cols-2 row-cols-md-4 g-2 small">
+              <div><span class="text-muted d-block">الميزانية</span>18,750 ر.س</div>
+              <div><span class="text-muted d-block">المنفق</span>12,000 ر.س</div>
+              <div><span class="text-muted d-block">العملاء</span>245</div>
+              <div><span class="text-success d-block">العائد</span>145%</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer border-0 px-4 pb-4 pt-0 mt-2">
+          <button class="btn btn-view w-100">عرض جميع الحملات</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <!-- Monthly Summary -->
+      <div class="card shadow-sm performance-summary">
+        <div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
+          <h4 class="mb-0 text-purple-900">ملخص الأداء التسويقي - الشهر الحالي</h4>
+        </div>
+        <div class="card-body px-4 pb-4">
+          <div class="row text-center g-4">
+            <div class="col-6 col-md">
+              <div class="text-value-xl text-primary">1400</div>
+              <div class="text-muted small mt-1">إجمالي العملاء</div>
+            </div>
+            <div class="col-6 col-md">
+              <div class="text-value-xl text-success">86,875 ر.س</div>
+              <div class="text-muted small mt-1">الميزانية الكلية</div>
+            </div>
+            <div class="col-6 col-md">
+              <div class="text-value-xl text-warning">60,875 ر.س</div>
+              <div class="text-muted small mt-1">المبلغ المنفق</div>
+            </div>
+            <div class="col-6 col-md">
+              <div class="text-value-xl text-purple">32 ر.س</div>
+              <div class="text-muted small mt-1">متوسط تكلفة العميل</div>
+            </div>
+            <div class="col-6 col-md">
+              <div class="text-value-xl text-pink">142%</div>
+              <div class="text-muted small mt-1">متوسط العائد</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <!-- Quick Actions -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+          <h4 class="mb-0">الإجراءات السريعة</h4>
+        </div>
+        <div class="card-body px-4 pb-4">
+          <div class="row g-3">
+            <div class="col-6 col-md-3">
+              <button
+                class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center active">
+                <i class="fas fa-users ms-2"></i>
+                إضافة عميل جديد
+              </button>
+            </div>
+            <div class="col-6 col-md-3">
+              <button
+                class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-arrow-trend-up ms-2"></i>
+                تعيين للمبيعات
+              </button>
+            </div>
+            <div class="col-6 col-md-3">
+              <button
+                class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-bullseye ms-2"></i>
+                إنشاء حملة
+              </button>
+            </div>
+            <div class="col-6 col-md-3">
+              <button
+                class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-dollar-sign ms-2"></i>
+                عرض التحليلات
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,71 @@
+<div class="flex-grow-1">
+  <div class="mb-4">
+    <h2 class="h3 fw-bold text-dark mb-1">خط المبيعات</h2>
+    <p class="text-muted">مرحباً بك! إليك ما يحدث اليوم.</p>
+  </div>
+
+  <div class="alert alert-danger border-warning-subtle d-flex gap-3 mb-4" role="alert">
+    <div class="rounded p-3 d-flex align-items-center">
+      <i class="bi bi-exclamation-circle-fill fs-4 text-warning"></i>
+    </div>
+    <div class="flex-grow-1">
+      <h5 class="alert-heading fw-bold mb-2 d-flex align-items-center gap-2">
+        تتبع الصفقات المفقودة
+        <i class="bi bi-bar-chart-fill fs-6 text-warning"></i>
+      </h5>
+      <p class="mb-3 small">
+        عند نقل أي عميل إلى مرحلة <strong class="text-danger">"صفقات مفقودة (لم تكتمل)"</strong>،
+        سيتم تلقائياً تسجيل بياناته مع سبب عدم الشراء وإرسالها إلى قسم التسويق.
+      </p>
+      <div class="bg-white bg-opacity-75 p-3 rounded border border-warning-subtle small">
+        <strong class="text-danger-emphasis d-block mb-2">📊 كيف يظهر في تحليل نتائج المبيعات:</strong>
+        <ul class="mb-0 p-2">
+          <li>يتم إدراج العميل في قائمة "العملاء غير المشترين"</li>
+          <li>يظهر سبب عدم إتمام الصفقة بوضوح للتحليل</li>
+          <li>يمكن لفريق التسويق تحليل الأسباب لتحسين الحملات المستقبلية</li>
+          <li>البيانات تساعد في فهم نقاط الضعف وتطوير استراتيجيات أفضل</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs nav-fill mb-3 pb-3 border-bottom d-block">
+    <div class="row g-3">
+      <div class="col-xl-3 col-lg-4 col-md-6">
+        <li class="nav-item">
+          <a class="nav-link active d-flex align-items-center justify-content-center gap-2" routerLink="line"
+            routerLinkActive="active">
+            <i class="bi bi-grid-3x3-gap-fill"></i> خط المبيعات
+          </a>
+        </li>
+      </div>
+      <div class="col-xl-3 col-lg-4 col-md-6">
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center justify-content-center gap-2" routerLink="price-offers"
+            routerLinkActive="active">
+            <i class="bi bi-file-earmark-text"></i> عروض الأسعار
+          </a>
+        </li>
+      </div>
+      <div class="col-xl-3 col-lg-4 col-md-6">
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center justify-content-center gap-2" routerLink="contracts"
+            routerLinkActive="active">
+            <i class="bi bi-file-earmark"></i> العقود
+          </a>
+        </li>
+      </div>
+      <div class="col-xl-3 col-lg-4 col-md-6">
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center justify-content-center gap-2" routerLink="follow-ups"
+            routerLinkActive="active">
+            <i class="bi bi-calendar-event"></i> المتابعات
+          </a>
+        </li>
+      </div>
+    </div>
+  </ul>
+
+  <router-outlet></router-outlet>
+
+</div>

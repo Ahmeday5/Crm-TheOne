@@ -1,0 +1,252 @@
+<div class="flex-grow-1">
+  <!-- العنوان الرئيسي -->
+  <div class="mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <h1 class="fw-bold">لوحة التحكم</h1>
+    </div>
+    <p class="text-muted fs-5">مرحباً بك! إليك ما يحدث اليوم.</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="row g-4">
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1 small">عملائي النشطين</p>
+            <p class="fs-5 fw-bold">1,234</p>
+          </div>
+          <div class="p-3 bg-success-subtle text-success rounded-3">
+            <i class="fas fa-users"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1 small">مكالمات اليوم</p>
+            <p class="fs-5 fw-bold">14</p>
+          </div>
+          <div class="p-3 bg-primary-subtle text-primary rounded-3">
+            <i class="fas fa-phone"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1 small">صفقات قيد التنفيذ</p>
+            <p class="fs-5 fw-bold">680 ألف <small class="fs-6">ر.س</small></p>
+          </div>
+          <div class="p-3 bg-purple-subtle text-purple rounded-3">
+            <i class="fas fa-chart-line"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted mb-1 small">متابعات معلقة</p>
+            <p class="fs-5 fw-bold">6</p>
+          </div>
+          <div class="p-3 bg-warning-subtle text-warning rounded-3">
+            <i class="fas fa-clock"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الشارتات -->
+  <div class="row g-4 mt-3">
+    <!-- Line Chart -->
+    <div class="col-lg-6">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold">مسار المبيعات</h6>
+        </div>
+        <div class="card-body">
+          <apx-chart [series]="revenueChartOptions.series" [chart]="revenueChartOptions.chart"
+            [xaxis]="revenueChartOptions.xaxis" [stroke]="revenueChartOptions.stroke"
+            [tooltip]="revenueChartOptions.tooltip"></apx-chart>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Bar Chart -->
+    <div class="col-lg-6">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold">الأداء الأسبوعي</h6>
+        </div>
+        <div class="card-body p-0">
+          <apx-chart [series]="conversionChartOptions.series" [chart]="conversionChartOptions.chart"
+            [xaxis]="conversionChartOptions.xaxis" [plotOptions]="conversionChartOptions.plotOptions"
+            [dataLabels]="conversionChartOptions.dataLabels" [tooltip]="conversionChartOptions.tooltip"
+            [colors]="conversionChartOptions.colors">
+          </apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mt-3">
+    <div class="col-lg-6">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold">عملائي المحتملين</h6>
+        </div>
+        <div class="card-body" style="max-height:420px; overflow-y:auto;">
+          <div class="recent-item p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+              <div>
+                <p class="fw-medium mb-0">أحمد صابر المالكي</p>
+                <p class="text-muted small mb-0">شركة الحلول التقنية</p>
+              </div>
+              <div class="text-end">
+                <p class="fw-bold text-success mb-1">55,000 ر.س</p>
+                <span class="badge bg-danger-subtle text-danger">عالية</span>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between small">
+              <span class="badge bg-primary-subtle text-primary">عرض سعر</span>
+              <span class="text-muted">آخر تواصل: اليوم</span>
+            </div>
+          </div>
+
+          <div class="recent-item p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+              <div>
+                <p class="fw-medium mb-0">هناء محمد الشمري</p>
+                <p class="text-muted small mb-0">وكالة التسويق الرقمي</p>
+              </div>
+              <div class="text-end">
+                <p class="fw-bold text-success mb-1">32,000 ر.س</p>
+                <span class="badge bg-danger-subtle text-danger">عالية</span>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between small">
+              <span class="badge bg-primary-subtle text-primary">تفاوض</span>
+              <span class="text-muted">آخر تواصل: أمس</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer border-0 px-4 pb-4 pt-0 mt-2">
+          <button class="btn btn-view w-100">عرض جميع العملاء المحتملين</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100 border-0 shadow-sm rounded-3">
+        <div class="card-header p-3 border-0">
+          <h6 class="fw-bold">جدول المتابعة اليومي</h6>
+        </div>
+        <div class="card-body" style="max-height:420px; overflow-y:auto;">
+          <div class="recent-item p-3 rounded mb-3 border-r-indicator">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+              <p class="fw-medium text-primary mb-0">10:00 صباحاً</p>
+              <span class="badge bg-primary-subtle text-primary">30 دقيقة</span>
+            </div>
+            <p class="fw-medium mb-1">أحمد صابر المالكي - الحلول التقنية</p>
+            <p class="text-muted small mb-0">مكالمة عرض توضيحي</p>
+          </div>
+
+          <div class="recent-item p-3 rounded mb-3 border-r-indicator">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+              <p class="fw-medium text-primary mb-0">02:00 مساءً</p>
+              <span class="badge bg-primary-subtle text-primary">45 دقيقة</span>
+            </div>
+            <p class="fw-medium mb-1">هناء محمد الشمري - التسويق الرقمي</p>
+            <p class="text-muted small mb-0">مراجعة العرض</p>
+          </div>
+        </div>
+        <div class="card-footer border-0 px-4 pb-4 pt-0 mt-2">
+          <button class="btn btn-view w-100">عرض جدول المتابعة الكامل</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <!-- Monthly Summary -->
+      <div class="card shadow-sm performance-summary">
+        <div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
+          <h4 class="mb-0 text-purple-900">ملخص الأداء التسويقي - الشهر الحالي</h4>
+        </div>
+        <div class="card-body px-4 pb-4">
+          <div class="row text-center g-4">
+            <div class="col-6 col-md-3">
+              <p class="text-value-xl text-primary mb-0">27</p>
+              <p class="text-muted small mt-1">صفقات مغلقة</p>
+            </div>
+            <div class="col-6 col-md-3">
+              <p class="text-value-xl text-success mb-0">850 ألف <small>ر.س</small></p>
+              <p class="text-muted small mt-1">إجمالي المبيعات</p>
+            </div>
+            <div class="col-6 col-md-3">
+              <p class="text-value-xl text-warning mb-0">31,500 <small>ر.س</small></p>
+              <p class="text-muted small mt-1">متوسط حجم الصفقة</p>
+            </div>
+            <div class="col-6 col-md-3">
+              <p class="text-value-xl text-purple mb-0">68%</p>
+              <p class="text-muted small mt-1">معدل التحويل</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <!-- Quick Actions -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+          <h4 class="mb-0">الإجراءات السريعة</h4>
+        </div>
+        <div class="card-body px-4 pb-4">
+          <div class="row g-3">
+            <div class="col-12 col-md-6 col-lg-4">
+              <button class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center active">
+                <i class="fas fa-phone ms-2"></i>
+                الاتصال بعميل
+              </button>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+              <button class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-users ms-2"></i>
+                تحديث حالة العميل
+              </button>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+              <button class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-file-invoice-dollar ms-2"></i>
+                إنشاء عرض سعر
+              </button>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+              <button class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-calendar-check ms-2"></i>
+                جدولة اجتماع
+              </button>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+              <button class="btn btn-view w-100 h-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-file-signature ms-2"></i>
+                إنشاء عقد
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
