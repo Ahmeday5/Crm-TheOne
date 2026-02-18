@@ -1,10 +1,126 @@
-.login-form {
-  background-color: #fff;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.login-wrapper {
+  background: var(--background-gradient);
+  display: flex;
+  align-items: center;
 }
 
-.btn-primary {
-  background-color: #8B5CF6;
-  border-color: #8B5CF6;
+.brand-box .logo {
+  height: 200px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 25px;
+  border-radius: 12px;
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+.title {
+  font-size: 48px;
+  font-weight: 900;
+  span {
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.subtitle {
+  font-size: 18px;
+  color: var(--main-color);
+  max-width: 380px;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  border-radius: 20px;
+  text-align: center;
+  transition: 0.3s;
+
+  h2 {
+    font-size: 32px;
+    font-weight: 800;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-5px);
+  }
+}
+
+.login-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.icon-box {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #003d7a, #0066cc);
+  color: white;
+  font-size: 30px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+}
+
+.custom-input .form-control {
+  border-radius: 10px !important;
+  border: 2px solid #e5e7eb;
+  height: 50px;
+}
+
+.custom-input .form-control:focus {
+  border-color: #0066cc;
+  box-shadow: none;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 55%;
+  left: 1%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  padding: 5px;
+}
+
+
+.login-btn {
+  height: 50px;
+  background: linear-gradient(to right, #003d7a, #0066cc);
+  color: #fff;
+  font-weight: bold;
+  border-radius: 12px;
+  transition: 0.3s;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.quick-btn {
+  border: 2px solid #e5e7eb;
+  font-weight: bold;
+  border-radius: 10px;
+  background: #fff;
+  transition: 0.3s;
+}
+
+.quick-btn:hover {
+  background: #f1f5f9;
+  border-color: #0066cc;
+  color: #0066cc;
+}
+
+.footer-text {
+  text-align: center;
+  color: white;
+  margin-top: 20px;
+  opacity: 0.8;
 }

@@ -1,16 +1,131 @@
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-md-12">
-      <form class="login-form card p-4" (ngSubmit)="login()" #loginForm="ngForm">
-        <h3 class="text-center mb-4">تسجيل الدخول</h3>
-        <div class="form-group mb-3">
-          <input type="email" class="form-control" placeholder="الإيميل" [(ngModel)]="email" name="email" required>
+<div class="login-wrapper">
+  <div class="container-fluid">
+    <div class="row justify-content-center align-items-center min-vh-100">
+      <!-- LEFT SIDE -->
+      <div class="col-lg-5 d-none d-lg-block text-white">
+
+        <div class="brand-box mb-2">
+          <img src="/assets/img/logo.avif" class="logo mb-4" />
+          <h1 class="title">
+            مرحباً بك في <br>
+            <span>TheOne CRM</span>
+          </h1>
+          <p class="subtitle">
+            نظام متكامل لإدارة علاقات العملاء مع تحكم كامل
+            في جميع عمليات المبيعات والتسويق والدعم الفني
+          </p>
         </div>
-        <div class="form-group mb-3">
-          <input type="password" class="form-control" placeholder="كلمة المرور" [(ngModel)]="password" name="password" required>
+
+        <div class="row g-4 stats-box">
+          <div class="col-6">
+            <div class="stat-card">
+              <h2>10+</h2>
+              <p>وحدات متكاملة</p>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-card">
+              <h2>5</h2>
+              <p>أدوار مخصصة</p>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-card">
+              <h2>99%</h2>
+              <p>معدل التشغيل</p>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-card">
+              <h2>24/7</h2>
+              <p>دعم متواصل</p>
+            </div>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary w-100">دخول</button>
-      </form>
+
+      </div>
+
+      <!-- RIGHT SIDE -->
+      <div class="col-lg-5">
+
+        <div class="login-card">
+          <div class="text-center mb-4">
+            <div class="icon-box">
+              🔒
+            </div>
+            <h3 class="fw-bold">تسجيل الدخول</h3>
+            <p class="text-muted">أدخل بياناتك للوصول إلى لوحة التحكم</p>
+          </div>
+
+          <form (ngSubmit)="login()" #loginForm="ngForm">
+
+            <div class="mb-3">
+              <label class="form-label">البريد الإلكتروني</label>
+              <div class="input-group custom-input">
+                <input type="email" class="form-control" [(ngModel)]="email" name="email" required
+                  placeholder="أدخل البريد الإلكتروني">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">كلمة المرور</label>
+              <div class="input-group custom-input">
+                <input [type]="showPassword ? 'text' : 'password'" class="form-control" [(ngModel)]="password"
+                  name="password" required placeholder="أدخل كلمة المرور">
+                <span class="password-toggle" (click)="togglePassword()">
+                  <i class="fa-regular {{ showPassword ? 'fa-eye-slash' : 'fa-eye' }}"
+                    style="color: var(--third-color);"></i>
+                </span>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe">
+                <label class="ms-2">تذكرني</label>
+              </div>
+              <a href="#" class="forgot-link">نسيت كلمة المرور؟</a>
+            </div>
+
+            <button type="submit" class="btn login-btn w-100">
+              تسجيل الدخول →
+            </button>
+
+          </form>
+
+          <hr class="my-4">
+
+          <div class="text-center mb-3 fw-bold">
+            تسجيل دخول سريع للتجربة
+          </div>
+
+          <div class="row g-2">
+            <div class="col-6">
+              <button class="btn quick-btn w-100" (click)="quickLogin('admin')">👑 مدير</button>
+            </div>
+            <div class="col-6">
+              <button class="btn quick-btn w-100" (click)="quickLogin('marketing')">📢 تسويق</button>
+            </div>
+            <div class="col-6">
+              <button class="btn quick-btn w-100" (click)="quickLogin('sales')">💰 مبيعات</button>
+            </div>
+            <div class="col-6">
+              <button class="btn quick-btn w-100" (click)="quickLogin('support')">🎧 دعم</button>
+            </div>
+            <div class="col-12">
+              <button class="btn quick-btn w-100" (click)="quickLogin('developer')">💻 مطورين</button>
+            </div>
+          </div>
+
+        </div>
+
+        <p class="footer-text">
+          © 2026 TheOne CRM - جميع الحقوق محفوظة
+        </p>
+
+      </div>
+
     </div>
   </div>
+
 </div>
