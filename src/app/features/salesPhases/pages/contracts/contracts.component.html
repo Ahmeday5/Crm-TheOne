@@ -1,13 +1,14 @@
 <div class="d-flex flex-column gap-4">
 
-  <button class="btn btn-outline-secondary d-flex align-items-center gap-2 w-fit mb-3">
+  <button class="btn btn-outline-secondary d-flex align-items-center gap-2 w-fit-content">
     <i class="bi bi-arrow-left"></i> العودة إلى خط المبيعات
   </button>
 
   <div class="alert alert-info border-info-subtle bg-info-subtle d-flex gap-3" role="alert">
     <i class="bi bi-info-circle-fill fs-4 text-info"></i>
     <div>
-      <strong>ملاحظة:</strong> عند حفظ هذا العقد، سيتم إضافته تلقائياً إلى قسم "إدارة العقود" ليتمكن جميع الأعضاء من الوصول إليه ومتابعته.
+      <strong>ملاحظة:</strong> عند حفظ هذا العقد، سيتم إضافته تلقائياً إلى قسم "إدارة العقود" ليتمكن جميع الأعضاء من
+      الوصول إليه ومتابعته.
     </div>
   </div>
 
@@ -126,18 +127,26 @@
         <div class="card-header">
           <h5 class="mb-0">الإجراءات</h5>
         </div>
-        <div class="card-body d-grid gap-3">
-          <button class="btn btn-primary d-flex align-items-center justify-content-center gap-2">
-            <i class="bi bi-save"></i> حفظ العقد
-          </button>
-          <button class="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2">
-            <i class="bi bi-send"></i> إرسال للتوقيع
-          </button>
-          <button class="btn btn-outline-success d-flex align-items-center justify-content-center gap-2">
-            <i class="bi bi-check-circle"></i> تمييز كموقّع
-          </button>
+        <div class="card-body d-flex gap-3 flex-column">
+          <div class="col-12">
+            <button class="btn btn-view d-flex align-items-center justify-content-center w-100 gap-2 active">
+              <i class="bi bi-save"></i> حفظ العقد
+            </button>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-view d-flex align-items-center justify-content-center w-100 gap-2">
+              <i class="bi bi-send"></i> إرسال للتوقيع
+            </button>
+          </div>
+          <div class="col-12">
+            <button
+              class="btn btn-view d-flex align-items-center justify-content-center w-100 gap-2">
+              <i class="bi bi-check-circle"></i> تمييز كموقّع
+            </button></div>
           <hr>
-          <button class="btn btn-outline-danger">إلغاء</button>
+          <div class="col-12">
+            <button class="btn btn-outline-danger w-100">إلغاء</button>
+          </div>
         </div>
       </div>
 

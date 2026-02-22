@@ -108,11 +108,22 @@ export const routes: Routes = [
           { path: '', redirectTo: 'line', pathMatch: 'full' },
           {
             path: 'line',
+            title: 'خط المبيعات',
             loadComponent: () =>
               import('./features/salesPhases/pages/sales-line/sales-line.component').then(
                 (m) => m.SalesLineComponent,
               ),
-            title: 'خط المبيعات',
+
+            children: [
+              {
+                path: 'view-details',
+                title: 'تفاصيل الصفقة',
+                loadComponent: () =>
+                  import('./features/salesPhases/pages/sales-line/view-details/view-details.component').then(
+                    (m) => m.ViewDetailsComponent,
+                  ),
+              },
+            ],
           },
           {
             path: 'line',

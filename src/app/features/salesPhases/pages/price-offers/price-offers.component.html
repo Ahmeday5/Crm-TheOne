@@ -5,7 +5,7 @@
       <h2 class="h4 fw-bold mb-1">عروض الأسعار</h2>
       <p class="text-secondary mb-0">إدارة جميع عروض الأسعار</p>
     </div>
-    <button class="btn btn-primary d-flex align-items-center gap-2">
+    <button class="btn btn-view d-flex align-items-center gap-2 fw-500 active">
       <i class="bi bi-plus-lg"></i> إنشاء عرض سعر
     </button>
   </div>
@@ -13,7 +13,7 @@
   <div class="row g-3">
     <div class="col-6 col-md col-lg-3">
       <div class="card text-center border shadow-sm">
-        <div class="card-body py-4">
+        <div class="card-body">
           <p class="h3 fw-bold mb-1">1</p>
           <p class="text-muted small">الإجمالي</p>
         </div>
@@ -21,7 +21,7 @@
     </div>
     <div class="col-6 col-md col-lg-3">
       <div class="card text-center border shadow-sm">
-        <div class="card-body py-4">
+        <div class="card-body">
           <p class="h3 fw-bold text-primary mb-1">1</p>
           <p class="text-muted small">مُرسلة</p>
         </div>
@@ -29,7 +29,7 @@
     </div>
     <div class="col-6 col-md col-lg-3">
       <div class="card text-center border shadow-sm">
-        <div class="card-body py-4">
+        <div class="card-body">
           <p class="h3 fw-bold text-success mb-1">0</p>
           <p class="text-muted small">موافق عليها</p>
         </div>
@@ -37,7 +37,7 @@
     </div>
     <div class="col-6 col-md col-lg-3">
       <div class="card text-center border shadow-sm">
-        <div class="card-body py-4">
+        <div class="card-body">
           <p class="h3 fw-bold text-secondary mb-1">0</p>
           <p class="text-muted small">مسودات</p>
         </div>
@@ -45,7 +45,7 @@
     </div>
     <div class="col-6 col-md col-lg-3">
       <div class="card text-center border shadow-sm">
-        <div class="card-body py-4">
+        <div class="card-body">
           <p class="h3 fw-bold text-warning mb-1">1</p>
           <p class="text-muted small">منتهية</p>
         </div>
@@ -58,14 +58,16 @@
       <div class="row g-3">
         <div class="col-md-6 col-lg-8">
           <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
             <input type="text" class="form-control" placeholder="البحث باسم العميل أو رقم عرض السعر...">
           </div>
         </div>
         <div class="col-md-6 col-lg-4">
           <select class="form-select">
-            <option>جميع الحالات</option>
-            <!-- أضف باقي الخيارات حسب الحاجة -->
+            <option value="all" selected>جميع الحالات</option>
+            <option value="مسودة">مسودة</option>
+            <option value="مُرسلة">مُرسلة</option>
+            <option value="موافق عليها">موافق عليها</option>
+            <option value="منتهية">منتهية</option>
           </select>
         </div>
       </div>
@@ -106,8 +108,8 @@
               <td>تطبيق جوال</td>
               <td class="fw-bold text-success">$25,200</td>
               <td><span class="badge bg-info-subtle text-info">تم الإرسال</span></td>
-              <td>٨‏/١‏/٢٠٢٦</td>
-              <td><span class="text-danger fw-medium">٣٠‏/١‏/٢٠٢٦ (منتهي)</span></td>
+              <td>1/2/٢٠٢٦</td>
+              <td><span class="text-danger fw-medium">30/2/٢٠٢٦ (منتهي)</span></td>
               <td class="text-end">
                 <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></button>
               </td>
