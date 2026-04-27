@@ -1,0 +1,200 @@
+<div class="container-fluid">
+
+  <!-- الكروت العلوية -->
+  <div class="row g-4 mb-4">
+    @for (stat of stats; track stat.title) {
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card shadow-sm h-100 border-0">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <p class="text-muted mb-1 fs-6">{{ stat.title }}</p>
+            <h3 class="fw-bold mb-0 {{ stat.colorClass }}">{{ stat.value }}</h3>
+            <small class="text-muted">{{ stat.extra }}</small>
+          </div>
+          <i class="bi {{ stat.icon }} fs-1 opacity-50 {{ stat.colorClass }}"></i>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- الرسوم البيانية + بطاقات الأوقات -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-8">
+      <div class="row g-4">
+        <div class="col-12">
+          <div class="card shadow-sm border-0 p-2">
+            <div class="card-header bg-white">
+              <h5 class="mb-0">التذاكر المحلولة أسبوعياً</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="weeklyChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="card shadow-sm border-0 p-2">
+            <div class="card-header bg-white">
+              <h5 class="mb-0">التذاكر حسب الحالة</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="statusPie"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="row g-4">
+        <div class="col-12">
+          <div class="card shadow-sm border-0 text-center py-4">
+            <i class="fa-solid fa-clock-rotate-left fs-1 text-primary mb-3"></i>
+            <h6 class="text-muted mb-1">متوسط وقت الاستجابة</h6>
+            <h4 class="fw-bold">{{ responseTimes.avgResponse }}</h4>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card shadow-sm border-0 text-center py-4">
+            <i class="fa-regular fa-circle-check fs-1 text-success mb-3"></i>
+            <h6 class="text-muted mb-1">متوسط وقت الحل</h6>
+            <h4 class="fw-bold">{{ responseTimes.avgResolve }}</h4>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card shadow-sm border-0 text-center py-4">
+            <i class="fa-solid fa-triangle-exclamation fs-1 text-danger mb-3"></i>
+            <h6 class="text-muted mb-1">تذاكر حرجة</h6>
+            <h4 class="fw-bold">{{ responseTimes.criticalTickets }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- الجداول + الرسوم -->
+  <div class="row g-4">
+    <!-- استشارات اليوم -->
+    <div class="col-12">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+          <h5 class="mb-0">استشارات اليوم</h5>
+          <span class="badge bg-primary-subtle text-primary px-3 py-2 fs-6">3 مجدولة</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>اسم العميل</th>
+                  <th>الشركة</th>
+                  <th>الوقت</th>
+                  <th>النوع</th>
+                  <th>الحالة</th>
+                  <th>الإجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-medium">أحمد محمد</td>
+                  <td>شركة الحلول التقنية</td>
+                  <td>10:00 ص</td>
+                  <td><span class="badge bg-secondary-subtle text-secondary">اتصال</span></td>
+                  <td><span class="badge bg-success-subtle text-success">مجدولة</span></td>
+                  <td>
+                    <button class="btn btn-view btn-sm d-flex align-items-center gap-2"
+                      (click)="goToTechnicalConsultation();">
+                      <i class="fa-solid fa-play"></i> بدء
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="fw-medium">سارة علي</td>
+                  <td>وكالة التسويق الرقمي</td>
+                  <td>02:00 م</td>
+                  <td><span class="badge bg-secondary-subtle text-secondary">اجتماع</span></td>
+                  <td><span class="badge bg-success-subtle text-success">مجدولة</span></td>
+                  <td>
+                    <button class="btn btn-view btn-sm d-flex align-items-center gap-2"
+                      (click)="goToTechnicalConsultation();">
+                      <i class="fa-solid fa-play"></i> بدء
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="fw-medium">محمد خالد</td>
+                  <td>متجر التجزئة</td>
+                  <td>04:00 م</td>
+                  <td><span class="badge bg-secondary-subtle text-secondary">عن بعد</span></td>
+                  <td><span class="badge bg-success-subtle text-success">مجدولة</span></td>
+                  <td>
+                    <button class="btn btn-view btn-sm d-flex align-items-center gap-2"
+                      (click)="goToTechnicalConsultation();">
+                      <i class="fa-solid fa-play"></i> بدء
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- حالات الدعم المفتوحة -->
+    <div class="col-12">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+          <h5 class="mb-0">حالات الدعم المفتوحة</h5>
+          <span class="badge bg-warning-subtle text-warning px-3 py-2 fs-6">3 مفتوحة</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>رقم التذكرة</th>
+                  <th>العميل</th>
+                  <th>الخدمة</th>
+                  <th>الأولوية</th>
+                  <th>الحالة</th>
+                  <th>الإجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-medium">#101</td>
+                  <td>أحمد محمد</td>
+                  <td>برنامج محاسبي</td>
+                  <td><span class="badge bg-warning-subtle text-warning">عالية</span></td>
+                  <td><span class="badge bg-warning-subtle text-warning">قيد المعالجة</span></td>
+                  <td><button class="btn btn-outline-secondary btn-sm" (click)="goToDetailsOfSupportCases();">عرض</button></td>
+                </tr>
+                <tr>
+                  <td class="fw-medium">#102</td>
+                  <td>سارة علي</td>
+                  <td>تطبيق جوال</td>
+                  <td><span class="badge bg-danger-subtle text-danger">حرجة</span></td>
+                  <td><span class="badge bg-primary-subtle text-primary">مفتوحة</span></td>
+                  <td><button class="btn btn-outline-secondary btn-sm" (click)="goToDetailsOfSupportCases();">عرض</button></td>
+                </tr>
+                <tr>
+                  <td class="fw-medium">#103</td>
+                  <td>يوسف إبراهيم</td>
+                  <td>موقع إلكتروني</td>
+                  <td><span class="badge bg-info-subtle text-info">متوسطة</span></td>
+                  <td><span class="badge bg-purple-subtle text-purple">بانتظار العميل</span></td>
+                  <td><button class="btn btn-outline-secondary btn-sm" (click)="goToDetailsOfSupportCases();">عرض</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

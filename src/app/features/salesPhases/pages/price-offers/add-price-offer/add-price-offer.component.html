@@ -1,0 +1,158 @@
+<div class="container-fluid">
+
+  <!-- Back Button -->
+  <button class="btn btn-view mb-4" (click)="goToSalesLine();">
+    <i class="fa-solid fa-arrow-right me-2"></i>
+    العودة إلى عروض الاسعار
+  </button>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+
+      <h5 class="fw-500 mb-4">
+        <i class="fa-regular fa-file-lines me-2"></i>
+        إنشاء عرض سعر
+      </h5>
+
+      <form>
+        <!-- ================= العميل ================= -->
+        <h5 class="fw-400 mb-3">معلومات العميل</h5>
+
+        <div class="row g-3">
+
+          <div class="col-md-6">
+            <label class="form-label">اسم العميل *</label>
+            <input type="text" class="form-control" placeholder="أدخل اسم العميل">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">اسم الشركة</label>
+            <input type="text" class="form-control" placeholder="أدخل اسم الشركة">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">رقم الهاتف *</label>
+            <input type="text" class="form-control" placeholder="+20 123 456 7890">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">البريد الإلكتروني *</label>
+            <input type="email" class="form-control" placeholder="email@example.com">
+          </div>
+
+        </div>
+
+        <hr class="my-4">
+
+        <!-- ================= تفاصيل العرض ================= -->
+        <h5 class="fw-400 mb-3">تفاصيل عرض السعر</h5>
+
+        <div class="row g-3">
+
+          <div class="col-md-6">
+            <label class="form-label">نوع الخدمة *</label>
+            <select class="form-select">
+              <option value="" selected disabled>اختر نوع الخدمة</option>
+              <option>برنامج محاسبي</option>
+              <option>تطبيق جوال</option>
+              <option>تطوير موقع ويب</option>
+              <option>منصة تجارة إلكترونية</option>
+              <option>نظام CRM</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">الباقة / الخطة</label>
+            <select class="form-select">
+              <option value="" selected disabled>اختر الباقة</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">السعر ($) *</label>
+            <input type="number" class="form-control" placeholder="0.00">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">الخصم (%)</label>
+            <input type="number" class="form-control" max="100" placeholder="0">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">السعر النهائي</label>
+            <div class="p-3 rounded final-price-box">
+              <h3 class="fw-500 m-0">$0.00</h3>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">صالح حتى</label>
+            <input type="date" class="form-control">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">وقت التسليم</label>
+            <input type="text" class="form-control" placeholder="مثال: 4-6 أسابيع">
+          </div>
+
+        </div>
+
+        <hr class="my-4">
+
+        <!-- ================= خيارات إضافية ================= -->
+        <h5 class="fw-400 mb-3">خيارات إضافية</h5>
+
+        <div class="row g-3">
+
+          <div class="col-12">
+            <label class="form-label">شروط الدفع</label>
+            <select class="form-select">
+              <option value="" selected disabled>اختر شروط الدفع</option>
+              <option>100% مقدماً</option>
+              <option>50% مقدماً، 50% عند التسليم</option>
+              <option>30% مقدماً، 70% عند التسليم</option>
+              <option>أقساط شهرية</option>
+              <option>بناءً على المراحل</option>
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">ملاحظات</label>
+            <textarea class="form-control" rows="4"
+              placeholder="أضف أي ملاحظات أو شروط إضافية..."></textarea>
+          </div>
+
+        </div>
+
+        <!-- ================= Buttons ================= -->
+        <div class="d-flex flex-wrap gap-2 mt-4 pt-3 border-top">
+
+          <button type="button" class="btn btn-view">
+            <i class="fa-regular fa-floppy-disk me-2"></i>
+            حفظ كمسودة
+          </button>
+
+          <button type="button" class="btn text-white"
+            style="background: var(--background-gradient); border:none;">
+            <i class="fa-regular fa-paper-plane me-2"></i>
+            إرسال عبر البريد
+          </button>
+
+          <button type="button" class="btn btn-view">
+            <i class="fa-brands fa-whatsapp me-2"></i>
+            إرسال عبر واتساب
+          </button>
+
+          <button type="button" class="btn btn-view">
+            <i class="fa-regular fa-file-lines me-2"></i>
+            تحويل إلى عقد
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+</div>

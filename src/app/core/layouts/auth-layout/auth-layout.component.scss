@@ -1,3 +1,5 @@
-  .auth-container {
-    min-height: 100vh;
-  }
+.auth-shell {
+  min-height: 100vh;
+  background: var(--brand-gradient);
+  display: flex;
+}

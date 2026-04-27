@@ -1,308 +1,206 @@
-import {
-  Component,
-  OnInit,
-  AfterViewInit,
-  ElementRef,
-  ViewChild,
-  OnDestroy,
-} from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  inject,
+} from '@angular/core';
+import { RouterModule } from '@angular/router';
+import {
+  Subscription,
   debounceTime,
   distinctUntilChanged,
   fromEvent,
   map,
-  Subscription,
 } from 'rxjs';
+import { LanguageService } from '../../../core/services/language.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
+import { TRANSLATIONS, resolveKey } from '../../../core/i18n';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+
+interface MenuItem {
+  label: string;     // translation key
+  path: string;
+  icon: string;
+  isOpen?: boolean;
+  submenu?: MenuItem[];
+}
+interface MenuSection {
+  title: string;     // translation key
+  items: MenuItem[];
+}
+
+const SIDEBAR_TOGGLE_ATTR = 'data-sidebar-toggle';
+const COLLAPSED_KEY = 'sidebarCollapsed';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouterModule, CommonModule],
+  imports: [CommonModule, RouterModule, TranslatePipe],
   templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.scss'],
+  styleUrl: './sidebar.component.scss',
 })
 export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
-  isSidebarOpen: boolean = false;
-  isCollapsed: boolean = false;
+  isSidebarOpen = false;
+  isCollapsed = false;
   isMobile = false;
 
-  menuItems: any[] = [];
-  filteredMenuItems: any[] = [];
-  private searchSub: Subscription | null = null;
-  @ViewChild('searchInput', { static: true })
-  searchInputRef!: ElementRef<HTMLInputElement>;
+  menuItems: MenuSection[] = [];
+  filteredMenuItems: MenuSection[] = [];
 
-  constructor(
-    private router: Router,
-    private sidebarService: SidebarService,
-  ) {}
+  /** Search input is always rendered, so the ref is reliable. */
+  @ViewChild('searchInput') searchInputRef?: ElementRef<HTMLInputElement>;
+
+  private searchSub?: Subscription;
+  private sidebarSub?: Subscription;
+
+  private host = inject(ElementRef<HTMLElement>);
+  private sidebarService = inject(SidebarService);
+  private language = inject(LanguageService);
 
   ngOnInit(): void {
-    this.updateMenuItems();
-    this.updateSidebarState();
-    this.filteredMenuItems = JSON.parse(JSON.stringify(this.menuItems));
+    this.menuItems = this.buildMenu();
+    this.filteredMenuItems = this.cloneMenu(this.menuItems);
 
-    const saved = localStorage.getItem('sidebarCollapsed');
-    if (saved) {
-      this.isCollapsed = saved === 'true';
-    }
+    const saved = localStorage.getItem(COLLAPSED_KEY);
+    if (saved) this.isCollapsed = saved === 'true';
 
-    this.sidebarService.sidebar$.subscribe((open) => {
-      if (window.innerWidth <= 992) {
-        this.isSidebarOpen = open;
-      }
+    this.computeViewportState();
+
+    // Drive isSidebarOpen from the service. On mobile we follow the service's
+    // state; on desktop the drawer is always "open" (laid out as a column).
+    this.sidebarSub = this.sidebarService.sidebar$.subscribe((open) => {
+      if (this.isMobile) this.isSidebarOpen = open;
+      else this.isSidebarOpen = true;
     });
   }
 
-  closeSidebar() {
-    this.sidebarService.close();
-  }
-
-  toggleCollapse(): void {
-    if (window.innerWidth >= 993) {
-      this.isCollapsed = !this.isCollapsed;
-      localStorage.setItem('sidebarCollapsed', this.isCollapsed.toString());
-      window.dispatchEvent(new Event('resize'));
-    }
-  }
-
   ngAfterViewInit(): void {
-    window.addEventListener('resize', () => this.updateSidebarState());
-
-    this.searchSub = fromEvent(this.searchInputRef.nativeElement, 'input')
+    // Search input is now ALWAYS rendered, so this is safe; guard anyway.
+    const input = this.searchInputRef?.nativeElement;
+    if (!input) return;
+    this.searchSub = fromEvent(input, 'input')
       .pipe(
-        map((e: any) => e.target.value as string),
-        map((v) => v.trim()),
+        map((e: Event) => (e.target as HTMLInputElement).value.trim()),
         debounceTime(200),
         distinctUntilChanged(),
       )
-      .subscribe((query) => {
-        this.applyFilter(query);
-      });
+      .subscribe((q) => this.applyFilter(q));
   }
 
   ngOnDestroy(): void {
-    if (this.searchSub) this.searchSub.unsubscribe();
+    this.searchSub?.unsubscribe();
+    this.sidebarSub?.unsubscribe();
   }
 
-  private updateSidebarState(): void {
+  @HostListener('window:resize')
+  onResize(): void {
+    this.computeViewportState();
+  }
+
+  /** Close the drawer when the user clicks anywhere outside it on mobile. */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.isMobile || !this.isSidebarOpen) return;
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    // Click inside the sidebar itself? leave it open.
+    if (this.host.nativeElement.contains(target)) return;
+    // Click on the hamburger toggle? let its own handler decide.
+    if (target.closest(`[${SIDEBAR_TOGGLE_ATTR}]`)) return;
+    this.sidebarService.close();
+  }
+
+  closeSidebar(): void {
+    this.sidebarService.close();
+  }
+
+  /** Auto-close mobile drawer when a link is tapped. */
+  onLinkClicked(): void {
+    if (this.isMobile) this.sidebarService.close();
+  }
+
+  toggleCollapse(): void {
+    if (this.isMobile) return;
+    this.isCollapsed = !this.isCollapsed;
+    localStorage.setItem(COLLAPSED_KEY, String(this.isCollapsed));
+  }
+
+  toggleSubmenu(sectionIndex: number, itemIndex: number): void {
+    const item = this.filteredMenuItems[sectionIndex]?.items[itemIndex];
+    if (item) item.isOpen = !item.isOpen;
+  }
+
+  private computeViewportState(): void {
+    const wasMobile = this.isMobile;
     this.isMobile = window.innerWidth <= 992;
 
     if (this.isMobile) {
-      this.isSidebarOpen = false;
       this.isCollapsed = false;
+      // crossing into mobile: drawer starts CLOSED
+      if (!wasMobile) this.isSidebarOpen = false;
     } else {
+      // desktop: laid out as a column, always "open"
       this.isSidebarOpen = true;
     }
   }
 
-  toggleSubmenu(sectionIndex: number, itemIndex: number): void {
-    const section = this.filteredMenuItems[sectionIndex];
-    if (!section || !section.items) return;
-
-    const item = section.items[itemIndex];
-    if (!item) return;
-
-    item.isOpen = !item.isOpen;
-  }
-
   private applyFilter(query: string): void {
     if (!query) {
-      this.filteredMenuItems = JSON.parse(JSON.stringify(this.menuItems));
-      this.closeAllSubmenus(this.filteredMenuItems);
+      this.filteredMenuItems = this.cloneMenu(this.menuItems);
       return;
     }
-
     const q = query.toLowerCase();
-
-    const result: any[] = [];
-
-    for (const section of this.menuItems) {
-      const clonedSection: any = { ...section };
-      clonedSection.items = [];
-
-      const titleMatches =
-        section.title && section.title.toLowerCase().includes(q);
-
-      if (titleMatches) {
-        clonedSection.items = JSON.parse(JSON.stringify(section.items || []));
-        if (clonedSection.items)
-          clonedSection.items.forEach((it: any) => {
-            if (it.submenu) it.isOpen = true;
-          });
-        result.push(clonedSection);
-        continue;
-      }
-
-      if (section.items && section.items.length) {
-        for (const item of section.items) {
-          const itemLabel = (item.label || '').toLowerCase();
-          let matchedItem: any = null;
-
-          if (itemLabel.includes(q)) {
-            matchedItem = JSON.parse(JSON.stringify(item));
-            if (matchedItem.submenu) matchedItem.isOpen = true;
-          } else if (item.submenu && item.submenu.length) {
-            const matchingSub: any[] = [];
-            for (const sub of item.submenu) {
-              const subKey = (sub.key || '').toLowerCase();
-              if (subKey.includes(q)) {
-                matchingSub.push(JSON.parse(JSON.stringify(sub)));
-              }
-            }
-            if (matchingSub.length) {
-              matchedItem = {
-                ...JSON.parse(JSON.stringify(item)),
-                submenu: matchingSub,
-                isOpen: true,
-              };
-            }
-          }
-
-          if (matchedItem) {
-            clonedSection.items.push(matchedItem);
-          }
-        }
-
-        if (clonedSection.items.length) {
-          result.push(clonedSection);
-        }
-      }
-    }
-
-    this.filteredMenuItems = result;
+    const dict = TRANSLATIONS[this.language.lang()];
+    const translated = (key: string) => resolveKey(dict, key).toLowerCase();
+    this.filteredMenuItems = this.menuItems
+      .map((s) => ({
+        ...s,
+        items: s.items.filter((it) => translated(it.label).includes(q)),
+      }))
+      .filter((s) => s.items.length > 0);
   }
 
-  private closeAllSubmenus(list: any[]): void {
-    for (const section of list) {
-      if (section.items && section.items.length) {
-        for (const it of section.items) {
-          if (it.submenu) it.isOpen = false;
-        }
-      }
-    }
+  private cloneMenu(menu: MenuSection[]): MenuSection[] {
+    return JSON.parse(JSON.stringify(menu));
   }
 
-  private updateMenuItems(): void {
-    this.menuItems = [
+  private buildMenu(): MenuSection[] {
+    return [
       {
-        title: 'اختر الدور',
+        title: 'sidebar.sections.role',
         items: [
-          {
-            label: 'المدير / المالك',
-            path: '/',
-            icons: 'bi bi-grid-fill',
-            isOpen: false,
-          },
-          {
-            label: 'التسويق',
-            path: 'marketing-dashboard',
-            icons: 'bi bi-people',
-            isOpen: false,
-          },
-          {
-            label: 'المبيعات',
-            path: 'sales-dashboard',
-            icons: 'bi bi-graph-up',
-            isOpen: false,
-          },
-          {
-            label: 'الدعم الفني',
-            path: 'appsupport-dashboard',
-            icons: 'bi bi-headset',
-            isOpen: false,
-          },
-          {
-            label: 'المطورين',
-            path: 'developer-dashboard',
-            icons: 'bi bi-code-slash',
-            isOpen: false,
-          },
+          { label: 'sidebar.items.admin',      path: '/',                       icon: 'fa-solid fa-table-cells-large' },
+          { label: 'sidebar.items.marketing',  path: '/marketing-dashboard',    icon: 'fa-solid fa-users' },
+          { label: 'sidebar.items.sales',      path: '/sales-dashboard',        icon: 'fa-solid fa-chart-line' },
+          { label: 'sidebar.items.support',    path: '/appsupport-dashboard',   icon: 'fa-solid fa-headset' },
+          { label: 'sidebar.items.developers', path: '/developer-dashboard',    icon: 'fa-solid fa-code' },
         ],
       },
       {
-        title: 'الوحدات المتاحة',
+        title: 'sidebar.sections.modules',
         items: [
-          {
-            label: 'إدارة العملاء المحتملين',
-            path: '/leads/marketing-leadsCustomer',
-            icons: 'bi bi-person-lines-fill',
-            isOpen: false,
-          },
-          {
-            label: 'خط المبيعات',
-            path: 'line',
-            icons: 'bi bi-graph-up-arrow',
-            isOpen: false,
-          },
-          {
-            label: 'الدعم الفني',
-            path: '/support',
-            icons: 'bi bi-headset',
-            isOpen: false,
-          },
-          {
-            label: 'المشاريع والمهام',
-            path: '/projects',
-            icons: 'bi bi-kanban',
-            isOpen: false,
-          },
-          {
-            label: 'التقارير والتحليلات',
-            path: '/reports',
-            icons: 'bi bi-bar-chart',
-            isOpen: false,
-          },
-          {
-            label: 'الدردشة الداخلية',
-            path: '/internal-chat',
-            icons: 'bi bi-chat-dots',
-            isOpen: false,
-          },
+          { label: 'sidebar.items.leads',     path: '/leads/marketing-leadsCustomer', icon: 'fa-solid fa-address-card' },
+          { label: 'sidebar.items.salesLine', path: '/line',                          icon: 'fa-solid fa-chart-line' },
+          { label: 'sidebar.items.support',   path: '/dashboardSupport',              icon: 'fa-solid fa-headset' },
+          { label: 'sidebar.items.projects',  path: '/ProjectManage',                 icon: 'fa-solid fa-table-columns' },
+          { label: 'sidebar.items.reports',   path: '/reports',                       icon: 'fa-solid fa-chart-bar' },
+          { label: 'sidebar.items.chat',      path: '/internal-chat',                 icon: 'fa-regular fa-comment-dots' },
         ],
       },
       {
-        title: 'إدارة النظام',
+        title: 'sidebar.sections.system',
         items: [
-          {
-            label: 'إدارة المستخدمين',
-            path: '/users',
-            icons: 'bi bi-person-gear',
-            isOpen: false,
-          },
-          {
-            label: 'إعدادات النظام',
-            path: '/settings',
-            icons: 'bi bi-gear',
-            isOpen: false,
-          },
-          {
-            label: 'قاعدة المعرفة',
-            path: '/knowledge-base',
-            icons: 'bi bi-book',
-            isOpen: false,
-          },
-          {
-            label: 'تحسينات النظام',
-            path: '/system-improvements',
-            icons: 'bi bi-lightning',
-            isOpen: false,
-          },
-          {
-            label: 'الميزات المتقدمة',
-            path: '/advanced-features',
-            icons: 'bi bi-cpu',
-            isOpen: false,
-          },
-          {
-            label: 'مركز الإشعارات',
-            path: '/notifications',
-            icons: 'bi bi-bell',
-            isOpen: false,
-          },
+          { label: 'sidebar.items.users',         path: '/users',                icon: 'fa-solid fa-user-gear' },
+          { label: 'sidebar.items.settings',      path: '/settings',             icon: 'fa-solid fa-gear' },
+          { label: 'sidebar.items.kb',            path: '/knowledge-base',       icon: 'fa-solid fa-book' },
+          { label: 'sidebar.items.improvements',  path: '/system-improvements',  icon: 'fa-solid fa-bolt' },
+          { label: 'sidebar.items.advanced',      path: '/advanced-features',    icon: 'fa-solid fa-microchip' },
+          { label: 'sidebar.items.notifications', path: '/notifications',        icon: 'fa-solid fa-bell' },
         ],
       },
     ];

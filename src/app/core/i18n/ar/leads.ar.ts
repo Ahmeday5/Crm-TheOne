@@ -1,0 +1,62 @@
+import { TranslationFile } from '../i18n.types';
+
+const leads: TranslationFile<'leads'> = {
+  leads: {
+    title: 'إدارة العملاء المحتملين',
+    subtitle: 'مرحباً بك! إليك ما يحدث اليوم.',
+    listTitle: 'قائمة العملاء المحتملين',
+    listSubtitle: 'إدارة جميع العملاء المحتملين من التسويق',
+    addNew: 'إضافة عميل محتمل جديد',
+    add: 'إضافة عميل محتمل',
+    new: 'عميل جديد',
+    list: 'قائمة العملاء',
+    name: 'اسم العميل',
+    company: 'الشركة',
+    phone: 'رقم الهاتف',
+    email: 'البريد الإلكتروني',
+    source: 'المصدر',
+    campaign: 'الحملة',
+    service: 'الخدمة المهتم بها',
+    interest: 'الاهتمام',
+    salesRep: 'مندوب المبيعات',
+    assignedTo: 'المسؤول',
+    status: 'الحالة',
+    createdAt: 'تاريخ الإنشاء',
+    notes: 'ملاحظات',
+    actions: 'الإجراءات',
+    total: 'إجمالي العملاء المحتملين',
+    export: 'تصدير',
+    searchPh: 'ابحث بالاسم أو رقم الهاتف...',
+    allSources: 'جميع المصادر',
+    allStatuses: 'جميع الحالات',
+    statuses: {
+      new: 'جديد',
+      contacted: 'تم الاتصال',
+      qualified: 'مؤهل',
+      lost: 'مفقود',
+      won: 'فائز',
+      assigned: 'معين لفريق المبيعات',
+    },
+    filters: {
+      all: 'الكل',
+      mine: 'المخصص لي',
+      thisWeek: 'هذا الأسبوع',
+      thisMonth: 'هذا الشهر',
+    },
+    actionTitles: {
+      assignToSales: 'تعيين لفريق المبيعات',
+      edit: 'تعديل',
+      delete: 'حذف',
+    },
+    assignModal: {
+      title: 'تعيين العميل المحتمل لفريق المبيعات',
+      hint: 'اختر مندوب مبيعات لتعيين هذا العميل المحتمل له.',
+      pickRep: 'اختر مندوب المبيعات',
+      submit: 'تعيين لفريق المبيعات',
+    },
+    marketing: { title: 'العملاء المحتملون - التسويق' },
+    sales:     { title: 'العملاء المحتملون - المبيعات' },
+  },
+};
+
+export default leads;

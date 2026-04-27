@@ -1,0 +1,62 @@
+import { TranslationFile } from '../i18n.types';
+
+const leads: TranslationFile<'leads'> = {
+  leads: {
+    title: 'Leads management',
+    subtitle: "Welcome back! Here's what's happening today.",
+    listTitle: 'Leads list',
+    listSubtitle: 'Manage all marketing leads',
+    addNew: 'Add new lead',
+    add: 'Add lead',
+    new: 'New lead',
+    list: 'Leads list',
+    name: 'Lead name',
+    company: 'Company',
+    phone: 'Phone',
+    email: 'Email',
+    source: 'Source',
+    campaign: 'Campaign',
+    service: 'Interested service',
+    interest: 'Interest',
+    salesRep: 'Sales rep',
+    assignedTo: 'Assigned to',
+    status: 'Status',
+    createdAt: 'Created',
+    notes: 'Notes',
+    actions: 'Actions',
+    total: 'Total leads',
+    export: 'Export',
+    searchPh: 'Search by name or phone...',
+    allSources: 'All sources',
+    allStatuses: 'All statuses',
+    statuses: {
+      new: 'New',
+      contacted: 'Contacted',
+      qualified: 'Qualified',
+      lost: 'Lost',
+      won: 'Won',
+      assigned: 'Assigned to sales',
+    },
+    filters: {
+      all: 'All',
+      mine: 'Assigned to me',
+      thisWeek: 'This week',
+      thisMonth: 'This month',
+    },
+    actionTitles: {
+      assignToSales: 'Assign to sales',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+    assignModal: {
+      title: 'Assign lead to sales',
+      hint: 'Select a sales rep to assign this lead to.',
+      pickRep: 'Pick a sales rep',
+      submit: 'Assign to sales',
+    },
+    marketing: { title: 'Marketing leads' },
+    sales:     { title: 'Sales leads' },
+  },
+};
+
+export default leads;

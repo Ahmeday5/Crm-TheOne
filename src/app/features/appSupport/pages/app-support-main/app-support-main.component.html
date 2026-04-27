@@ -1,0 +1,40 @@
+<div class="flex-grow-1">
+  <app-page-header [title]="'support.title' | translate"
+                   [subtitle]="'support.subtitle' | translate"
+                   icon="fa-solid fa-headset"></app-page-header>
+
+  <ul class="nav nav-tabs nav-fill mb-3 pb-3 border-bottom d-block">
+    <div class="row g-2">
+      <div class="col-xl-3 col-lg-4 col-md-6">
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center justify-content-center gap-2" routerLink="dashboardSupport" routerLinkActive="active">
+            <i class="fa-solid fa-table-cells"></i>{{ 'support.tabs.dashboard' | translate }}
+          </a>
+        </li>
+      </div>
+      <div class="col-xl-3 col-lg-4 col-md-6">
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center justify-content-center gap-2" routerLink="Designated-clients" routerLinkActive="active">
+            <i class="fa-solid fa-users"></i>{{ 'support.tabs.designatedClients' | translate }}
+          </a>
+        </li>
+      </div>
+      <div class="col-xl-3 col-lg-4 col-md-6">
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center justify-content-center gap-2" routerLink="SupportTickets" routerLinkActive="active">
+            <i class="fa-solid fa-ticket"></i>{{ 'support.tabs.tickets' | translate }}
+          </a>
+        </li>
+      </div>
+      <div class="col-xl-3 col-lg-4 col-md-6">
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center justify-content-center gap-2" routerLink="SupportLog" routerLinkActive="active">
+            <i class="fa-solid fa-book-open"></i>{{ 'support.tabs.log' | translate }}
+          </a>
+        </li>
+      </div>
+    </div>
+  </ul>
+
+  <router-outlet></router-outlet>
+</div>

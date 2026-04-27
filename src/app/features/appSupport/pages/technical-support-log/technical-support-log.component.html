@@ -1,0 +1,258 @@
+<div class="container-fluid">
+
+  <!-- العنوان -->
+  <div class="mb-4">
+    <h2 class="fw-bold mb-1">سجل الدعم الفني</h2>
+    <p class="text-muted mb-0">سجل كامل لجميع الاستشارات والتذاكر الفنية</p>
+  </div>
+
+  <!-- الكروت الأربعة -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm border-0 text-center py-4">
+        <div class="card-body">
+          <h3 class="fw-bold text-primary mb-1">3</h3>
+          <p class="text-muted mb-0 small">إجمالي الاستشارات</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm border-0 text-center py-4">
+        <div class="card-body">
+          <h3 class="fw-bold text-success mb-1">0</h3>
+          <p class="text-muted mb-0 small">تم الحل</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm border-0 text-center py-4">
+        <div class="card-body">
+          <h3 class="fw-600 text-purple mb-1">125 دقيقة</h3>
+          <p class="text-muted mb-0 small">متوسط وقت الحل</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm border-0 text-center py-4">
+        <div class="card-body">
+          <h3 class="fw-bold text-warning mb-1">0</h3>
+          <p class="text-muted mb-0 small">تمت الإحالة</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- فلاتر البحث + selects + تواريخ -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body py-3">
+      <div class="row g-3">
+
+        <!-- بحث -->
+        <div class="col-md-3">
+          <div class="position-relative">
+            <input 
+              type="text" 
+              class="form-control ps-3 pe-5" 
+              placeholder="بحث..." 
+            />
+            <i class="fa-solid fa-magnifying-glass position-absolute top-50 end-0 translate-middle-y pe-3 text-muted"></i>
+          </div>
+        </div>
+
+        <!-- خدمة -->
+        <div class="col-6 col-md-3">
+          <select class="form-select">
+            <option selected>جميع الخدمات</option>
+            <option>منصة تجارة إلكترونية</option>
+            <option>موقع إلكتروني</option>
+            <option>نظام إدارة العملاء</option>
+            <option>تطبيق جوال</option>
+          </select>
+        </div>
+
+        <!-- موظف -->
+        <div class="col-6 col-md-3">
+          <select class="form-select">
+            <option selected>جميع الموظفين</option>
+            <option>المستخدم الحالي</option>
+            <option>فهد سعد</option>
+            <option>خالد أحمد</option>
+          </select>
+        </div>
+
+        <!-- حالة -->
+        <div class="col-6 col-md-3">
+          <select class="form-select">
+            <option selected>جميع الحالات</option>
+            <option>محلولة</option>
+            <option>مغلقة</option>
+            <option>قيد المعالجة</option>
+            <option>مفتوحة</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- التواريخ + أزرار -->
+      <div class="row g-3 mt-3 align-items-end">
+        <div class="col-12 col-md-5 col-lg-4">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fa-regular fa-calendar text-muted"></i>
+            <input type="date" class="form-control" placeholder="من" />
+          </div>
+        </div>
+
+        <div class="col-12 col-md-5 col-lg-4">
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-muted">إلى</span>
+            <input type="date" class="form-control" placeholder="إلى" />
+          </div>
+        </div>
+
+        <div class="col-12 col-md-2 col-lg-4">
+          <div class="d-flex gap-2">
+            <button class="btn btn-view flex-fill">مسح الفلاتر</button>
+            <button class="btn btn-view flex-fill">
+              <i class="fa-solid fa-download"></i>
+              تصدير
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الجدول الرئيسي -->
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+      <h5 class="mb-0">سجلات الدعم: 3</h5>
+      <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+        <i class="fa-solid fa-filter"></i>
+        فلتر متقدم
+      </button>
+    </div>
+
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>رقم التذكرة</th>
+              <th>اسم العميل</th>
+              <th>الخدمة</th>
+              <th>ملخص المشكلة</th>
+              <th>الحالة</th>
+              <th>موظف الدعم</th>
+              <th>التاريخ</th>
+              <th>المدة</th>
+              <th>الإجراء</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- سجل 1 -->
+            <tr>
+              <td class="fw-medium">TKT-095</td>
+              <td>
+                <div>
+                  <div class="fw-medium">محمد خالد الشمري</div>
+                  <small class="text-muted">متجر التجزئة</small>
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary">منصة تجارة إلكترونية</span>
+              </td>
+              <td>
+                <div class="text-truncate" style="max-width: 220px;">
+                  استشارة تكامل بوابة الدفع
+                </div>
+              </td>
+              <td><span class="badge bg-success-subtle text-success">محلولة</span></td>
+              <td>المستخدم الحالي</td>
+              <td>
+                <div>
+                  <div>٥‏/١‏/٢٠٢٦</div>
+                  <small class="text-muted">تم الحل: ٥‏/١‏/٢٠٢٦</small>
+                </div>
+              </td>
+              <td>150 دقيقة</td>
+              <td>
+                <button class="btn btn-view btn-sm">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </td>
+            </tr>
+
+            <!-- سجل 2 -->
+            <tr>
+              <td class="fw-medium">TKT-093</td>
+              <td>
+                <div>
+                  <div class="fw-medium">يوسف إبراهيم الحربي</div>
+                  <small class="text-muted">وكالة التسويق</small>
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary">موقع إلكتروني</span>
+              </td>
+              <td>
+                <div class="text-truncate" style="max-width: 220px;">
+                  تحسين محركات البحث ومشاكل الأداء
+                </div>
+              </td>
+              <td><span class="badge bg-success-subtle text-success">محلولة</span></td>
+              <td>المستخدم الحالي</td>
+              <td>
+                <div>
+                  <div>٤‏/١‏/٢٠٢٦</div>
+                  <small class="text-muted">تم الحل: ٤‏/١‏/٢٠٢٦</small>
+                </div>
+              </td>
+              <td>105 دقيقة</td>
+              <td>
+                <button class="btn btn-view btn-sm">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </td>
+            </tr>
+
+            <!-- سجل 3 -->
+            <tr>
+              <td class="fw-medium">TKT-089</td>
+              <td>
+                <div>
+                  <div class="fw-medium">نورة عبدالله القرني</div>
+                  <small class="text-muted">شركة الاستشارات</small>
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary">نظام إدارة العملاء</span>
+              </td>
+              <td>
+                <div class="text-truncate" style="max-width: 220px;">
+                  مشكلة في مزامنة البيانات مع التطبيق الجوال
+                </div>
+              </td>
+              <td><span class="badge bg-secondary">مغلقة</span></td>
+              <td>فهد سعد</td>
+              <td>
+                <div>
+                  <div>٣‏/١‏/٢٠٢٦</div>
+                  <small class="text-muted">تم الحل: ٣‏/١‏/٢٠٢٦</small>
+                </div>
+              </td>
+              <td>120 دقيقة</td>
+              <td>
+                <button class="btn btn-view btn-sm">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>

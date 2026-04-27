@@ -1,0 +1,154 @@
+<div class="container-fluid">
+
+  <!-- العنوان والوصف -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1">العملاء المحتملون المعينون</h2>
+      <p class="text-muted mb-0">عملاء محولون من فريق المبيعات للاستشارة الفنية</p>
+    </div>
+  </div>
+
+  <!-- الكروت الثلاثة الصغيرة -->
+  <div class="row g-4 mb-4">
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm border-0 text-center py-4">
+        <div class="card-body">
+          <h3 class="fw-bold text-primary mb-1">3</h3>
+          <p class="text-muted mb-0">إجمالي المعينين</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm border-0 text-center py-4">
+        <div class="card-body">
+          <h3 class="fw-bold text-warning mb-1">2</h3>
+          <p class="text-muted mb-0">قيد الانتظار</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm border-0 text-center py-4">
+        <div class="card-body">
+          <h3 class="fw-bold text-success mb-1">0</h3>
+          <p class="text-muted mb-0">مكتملة</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- حقل البحث -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body py-3">
+      <div class="position-relative">
+        <input
+          type="text"
+          class="form-control ps-3 pe-5"
+          placeholder="ابحث عن العملاء المحتملين..."
+        />
+        <i class="fa-solid fa-magnifying-glass position-absolute top-50 end-0 translate-middle-y pe-3 text-muted"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- الجدول الرئيسي -->
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-white border-0 py-3">
+      <h5 class="mb-0">قائمة العملاء المحتملين (3)</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>اسم العميل</th>
+              <th>الشركة</th>
+              <th>نوع الخدمة</th>
+              <th>مندوب المبيعات</th>
+              <th>تاريخ التعيين</th>
+              <th>الحالة</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- السطر الأول -->
+            <tr>
+              <td class="fw-medium">أحمد محمد العمري</td>
+              <td>شركة الحلول التقنية</td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary">برنامج محاسبي</span>
+              </td>
+              <td>عمر حسن الشهري</td>
+              <td>٨/١/٢٠٢٦</td>
+              <td>
+                <span class="badge bg-warning-subtle text-warning">قيد الانتظار</span>
+              </td>
+              <td>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button class="btn btn-view active btn-sm d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-play"></i>
+                    بدء الاستشارة
+                  </button>
+                  <button class="btn btn-view btn-sm d-flex align-items-center gap-2">
+                    <i class="fa-regular fa-file-lines"></i>
+                    ملاحظات
+                  </button>
+                </div>
+              </td>
+            </tr>
+            
+            <!-- السطر الثاني -->
+            <tr>
+              <td class="fw-medium">سارة علي القحطاني</td>
+              <td>وكالة التسويق الرقمي</td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary">تطبيق جوال</span>
+              </td>
+              <td>فاطمة علي الدوسري</td>
+              <td>٧/١/٢٠٢٦</td>
+              <td>
+                <span class="badge bg-warning-subtle text-warning">قيد الانتظار</span>
+              </td>
+              <td>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button class="btn btn-view active btn-sm d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-play"></i>
+                    بدء الاستشارة
+                  </button>
+                  <button class="btn btn-view btn-sm d-flex align-items-center gap-2">
+                    <i class="fa-regular fa-file-lines"></i>
+                    ملاحظات
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- السطر الثالث -->
+            <tr>
+              <td class="fw-medium">خالد إبراهيم المطيري</td>
+              <td>مؤسسة التجارة الإلكترونية</td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary">موقع إلكتروني</span>
+              </td>
+              <td>نورة سعد العتيبي</td>
+              <td>٦/١/٢٠٢٦</td>
+              <td>
+                <span class="badge bg-primary-subtle text-primary">جاري الاستشارة</span>
+              </td>
+              <td>
+                <div class="d-flex gap-2 flex-wrap">
+                  <!-- هنا لم يكن هناك زر "بدء" في الأصل لأنه جاري بالفعل -->
+                  <button class="btn btn-view btn-sm d-flex align-items-center gap-2">
+                    <i class="fa-regular fa-file-lines"></i>
+                    ملاحظات
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>

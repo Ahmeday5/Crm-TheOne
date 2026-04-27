@@ -1,28 +1,30 @@
-import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { SidebarService } from '../../../core/services/sidebar.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { SidebarService } from '../../../core/services/sidebar.service';
+import { LanguageToggleComponent } from '../language-toggle/language-toggle.component';
+import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-header',
   standalone: true,
+  imports: [CommonModule, ThemeToggleComponent, LanguageToggleComponent, TranslatePipe],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
 })
 export class HeaderComponent {
-
- constructor(
-    private sidebarService: SidebarService,
-    private authService: AuthService,
-    private router: Router
-  ) {}
-
-  toggleSidebar() {
-    this.sidebarService.toggle();
+  private sidebar = inject(SidebarService);
+  private auth = inject(AuthService);
+  private router = inject(Router);
+  
+  toggleSidebar(): void {
+    this.sidebar.toggle();
   }
 
-  logout() {
-    this.authService.logout();
+  logout(): void {
+    this.auth.logout();
     this.router.navigate(['auth/login']);
   }
 }

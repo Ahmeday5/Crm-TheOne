@@ -1,14 +1,11 @@
 <app-header></app-header>
 
-<!-- الـ Layout الرئيسي -->
-<div class="app-layout">
-  <!-- Sidebar -->
-  <aside class="sidebar-wrapper">
-    <app-sidebar></app-sidebar>
-  </aside>
+<div class="app-shell">
+  <app-sidebar></app-sidebar>
 
-  <!-- المحتوى الرئيسي -->
-  <main class="main-content">
-    <router-outlet></router-outlet>
+  <main class="app-main" [@fadeIn]>
+    <div class="container-fluid py-3 py-lg-4">
+      <router-outlet></router-outlet>
+    </div>
   </main>
 </div>

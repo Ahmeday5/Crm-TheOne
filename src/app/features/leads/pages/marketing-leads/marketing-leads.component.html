@@ -1,148 +1,135 @@
-<div class="flex-1">
-  <div class="mb-6">
-    <div class="flex items-center gap-3 mb-2">
-      <h2 class="text-3xl fw-bold">إدارة العملاء المحتملين</h2>
-    </div>
-    <p class="text-muted">مرحباً بك! إليك ما يحدث اليوم.</p>
-  </div>
+<app-page-header [title]="'leads.title' | translate"
+                 [subtitle]="'leads.subtitle' | translate"
+                 icon="fa-solid fa-address-card">
+  <button class="btn btn-primary" (click)="goToAddLead()">
+    <i class="fa-solid fa-plus me-1"></i>{{ 'leads.addNew' | translate }}
+  </button>
+</app-page-header>
+
+<div class="d-flex align-items-center justify-content-between mb-3">
   <div>
-    <div class="mb-6">
-      <div class="d-flex align-items-center justify-content-between mb-6">
-        <div>
-          <h3>قائمة العملاء المحتملين</h3>
-          <p class="text-muted">إدارة جميع العملاء المحتملين من التسويق</p>
-        </div>
-        <button class="btn btn-view active" (click)="goToAddLead()">
-          <i class="fas fa-plus ml-2"></i> إضافة عميل محتمل جديد
-        </button>
+    <h4 class="mb-1">{{ 'leads.listTitle' | translate }}</h4>
+    <p class="text-muted mb-0">{{ 'leads.listSubtitle' | translate }}</p>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <input type="text" class="form-control"
+               [placeholder]="'leads.searchPh' | translate"
+               [(ngModel)]="searchQuery" (input)="filterLeads()">
       </div>
-      <div class="card mb-6">
-        <div class="card-body pt-6">
-          <div class="row">
-            <div class="col-md-6">
-              <div class="input-group mb-3">
-                <input type="text" class="form-control" placeholder="ابحث بالاسم أو رقم الهاتف..."
-                  [(ngModel)]="searchQuery" (input)="filterLeads()">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <select class="form-select" [(ngModel)]="selectedSource" (change)="filterLeads()">
-                <option value="">جميع المصادر</option>
-                <option value="فيسبوك">فيسبوك</option>
-                <option value="إنستغرام">إنستغرام</option>
-                <!-- أضف المزيد -->
-              </select>
-            </div>
-            <div class="col-md-3">
-              <select class="form-select" [(ngModel)]="selectedStatus" (change)="filterLeads()">
-                <option value="">جميع الحالات</option>
-                <option value="جديد">جديد</option>
-                <option value="معين لفريق المبيعات">معين لفريق المبيعات</option>
-                <!-- أضف المزيد -->
-              </select>
-            </div>
-          </div>
-        </div>
+      <div class="col-md-3">
+        <select class="form-select" [(ngModel)]="selectedSource" (change)="filterLeads()">
+          <option value="">{{ 'leads.allSources' | translate }}</option>
+          <option value="فيسبوك">{{ 'dashboard.sources.facebook' | translate }}</option>
+          <option value="إنستغرام">{{ 'dashboard.sources.instagram' | translate }}</option>
+          <option value="جوجل">{{ 'dashboard.sources.google' | translate }}</option>
+        </select>
       </div>
-    </div>
-    <div class="card mt-3">
-      <div class="card-header">
-        <h4 class="card-title d-flex align-items-center justify-content-between">
-          <h5 class="mt-2">إجمالي العملاء المحتملين: {{ filteredLeads.length }}</h5>
-          <button class="btn btn-view"><i class="fas fa-filter ml-2"></i>تصدير</button>
-        </h4>
-      </div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>اسم العميل</th>
-                <th>رقم الهاتف</th>
-                <th>المصدر</th>
-                <th>الحملة</th>
-                <th>الخدمة المهتم بها</th>
-                <th>الحالة</th>
-                <th>مندوب المبيعات</th>
-                <th>تاريخ الإنشاء</th>
-                <th>الإجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let lead of filteredLeads">
-                <td>{{ lead.name }}</td>
-                <td>{{ lead.phone }}</td>
-                <td>{{ lead.source }}</td>
-                <td>{{ lead.campaign }}</td>
-                <td>{{ lead.service }}</td>
-                <td><span class="badge"
-                    [ngClass]="{'bg-primary': lead.status === 'جديد', 'bg-success': lead.status === 'معين لفريق المبيعات', 'bg-warning': lead.status === 'تم الاتصال'}">{{
-                    lead.status }}</span></td>
-                <td>{{ lead.salesRep || '-' }}</td>
-                <td>{{ lead.createdDate }}</td>
-                <td>
-                  <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-view" title="تعيين لفريق المبيعات"
-                      (click)="openModal(lead)"><i class="fas fa-user-plus"></i></button>
-                    <button class="btn btn-sm btn-outline-secondary" title="تعديل"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-sm btn-outline-danger" title="حذف"><i class="fas fa-trash"></i></button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="col-md-3">
+        <select class="form-select" [(ngModel)]="selectedStatus" (change)="filterLeads()">
+          <option value="">{{ 'leads.allStatuses' | translate }}</option>
+          <option value="جديد">{{ 'leads.statuses.new' | translate }}</option>
+          <option value="معين لفريق المبيعات">{{ 'leads.statuses.assigned' | translate }}</option>
+          <option value="تم الاتصال">{{ 'leads.statuses.contacted' | translate }}</option>
+        </select>
       </div>
     </div>
   </div>
-  @if (showAssignModal) {
+</div>
+
+<!-- Table -->
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <h5 class="mb-0">{{ 'leads.total' | translate }}: {{ filteredLeads.length }}</h5>
+    <button class="btn btn-light"><i class="fa-solid fa-download me-1"></i>{{ 'leads.export' | translate }}</button>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{{ 'leads.name' | translate }}</th>
+            <th>{{ 'leads.phone' | translate }}</th>
+            <th>{{ 'leads.source' | translate }}</th>
+            <th>{{ 'leads.campaign' | translate }}</th>
+            <th>{{ 'leads.service' | translate }}</th>
+            <th>{{ 'leads.status' | translate }}</th>
+            <th>{{ 'leads.salesRep' | translate }}</th>
+            <th>{{ 'leads.createdAt' | translate }}</th>
+            <th>{{ 'leads.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let lead of filteredLeads">
+            <td>{{ lead.name }}</td>
+            <td>{{ lead.phone }}</td>
+            <td>{{ lead.source }}</td>
+            <td>{{ lead.campaign }}</td>
+            <td>{{ lead.service }}</td>
+            <td>
+              <span class="badge"
+                    [ngClass]="{
+                      'bg-primary-subtle': lead.status === 'جديد',
+                      'bg-success-subtle': lead.status === 'معين لفريق المبيعات',
+                      'bg-warning-subtle': lead.status === 'تم الاتصال'
+                    }">{{ lead.status }}</span>
+            </td>
+            <td>{{ lead.salesRep || '—' }}</td>
+            <td>{{ lead.createdDate }}</td>
+            <td>
+              <div class="d-flex gap-1 justify-content-center">
+                <button class="btn-icon" [title]="'leads.actionTitles.assignToSales' | translate"
+                        (click)="openModal(lead)"><i class="fa-solid fa-user-plus"></i></button>
+                <button class="btn-icon" [title]="'leads.actionTitles.edit' | translate"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-icon text-danger" [title]="'leads.actionTitles.delete' | translate"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Assign modal -->
+@if (showAssignModal) {
   <div class="modal fade show d-block" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content rounded-3">
-
-        <div class="modal-header justify-content-between">
+      <div class="modal-content">
+        <div class="modal-header">
           <div>
-            <h5>تعيين العميل المحتمل لفريق المبيعات</h5>
-            <h6 class="text-muted">
-              اختر مندوب مبيعات لتعيين هذا العميل المحتمل له.
-            </h6>
+            <h5 class="mb-1">{{ 'leads.assignModal.title' | translate }}</h5>
+            <small class="text-muted">{{ 'leads.assignModal.hint' | translate }}</small>
           </div>
           <button class="btn-close" (click)="closeModal()"></button>
         </div>
 
         <div class="modal-body">
-          <div class="lead-preview">
-            <p class="fw-500 mb-1">{{ selectedLead?.name }}</p>
-            <p class="text-muted mb-0">{{ selectedLead?.phone }}</p>
-            <p class="text-muted mb-0">{{ selectedLead?.service }}</p>
+          <div class="card bg-light p-3 mb-3">
+            <p class="fw-600 mb-1">{{ selectedLead?.name }}</p>
+            <small class="text-muted d-block">{{ selectedLead?.phone }}</small>
+            <small class="text-muted d-block">{{ selectedLead?.service }}</small>
           </div>
 
-          <div class="mt-3">
-            <label class="form-label fw-500">اختر مندوب المبيعات</label>
-            <select class="form-select">
-              <option value="">اختر مندوب المبيعات</option>
-              <option>عمر حسن الشهري</option>
-              <option>فاطمة علي الدوسري</option>
-            </select>
-          </div>
+          <label class="form-label">{{ 'leads.assignModal.pickRep' | translate }}</label>
+          <select class="form-select">
+            <option value="">{{ 'leads.assignModal.pickRep' | translate }}</option>
+            <option>عمر حسن الشهري</option>
+            <option>فاطمة علي الدوسري</option>
+          </select>
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-outline-secondary" (click)="closeModal()">
-            إلغاء
-          </button>
-          <button class="btn btn-view active">
-            تعيين لفريق المبيعات
-          </button>
+          <button class="btn btn-light" (click)="closeModal()">{{ 'common.cancel' | translate }}</button>
+          <button class="btn btn-primary">{{ 'leads.assignModal.submit' | translate }}</button>
         </div>
-
       </div>
     </div>
   </div>
-
-  <!-- Backdrop -->
   <div class="modal-backdrop fade show"></div>
-  }
-
-
-</div>
+}

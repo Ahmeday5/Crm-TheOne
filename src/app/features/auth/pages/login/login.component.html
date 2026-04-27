@@ -1,131 +1,92 @@
-<div class="login-wrapper">
-  <div class="container-fluid">
-    <div class="row justify-content-center align-items-center min-vh-100">
-      <!-- LEFT SIDE -->
-      <div class="col-lg-5 d-none d-lg-block text-white">
-
-        <div class="brand-box mb-2">
-          <img src="/assets/img/logo.avif" class="logo mb-4" />
-          <h1 class="title">
-            مرحباً بك في <br>
-            <span>TheOne CRM</span>
-          </h1>
-          <p class="subtitle">
-            نظام متكامل لإدارة علاقات العملاء مع تحكم كامل
-            في جميع عمليات المبيعات والتسويق والدعم الفني
-          </p>
-        </div>
-
-        <div class="row g-4 stats-box">
-          <div class="col-6">
-            <div class="stat-card">
-              <h2>10+</h2>
-              <p>وحدات متكاملة</p>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="stat-card">
-              <h2>5</h2>
-              <p>أدوار مخصصة</p>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="stat-card">
-              <h2>99%</h2>
-              <p>معدل التشغيل</p>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="stat-card">
-              <h2>24/7</h2>
-              <p>دعم متواصل</p>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- RIGHT SIDE -->
-      <div class="col-lg-5">
-
-        <div class="login-card">
-          <div class="text-center mb-4">
-            <div class="icon-box">
-              🔒
-            </div>
-            <h3 class="fw-bold">تسجيل الدخول</h3>
-            <p class="text-muted">أدخل بياناتك للوصول إلى لوحة التحكم</p>
-          </div>
-
-          <form (ngSubmit)="login()" #loginForm="ngForm">
-
-            <div class="mb-3">
-              <label class="form-label">البريد الإلكتروني</label>
-              <div class="input-group custom-input">
-                <input type="email" class="form-control" [(ngModel)]="email" name="email" required
-                  placeholder="أدخل البريد الإلكتروني">
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">كلمة المرور</label>
-              <div class="input-group custom-input">
-                <input [type]="showPassword ? 'text' : 'password'" class="form-control" [(ngModel)]="password"
-                  name="password" required placeholder="أدخل كلمة المرور">
-                <span class="password-toggle" (click)="togglePassword()">
-                  <i class="fa-regular {{ showPassword ? 'fa-eye-slash' : 'fa-eye' }}"
-                    style="color: var(--third-color);"></i>
-                </span>
-              </div>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <div>
-                <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe">
-                <label class="ms-2">تذكرني</label>
-              </div>
-              <a href="#" class="forgot-link">نسيت كلمة المرور؟</a>
-            </div>
-
-            <button type="submit" class="btn login-btn w-100">
-              تسجيل الدخول →
-            </button>
-
-          </form>
-
-          <hr class="my-4">
-
-          <div class="text-center mb-3 fw-bold">
-            تسجيل دخول سريع للتجربة
-          </div>
-
-          <div class="row g-2">
-            <div class="col-6">
-              <button class="btn quick-btn w-100" (click)="quickLogin('admin')">👑 مدير</button>
-            </div>
-            <div class="col-6">
-              <button class="btn quick-btn w-100" (click)="quickLogin('marketing')">📢 تسويق</button>
-            </div>
-            <div class="col-6">
-              <button class="btn quick-btn w-100" (click)="quickLogin('sales')">💰 مبيعات</button>
-            </div>
-            <div class="col-6">
-              <button class="btn quick-btn w-100" (click)="quickLogin('support')">🎧 دعم</button>
-            </div>
-            <div class="col-12">
-              <button class="btn quick-btn w-100" (click)="quickLogin('developer')">💻 مطورين</button>
-            </div>
-          </div>
-
-        </div>
-
-        <p class="footer-text">
-          © 2026 TheOne CRM - جميع الحقوق محفوظة
-        </p>
-
-      </div>
-
-    </div>
+<div class="container-fluid py-4">
+  <!-- Top right: language + theme switchers (also visible before login) -->
+  <div class="d-flex justify-content-end gap-2 mb-2">
+    <app-language-toggle></app-language-toggle>
+    <app-theme-toggle></app-theme-toggle>
   </div>
 
+  <div class="row align-items-center justify-content-center min-vh-90 g-4">
+
+    <!-- Brand panel -->
+    <div class="col-lg-5 d-none d-lg-block text-white">
+      <div class="brand-box">
+        <img src="/assets/img/logo.avif" class="brand-logo mb-4" alt="logo" />
+        <h1 class="display-4 fw-700 mb-3">
+          {{ 'auth.welcome' | translate }} <br>
+          <span class="brand-highlight">{{ 'header.app' | translate }}</span>
+        </h1>
+        <p class="lead mb-4 opacity-90">
+          {{ 'auth.subtitle' | translate }}
+        </p>
+
+        <div class="row g-3 mt-2">
+          <div class="col-6"><div class="stat-card"><h2>10+</h2><p class="mb-0">{{ 'auth.stats.modules' | translate }}</p></div></div>
+          <div class="col-6"><div class="stat-card"><h2>5</h2><p class="mb-0">{{ 'auth.stats.roles' | translate }}</p></div></div>
+          <div class="col-6"><div class="stat-card"><h2>99%</h2><p class="mb-0">{{ 'auth.stats.uptime' | translate }}</p></div></div>
+          <div class="col-6"><div class="stat-card"><h2>24/7</h2><p class="mb-0">{{ 'auth.stats.support' | translate }}</p></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login form -->
+    <div class="col-lg-5 col-md-8 col-sm-10">
+      <div class="card login-card p-4 p-lg-5">
+        <div class="text-center mb-4">
+          <span class="icon-tile lg mx-auto mb-3"><i class="fa-solid fa-shield-halved"></i></span>
+          <h3 class="fw-700">{{ 'auth.login.title' | translate }}</h3>
+          <p class="text-muted mb-0">{{ 'auth.login.hint' | translate }}</p>
+        </div>
+
+        <form (ngSubmit)="login()" #loginForm="ngForm">
+          <div class="mb-3">
+            <label class="form-label">{{ 'auth.email' | translate }}</label>
+            <input type="email" class="form-control"
+                   name="email" [(ngModel)]="email" required
+                   [placeholder]="'auth.emailPlaceholder' | translate">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">{{ 'auth.password' | translate }}</label>
+            <div class="position-relative">
+              <input [type]="showPassword ? 'text' : 'password'"
+                     class="form-control pe-5"
+                     name="password" [(ngModel)]="password" required
+                     [placeholder]="'auth.passwordPlaceholder' | translate">
+              <button type="button" class="btn-icon password-toggle" (click)="togglePassword()">
+                <i class="bi" [class.bi-eye-slash]="showPassword" [class.bi-eye]="!showPassword"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox"
+                     id="rememberMe" name="rememberMe" [(ngModel)]="rememberMe">
+              <label class="form-check-label" for="rememberMe">{{ 'auth.remember' | translate }}</label>
+            </div>
+            <a href="#" class="link-primary">{{ 'auth.forgot' | translate }}</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 fw-700 py-3">
+            {{ 'auth.login.submit' | translate }}
+            <i class="fa-solid fa-arrow-left ms-1 fs-4 align-middle"></i>
+          </button>
+        </form>
+
+        <hr class="my-4">
+
+        <p class="text-center fw-600 mb-3">{{ 'auth.quick' | translate }}</p>
+
+        <div class="row g-2">
+          <div class="col-6"><button class="btn btn-light w-100 fw-600" (click)="quickLogin('admin')"><i class="fa-regular fa-user-badge me-1"></i>{{ 'auth.role.admin' | translate }}</button></div>
+          <div class="col-6"><button class="btn btn-light w-100 fw-600" (click)="quickLogin('marketing')"><i class="fa-solid fa-bullhorn me-1"></i>{{ 'auth.role.marketing' | translate }}</button></div>
+          <div class="col-6"><button class="btn btn-light w-100 fw-600" (click)="quickLogin('sales')"><i class="fa-solid fa-coins me-1"></i>{{ 'auth.role.sales' | translate }}</button></div>
+          <div class="col-6"><button class="btn btn-light w-100 fw-600" (click)="quickLogin('support')"><i class="fa-solid fa-headset me-1"></i>{{ 'auth.role.support' | translate }}</button></div>
+          <div class="col-12"><button class="btn btn-light w-100 fw-600" (click)="quickLogin('developer')"><i class="fa-solid fa-code me-1"></i>{{ 'auth.role.developer' | translate }}</button></div>
+        </div>
+      </div>
+
+      <p class="text-center text-white-50 mt-3 mb-0">{{ 'auth.copyright' | translate }}</p>
+    </div>
+  </div>
 </div>

@@ -1,0 +1,255 @@
+<div class="container-fluid py-4">
+
+  <!-- Back -->
+  <button class="btn btn-light mb-4" (click)="goToSupportTickets();">
+    <i class="fa-solid fa-arrow-right me-2"></i>
+    العودة للبلاغات
+  </button>
+
+  <div class="row g-4">
+    <!-- LEFT SIDE -->
+    <div class="col-lg-8">
+      <!-- Ticket Header -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-500 mb-0">بلاغ #TKT-101</h5>
+            <div class="d-flex gap-2">
+              <span class="badge bg-secondary">عالية</span>
+              <span class="badge bg-secondary">قيد المعالجة</span>
+            </div>
+          </div>
+
+          <div class="row g-4">
+
+            <div class="col-md-6">
+              <p class="text-muted mb-1">اسم العميل</p>
+              <h6 class="fw-semibold">أحمد محمد العمري</h6>
+            </div>
+
+            <div class="col-md-6">
+              <p class="text-muted mb-1">اسم الشركة</p>
+              <h6 class="fw-semibold">شركة الحلول التقنية</h6>
+            </div>
+
+            <div class="col-md-6">
+              <p class="text-muted mb-1">رقم الجوال</p>
+              <h6 class="fw-semibold">+966 50 123 4567</h6>
+            </div>
+
+            <div class="col-md-6">
+              <p class="text-muted mb-1">البريد الإلكتروني</p>
+              <h6 class="fw-semibold">ahmed-techsolutions.sa</h6>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Problem Description -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+          <h6 class="fw-bold mb-3">وصف المشكلة</h6>
+
+          <div class="mb-3">
+            <p class="text-muted mb-1">نوع الخدمة</p>
+            <span class="badge bg-light text-dark border">
+              برنامج محاسبي
+            </span>
+          </div>
+
+          <div class="mb-3">
+            <p class="text-muted mb-1">فئة المشكلة</p>
+            <span class="badge bg-light text-dark border">
+              تقني
+            </span>
+          </div>
+
+          <hr>
+
+          <p class="text-muted mb-1">الوصف التفصيلي</p>
+          <p>
+            غير قادر على تصدير التقارير المالية بصيغة PDF.
+            زر التصدير يظهر التحميل لكن لا يحدث شيء.
+          </p>
+
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+          <h6 class="fw-bold mb-4">
+            <i class="fa-regular fa-clock me-2"></i>
+            سجل البلاغ
+          </h6>
+
+          <div class="timeline">
+
+            <div class="timeline-item">
+              <div class="dot"></div>
+              <div>
+                <h6 class="fw-semibold">Ticket Created</h6>
+                <p class="mb-1 text-muted small">
+                  Support ticket created
+                </p>
+                <small class="text-muted">
+                  بواسطة المستخدم الحالي • ٦/١/٢٠٢٦ ١٠:٠٠:٠٠ ص
+                </small>
+              </div>
+            </div>
+
+            <div class="timeline-item">
+              <div class="dot"></div>
+              <div>
+                <h6 class="fw-semibold">Status Updated</h6>
+                <p class="mb-1 text-muted small">
+                  Ticket status changed to قيد المعالجة
+                </p>
+                <small class="text-muted">
+                  بواسطة المستخدم الحالي • ٣/٣/٢٠٢٦ ١١:٢١:٥٠ ص
+                </small>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Attachments -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+
+          <h6 class="fw-bold mb-3">
+            <i class="fa-solid fa-paperclip me-2"></i>
+            المرفقات
+          </h6>
+
+          <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-3">
+            <div>
+              <h6 class="mb-1">error-screenshot.png</h6>
+              <small class="text-muted">
+                2.4 MB • رفع بواسطة أحمد محمد العمري
+              </small>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary">
+              تحميل
+            </button>
+          </div>
+
+          <button class="btn btn-view w-100">
+            <i class="fa-solid fa-paperclip me-2"></i>
+            إضافة مرفق
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="col-lg-4">
+
+      <!-- Quick Actions -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+          <h6 class="fw-bold mb-3">إجراءات سريعة</h6>
+
+          <div class="d-grid gap-2">
+            <button class="btn btn-view">
+              إضافة تعليق
+            </button>
+            <button class="btn btn-outline-danger">
+              إغلاق البلاغ
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Change Priority -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+          <h6 class="fw-bold mb-3">تغيير الأولوية</h6>
+
+          <select class="form-select mb-3">
+            <option selected disabled>مستوى الأولوية</option>
+            <option>منخفضة</option>
+            <option>متوسطة</option>
+            <option>عالية</option>
+          </select>
+
+          <button class="btn btn-view w-100">
+            تحديث الأولوية
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Change Status -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+          <h6 class="fw-bold mb-3">تحديث الحالة</h6>
+
+          <select class="form-select mb-3">
+            <option selected disabled>حالة البلاغ</option>
+            <option>قيد المعالجة</option>
+            <option>مغلق</option>
+            <option>قيد الانتظار</option>
+          </select>
+
+          <button class="btn btn-view w-100">
+            تحديث الحالة
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Add Comment -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+          <h6 class="fw-bold mb-3">إضافة تعليق</h6>
+
+          <textarea class="form-control mb-3" rows="4" placeholder="أضف تعليقاً على البلاغ..."></textarea>
+
+          <button class="btn btn-view w-100">
+            نشر التعليق
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+
+          <h6 class="fw-500 mb-3">معلومات البلاغ</h6>
+
+          <p class="text-muted mb-1">الوكيل المسؤول</p>
+          <p class="fw-500">المستخدم الحالي</p>
+
+          <hr>
+
+          <p class="text-muted mb-1">تاريخ الإنشاء</p>
+          <p class="fw-500">٦/١/٢٠٢٦ ١٠:٠٠:٠٠ ص</p>
+
+          <hr>
+
+          <p class="text-muted mb-1">رقم البلاغ</p>
+          <p class="fw-500">TKT-101</p>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>

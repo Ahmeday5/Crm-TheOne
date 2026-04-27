@@ -1,10 +1,7 @@
 <div class="flex-1">
-  <div class="mb-6">
-    <div class="flex items-center gap-3 mb-2">
-      <h2 class="text-3xl fw-bold">إدارة العملاء المحتملين</h2>
-    </div>
-    <p class="text-muted">مرحباً بك! إليك ما يحدث اليوم.</p>
-  </div>
+  <app-page-header [title]="'leads.title' | translate"
+                   [subtitle]="'leads.subtitle' | translate"
+                   icon="fa-solid fa-address-card"></app-page-header>
   <div class="space-y-6">
     <div class="mb-6">
       <h4 class="mb-2">عملائي المحتملين</h4>

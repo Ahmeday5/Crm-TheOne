@@ -1,12 +1,11 @@
 import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-price-offers',
   standalone: true,
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './price-offers.component.html',
-  styleUrl: './price-offers.component.scss'
+  styleUrl: './price-offers.component.scss',
 })
-export class PriceOffersComponent {
-
-}
+export class PriceOffersComponent {}

@@ -2,10 +2,13 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgApexchartsModule } from 'ng-apexcharts';
 
+import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+
 @Component({
   selector: 'app-developer-dashboard',
   standalone: true,
-  imports: [CommonModule, NgApexchartsModule],
+  imports: [CommonModule, NgApexchartsModule, TranslatePipe, PageHeaderComponent],
   templateUrl: './developer-dashboard.component.html',
   styleUrl: './developer-dashboard.component.scss',
 })

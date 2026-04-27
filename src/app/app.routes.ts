@@ -113,25 +113,6 @@ export const routes: Routes = [
               import('./features/salesPhases/pages/sales-line/sales-line.component').then(
                 (m) => m.SalesLineComponent,
               ),
-
-            children: [
-              {
-                path: 'view-details',
-                title: 'تفاصيل الصفقة',
-                loadComponent: () =>
-                  import('./features/salesPhases/pages/sales-line/view-details/view-details.component').then(
-                    (m) => m.ViewDetailsComponent,
-                  ),
-              },
-            ],
-          },
-          {
-            path: 'line',
-            loadComponent: () =>
-              import('./features/leads/pages/sales-leads/sales-leads.component').then(
-                (m) => m.SalesLeadsComponent,
-              ),
-            title: 'إدارة العملاء المحتملين',
           },
           {
             path: 'price-offers',
@@ -156,6 +137,106 @@ export const routes: Routes = [
                 (m) => m.FollowUpsComponent,
               ),
             title: 'المتابعات',
+          },
+        ],
+      },
+      {
+        path: 'view-details-deal',
+        title: 'تفاصيل الصفقة',
+        loadComponent: () =>
+          import('./features/salesPhases/pages/sales-line/view-details/view-details.component').then(
+            (m) => m.ViewDetailsComponent,
+          ),
+      },
+      {
+        path: 'add-price-offer',
+        title: 'إضافة عرض السعر',
+        loadComponent: () =>
+          import('./features/salesPhases/pages/price-offers/add-price-offer/add-price-offer.component').then(
+            (m) => m.AddPriceOfferComponent,
+          ),
+      },
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/appSupport/pages/app-support-main/app-support-main.component').then(
+            (m) => m.AppSupportMainComponent,
+          ),
+        children: [
+          { path: '', redirectTo: 'dashboardSupport', pathMatch: 'full' },
+          {
+            path: 'dashboardSupport',
+            title: 'لوحة التحكم',
+            loadComponent: () =>
+              import('./features/appSupport/pages/dashboard-app-support/dashboard-app-support.component').then(
+                (m) => m.DashboardAppSupportComponent,
+              ),
+          },
+          {
+            path: 'Designated-clients',
+            loadComponent: () =>
+              import('./features/appSupport/pages/designated-clients/designated-clients.component').then(
+                (m) => m.DesignatedClientsComponent,
+              ),
+            title: 'العملاء المعينون',
+          },
+          {
+            path: 'SupportTickets',
+            loadComponent: () =>
+              import('./features/appSupport/pages/support-tickets/support-tickets.component').then(
+                (m) => m.SupportTicketsComponent,
+              ),
+            title: 'تذاكر الدعم',
+          },
+          {
+            path: 'SupportLog',
+            loadComponent: () =>
+              import('./features/appSupport/pages/technical-support-log/technical-support-log.component').then(
+                (m) => m.TechnicalSupportLogComponent,
+              ),
+            title: 'سجل الدعم',
+          },
+        ],
+      },
+      {
+        path: 'technical-consultation',
+        loadComponent: () =>
+          import('./features/appSupport/pages/designated-clients/technical-consultation/technical-consultation.component').then(
+            (m) => m.TechnicalConsultationComponent,
+          ),
+        title: 'الاستشارة الفنية',
+      },
+      {
+        path: 'details-of-support-cases',
+        loadComponent: () =>
+          import('./features/appSupport/pages/support-tickets/details-of-support-cases/details-of-support-cases.component').then(
+            (m) => m.DetailsOfSupportCasesComponent,
+          ),
+        title: 'تفاصيل حالات الدعم المفتوحة',
+      },
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/ProjectsTasks/pages/projects-and-tasks/projects-and-tasks.component').then(
+            (m) => m.ProjectsAndTasksComponent,
+          ),
+        children: [
+          { path: '', redirectTo: 'ProjectManage', pathMatch: 'full' },
+          {
+            path: 'ProjectManage',
+            title: 'إدارة المشاريع',
+            loadComponent: () =>
+              import('./features/ProjectsTasks/pages/project-manage/project-manage.component').then(
+                (m) => m.ProjectManageComponent,
+              ),
+          },
+          {
+            path: 'TasksManage',
+            loadComponent: () =>
+              import('./features/ProjectsTasks/pages/tasks-manage/tasks-manage.component').then(
+                (m) => m.TasksManageComponent,
+              ),
+            title: 'إدارة المهام',
           },
         ],
       },

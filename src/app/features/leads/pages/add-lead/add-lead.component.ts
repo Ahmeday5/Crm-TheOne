@@ -4,10 +4,13 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../../core/services/api.service';
 
+import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+
 @Component({
   selector: 'app-add-lead',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, TranslatePipe, PageHeaderComponent],
   templateUrl: './add-lead.component.html',
   styleUrl: './add-lead.component.scss',
 })

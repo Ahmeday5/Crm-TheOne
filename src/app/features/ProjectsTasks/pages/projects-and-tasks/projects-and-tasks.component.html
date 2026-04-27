@@ -1,0 +1,26 @@
+<div class="flex-grow-1">
+  <app-page-header [title]="'projects.title' | translate"
+                   [subtitle]="'projects.subtitle' | translate"
+                   icon="fa-solid fa-table-columns"></app-page-header>
+
+  <ul class="nav nav-tabs nav-fill mb-3 pb-3 border-bottom d-block">
+    <div class="row g-2">
+      <div class="col-md-6">
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center justify-content-center gap-2" routerLink="ProjectManage" routerLinkActive="active">
+            <i class="fa-solid fa-table-columns"></i>{{ 'projects.tabs.projects' | translate }}
+          </a>
+        </li>
+      </div>
+      <div class="col-md-6">
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center justify-content-center gap-2" routerLink="TasksManage" routerLinkActive="active">
+            <i class="fa-solid fa-list-check"></i>{{ 'projects.tabs.tasks' | translate }}
+          </a>
+        </li>
+      </div>
+    </div>
+  </ul>
+
+  <router-outlet></router-outlet>
+</div>

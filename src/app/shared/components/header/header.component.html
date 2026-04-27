@@ -1,150 +1,50 @@
-<header class="header border-bottom shadow-sm sticky-top bg-white">
-    <div class="d-flex align-items-center justify-content-between">
+<header class="app-header sticky-top border-bottom shadow-sm">
+  <div class="d-flex align-items-center justify-content-between gap-3 h-100 px-3 px-lg-4">
 
-      <!-- LEFT -->
-      <div class="d-flex align-items-center gap-4">
-        <button class="btn btn-link p-0 d-lg-none" (click)="toggleSidebar()">
-          <i class="fas fa-bars fs-4 text-muted"></i>
-        </button>
+    <!-- Left: brand + sidebar toggle -->
+    <div class="d-flex align-items-center gap-3">
+      <button class="btn-icon d-lg-none" type="button" data-sidebar-toggle (click)="toggleSidebar()" aria-label="menu">
+        <i class="fa-solid fa-bars fs-3"></i>
+      </button>
 
-        <div class="d-flex align-items-center gap-3">
-          <img src="/assets/img/logo.png" class="header-logo" alt="Logo">
-          <div class="d-none d-sm-block">
-            <h1 class="fs-5 fw-bold text-brand mb-0">TheOne CRM</h1>
-            <p class="text-muted mb-0 fs-6">نظام إدارة علاقات العملاء</p>
-          </div>
+      <div class="d-flex align-items-center gap-3">
+        <img src="/assets/img/logo.png" class="brand-logo" alt="logo">
+        <div class="d-none d-sm-block">
+          <h1 class="brand-title mb-0">{{ 'header.app' | translate }}</h1>
+          <small class="text-muted d-block">{{ 'header.tagline' | translate }}</small>
         </div>
-      </div>
-
-      <!-- RIGHT -->
-      <div class="d-flex align-items-center gap-2">
-        <!-- LANGUAGE -->
-        <div class="dropdown">
-          <button class="btn dropdown-toggle d-flex align-items-center gap-2"
-                  data-bs-toggle="dropdown">
-            <i class="fas fa-globe"></i>
-            <span>🇸🇦</span>
-            <span class="d-none d-lg-inline">العربية</span>
-          </button>
-
-          <div class="dropdown-menu dropdown-menu-end p-0 lang-dropdown">
-            <div class="dropdown-header d-flex align-items-center gap-2">
-              <i class="fas fa-globe"></i>
-              اختر اللغة / Select Language
-            </div>
-
-            <div class="lang-list">
-              <button class="lang-item active">
-                <span class="flag">🇸🇦</span>
-                <div>
-                  <strong>العربية</strong>
-                  <small>Arabic</small>
-                </div>
-                <i class="fas fa-check text-primary"></i>
-              </button>
-
-              <button class="lang-item">
-                <span class="flag">🇺🇸</span>
-                <div>
-                  <strong>English</strong>
-                  <small>English</small>
-                </div>
-              </button>
-
-              <button class="lang-item">
-                <span class="flag">🇫🇷</span>
-                <div>
-                  <strong>Français</strong>
-                  <small>French</small>
-                </div>
-              </button>
-            </div>
-
-            <div class="lang-footer">
-              <div>
-                <small>اللغة الحالية</small>
-                <strong>العربية</strong>
-              </div>
-              <span class="badge bg-primary">RTL</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- THEME -->
-        <div class="dropdown">
-          <button class="btn dropdown-toggle"
-                  data-bs-toggle="dropdown">
-            <i class="fas fa-palette"></i>
-            <span class="d-none d-lg-inline">المظهر</span>
-          </button>
-
-          <div class="dropdown-menu dropdown-menu-end p-3 theme-dropdown">
-            <h6 class="text-muted mb-2">الوضع</h6>
-
-            <div class="d-flex gap-2 mb-3">
-              <button class="theme-box active">
-                <i class="fas fa-sun"></i>
-                <span>فاتح</span>
-              </button>
-              <button class="theme-box">
-                <i class="fas fa-moon"></i>
-                <span>داكن</span>
-              </button>
-              <button class="theme-box">
-                <i class="fas fa-desktop"></i>
-                <span>تلقائي</span>
-              </button>
-            </div>
-
-            <h6 class="text-muted mb-2">اللون</h6>
-            <div class="d-grid grid-2 gap-2">
-              <button class="color-item active">
-                <span class="dot blue"></span> أزرق
-              </button>
-              <button class="color-item">
-                <span class="dot purple"></span> بنفسجي
-              </button>
-              <button class="color-item">
-                <span class="dot green"></span> أخضر
-              </button>
-              <button class="color-item">
-                <span class="dot orange"></span> برتقالي
-              </button>
-            </div>
-
-            <div class="current-theme">
-              الوضع الحالي: ☀️ فاتح
-            </div>
-          </div>
-        </div>
-
-        <!-- NOTIFICATIONS -->
-        <button class="btn position-relative">
-          <i class="fas fa-bell"></i>
-          <span class="badge-dot"></span>
-        </button>
-
-        <!-- USER -->
-        <div class="dropdown">
-          <button class="btn dropdown-toggle d-flex align-items-center gap-2"
-                  data-bs-toggle="dropdown">
-            <div class="user-avatar">
-              <i class="fas fa-user"></i>
-            </div>
-            <div class="d-none d-md-block text-end">
-              <strong>محمد أحمد السعيد</strong>
-              <small class="text-muted d-block">التسويق</small>
-            </div>
-          </button>
-
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item">الملف الشخصي</a></li>
-            <li><a class="dropdown-item">الإعدادات</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" (click)="logout()">تسجيل الخروج</a></li>
-          </ul>
-        </div>
-
       </div>
     </div>
+
+    <!-- Right: language, theme, notifications, user -->
+    <div class="d-flex align-items-center gap-2">
+      <app-language-toggle></app-language-toggle>
+      <app-theme-toggle></app-theme-toggle>
+
+      <button class="btn-icon position-relative" type="button" [attr.aria-label]="'header.notifications' | translate">
+        <i class="fa-solid fa-bell fs-5"></i>
+        <span class="notif-dot"></span>
+      </button>
+      
+      <div class="dropdown">
+        <button class="btn btn-light d-flex align-items-center gap-2 user-pill"
+                type="button" data-bs-toggle="dropdown">
+          <span class="user-avatar"><i class="fa-solid fa-user"></i></span>
+          <span class="d-none d-md-inline-block text-start">
+            <span class="d-block fw-700">محمد أحمد السعيد</span>
+            <small class="text-muted">{{ 'sidebar.items.marketing' | translate }}</small>
+          </span>
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item"><i class="fa-regular fa-user me-2"></i>{{ 'header.profile' | translate }}</a></li>
+          <li><a class="dropdown-item"><i class="fa-solid fa-gear me-2"></i>{{ 'header.settings' | translate }}</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><button type="button" class="dropdown-item text-danger" (click)="logout()">
+            <i class="fa-solid fa-right-from-bracket me-2"></i>{{ 'header.logout' | translate }}
+          </button></li>
+        </ul>
+      </div>
+    </div>
+  </div>
 </header>

@@ -1,69 +1,81 @@
-<aside class="sidebar" [class.sidebar-open]="isSidebarOpen" [class.sidebar-mini]="isCollapsed" dir="rtl">
+<aside class="sidebar"
+       [class.is-open]="isSidebarOpen && isMobile"
+       [class.is-mini]="isCollapsed && !isMobile">
 
-  <nav class="sidebar-nav">
-    <!-- رأس الـ Sidebar -->
-    <div class="sidebar-header d-flex align-items-center justify-content-center">
-      <div class="search-container flex-grow-1">
-        <input #searchInput id="Search" type="text" class="form-control" placeholder="ابحث في القائمة..."
-          aria-label="Search">
-        <i class="fas fa-search search-icon"></i>
-      </div>
-
-      <div class="collapse-toggle">
-        <button class="btn desktop-minimize-btn" [class.minimized]="isCollapsed" (click)="toggleCollapse()"
-          title="{{ isCollapsed ? 'تكبير القائمة' : 'تصغير القائمة' }}">
-          <i class="fa-solid" [ngClass]="isCollapsed ? 'fa-angles-left' : 'fa-angles-right'"></i>
-        </button>
-
-        <button class="btn close-btn" *ngIf="isSidebarOpen && isMobile" (click)="closeSidebar()">
-          <i class="fa-solid fa-times"></i>
-        </button>
-      </div>
+  <!-- Header: search (always rendered) + toggle / close button -->
+  <div class="sidebar-head d-flex align-items-center gap-2">
+    <div class="search-wrap flex-grow-1">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input #searchInput type="text" class="form-control form-control-sm"
+             [placeholder]="'sidebar.search' | translate" />
     </div>
-    <!-- الأقسام الرئيسية -->
-    <div class="nav-sections">
-      @for (section of filteredMenuItems; track sectionIndex; let sectionIndex = $index) {
-      <div class="menu-section mb-4">
-        <h6>{{ section.title || 'القسم' }}</h6>
-        <ul class="nav-menu list-unstyled">
-          @for (item of section.items; track itemIndex; let itemIndex = $index) {
-          <li class="nav-item" [ngClass]="{'has-submenu': item.submenu, 'open': item.isOpen}">
-            @if (item.submenu) {
-            <a href="#" class="sidebar-btn nav-link d-flex align-items-center justify-content-between"
-              (click)="toggleSubmenu(sectionIndex, itemIndex); $event.preventDefault()">
 
-              <div class="d-flex align-items-center gap-3 flex-grow-1">
-                <i [class]="item.icons"></i>
-                <span>{{ item.label }}</span>
-              </div>
+    @if (isMobile) {
+      <button class="btn-icon flex-shrink-0" type="button"
+              (click)="closeSidebar()" aria-label="close">
+        <i class="fa-solid fa-xmark fs-5"></i>
+      </button>
+    } @else {
+      <button class="btn-icon flex-shrink-0" type="button"
+              (click)="toggleCollapse()"
+              [title]="(isCollapsed ? 'sidebar.expand' : 'sidebar.collapse') | translate"
+              [attr.aria-label]="(isCollapsed ? 'sidebar.expand' : 'sidebar.collapse') | translate">
+        <i class="fa-solid fs-5"
+           [class.fa-angles-right]="!isCollapsed"
+           [class.fa-angles-left]="isCollapsed"></i>
+      </button>
+    }
+  </div>
 
-              <i class="fa-solid fa-chevron-down submenu-arrow" [ngClass]="{'fa-chevron-up': item.isOpen}"></i>
-            </a>
-
-            <ul class="submenu list-unstyled ps-4" [ngClass]="{'open': item.isOpen}">
-              @for (subItem of item.submenu; track subItemIndex; let subItemIndex = $index) {
-              <li>
-                <a [routerLink]="subItem.path" class="sidebar-btn nav-link" routerLinkActive="active"
-                  [routerLinkActiveOptions]="{ exact: true }">
-                  <i [class]="subItem.icon"></i>
-                  <span>{{ subItem.key }}</span>
+  <!-- Nav -->
+  <nav class="sidebar-nav">
+    @for (section of filteredMenuItems; track section.title; let si = $index) {
+      <div class="nav-section">
+        <h6 class="nav-section-title">{{ section.title | translate }}</h6>
+        <ul class="list-unstyled nav-list">
+          @for (item of section.items; track item.path; let ii = $index) {
+            <li class="nav-item" [class.has-submenu]="item.submenu" [class.is-open]="item.isOpen">
+              @if (item.submenu) {
+                <button type="button" class="nav-link"
+                        (click)="toggleSubmenu(si, ii)">
+                  <i [class]="item.icon"></i>
+                  <span class="nav-label">{{ item.label | translate }}</span>
+                  <i class="fa-solid fa-chevron-down submenu-arrow ms-auto"
+                     [class.rotated]="item.isOpen"></i>
+                </button>
+                <ul class="list-unstyled submenu" [class.show]="item.isOpen">
+                  @for (sub of item.submenu; track sub.path) {
+                    <li>
+                      <a class="nav-link sub-link"
+                         [routerLink]="sub.path"
+                         routerLinkActive="active"
+                         [routerLinkActiveOptions]="{ exact: true }"
+                         (click)="onLinkClicked()">
+                        <i [class]="sub.icon"></i>
+                        <span class="nav-label">{{ sub.label | translate }}</span>
+                      </a>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <a class="nav-link"
+                   [routerLink]="item.path"
+                   routerLinkActive="active"
+                   [routerLinkActiveOptions]="{ exact: true }"
+                   [title]="item.label | translate"
+                   (click)="onLinkClicked()">
+                  <i [class]="item.icon"></i>
+                  <span class="nav-label">{{ item.label | translate }}</span>
                 </a>
-              </li>
               }
-            </ul>
-            } @else {
-            <!-- العناصر العادية بدون submenu -->
-            <a [routerLink]="item.path" class="sidebar-btn nav-link" routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: true }">
-              <i [class]="item.icons"></i>
-              <span>{{ item.label }}</span>
-            </a>
-            }
-          </li>
+            </li>
           }
         </ul>
       </div>
-      }
-    </div>
+    }
   </nav>
 </aside>
+
+@if (isSidebarOpen && isMobile) {
+  <div class="sidebar-backdrop" (click)="closeSidebar()"></div>
+}

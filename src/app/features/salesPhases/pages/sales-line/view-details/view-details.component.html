@@ -1,1 +1,273 @@
-<p>view-details works!</p>
+<div class="container-fluid">
+  <!-- زر رجوع -->
+  <button class="btn btn-view mb-4" (click)="goToSalesLine();">
+    ← العودة إلى خط المبيعات
+  </button>
+
+  <div class="row g-4 flex-row">
+    <!-- LEFT -->
+    <div class="col-lg-8">
+      <!-- معلومات العميل -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="d-flex justify-content-between align-items-center m-0">
+            <span>معلومات العميل</span>
+            <span class="badge badge-orange">قيد التفاوض</span>
+          </h5>
+        </div>
+
+        <div class="card-body">
+          <div class="row g-4">
+
+            <div class="col-md-6 d-flex gap-3">
+              <div class="icon-box">👤</div>
+              <div>
+                <div class="text-muted small">اسم العميل</div>
+                <div class="fw-500 fs-5">محمد خالد</div>
+              </div>
+            </div>
+
+            <div class="col-md-6 d-flex gap-3">
+              <div class="icon-box">🏢</div>
+              <div>
+                <div class="text-muted small">الشركة</div>
+                <div class="fw-500 fs-5">متجر التجزئة</div>
+              </div>
+            </div>
+
+            <div class="col-md-6 d-flex gap-3">
+              <div class="icon-box">📄</div>
+              <div>
+                <div class="text-muted small">نوع الخدمة</div>
+                <div class="fw-500">منصة تجارة إلكترونية</div>
+              </div>
+            </div>
+
+            <div class="col-md-6 d-flex gap-3">
+              <div class="icon-box">💲</div>
+              <div>
+                <div class="text-muted small">قيمة الصفقة</div>
+                <div class="fw-500 fs-5 text-success">$20,000</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-lg-4">
+      <!-- إجراءات سريعة -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="m-0">إجراءات سريعة</h5>
+        </div>
+
+        <div class="card-body d-flex justify-content-center flex-wrap">
+          <div class="col-12">
+            <button class="btn btn-view w-100 active" data-bs-toggle="modal" data-bs-target="#followModal">
+              جدولة متابعة
+            </button>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-view w-100">إنشاء عرض سعر</button>
+
+          </div>
+          <div class="col-12">
+            <button class="btn btn-view w-100">إضافة مرفق</button>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <!-- الجدول الزمني -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="m-0">الجدول الزمني للمبيعات</h5>
+        </div>
+
+        <div class="card-body">
+
+          <div class="d-flex gap-3 mb-4">
+            <div class="d-flex flex-column align-items-center">
+              <div class="timeline-dot"></div>
+              <div class="timeline-line"></div>
+            </div>
+
+            <div>
+              <div class="fw-semibold">تم إنشاء الصفقة</div>
+              <div class="text-muted small">صفقة جديدة تمت إضافتها إلى خط المبيعات</div>
+              <div class="text-muted small">بواسطة عمر حسن • 2/1/2026</div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3">
+            <div class="timeline-dot"></div>
+            <div>
+              <div class="fw-semibold">تم إرسال عرض السعر</div>
+              <div class="text-muted small">تم إرسال عرض السعر للعميل عبر البريد الإلكتروني</div>
+              <div class="text-muted small">بواسطة عمر حسن • 22/1/2026</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+
+      <!-- تحديث المرحلة -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="m-0">تحديث حالة الصفقة</h5>
+        </div>
+
+        <div class="card-body">
+
+          <label class="form-label">مرحلة الصفقة</label>
+
+          <select class="form-select mb-3">
+            <option>قيد التفاوض</option>
+            <option>تم الإغلاق</option>
+            <option>ملغاة</option>
+          </select>
+
+          <button class="btn btn-view active w-100">تحديث المرحلة</button>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+
+      <!-- سجل عروض الأسعار -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="m-0">سجل عروض الأسعار</h5>
+        </div>
+
+        <div class="card-body">
+
+          <div class="p-3 bg-light rounded d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-medium">QUO-20260108001</div>
+              <div class="small text-muted">تم الإرسال في 8 يناير 2026</div>
+            </div>
+
+            <div class="text-start">
+              <div class="fw-bold text-success">$20,000</div>
+              <div class="badge bg-success mt-1">تمت الموافقة</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <!-- إضافة ملاحظة -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="m-0">إضافة ملاحظة</h5>
+        </div>
+
+        <div class="card-body">
+          <textarea class="form-control mb-2" rows="4" placeholder="أضف ملاحظة حول هذه الصفقة..."></textarea>
+          <button class="btn btn-view active w-100">إضافة ملاحظة</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+
+      <!-- العقد -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="m-0">تفاصيل العقد</h5>
+        </div>
+
+        <div class="card-body d-flex align-items-center justify-content-center">
+          <div>
+            <i style="font-size:40px;">📄</i>
+            <p>لم يتم إنشاء عقد بعد</p>
+            <button class="btn btn-outline-secondary mt-2">إنشاء عقد</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- RIGHT -->
+    <div class="col-lg-4">
+
+      <!-- معلومات الصفقة -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="m-0">معلومات الصفقة</h5>
+        </div>
+
+        <div class="card-body">
+
+          <div class="mb-3">
+            <div class="text-muted small">موظف المبيعات المسؤول</div>
+            <div class="fw-semibold">عمر حسن</div>
+          </div>
+
+          <hr>
+
+          <div class="mb-3">
+            <div class="text-muted small">تاريخ الإنشاء</div>
+            <div class="fw-semibold">2/1/2026</div>
+          </div>
+
+          <hr>
+
+          <div>
+            <div class="text-muted small">رقم الصفقة</div>
+            <div class="fw-semibold">#3</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+
+
+<!-- MODAL -->
+<div class="modal fade" id="followModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">جدولة متابعة</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <label class="form-label">التاريخ</label>
+        <input type="date" class="form-control mb-3">
+
+        <label class="form-label">الوقت</label>
+        <input type="time" class="form-control mb-3">
+
+        <label class="form-label">ملاحظات</label>
+        <textarea class="form-control"></textarea>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button class="btn btn-primary">حفظ</button>
+      </div>
+
+    </div>
+  </div>
+</div>

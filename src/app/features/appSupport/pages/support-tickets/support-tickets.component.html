@@ -1,0 +1,251 @@
+<div class="container-fluid py-4">
+
+  <!-- العنوان + زر إنشاء تذكرة -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1">تذاكر الدعم الفني</h2>
+      <p class="text-muted mb-0">إدارة وتتبع جميع تذاكر الدعم</p>
+    </div>
+    <button class="btn btn-view active d-flex align-items-center gap-2">
+      <i class="fa-solid fa-plus"></i>
+      إنشاء تذكرة جديدة
+    </button>
+  </div>
+
+  <!-- الكروت الأربعة الصغيرة -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm border-0 text-center py-4">
+        <div class="card-body">
+          <h3 class="fw-bold text-primary mb-1">1</h3>
+          <p class="text-muted mb-0 small">مفتوحة</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm border-0 text-center py-4">
+        <div class="card-body">
+          <h3 class="fw-bold text-warning mb-1">0</h3>
+          <p class="text-muted mb-0 small">قيد التنفيذ</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm border-0 text-center py-4">
+        <div class="card-body">
+          <h3 class="fw-bold text-danger mb-1">1</h3>
+          <p class="text-muted mb-0 small">حرجة</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card shadow-sm border-0 text-center py-4">
+        <div class="card-body">
+          <h3 class="fw-bold text-success mb-1">0</h3>
+          <p class="text-muted mb-0 small">تم الحل</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- فلاتر البحث والـ selects -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body py-3">
+      <div class="row g-3">
+        <div class="col-md-4 col-lg-3">
+          <div class="position-relative">
+            <input
+              type="text"
+              class="form-control ps-3 pe-5"
+              placeholder="بحث في التذاكر..."
+            />
+            <i class="fa-solid fa-magnifying-glass position-absolute top-50 end-0 translate-middle-y pe-3 text-muted"></i>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+          <select class="form-select">
+            <option selected>جميع الأولويات</option>
+            <option>عالية</option>
+            <option>متوسطة</option>
+            <option>منخفضة</option>
+          </select>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+          <select class="form-select">
+            <option selected>جميع الحالات</option>
+            <option>مفتوحة</option>
+            <option>قيد المعالجة</option>
+            <option>بانتظار العميل</option>
+            <option>مغلقة</option>
+          </select>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+          <select class="form-select">
+            <option selected>جميع الفئات</option>
+            <option>تقني</option>
+            <option>خطأ برمجي</option>
+            <option>استفسار</option>
+            <option>طلب ميزة</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الجدول الرئيسي -->
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+      <h5 class="mb-0">جميع التذاكر: 3</h5>
+      <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+        <i class="fa-solid fa-filter"></i>
+        تصدير
+      </button>
+    </div>
+
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>رقم التذكرة</th>
+              <th>العميل</th>
+              <th>الخدمة</th>
+              <th>الفئة</th>
+              <th>الأولوية</th>
+              <th>الحالة</th>
+              <th>مسند إلى</th>
+              <th>تاريخ الإنشاء</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- تذكرة 1 -->
+            <tr>
+              <td class="fw-medium">TKT-101</td>
+              <td>
+                <div>
+                  <div class="fw-medium">أحمد محمد العمري</div>
+                  <small class="text-muted">شركة الحلول التقنية</small>
+                </div>
+              </td>
+              <td>برنامج محاسبي</td>
+              <td><span class="badge bg-secondary-subtle text-secondary">تقني</span></td>
+              <td>
+                <span class="badge bg-warning-subtle text-warning d-flex align-items-center gap-1">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  عالية
+                </span>
+              </td>
+              <td><span class="badge bg-secondary">قيد المعالجة</span></td>
+              <td>المستخدم الحالي</td>
+              <td>
+                <div>
+                  <div>٦/١/٢٠٢٦</div>
+                  <small class="text-muted">آخر تحديث: ٨/١/٢٠٢٦</small>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-view btn-sm" (click)="goToDetailsOfSupportCases();">
+                    <i class="fa-regular fa-eye"></i>
+                  </button>
+                  <select class="form-select form-select-sm" style="width: 140px;">
+                    <option selected></option>
+                    <option>مفتوحة</option>
+                    <option>قيد المعالجة</option>
+                    <option>بانتظار العميل</option>
+                    <option>مغلقة</option>
+                  </select>
+                </div>
+              </td>
+            </tr>
+
+            <!-- تذكرة 2 -->
+            <tr>
+              <td class="fw-medium">TKT-102</td>
+              <td>
+                <div>
+                  <div class="fw-medium">سارة علي القحطاني</div>
+                  <small class="text-muted">وكالة التسويق الرقمي</small>
+                </div>
+              </td>
+              <td>تطبيق جوال</td>
+              <td><span class="badge bg-secondary-subtle text-secondary">خطأ برمجي</span></td>
+              <td>
+                <span class="badge bg-danger-subtle text-danger d-flex align-items-center gap-1">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  حرجة
+                </span>
+              </td>
+              <td><span class="badge bg-primary-subtle text-primary">مفتوحة</span></td>
+              <td>المستخدم الحالي</td>
+              <td>
+                <div>
+                  <div>٨/١/٢٠٢٦</div>
+                  <small class="text-muted">آخر تحديث: ٨/١/٢٠٢٦</small>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-view btn-sm" (click)="goToDetailsOfSupportCases();">
+                    <i class="fa-regular fa-eye"></i>
+                  </button>
+                  <select class="form-select form-select-sm" style="width: 140px;">
+                    <option selected>مفتوحة</option>
+                    <option>قيد المعالجة</option>
+                    <option>بانتظار العميل</option>
+                    <option>مغلقة</option>
+                  </select>
+                </div>
+              </td>
+            </tr>
+
+            <!-- تذكرة 3 -->
+            <tr>
+              <td class="fw-medium">TKT-103</td>
+              <td>
+                <div>
+                  <div class="fw-medium">فهد سعد الغامدي</div>
+                  <small class="text-muted">مركز التدريب</small>
+                </div>
+              </td>
+              <td>نظام إدارة التعلم</td>
+              <td><span class="badge bg-secondary-subtle text-secondary">استفسار</span></td>
+              <td>
+                <span class="badge bg-info-subtle text-info">متوسطة</span>
+              </td>
+              <td><span class="badge bg-secondary">بانتظار العميل</span></td>
+              <td>خالد أحمد</td>
+              <td>
+                <div>
+                  <div>٥/١/٢٠٢٦</div>
+                  <small class="text-muted">آخر تحديث: ٧/١/٢٠٢٦</small>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-view btn-sm" (click)="goToDetailsOfSupportCases();">
+                    <i class="fa-regular fa-eye"></i>
+                  </button>
+                  <select class="form-select form-select-sm" style="width: 140px;">
+                    <option selected></option>
+                    <option>مفتوحة</option>
+                    <option>قيد المعالجة</option>
+                    <option>بانتظار العميل</option>
+                    <option>مغلقة</option>
+                  </select>
+                </div>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>

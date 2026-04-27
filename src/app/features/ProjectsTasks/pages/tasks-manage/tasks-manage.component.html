@@ -1,0 +1,285 @@
+<div class="container-fluid py-4">
+
+  <!-- العنوان + زر إنشاء مهمة -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1">إدارة المهام</h2>
+      <p class="text-muted mb-0">تنظيم ومتابعة مهام التطوير</p>
+    </div>
+    <button class="btn btn-view active d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#newTaskModal">
+      <i class="fa-solid fa-plus"></i>
+      إنشاء مهمة
+    </button>
+  </div>
+
+  <!-- فلاتر البحث والـ selects -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body py-3">
+      <div class="row g-3 align-items-center">
+
+        <!-- بحث -->
+        <div class="col-md-4 col-lg-3">
+          <div class="position-relative">
+            <input 
+              type="text" 
+              class="form-control ps-5" 
+              placeholder="البحث في المهام..." 
+            />
+            <i class="fa-solid fa-magnifying-glass position-absolute top-50 start-0 translate-middle-y ps-3 text-muted"></i>
+          </div>
+        </div>
+
+        <!-- اختيار المشروع -->
+        <div class="col-6 col-md-3 col-lg-3">
+          <select class="form-select">
+            <option selected>جميع المشاريع</option>
+            <option>E-commerce Platform</option>
+            <option>Mobile App Development</option>
+            <option>CRM System</option>
+          </select>
+        </div>
+
+        <!-- اختيار الأولوية -->
+        <div class="col-6 col-md-3 col-lg-3">
+          <select class="form-select">
+            <option selected>جميع الأولويات</option>
+            <option>عالية</option>
+            <option>متوسطة</option>
+            <option>حرجة</option>
+            <option>منخفضة</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Kanban Board -->
+  <div class="d-flex flex-nowrap gap-4 overflow-auto pb-4">
+    <!-- عمود 1: قيد التنفيذ -->
+    <div class="flex-shrink-0">
+      <div class="bg-primary-subtle rounded p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0 small fw-semibold">قيد التنفيذ</h5>
+          <span class="badge bg-primary">1</span>
+        </div>
+
+        <div class="d-flex flex-column gap-3" style="min-height: 500px;">
+          <div class="card shadow-sm border">
+            <div class="card-body p-3">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0 small fw-medium">Implement Payment Gateway</h6>
+                <span class="badge bg-danger-subtle text-danger">Critical</span>
+              </div>
+              <p class="text-muted small mb-3 line-clamp-2">Integrate Stripe payment system</p>
+
+              <div class="d-flex flex-column gap-1 text-muted small">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fa-solid fa-table-cells"></i>
+                  <span>E-commerce Platform</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fa-regular fa-user"></i>
+                  <span>Sara Mohamed</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fa-regular fa-calendar"></i>
+                  <span>1/10/2026</span>
+                </div>
+              </div>
+
+              <div class="mt-2 text-muted small">Est: 16h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- عمود 2: مراجعة -->
+    <div class="flex-shrink-0">
+      <div class="bg-purple-subtle rounded p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0 small fw-semibold">مراجعة</h5>
+          <span class="badge bg-purple">1</span>
+        </div>
+
+        <div class="d-flex flex-column gap-3" style="min-height: 500px;">
+          <div class="card shadow-sm border">
+            <div class="card-body p-3">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0 small fw-medium">Fix Authentication Bug</h6>
+                <span class="badge bg-warning-subtle text-warning">High</span>
+              </div>
+              <p class="text-muted small mb-3 line-clamp-2">Resolve login timeout issues</p>
+
+              <div class="d-flex flex-column gap-1 text-muted small">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fa-solid fa-table-cells"></i>
+                  <span>CRM System</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fa-regular fa-user"></i>
+                  <span>Omar Hassan</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fa-regular fa-calendar"></i>
+                  <span>1/9/2026</span>
+                </div>
+              </div>
+
+              <div class="mt-2 text-muted small">Est: 4h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- عمود 3: مكتملة -->
+    <div class="flex-shrink-0">
+      <div class="bg-success-subtle rounded p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0 small fw-semibold">مكتملة</h5>
+          <span class="badge bg-success">1</span>
+        </div>
+
+        <div class="d-flex flex-column gap-3" style="min-height: 500px;">
+          <div class="card shadow-sm border">
+            <div class="card-body p-3">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0 small fw-medium">Write API Documentation</h6>
+                <span class="badge bg-primary-subtle text-primary">Medium</span>
+              </div>
+              <p class="text-muted small mb-3 line-clamp-2">Document all API endpoints</p>
+
+              <div class="d-flex flex-column gap-1 text-muted small">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fa-solid fa-table-cells"></i>
+                  <span>Mobile App</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fa-regular fa-user"></i>
+                  <span>Fatima Ali</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fa-regular fa-calendar"></i>
+                  <span>1/15/2026</span>
+                </div>
+              </div>
+
+              <div class="mt-2 text-muted small">Est: 12h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<!-- ============================================= -->
+<!--          مودال إنشاء مهمة جديدة (Bootstrap)         -->
+<!-- ============================================= -->
+
+<div class="modal fade" id="newTaskModal" tabindex="-1" aria-labelledby="newTaskModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title fs-4" id="newTaskModalLabel">إنشاء مهمة جديدة</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form class="row g-3">
+
+          <div class="col-12">
+            <label for="taskTitle" class="form-label">عنوان المهمة <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="taskTitle" placeholder="مثال: تطوير واجهة تسجيل الدخول" required>
+          </div>
+
+          <div class="col-md-6">
+            <label for="taskProject" class="form-label">المشروع <span class="text-danger">*</span></label>
+            <select class="form-select" id="taskProject" required>
+              <option value="" disabled selected>اختر المشروع</option>
+              <option>E-commerce Platform</option>
+              <option>Mobile App Development</option>
+              <option>CRM System</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="assignedTo" class="form-label">معين إلى <span class="text-danger">*</span></label>
+            <select class="form-select" id="assignedTo" required>
+              <option value="" disabled selected>اختر المطور</option>
+              <option>عمر إبراهيم المطيري - Full Stack</option>
+              <option>خالد فيصل العمري - Backend</option>
+              <option>منى سالم الغامدي - Frontend</option>
+              <option>عبدالرحمن محمد الشهري - Mobile</option>
+              <option>هدى حسين القرني - DevOps</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="taskPriority" class="form-label">الأولوية</label>
+            <select class="form-select" id="taskPriority">
+              <option selected>متوسطة</option>
+              <option>منخفضة</option>
+              <option>عالية</option>
+              <option>حرجة</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="taskStatus" class="form-label">الحالة</label>
+            <select class="form-select" id="taskStatus">
+              <option selected>للإنجاز</option>
+              <option>قيد التنفيذ</option>
+              <option>قيد المراجعة</option>
+              <option>قيد الاختبار</option>
+              <option>مكتملة</option>
+              <option>معلقة</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="taskCategory" class="form-label">الفئة</label>
+            <select class="form-select" id="taskCategory">
+              <option selected>تطوير</option>
+              <option>خطأ برمجي</option>
+              <option>ميزة جديدة</option>
+              <option>اختبار</option>
+              <option>توثيق</option>
+              <option>تصميم</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="dueDate" class="form-label">الموعد النهائي <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" id="dueDate" required>
+          </div>
+
+          <div class="col-md-6">
+            <label for="estimatedHours" class="form-label">الوقت المقدر (ساعات)</label>
+            <input type="number" class="form-control" id="estimatedHours" step="0.5" placeholder="مثال: 8">
+          </div>
+
+          <div class="col-md-6">
+            <label for="taskTags" class="form-label">الوسوم (مفصولة بفاصلة)</label>
+            <input type="text" class="form-control" id="taskTags" placeholder="مثال: واجهة أمامية, React, تصميم">
+          </div>
+
+          <div class="col-12">
+            <label for="taskDescription" class="form-label">الوصف</label>
+            <textarea class="form-control" id="taskDescription" rows="4" placeholder="أدخل وصف المهمة والمتطلبات..."></textarea>
+          </div>
+
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-primary">إنشاء المهمة</button>
+      </div>
+    </div>
+  </div>
+</div>
