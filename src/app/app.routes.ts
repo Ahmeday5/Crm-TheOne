@@ -24,7 +24,10 @@ export const routes: Routes = [
   // 🔹 Routes بعد اللوجين
   {
     path: '',
-    component: MainLayoutComponent,
+    loadComponent: () =>
+      import('./core/layouts/main-layout/main-layout.component').then(
+        (m) => m.MainLayoutComponent,
+      ),
     children: [
       {
         path: '',
@@ -239,6 +242,13 @@ export const routes: Routes = [
             title: 'إدارة المهام',
           },
         ],
+      },
+      {
+        path: '',
+        loadChildren: () =>
+          import('./features/report-and-analytics/reportsAnalytics.routes').then(
+            (m) => m.REPORT_ROUTES,
+          ),
       },
     ],
   },

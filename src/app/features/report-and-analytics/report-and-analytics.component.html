@@ -1,0 +1,39 @@
+<div class="flex-grow-1">
+  <app-page-header [title]="'reportAnalysis.title' | translate" [subtitle]="'reportAnalysis.subtitle' | translate"
+    icon="fa-solid fa-chart-line"></app-page-header>
+
+  <div class="card report-card p-2">
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn report-btn primary flex-btn" routerLink="panel" routerLinkActive="active">
+        <i class="fa-solid fa-chart-column me-2"></i>
+        {{ 'reportAnalysis.tabs.panel' | translate }}
+      </a>
+      <a class="btn report-btn indigo flex-btn" routerLink="emp-report" routerLinkActive="active">
+        <i class="fa-solid fa-clipboard-list me-2"></i>
+        {{ 'reportAnalysis.tabs.empReport' | translate }}
+      </a>
+      <a class="btn report-btn green flex-btn" routerLink="marketing-report" routerLinkActive="active">
+        <i class="fa-solid fa-users me-2"></i>
+        {{ 'reportAnalysis.tabs.marketingReport' | translate }}
+      </a>
+      <a class="btn report-btn yellow flex-btn" routerLink="sales-report" routerLinkActive="active">
+        <i class="fa-solid fa-arrow-trend-up me-2"></i>
+        {{ 'reportAnalysis.tabs.salesReport' | translate }}
+      </a>
+      <a class="btn report-btn orange flex-btn" routerLink="app-report" routerLinkActive="active">
+        <i class="fa-solid fa-headphones me-2"></i>
+        {{ 'reportAnalysis.tabs.appReport' | translate }}
+      </a>
+      <a class="btn report-btn purple flex-btn" routerLink="projects-report" routerLinkActive="active">
+        <i class="fa-solid fa-folder-open me-2"></i>
+        {{ 'reportAnalysis.tabs.projectReport' | translate }}
+      </a>
+      <a class="btn report-btn gray flex-btn" routerLink="custom-report" routerLinkActive="active">
+        <i class="fa-solid fa-file-lines me-2"></i>
+        {{ 'reportAnalysis.tabs.customReport' | translate }}
+      </a>
+    </div>
+  </div>
+
+  <router-outlet></router-outlet>
+</div>

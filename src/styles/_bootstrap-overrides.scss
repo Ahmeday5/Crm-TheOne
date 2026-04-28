@@ -9,19 +9,35 @@
   font-size: var(--fs-md);
   padding: 0.55rem 1.05rem;
   border-radius: var(--radius-md);
-  transition: transform 0.15s ease, box-shadow 0.15s ease,
-    background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
-.btn:focus, .btn:focus-visible { box-shadow: 0 0 0 3px var(--brand-soft); outline: 0; }
-.btn-sm { padding: 0.35rem 0.75rem; font-size: var(--fs-sm); }
-.btn-lg { padding: 0.75rem 1.5rem; font-size: var(--fs-lg); }
+.btn:focus,
+.btn:focus-visible {
+  box-shadow: 0 0 0 3px var(--brand-soft);
+  outline: 0;
+}
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: var(--fs-sm);
+}
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: var(--fs-lg);
+}
 
 .btn-primary {
   background: var(--brand);
   border-color: var(--brand);
   color: #fff;
 }
-.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
   background: var(--brand-dark) !important;
   border-color: var(--brand-dark) !important;
   color: #fff !important;
@@ -32,36 +48,55 @@
   border-color: var(--brand);
   background: transparent;
 }
-.btn-outline-primary:hover, .btn-outline-primary:active {
+.btn-outline-primary:hover,
+.btn-outline-primary:active {
   background: var(--brand) !important;
   border-color: var(--brand) !important;
   color: #fff !important;
 }
 
 /* .btn-light & .bg-light remap to surface — works in dark mode */
-.btn-light, .btn-secondary {
+.btn-light,
+.btn-secondary {
   background: var(--surface-1);
   border-color: var(--border);
   color: var(--text-1);
 }
-.btn-light:hover, .btn-secondary:hover {
+.btn-light:hover,
+.btn-secondary:hover {
   background: var(--surface-2);
   color: var(--text-1);
   border-color: var(--border-strong);
 }
 
-.btn-link { color: var(--brand); text-decoration: none; }
-.btn-link:hover { color: var(--brand-dark); }
+.btn-link {
+  color: var(--brand);
+  text-decoration: none;
+}
+.btn-link:hover {
+  color: var(--brand-dark);
+}
 
 .btn-icon {
-  width: 40px; height: 40px; padding: 0;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-md); border: 1px solid transparent;
-  background: transparent; color: var(--text-2);
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-2);
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
-.btn-icon:hover { background: var(--surface-2); color: var(--brand); }
+.btn-icon:hover {
+  background: var(--surface-2);
+  color: var(--brand);
+}
 
 /* ---------- Cards ---------- */
 .card {
@@ -71,14 +106,84 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
-.card-header, .card-footer {
+.card-header,
+.card-footer {
   background: transparent;
   border-color: var(--border);
+}
+
+/* زر أساسي موحد */
+.report-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  height: 38px;
+  font-size: 14px;
+  font-weight: 500;
+
+  border-radius: 8px;
+  border: none;
+
+  transition: 0.2s ease-in-out;
+
+  min-width: 150px;
+  flex: 1;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+}
+
+.report-btn.active {
+  background: var(--brand-gradient) !important;
+  color: #fff !important;
+}
+
+/* توزيع الألوان زي التصميم الأصلي */
+
+.report-btn.primary {
+  background: #d6d6d6;
+  color: #0d6efd;
+}
+
+.report-btn.indigo {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.report-btn.green {
+  background: #ecfdf5;
+  color: #16a34a;
+}
+
+.report-btn.yellow {
+  background: #fffbeb;
+  color: #ca8a04;
+}
+
+.report-btn.orange {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.report-btn.purple {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.report-btn.gray {
+  background: #f9fafb;
+  color: #6b7280;
 }
 /* Force-override any utility that hardcodes white/light backgrounds on cards
  * (some templates do `.card.bg-white` or use `border-0 shadow-sm`). */
 .card.bg-white,
-.card[class*="bg-white"] { background: var(--surface-0) !important; }
+.card[class*="bg-white"] {
+  background: var(--surface-0) !important;
+}
 
 /* ---------- List groups ---------- */
 .list-group {
@@ -97,12 +202,23 @@
   color: var(--text-1);
   border-color: var(--border);
 }
-.list-group-flush > .list-group-item { background: transparent; }
-.list-group-item-action:hover { background: var(--surface-2); color: var(--brand); }
+.list-group-flush > .list-group-item {
+  background: transparent;
+}
+.list-group-item-action:hover {
+  background: var(--surface-2);
+  color: var(--brand);
+}
 
 /* ---------- Forms ---------- */
-.form-label { font-weight: var(--fw-600); margin-bottom: 0.4rem; color: var(--text-1); font-size: var(--fs-md); }
-.form-control, .form-select {
+.form-label {
+  font-weight: var(--fw-600);
+  margin-bottom: 0.4rem;
+  color: var(--text-1);
+  font-size: var(--fs-md);
+}
+.form-control,
+.form-select {
   background: var(--surface-1);
   color: var(--text-1);
   border: 1px solid var(--border);
@@ -111,15 +227,24 @@
   font-size: var(--fs-md);
   min-height: 42px;
 }
-.form-control::placeholder { color: var(--text-muted); }
-.form-control:focus, .form-select:focus {
+.form-control::placeholder {
+  color: var(--text-muted);
+}
+.form-control:focus,
+.form-select:focus {
   background: var(--surface-1);
   color: var(--text-1);
   border-color: var(--brand);
   box-shadow: 0 0 0 3px var(--brand-soft);
 }
-.form-check-input { background: var(--surface-1); border-color: var(--border-strong); }
-.form-check-input:checked { background: var(--brand); border-color: var(--brand); }
+.form-check-input {
+  background: var(--surface-1);
+  border-color: var(--border-strong);
+}
+.form-check-input:checked {
+  background: var(--brand);
+  border-color: var(--brand);
+}
 .input-group-text {
   background: var(--surface-2);
   color: var(--text-2);
@@ -172,24 +297,52 @@
   min-width: 220px;
   font-size: var(--fs-md);
 }
-.dropdown-item { color: var(--text-1); border-radius: var(--radius-sm); padding: 0.5rem 0.75rem; }
-.dropdown-item:hover, .dropdown-item:focus { background: var(--surface-2); color: var(--brand); }
-.dropdown-item.active, .dropdown-item:active { background: var(--brand-soft); color: var(--brand-dark); }
-.dropdown-divider { border-color: var(--border); }
-.dropdown-header { color: var(--text-3); }
+.dropdown-item {
+  color: var(--text-1);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+}
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background: var(--surface-2);
+  color: var(--brand);
+}
+.dropdown-item.active,
+.dropdown-item:active {
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+}
+.dropdown-divider {
+  border-color: var(--border);
+}
+.dropdown-header {
+  color: var(--text-3);
+}
 
 /* ---------- Modal & offcanvas ---------- */
-.modal-content, .offcanvas {
+.modal-content,
+.offcanvas {
   background: var(--surface-0);
   color: var(--text-1);
   border-color: var(--border);
 }
-.modal-header, .modal-footer { border-color: var(--border); }
-.modal-backdrop { background: #0f172a; }
+.modal-header,
+.modal-footer {
+  border-color: var(--border);
+}
+.modal-backdrop {
+  background: #0f172a;
+}
 
 /* ---------- Progress ---------- */
-.progress { background: var(--surface-2); height: 0.6rem; border-radius: var(--radius-pill); }
-.progress-bar { background: var(--brand); }
+.progress {
+  background: var(--surface-2);
+  height: 0.6rem;
+  border-radius: var(--radius-pill);
+}
+.progress-bar {
+  background: var(--brand);
+}
 
 /* ---------- Pagination ---------- */
 .page-link {
@@ -197,12 +350,23 @@
   color: var(--text-1);
   border-color: var(--border);
 }
-.page-link:hover { background: var(--surface-2); color: var(--brand); }
-.page-item.active .page-link { background: var(--brand); border-color: var(--brand); }
+.page-link:hover {
+  background: var(--surface-2);
+  color: var(--brand);
+}
+.page-item.active .page-link {
+  background: var(--brand);
+  border-color: var(--brand);
+}
 
 /* ---------- Nav-tabs ---------- */
-.nav-tabs { border-bottom-color: var(--border); }
-.nav-tabs .nav-link { color: var(--text-2); border: 0; }
+.nav-tabs {
+  border-bottom-color: var(--border);
+}
+.nav-tabs .nav-link {
+  color: var(--text-2);
+  border: 0;
+}
 .nav-tabs .nav-link.active {
   color: var(--brand);
   background: transparent;
@@ -210,59 +374,145 @@
 }
 
 /* ---------- Alerts ---------- */
-.alert { border: 1px solid var(--border); background: var(--surface-1); color: var(--text-1); }
-.alert-primary { background: var(--brand-soft); color: var(--brand-dark); border-color: transparent; }
-.alert-success { background: var(--success-soft); color: var(--success); border-color: transparent; }
-.alert-warning { background: var(--warning-soft); color: var(--warning); border-color: transparent; }
-.alert-danger  { background: var(--danger-soft);  color: var(--danger);  border-color: transparent; }
+.alert {
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-1);
+}
+.alert-primary {
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  border-color: transparent;
+}
+.alert-success {
+  background: var(--success-soft);
+  color: var(--success);
+  border-color: transparent;
+}
+.alert-warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border-color: transparent;
+}
+.alert-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: transparent;
+}
 
 /* ---------- Color helpers (theme-aware remapping) ---------- */
 /* IMPORTANT: keeps existing markup working in dark mode */
-.bg-white  { background-color: var(--surface-0) !important; color: var(--text-1) !important; }
-.bg-light  { background-color: var(--surface-1) !important; color: var(--text-1) !important; }
-.bg-body   { background-color: var(--surface-2) !important; color: var(--text-1) !important; }
-.text-dark { color: var(--text-1) !important; }
-.text-body { color: var(--text-1) !important; }
-.text-muted { color: var(--text-3) !important; }
-.text-secondary { color: var(--text-2) !important; }
-.border { border-color: var(--border) !important; }
-.border-bottom, .border-top, .border-start, .border-end { border-color: var(--border) !important; }
+.bg-white {
+  background-color: var(--surface-0) !important;
+  color: var(--text-1) !important;
+}
+.bg-light {
+  background-color: var(--surface-1) !important;
+  color: var(--text-1) !important;
+}
+.bg-body {
+  background-color: var(--surface-2) !important;
+  color: var(--text-1) !important;
+}
+.text-dark {
+  color: var(--text-1) !important;
+}
+.text-body {
+  color: var(--text-1) !important;
+}
+.text-muted {
+  color: var(--text-3) !important;
+}
+.text-secondary {
+  color: var(--text-2) !important;
+}
+.border {
+  border-color: var(--border) !important;
+}
+.border-bottom,
+.border-top,
+.border-start,
+.border-end {
+  border-color: var(--border) !important;
+}
 
-.text-primary { color: var(--brand) !important; }
-.text-brand { color: var(--brand) !important; }
-.bg-brand { background: var(--brand) !important; color: #fff !important; }
-.bg-brand-soft { background: var(--brand-soft) !important; color: var(--brand-dark) !important; }
-.bg-surface-0 { background: var(--surface-0) !important; }
-.bg-surface-1 { background: var(--surface-1) !important; }
-.bg-surface-2 { background: var(--surface-2) !important; }
-.border-brand { border-color: var(--brand) !important; }
+.text-primary {
+  color: var(--brand) !important;
+}
+.text-brand {
+  color: var(--brand) !important;
+}
+.bg-brand {
+  background: var(--brand) !important;
+  color: #fff !important;
+}
+.bg-brand-soft {
+  background: var(--brand-soft) !important;
+  color: var(--brand-dark) !important;
+}
+.bg-surface-0 {
+  background: var(--surface-0) !important;
+}
+.bg-surface-1 {
+  background: var(--surface-1) !important;
+}
+.bg-surface-2 {
+  background: var(--surface-2) !important;
+}
+.border-brand {
+  border-color: var(--brand) !important;
+}
 
 /* Bootstrap "subtle" helpers used in templates */
-.bg-primary-subtle { background-color: var(--brand-soft) !important; color: var(--brand-dark) !important; }
-.bg-success-subtle { background-color: var(--success-soft) !important; color: var(--success) !important; }
-.bg-warning-subtle { background-color: var(--warning-soft) !important; color: var(--warning) !important; }
-.bg-danger-subtle  { background-color: var(--danger-soft)  !important; color: var(--danger)  !important; }
-.bg-info-subtle    { background-color: var(--info-soft)    !important; color: var(--info)    !important; }
+.bg-primary-subtle {
+  background-color: var(--brand-soft) !important;
+  color: var(--brand-dark) !important;
+}
+.bg-success-subtle {
+  background-color: var(--success-soft) !important;
+  color: var(--success) !important;
+}
+.bg-warning-subtle {
+  background-color: var(--warning-soft) !important;
+  color: var(--warning) !important;
+}
+.bg-danger-subtle {
+  background-color: var(--danger-soft) !important;
+  color: var(--danger) !important;
+}
+.bg-info-subtle {
+  background-color: var(--info-soft) !important;
+  color: var(--info) !important;
+}
 
 /* Some templates combine bg-white with bg-opacity helpers — keep them surface-aware */
 .bg-white.bg-opacity-75,
 .bg-white.bg-opacity-50,
-.bg-white.bg-opacity-25 { background-color: var(--surface-1) !important; }
+.bg-white.bg-opacity-25 {
+  background-color: var(--surface-1) !important;
+}
 
 /* ---------- ApexCharts dark-mode fix ---------- */
 :root[data-theme="dark"] {
   .apexcharts-canvas,
-  .apexcharts-svg { background: transparent !important; }
+  .apexcharts-svg {
+    background: transparent !important;
+  }
 
   .apexcharts-text,
   .apexcharts-xaxis-label,
   .apexcharts-yaxis-label,
   .apexcharts-legend-text,
-  .apexcharts-title-text { fill: var(--text-2) !important; color: var(--text-2) !important; }
+  .apexcharts-title-text {
+    fill: var(--text-2) !important;
+    color: var(--text-2) !important;
+  }
 
   .apexcharts-gridline,
   .apexcharts-xaxis line,
-  .apexcharts-yaxis line { stroke: var(--border) !important; }
+  .apexcharts-yaxis line {
+    stroke: var(--border) !important;
+  }
 
   .apexcharts-tooltip {
     background: var(--surface-0) !important;
@@ -275,13 +525,24 @@
     color: var(--text-1) !important;
     border-bottom-color: var(--border) !important;
   }
-  .apexcharts-tooltip-text { color: var(--text-1) !important; }
+  .apexcharts-tooltip-text {
+    color: var(--text-1) !important;
+  }
 }
 
 /* ---------- Modal backdrop / close button in dark ---------- */
-.btn-close { filter: none; }
-:root[data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(2); }
+.btn-close {
+  filter: none;
+}
+:root[data-theme="dark"] .btn-close {
+  filter: invert(1) grayscale(100%) brightness(2);
+}
 
 /* ---------- Borders that templates set with arbitrary classes ---------- */
-.border-warning-subtle, .border-success-subtle, .border-primary-subtle,
-.border-danger-subtle, .border-info-subtle { border-color: var(--border) !important; }
+.border-warning-subtle,
+.border-success-subtle,
+.border-primary-subtle,
+.border-danger-subtle,
+.border-info-subtle {
+  border-color: var(--border) !important;
+}

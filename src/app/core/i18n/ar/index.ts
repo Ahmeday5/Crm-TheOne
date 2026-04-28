@@ -8,6 +8,7 @@ import leads from './leads.ar';
 import sales from './sales.ar';
 import support from './support.ar';
 import projects from './projects.ar';
+import reportAnalysis from './reportAnalysis.ar';
 
 const ar: Translations = {
   ...common,
@@ -19,6 +20,7 @@ const ar: Translations = {
   ...sales,
   ...support,
   ...projects,
+  ...reportAnalysis,
 };
 
 export default ar;
