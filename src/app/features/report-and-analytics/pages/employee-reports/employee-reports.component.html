@@ -1,1 +1,167 @@
-<p>employee-reports works!</p>
+<section>
+  <header class="d-flex align-items-center gap-3 mb-4">
+    <span class="icon-tile xl tone-primary"><i class="fa-solid fa-clipboard-list"></i></span>
+    <div>
+      <h2 class="fw-700 mb-1">{{ 'reportAnalysis.employee.title' | translate }}</h2>
+      <p class="text-muted mb-0">{{ 'reportAnalysis.employee.subtitle' | translate }}</p>
+    </div>
+  </header>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-calendar text-muted"></i>
+            {{ 'reportAnalysis.common.period' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="period">
+            <option *ngFor="let opt of periodOptions" [value]="opt">
+              {{ ('reportAnalysis.common.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-building text-muted"></i>
+            {{ 'reportAnalysis.employee.filters.department' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="department">
+            <option *ngFor="let opt of departmentOptions" [value]="opt">
+              {{ ('reportAnalysis.employee.filters.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-user-tag text-muted"></i>
+            {{ 'reportAnalysis.employee.filters.role' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="role">
+            <option *ngFor="let opt of roleOptions" [value]="opt">
+              {{ ('reportAnalysis.employee.filters.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="d-flex gap-2 justify-content-md-end">
+            <button type="button" class="btn btn-light flex-grow-1 flex-md-grow-0">
+              <i class="fa-solid fa-file-pdf me-1"></i>{{ 'reportAnalysis.common.export.pdf' | translate }}
+            </button>
+            <button type="button" class="btn btn-light flex-grow-1 flex-md-grow-0">
+              <i class="fa-solid fa-file-excel me-1"></i>{{ 'reportAnalysis.common.export.excel' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div *ngFor="let kpi of kpis" class="col-12 col-sm-6 col-lg-4 col-xl">
+      <div class="card kpi-card">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div class="flex-grow-1 min-w-0">
+            <p class="text-muted small mb-1 text-truncate">{{ kpi.labelKey | translate }}</p>
+            <h3 class="fw-700 mb-2 kpi-value">{{ kpi.value }}</h3>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="badge"
+                    [class.success]="kpi.deltaTone === 'success'"
+                    [class.danger]="kpi.deltaTone === 'danger'">
+                {{ kpi.delta }}
+              </span>
+              <small class="text-muted">{{ 'reportAnalysis.common.vsLastMonth' | translate }}</small>
+            </div>
+          </div>
+          <span [class]="'icon-tile xl tone-' + kpi.iconTone"><i [class]="kpi.icon"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-chart-line text-primary"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.employee.charts.performanceOverTime' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="performanceChart().series"
+            [chart]="performanceChart().chart"
+            [xaxis]="performanceChart().xaxis"
+            [yaxis]="performanceChart().yaxis"
+            [colors]="performanceChart().colors"
+            [stroke]="performanceChart().stroke"
+            [grid]="performanceChart().grid"
+            [markers]="performanceChart().markers"
+            [dataLabels]="performanceChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-trophy text-success"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.employee.charts.topPerformers' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="topPerformersChart().series"
+            [chart]="topPerformersChart().chart"
+            [xaxis]="topPerformersChart().xaxis"
+            [colors]="topPerformersChart().colors"
+            [plotOptions]="topPerformersChart().plotOptions"
+            [grid]="topPerformersChart().grid"
+            [dataLabels]="topPerformersChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-calendar-check text-warning"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.employee.charts.attendance' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="attendanceChart().series"
+            [chart]="attendanceChart().chart"
+            [labels]="attendanceChart().labels"
+            [colors]="attendanceChart().colors"
+            [legend]="attendanceChart().legend"
+            [stroke]="attendanceChart().stroke"
+            [dataLabels]="attendanceChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-list-check text-purple"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.employee.charts.tasksDone' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="tasksChart().series"
+            [chart]="tasksChart().chart"
+            [xaxis]="tasksChart().xaxis"
+            [colors]="tasksChart().colors"
+            [plotOptions]="tasksChart().plotOptions"
+            [grid]="tasksChart().grid"
+            [dataLabels]="tasksChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

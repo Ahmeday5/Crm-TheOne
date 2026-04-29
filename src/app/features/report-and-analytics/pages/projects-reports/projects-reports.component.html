@@ -1,1 +1,170 @@
-<p>projects-reports works!</p>
+<section>
+  <header class="d-flex align-items-center gap-3 mb-4">
+    <span class="icon-tile xl tone-purple"><i class="fa-solid fa-folder-open"></i></span>
+    <div>
+      <h2 class="fw-700 mb-1">{{ 'reportAnalysis.projects.title' | translate }}</h2>
+      <p class="text-muted mb-0">{{ 'reportAnalysis.projects.subtitle' | translate }}</p>
+    </div>
+  </header>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-calendar text-muted"></i>
+            {{ 'reportAnalysis.common.period' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="period">
+            <option *ngFor="let opt of periodOptions" [value]="opt">
+              {{ ('reportAnalysis.common.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-flag text-muted"></i>
+            {{ 'reportAnalysis.projects.filters.status' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="status">
+            <option *ngFor="let opt of statusOptions" [value]="opt">
+              {{ ('reportAnalysis.projects.filters.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-user-tie text-muted"></i>
+            {{ 'reportAnalysis.projects.filters.manager' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="manager">
+            <option *ngFor="let opt of managerOptions" [value]="opt">
+              {{ ('reportAnalysis.projects.filters.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="d-flex gap-2 justify-content-md-end">
+            <button type="button" class="btn btn-light flex-grow-1 flex-md-grow-0">
+              <i class="fa-solid fa-file-pdf me-1"></i>{{ 'reportAnalysis.common.export.pdf' | translate }}
+            </button>
+            <button type="button" class="btn btn-light flex-grow-1 flex-md-grow-0">
+              <i class="fa-solid fa-file-excel me-1"></i>{{ 'reportAnalysis.common.export.excel' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div *ngFor="let kpi of kpis" class="col-12 col-sm-6 col-lg-4 col-xl">
+      <div class="card kpi-card">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div class="flex-grow-1 min-w-0">
+            <p class="text-muted small mb-1 text-truncate">{{ kpi.labelKey | translate }}</p>
+            <h3 class="fw-700 mb-2 kpi-value">
+              {{ kpi.value }}
+              <small *ngIf="kpi.suffixKey" class="fs-6 text-muted fw-500">{{ kpi.suffixKey | translate }}</small>
+            </h3>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="badge"
+                    [class.success]="kpi.deltaTone === 'success'"
+                    [class.danger]="kpi.deltaTone === 'danger'">
+                {{ kpi.delta }}
+              </span>
+              <small class="text-muted">{{ 'reportAnalysis.common.vsLastMonth' | translate }}</small>
+            </div>
+          </div>
+          <span [class]="'icon-tile xl tone-' + kpi.iconTone"><i [class]="kpi.icon"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-primary"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.projects.charts.statusDist' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="statusChart().series"
+            [chart]="statusChart().chart"
+            [labels]="statusChart().labels"
+            [colors]="statusChart().colors"
+            [legend]="statusChart().legend"
+            [stroke]="statusChart().stroke"
+            [dataLabels]="statusChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-check-circle text-success"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.projects.charts.completionTimeline' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="completionChart().series"
+            [chart]="completionChart().chart"
+            [xaxis]="completionChart().xaxis"
+            [colors]="completionChart().colors"
+            [plotOptions]="completionChart().plotOptions"
+            [grid]="completionChart().grid"
+            [dataLabels]="completionChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-people-group text-purple"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.projects.charts.workload' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="workloadChart().series"
+            [chart]="workloadChart().chart"
+            [xaxis]="workloadChart().xaxis"
+            [colors]="workloadChart().colors"
+            [plotOptions]="workloadChart().plotOptions"
+            [grid]="workloadChart().grid"
+            [legend]="workloadChart().legend"
+            [dataLabels]="workloadChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-flag-checkered text-warning"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.projects.charts.milestones' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="milestonesChart().series"
+            [chart]="milestonesChart().chart"
+            [xaxis]="milestonesChart().xaxis"
+            [colors]="milestonesChart().colors"
+            [plotOptions]="milestonesChart().plotOptions"
+            [grid]="milestonesChart().grid"
+            [legend]="milestonesChart().legend"
+            [dataLabels]="milestonesChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

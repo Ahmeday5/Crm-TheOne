@@ -1,0 +1,196 @@
+/*
+ * Shared tab-bar card used by every section that toggles between sibling routes
+ * (reports, sales pipeline, projects/tasks, app-support …).
+ * Styles are token-driven so light / dark mode and brand color all just work.
+ */
+
+:host {
+  display: block;
+}
+
+.tabbed-nav-card {
+  padding: 0.5rem;
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.tabbed-nav-grid {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.tabbed-nav-btn {
+  --tone-bg: var(--surface-2);
+  --tone-fg: var(--text-2);
+  --tone-ring: var(--border);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  min-height: 42px;
+  padding: 0.55rem 0.9rem;
+
+  font-size: var(--fs-md);
+  font-weight: var(--fw-600);
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+
+  background: var(--tone-bg);
+  color: var(--tone-fg);
+  border: 1px solid var(--tone-ring);
+  border-radius: var(--radius-md);
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+
+  i {
+    font-size: 1em;
+    flex-shrink: 0;
+  }
+}
+
+.tabbed-nav-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabbed-nav-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  color: var(--tone-fg);
+}
+
+.tabbed-nav-btn:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+
+.tabbed-nav-btn.active {
+  background: var(--brand-gradient);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-md);
+}
+
+/* ---------- Tone palette — light theme ---------- */
+.tabbed-nav-btn.tone-primary {
+  --tone-bg: rgba(0, 102, 204, 0.10);
+  --tone-fg: #0052a8;
+  --tone-ring: rgba(0, 102, 204, 0.18);
+}
+.tabbed-nav-btn.tone-indigo {
+  --tone-bg: rgba(79, 70, 229, 0.10);
+  --tone-fg: #4338ca;
+  --tone-ring: rgba(79, 70, 229, 0.18);
+}
+.tabbed-nav-btn.tone-green {
+  --tone-bg: rgba(22, 163, 74, 0.10);
+  --tone-fg: #15803d;
+  --tone-ring: rgba(22, 163, 74, 0.18);
+}
+.tabbed-nav-btn.tone-yellow {
+  --tone-bg: rgba(202, 138, 4, 0.12);
+  --tone-fg: #a16207;
+  --tone-ring: rgba(202, 138, 4, 0.22);
+}
+.tabbed-nav-btn.tone-orange {
+  --tone-bg: rgba(234, 88, 12, 0.10);
+  --tone-fg: #c2410c;
+  --tone-ring: rgba(234, 88, 12, 0.20);
+}
+.tabbed-nav-btn.tone-purple {
+  --tone-bg: rgba(124, 58, 237, 0.10);
+  --tone-fg: #6d28d9;
+  --tone-ring: rgba(124, 58, 237, 0.20);
+}
+.tabbed-nav-btn.tone-cyan {
+  --tone-bg: rgba(8, 145, 178, 0.10);
+  --tone-fg: #0e7490;
+  --tone-ring: rgba(8, 145, 178, 0.20);
+}
+.tabbed-nav-btn.tone-pink {
+  --tone-bg: rgba(219, 39, 119, 0.10);
+  --tone-fg: #be185d;
+  --tone-ring: rgba(219, 39, 119, 0.20);
+}
+.tabbed-nav-btn.tone-gray {
+  --tone-bg: var(--surface-2);
+  --tone-fg: var(--text-2);
+  --tone-ring: var(--border);
+}
+
+/* ---------- Tone palette — dark theme (brighter foreground, softer bg) ---------- */
+:host-context(:root[data-theme='dark']) {
+  .tabbed-nav-btn.tone-primary {
+    --tone-bg: rgba(96, 165, 250, 0.16);
+    --tone-fg: #93c5fd;
+    --tone-ring: rgba(96, 165, 250, 0.28);
+  }
+  .tabbed-nav-btn.tone-indigo {
+    --tone-bg: rgba(129, 140, 248, 0.16);
+    --tone-fg: #c7d2fe;
+    --tone-ring: rgba(129, 140, 248, 0.28);
+  }
+  .tabbed-nav-btn.tone-green {
+    --tone-bg: rgba(74, 222, 128, 0.16);
+    --tone-fg: #86efac;
+    --tone-ring: rgba(74, 222, 128, 0.28);
+  }
+  .tabbed-nav-btn.tone-yellow {
+    --tone-bg: rgba(250, 204, 21, 0.16);
+    --tone-fg: #fde68a;
+    --tone-ring: rgba(250, 204, 21, 0.28);
+  }
+  .tabbed-nav-btn.tone-orange {
+    --tone-bg: rgba(251, 146, 60, 0.16);
+    --tone-fg: #fdba74;
+    --tone-ring: rgba(251, 146, 60, 0.28);
+  }
+  .tabbed-nav-btn.tone-purple {
+    --tone-bg: rgba(167, 139, 250, 0.16);
+    --tone-fg: #ddd6fe;
+    --tone-ring: rgba(167, 139, 250, 0.28);
+  }
+  .tabbed-nav-btn.tone-cyan {
+    --tone-bg: rgba(34, 211, 238, 0.16);
+    --tone-fg: #a5f3fc;
+    --tone-ring: rgba(34, 211, 238, 0.28);
+  }
+  .tabbed-nav-btn.tone-pink {
+    --tone-bg: rgba(244, 114, 182, 0.16);
+    --tone-fg: #fbcfe8;
+    --tone-ring: rgba(244, 114, 182, 0.28);
+  }
+  .tabbed-nav-btn.tone-gray {
+    --tone-bg: var(--surface-3);
+    --tone-fg: var(--text-1);
+    --tone-ring: var(--border-strong);
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 575.98px) {
+  .tabbed-nav-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.4rem;
+  }
+  .tabbed-nav-btn {
+    min-height: 40px;
+    padding: 0.45rem 0.6rem;
+    font-size: var(--fs-sm);
+
+    .tabbed-nav-label {
+      max-width: 100%;
+    }
+  }
+}

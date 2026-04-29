@@ -55,8 +55,43 @@
   background: var(--brand-soft);
   color: var(--brand);
   font-size: var(--fs-lg);
+  flex-shrink: 0;
 }
 .icon-tile.lg { width: 56px; height: 56px; font-size: var(--fs-2xl); border-radius: var(--radius-lg); }
+.icon-tile.xl { width: 64px; height: 64px; font-size: 1.5rem; border-radius: 50%; }
+
+/* Tone variants — theme-aware via *-soft tokens (which already shift in dark mode). */
+.icon-tile.tone-primary { background: var(--brand-soft);   color: var(--brand); }
+.icon-tile.tone-success { background: var(--success-soft); color: var(--success); }
+.icon-tile.tone-warning { background: var(--warning-soft); color: var(--warning); }
+.icon-tile.tone-danger  { background: var(--danger-soft);  color: var(--danger); }
+.icon-tile.tone-info    { background: var(--info-soft);    color: var(--info); }
+.icon-tile.tone-purple  { background: rgba(124, 58, 237, 0.12); color: #7c3aed; }
+.icon-tile.tone-orange  { background: rgba(234, 88, 12, 0.12); color: #ea580c; }
+.icon-tile.tone-pink    { background: rgba(219, 39, 119, 0.12); color: #be185d; }
+:root[data-theme='dark'] {
+  .icon-tile.tone-purple { background: rgba(167, 139, 250, 0.20); color: #c4b5fd; }
+  .icon-tile.tone-orange { background: rgba(251, 146, 60, 0.20); color: #fdba74; }
+  .icon-tile.tone-pink   { background: rgba(244, 114, 182, 0.20); color: #fbcfe8; }
+}
+
+/* KPI tile shared across reports & dashboards. */
+.kpi-card {
+  border: 1px solid var(--border);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  height: 100%;
+}
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--brand-soft);
+}
+.kpi-card .kpi-value { line-height: 1.15; }
+
+/* Five-card auto-distribute on xl. */
+@media (min-width: 1200px) {
+  .row > .col-xl { flex: 1 0 0%; }
+}
 
 .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 .dot.blue   { background: #0066cc; }
@@ -82,7 +117,8 @@
 /* Backwards-compat */
 .bg-primary-subtle { background: var(--brand-soft) !important; }
 .bg-purple-subtle { background: #f3e8ff !important; }
-.text-purple { color: #6f42c1 !important; }
+.text-purple { color: #7c3aed !important; }
+:root[data-theme='dark'] .text-purple { color: #c4b5fd !important; }
 .badge-orange { background: var(--warning-soft); color: var(--warning); }
 .badge-green  { background: var(--success-soft); color: var(--success); }
 .border-r-indicator { border-right: 4px solid var(--brand); }

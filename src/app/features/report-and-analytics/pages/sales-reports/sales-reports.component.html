@@ -1,1 +1,171 @@
-<p>sales-reports works!</p>
+<section>
+  <header class="d-flex align-items-center gap-3 mb-4">
+    <span class="icon-tile xl tone-warning"><i class="fa-solid fa-arrow-trend-up"></i></span>
+    <div>
+      <h2 class="fw-700 mb-1">{{ 'reportAnalysis.sales.title' | translate }}</h2>
+      <p class="text-muted mb-0">{{ 'reportAnalysis.sales.subtitle' | translate }}</p>
+    </div>
+  </header>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-calendar text-muted"></i>
+            {{ 'reportAnalysis.common.period' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="period">
+            <option *ngFor="let opt of periodOptions" [value]="opt">
+              {{ ('reportAnalysis.common.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-users text-muted"></i>
+            {{ 'reportAnalysis.sales.filters.team' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="team">
+            <option *ngFor="let opt of teamOptions" [value]="opt">
+              {{ ('reportAnalysis.sales.filters.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-box text-muted"></i>
+            {{ 'reportAnalysis.sales.filters.product' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="product">
+            <option *ngFor="let opt of productOptions" [value]="opt">
+              {{ ('reportAnalysis.sales.filters.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="d-flex gap-2 justify-content-md-end">
+            <button type="button" class="btn btn-light flex-grow-1 flex-md-grow-0">
+              <i class="fa-solid fa-file-pdf me-1"></i>{{ 'reportAnalysis.common.export.pdf' | translate }}
+            </button>
+            <button type="button" class="btn btn-light flex-grow-1 flex-md-grow-0">
+              <i class="fa-solid fa-file-excel me-1"></i>{{ 'reportAnalysis.common.export.excel' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div *ngFor="let kpi of kpis" class="col-12 col-sm-6 col-lg-4 col-xl">
+      <div class="card kpi-card">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div class="flex-grow-1 min-w-0">
+            <p class="text-muted small mb-1 text-truncate">{{ kpi.labelKey | translate }}</p>
+            <h3 class="fw-700 mb-2 kpi-value">
+              {{ kpi.value }}
+              <ng-container *ngIf="kpi.labelKey === 'reportAnalysis.sales.kpi.revenue' || kpi.labelKey === 'reportAnalysis.sales.kpi.avgDeal' || kpi.labelKey === 'reportAnalysis.sales.kpi.pipeline'">
+                <small class="fs-6 text-muted fw-500">{{ 'reportAnalysis.common.currency' | translate }}</small>
+              </ng-container>
+            </h3>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="badge"
+                    [class.success]="kpi.deltaTone === 'success'"
+                    [class.danger]="kpi.deltaTone === 'danger'">
+                {{ kpi.delta }}
+              </span>
+              <small class="text-muted">{{ 'reportAnalysis.common.vsLastMonth' | translate }}</small>
+            </div>
+          </div>
+          <span [class]="'icon-tile xl tone-' + kpi.iconTone"><i [class]="kpi.icon"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-dollar-sign text-warning"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.sales.charts.revenueByMonth' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="revenueByMonthChart().series"
+            [chart]="revenueByMonthChart().chart"
+            [xaxis]="revenueByMonthChart().xaxis"
+            [yaxis]="revenueByMonthChart().yaxis"
+            [colors]="revenueByMonthChart().colors"
+            [plotOptions]="revenueByMonthChart().plotOptions"
+            [grid]="revenueByMonthChart().grid"
+            [dataLabels]="revenueByMonthChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-handshake text-success"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.sales.charts.dealsByRep' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="dealsByRepChart().series"
+            [chart]="dealsByRepChart().chart"
+            [xaxis]="dealsByRepChart().xaxis"
+            [colors]="dealsByRepChart().colors"
+            [plotOptions]="dealsByRepChart().plotOptions"
+            [grid]="dealsByRepChart().grid"
+            [dataLabels]="dealsByRepChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-primary"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.sales.charts.pipelineByStage' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="pipelineChart().series"
+            [chart]="pipelineChart().chart"
+            [labels]="pipelineChart().labels"
+            [colors]="pipelineChart().colors"
+            [legend]="pipelineChart().legend"
+            [stroke]="pipelineChart().stroke"
+            [dataLabels]="pipelineChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-crown text-purple"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.sales.charts.topCustomers' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="topCustomersChart().series"
+            [chart]="topCustomersChart().chart"
+            [xaxis]="topCustomersChart().xaxis"
+            [colors]="topCustomersChart().colors"
+            [plotOptions]="topCustomersChart().plotOptions"
+            [grid]="topCustomersChart().grid"
+            [dataLabels]="topCustomersChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

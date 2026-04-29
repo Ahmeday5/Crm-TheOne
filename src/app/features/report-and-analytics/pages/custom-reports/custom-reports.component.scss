@@ -1,0 +1,9 @@
+:host { display: block; }
+
+.custom-preview {
+  min-height: 220px;
+  background: var(--surface-1);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}

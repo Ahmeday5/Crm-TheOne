@@ -1,7 +1,9 @@
 <div class="flex-grow-1">
-  <app-page-header [title]="'sales.title' | translate"
-                   [subtitle]="'sales.subtitle' | translate"
-                   icon="fa-solid fa-chart-line"></app-page-header>
+  <app-page-header
+    [title]="'sales.title' | translate"
+    [subtitle]="'sales.subtitle' | translate"
+    icon="fa-solid fa-chart-line"
+  ></app-page-header>
 
   <div class="alert alert-warning d-flex gap-3 mb-4 align-items-start" role="alert">
     <i class="fa-solid fa-circle-exclamation fs-4 mt-1"></i>
@@ -24,38 +26,7 @@
     </div>
   </div>
 
-  <ul class="nav nav-tabs nav-fill mb-3 pb-3 border-bottom d-block">
-    <div class="row g-2">
-      <div class="col-xl-3 col-lg-4 col-md-6">
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center justify-content-center gap-2" routerLink="line" routerLinkActive="active">
-            <i class="fa-solid fa-table-cells"></i>{{ 'sales.tabs.line' | translate }}
-          </a>
-        </li>
-      </div>
-      <div class="col-xl-3 col-lg-4 col-md-6">
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center justify-content-center gap-2" routerLink="price-offers" routerLinkActive="active">
-            <i class="fa-regular fa-file-lines"></i>{{ 'sales.tabs.priceOffers' | translate }}
-          </a>
-        </li>
-      </div>
-      <div class="col-xl-3 col-lg-4 col-md-6">
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center justify-content-center gap-2" routerLink="contracts" routerLinkActive="active">
-            <i class="fa-regular fa-file"></i>{{ 'sales.tabs.contracts' | translate }}
-          </a>
-        </li>
-      </div>
-      <div class="col-xl-3 col-lg-4 col-md-6">
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center justify-content-center gap-2" routerLink="follow-ups" routerLinkActive="active">
-            <i class="fa-solid fa-calendar-day"></i>{{ 'sales.tabs.followUps' | translate }}
-          </a>
-        </li>
-      </div>
-    </div>
-  </ul>
+  <app-tabbed-nav-card [items]="tabs"></app-tabbed-nav-card>
 
   <router-outlet></router-outlet>
 </div>

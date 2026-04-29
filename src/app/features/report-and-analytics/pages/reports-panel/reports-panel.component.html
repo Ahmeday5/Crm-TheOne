@@ -1,1 +1,191 @@
-<p>reports-panel works!</p>
+<section class="reports-panel">
+  <!-- Header -->
+  <header class="d-flex align-items-center gap-3 mb-4">
+    <span class="icon-tile xl tone-primary">
+      <i class="fa-solid fa-chart-column"></i>
+    </span>
+    <div>
+      <h2 class="fw-700 mb-1">{{ 'reportAnalysis.panel.title' | translate }}</h2>
+      <p class="text-muted mb-0">{{ 'reportAnalysis.panel.subtitle' | translate }}</p>
+    </div>
+  </header>
+
+  <!-- Filters card -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-calendar text-muted"></i>
+            {{ 'reportAnalysis.panel.filters.period' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="period">
+            <option *ngFor="let opt of periodOptions" [value]="opt">
+              {{ ('reportAnalysis.panel.filters.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-users text-muted"></i>
+            {{ 'reportAnalysis.panel.filters.team' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="team">
+            <option *ngFor="let opt of teamOptions" [value]="opt">
+              {{ ('reportAnalysis.panel.filters.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-filter text-muted"></i>
+            {{ 'reportAnalysis.panel.filters.serviceType' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="service">
+            <option *ngFor="let opt of serviceOptions" [value]="opt">
+              {{ ('reportAnalysis.panel.filters.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <div class="d-flex gap-2 justify-content-md-end">
+            <button type="button" class="btn btn-light flex-grow-1 flex-md-grow-0">
+              <i class="fa-solid fa-file-pdf me-1"></i>
+              {{ 'reportAnalysis.panel.export.pdf' | translate }}
+            </button>
+            <button type="button" class="btn btn-light flex-grow-1 flex-md-grow-0">
+              <i class="fa-solid fa-file-excel me-1"></i>
+              {{ 'reportAnalysis.panel.export.excel' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI grid -->
+  <div class="row g-3 mb-4">
+    <div *ngFor="let kpi of kpis" class="col-12 col-sm-6 col-lg-4 col-xl">
+      <div class="card kpi-card h-100">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div class="flex-grow-1 min-w-0">
+            <p class="text-muted small mb-1 text-truncate">{{ kpi.labelKey | translate }}</p>
+            <h3 class="fw-700 mb-2">
+              {{ kpi.value }}
+              <ng-container *ngIf="kpi.labelKey === 'reportAnalysis.panel.kpi.totalRevenue'">
+                <small class="fs-6 text-muted fw-500">{{ 'reportAnalysis.panel.kpi.currency' | translate }}</small>
+              </ng-container>
+            </h3>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="badge"
+                    [class.success]="kpi.deltaTone === 'success'"
+                    [class.danger]="kpi.deltaTone === 'danger'">
+                {{ kpi.delta }}
+              </span>
+              <small class="text-muted">{{ 'reportAnalysis.panel.kpi.vsLastMonth' | translate }}</small>
+            </div>
+          </div>
+          <span class="icon-tile xl" [class]="'icon-tile xl tone-' + kpi.iconTone">
+            <i [class]="kpi.icon"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row 1 -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-users text-primary"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.panel.charts.leadsOverTime' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="leadsLineChart().series"
+            [chart]="leadsLineChart().chart"
+            [xaxis]="leadsLineChart().xaxis"
+            [yaxis]="leadsLineChart().yaxis"
+            [colors]="leadsLineChart().colors"
+            [stroke]="leadsLineChart().stroke"
+            [legend]="leadsLineChart().legend"
+            [grid]="leadsLineChart().grid"
+            [markers]="leadsLineChart().markers"
+            [dataLabels]="leadsLineChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-dollar-sign text-success"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.panel.charts.revenueOverTime' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="revenueBarChart().series"
+            [chart]="revenueBarChart().chart"
+            [xaxis]="revenueBarChart().xaxis"
+            [yaxis]="revenueBarChart().yaxis"
+            [colors]="revenueBarChart().colors"
+            [plotOptions]="revenueBarChart().plotOptions"
+            [grid]="revenueBarChart().grid"
+            [dataLabels]="revenueBarChart().dataLabels"
+            [tooltip]="revenueBarChart().tooltip"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row 2 -->
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-arrow-trend-up text-purple"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.panel.charts.dealsByStage' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="dealsPieChart().series"
+            [chart]="dealsPieChart().chart"
+            [labels]="dealsPieChart().labels"
+            [colors]="dealsPieChart().colors"
+            [legend]="dealsPieChart().legend"
+            [dataLabels]="dealsPieChart().dataLabels"
+            [stroke]="dealsPieChart().stroke"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-ticket text-warning"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.panel.charts.ticketsByPriority' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="ticketsBarChart().series"
+            [chart]="ticketsBarChart().chart"
+            [xaxis]="ticketsBarChart().xaxis"
+            [colors]="ticketsBarChart().colors"
+            [plotOptions]="ticketsBarChart().plotOptions"
+            [legend]="ticketsBarChart().legend"
+            [grid]="ticketsBarChart().grid"
+            [dataLabels]="ticketsBarChart().dataLabels"
+            [fill]="ticketsBarChart().fill"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

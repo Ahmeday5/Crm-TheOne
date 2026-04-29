@@ -8,6 +8,7 @@ import leads from './leads.en';
 import sales from './sales.en';
 import support from './support.en';
 import projects from './projects.en';
+import reportAnalysis from './reportAnalysis.en';
 
 const en: Translations = {
   ...common,
@@ -19,6 +20,7 @@ const en: Translations = {
   ...sales,
   ...support,
   ...projects,
+  ...reportAnalysis,
 };
 
 export default en;

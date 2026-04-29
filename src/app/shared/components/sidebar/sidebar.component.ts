@@ -171,6 +171,7 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private buildMenu(): MenuSection[] {
     return [
+      // Role selector
       {
         title: 'sidebar.sections.role',
         items: [
@@ -201,8 +202,25 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
           },
         ],
       },
+      // Marketing & sales
       {
-        title: 'sidebar.sections.modules',
+        title: 'sidebar.sections.marketingSales',
+        items: [
+          {
+            label: 'sidebar.items.campaigns',
+            path: '/marketing-campaigns',
+            icon: 'fa-solid fa-bullhorn',
+          },
+          {
+            label: 'sidebar.items.salesAnalysis',
+            path: '/sales-analysis',
+            icon: 'fa-solid fa-chart-column',
+          },
+        ],
+      },
+      // Main modules
+      {
+        title: 'sidebar.sections.mainModules',
         items: [
           {
             label: 'sidebar.items.leads',
@@ -236,14 +254,10 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
           },
         ],
       },
+      // System administration
       {
         title: 'sidebar.sections.system',
         items: [
-          {
-            label: 'sidebar.items.users',
-            path: '/users',
-            icon: 'fa-solid fa-user-gear',
-          },
           {
             label: 'sidebar.items.settings',
             path: '/settings',
@@ -260,14 +274,52 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
             icon: 'fa-solid fa-bolt',
           },
           {
-            label: 'sidebar.items.advanced',
-            path: '/advanced-features',
-            icon: 'fa-solid fa-microchip',
+            label: 'sidebar.items.resources',
+            path: '/resources',
+            icon: 'fa-solid fa-users-gear',
           },
           {
             label: 'sidebar.items.notifications',
             path: '/notifications',
             icon: 'fa-solid fa-bell',
+          },
+        ],
+      },
+      // Contracts & schedule
+      {
+        title: 'sidebar.sections.contracts',
+        items: [
+          {
+            label: 'sidebar.items.contractsManage',
+            path: '/contracts-management',
+            icon: 'fa-solid fa-file-contract',
+          },
+          {
+            label: 'sidebar.items.schedule',
+            path: '/schedule',
+            icon: 'fa-solid fa-calendar-days',
+          },
+        ],
+      },
+      // Performance & motivation
+      {
+        title: 'sidebar.sections.performance',
+        items: [
+          {
+            label: 'sidebar.items.goals',
+            path: '/goals',
+            icon: 'fa-solid fa-trophy',
+          },
+        ],
+      },
+      // Security
+      {
+        title: 'sidebar.sections.security',
+        items: [
+          {
+            label: 'sidebar.items.mfa',
+            path: '/security/mfa',
+            icon: 'fa-solid fa-shield-halved',
           },
         ],
       },

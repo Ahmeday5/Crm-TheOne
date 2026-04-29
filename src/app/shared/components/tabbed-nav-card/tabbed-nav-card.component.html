@@ -1,0 +1,13 @@
+<nav class="card tabbed-nav-card mb-3" aria-label="section tabs">
+  <div class="tabbed-nav-grid">
+    <a
+      *ngFor="let item of items"
+      [class]="'tabbed-nav-btn tone-' + (item.color || 'primary')"
+      [routerLink]="item.routerLink"
+      routerLinkActive="active"
+    >
+      <i [class]="item.icon" aria-hidden="true"></i>
+      <span class="tabbed-nav-label">{{ item.labelKey | translate }}</span>
+    </a>
+  </div>
+</nav>

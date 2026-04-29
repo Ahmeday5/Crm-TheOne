@@ -7,26 +7,42 @@ const sidebar: TranslationFile<'sidebar'> = {
     expand: 'تكبير القائمة',
     sections: {
       role: 'اختر الدور',
-      modules: 'الوحدات المتاحة',
+      marketingSales: 'التسويق والمبيعات',
+      mainModules: 'الوحدات الرئيسية',
       system: 'إدارة النظام',
+      contracts: 'العقود والمواعيد',
+      performance: 'الأداء والتحفيز',
+      security: 'الأمن',
     },
     items: {
+      // Roles
       admin: 'المدير / المالك',
       marketing: 'التسويق',
       sales: 'المبيعات',
       support: 'الدعم الفني',
       developers: 'المطورين',
+      // Marketing & sales
+      campaigns: 'الحملات التسويقية',
+      salesAnalysis: 'تحليل نتائج المبيعات',
+      // Main modules
       leads: 'إدارة العملاء المحتملين',
       salesLine: 'خط المبيعات',
       projects: 'المشاريع والمهام',
       reports: 'التقارير والتحليلات',
       chat: 'الدردشة الداخلية',
-      users: 'إدارة المستخدمين',
+      // System administration
       settings: 'إعدادات النظام',
       kb: 'قاعدة المعرفة',
       improvements: 'تحسينات النظام',
-      advanced: 'الميزات المتقدمة',
+      resources: 'إدارة الموارد',
       notifications: 'مركز الإشعارات',
+      // Contracts & schedule
+      contractsManage: 'إدارة العقود',
+      schedule: 'جدول المواعيد',
+      // Performance
+      goals: 'الأهداف والتحفيز',
+      // Security
+      mfa: 'التحقق متعدد العوامل',
     },
   },
 };

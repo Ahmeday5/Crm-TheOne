@@ -7,26 +7,42 @@ const sidebar: TranslationFile<'sidebar'> = {
     expand: 'Expand menu',
     sections: {
       role: 'Select role',
-      modules: 'Available modules',
+      marketingSales: 'Marketing & sales',
+      mainModules: 'Main modules',
       system: 'System administration',
+      contracts: 'Contracts & schedule',
+      performance: 'Performance & motivation',
+      security: 'Security',
     },
     items: {
+      // Roles
       admin: 'Admin / Owner',
       marketing: 'Marketing',
       sales: 'Sales',
-      support: 'Technical Support',
+      support: 'Technical support',
       developers: 'Developers',
+      // Marketing & sales
+      campaigns: 'Marketing campaigns',
+      salesAnalysis: 'Sales analysis',
+      // Main modules
       leads: 'Leads management',
       salesLine: 'Sales pipeline',
       projects: 'Projects & tasks',
       reports: 'Reports & analytics',
       chat: 'Internal chat',
-      users: 'User management',
+      // System administration
       settings: 'System settings',
       kb: 'Knowledge base',
       improvements: 'System improvements',
-      advanced: 'Advanced features',
+      resources: 'Resources management',
       notifications: 'Notifications center',
+      // Contracts & schedule
+      contractsManage: 'Contracts management',
+      schedule: 'Schedule',
+      // Performance
+      goals: 'Goals & motivation',
+      // Security
+      mfa: 'Multi-factor authentication',
     },
   },
 };

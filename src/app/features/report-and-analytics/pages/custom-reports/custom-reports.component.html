@@ -1,1 +1,162 @@
-<p>custom-reports works!</p>
+<section>
+  <header class="d-flex align-items-center gap-3 mb-4">
+    <span class="icon-tile xl tone-primary"><i class="fa-solid fa-file-lines"></i></span>
+    <div>
+      <h2 class="fw-700 mb-1">{{ 'reportAnalysis.custom.title' | translate }}</h2>
+      <p class="text-muted mb-0">{{ 'reportAnalysis.custom.subtitle' | translate }}</p>
+    </div>
+  </header>
+
+  <!-- Builder card -->
+  <div class="card mb-4">
+    <div class="card-header d-flex align-items-center gap-2">
+      <i class="fa-solid fa-sliders text-primary"></i>
+      <h5 class="mb-0">{{ 'reportAnalysis.custom.builder.title' | translate }}</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label">
+            <i class="fa-solid fa-database text-muted me-2"></i>
+            {{ 'reportAnalysis.custom.builder.source' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="source">
+            <option *ngFor="let opt of sourceOptions" [value]="opt">
+              {{ ('reportAnalysis.custom.builder.sources.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label">
+            <i class="fa-solid fa-calendar text-muted me-2"></i>
+            {{ 'reportAnalysis.custom.builder.period' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="period">
+            <option *ngFor="let opt of periodOptions" [value]="opt">
+              {{ ('reportAnalysis.common.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label">
+            <i class="fa-solid fa-chart-column text-muted me-2"></i>
+            {{ 'reportAnalysis.custom.builder.format' | translate }}
+          </label>
+          <div class="btn-group w-100" role="group">
+            <button *ngFor="let f of formatOptions"
+                    type="button"
+                    class="btn"
+                    [class.btn-primary]="format === f"
+                    [class.btn-light]="format !== f"
+                    (click)="format = f">
+              {{ ('reportAnalysis.custom.builder.formats.' + f) | translate }}
+            </button>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label invisible d-none d-lg-block">.</label>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary flex-grow-1">
+              <i class="fa-solid fa-play me-1"></i>{{ 'reportAnalysis.custom.builder.run' | translate }}
+            </button>
+            <button type="button" class="btn btn-light" (click)="resetBuilder()" [title]="'reportAnalysis.custom.builder.reset' | translate">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+            <button type="button" class="btn btn-light" [title]="'reportAnalysis.custom.builder.save' | translate">
+              <i class="fa-solid fa-bookmark"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview placeholder -->
+      <div class="custom-preview mt-4 d-flex flex-column align-items-center justify-content-center text-muted gap-2">
+        <i class="fa-solid fa-chart-bar fs-1"></i>
+        <p class="mb-0">{{ ('reportAnalysis.custom.builder.formats.' + format) | translate }} —
+          {{ ('reportAnalysis.custom.builder.sources.' + source) | translate }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates -->
+  <div class="card mb-4">
+    <div class="card-header d-flex align-items-center gap-2">
+      <i class="fa-solid fa-grip text-purple"></i>
+      <h5 class="mb-0">{{ 'reportAnalysis.custom.templates.title' | translate }}</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div *ngFor="let tpl of templates" class="col-md-6 col-lg-3">
+          <div class="card kpi-card h-100">
+            <div class="card-body d-flex flex-column gap-3">
+              <span [class]="'icon-tile lg tone-' + tpl.iconTone"><i [class]="tpl.icon"></i></span>
+              <div>
+                <h6 class="fw-700 mb-1">{{ tpl.titleKey | translate }}</h6>
+                <p class="text-muted small mb-0">{{ tpl.descKey | translate }}</p>
+              </div>
+              <button type="button" class="btn btn-light btn-sm mt-auto">
+                {{ 'reportAnalysis.custom.templates.useTemplate' | translate }}
+                <i class="fa-solid fa-arrow-right ms-1"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saved reports -->
+  <div class="card">
+    <div class="card-header d-flex align-items-center gap-2">
+      <i class="fa-solid fa-bookmark text-success"></i>
+      <h5 class="mb-0">{{ 'reportAnalysis.custom.saved.title' | translate }}</h5>
+    </div>
+    <div class="card-body p-0">
+      <div *ngIf="saved.length === 0" class="p-4 text-center text-muted">
+        {{ 'reportAnalysis.custom.saved.empty' | translate }}
+      </div>
+
+      <div class="table-responsive" *ngIf="saved.length > 0">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>{{ 'reportAnalysis.custom.builder.title' | translate }}</th>
+              <th>{{ 'reportAnalysis.custom.builder.source' | translate }}</th>
+              <th>{{ 'reportAnalysis.custom.builder.format' | translate }}</th>
+              <th>{{ 'reportAnalysis.custom.saved.lastRun' | translate }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of saved">
+              <td class="fw-600">{{ r.nameKey | translate }}</td>
+              <td>
+                <span class="badge gray">
+                  {{ ('reportAnalysis.custom.builder.sources.' + r.source) | translate }}
+                </span>
+              </td>
+              <td>{{ ('reportAnalysis.custom.builder.formats.' + r.format) | translate }}</td>
+              <td class="text-muted">{{ r.lastRun }}</td>
+              <td class="text-end">
+                <div class="d-inline-flex gap-1">
+                  <button type="button" class="btn btn-icon" [title]="'reportAnalysis.custom.saved.run' | translate">
+                    <i class="fa-solid fa-play"></i>
+                  </button>
+                  <button type="button" class="btn btn-icon" [title]="'reportAnalysis.custom.saved.edit' | translate">
+                    <i class="fa-solid fa-pen"></i>
+                  </button>
+                  <button type="button" class="btn btn-icon text-danger" [title]="'reportAnalysis.custom.saved.delete' | translate">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>

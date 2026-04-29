@@ -1,1 +1,167 @@
-<p>app-support-reports works!</p>
+<section>
+  <header class="d-flex align-items-center gap-3 mb-4">
+    <span class="icon-tile xl tone-orange"><i class="fa-solid fa-headphones"></i></span>
+    <div>
+      <h2 class="fw-700 mb-1">{{ 'reportAnalysis.appSupport.title' | translate }}</h2>
+      <p class="text-muted mb-0">{{ 'reportAnalysis.appSupport.subtitle' | translate }}</p>
+    </div>
+  </header>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-calendar text-muted"></i>
+            {{ 'reportAnalysis.common.period' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="period">
+            <option *ngFor="let opt of periodOptions" [value]="opt">
+              {{ ('reportAnalysis.common.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-users text-muted"></i>
+            {{ 'reportAnalysis.appSupport.filters.team' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="team">
+            <option *ngFor="let opt of teamOptions" [value]="opt">
+              {{ ('reportAnalysis.appSupport.filters.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="fa-solid fa-flag text-muted"></i>
+            {{ 'reportAnalysis.appSupport.filters.priority' | translate }}
+          </label>
+          <select class="form-select" [(ngModel)]="priority">
+            <option *ngFor="let opt of priorityOptions" [value]="opt">
+              {{ ('reportAnalysis.appSupport.filters.' + opt) | translate }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="d-flex gap-2 justify-content-md-end">
+            <button type="button" class="btn btn-light flex-grow-1 flex-md-grow-0">
+              <i class="fa-solid fa-file-pdf me-1"></i>{{ 'reportAnalysis.common.export.pdf' | translate }}
+            </button>
+            <button type="button" class="btn btn-light flex-grow-1 flex-md-grow-0">
+              <i class="fa-solid fa-file-excel me-1"></i>{{ 'reportAnalysis.common.export.excel' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div *ngFor="let kpi of kpis" class="col-12 col-sm-6 col-lg-4 col-xl">
+      <div class="card kpi-card">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div class="flex-grow-1 min-w-0">
+            <p class="text-muted small mb-1 text-truncate">{{ kpi.labelKey | translate }}</p>
+            <h3 class="fw-700 mb-2 kpi-value">{{ kpi.value }}</h3>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="badge"
+                    [class.success]="kpi.deltaTone === 'success'"
+                    [class.danger]="kpi.deltaTone === 'danger'">
+                {{ kpi.delta }}
+              </span>
+              <small class="text-muted">{{ 'reportAnalysis.common.vsLastMonth' | translate }}</small>
+            </div>
+          </div>
+          <span [class]="'icon-tile xl tone-' + kpi.iconTone"><i [class]="kpi.icon"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-chart-line text-primary"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.appSupport.charts.ticketsTrend' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="trendChart().series"
+            [chart]="trendChart().chart"
+            [xaxis]="trendChart().xaxis"
+            [colors]="trendChart().colors"
+            [stroke]="trendChart().stroke"
+            [grid]="trendChart().grid"
+            [legend]="trendChart().legend"
+            [markers]="trendChart().markers"
+            [dataLabels]="trendChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-flag text-warning"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.appSupport.charts.byPriority' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="priorityChart().series"
+            [chart]="priorityChart().chart"
+            [labels]="priorityChart().labels"
+            [colors]="priorityChart().colors"
+            [legend]="priorityChart().legend"
+            [stroke]="priorityChart().stroke"
+            [dataLabels]="priorityChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-tags text-purple"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.appSupport.charts.byCategory' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="categoryChart().series"
+            [chart]="categoryChart().chart"
+            [xaxis]="categoryChart().xaxis"
+            [colors]="categoryChart().colors"
+            [plotOptions]="categoryChart().plotOptions"
+            [grid]="categoryChart().grid"
+            [dataLabels]="categoryChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-star text-success"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.appSupport.charts.satisfaction' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <apx-chart
+            [series]="satisfactionChart().series"
+            [chart]="satisfactionChart().chart"
+            [labels]="satisfactionChart().labels"
+            [colors]="satisfactionChart().colors"
+            [legend]="satisfactionChart().legend"
+            [stroke]="satisfactionChart().stroke"
+            [dataLabels]="satisfactionChart().dataLabels"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
