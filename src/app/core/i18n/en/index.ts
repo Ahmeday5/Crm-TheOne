@@ -9,6 +9,8 @@ import sales from './sales.en';
 import support from './support.en';
 import projects from './projects.en';
 import reportAnalysis from './reportAnalysis.en';
+import notFound from './notFound.en';
+import settings from './settings.en';
 
 const en: Translations = {
   ...common,
@@ -21,6 +23,8 @@ const en: Translations = {
   ...support,
   ...projects,
   ...reportAnalysis,
+  ...notFound,
+  ...settings,
 };
 
 export default en;

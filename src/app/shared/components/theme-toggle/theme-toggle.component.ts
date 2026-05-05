@@ -75,7 +75,7 @@ export class ThemeToggleComponent {
 
   readonly colors: { key: ColorScheme; label: string }[] = [
     { key: 'blue',   label: 'header.color.blue' },
-    { key: 'purple', label: 'header.color.purple' },
+    //{ key: 'purple', label: 'header.color.purple' },
     { key: 'green',  label: 'header.color.green' },
   ];
 

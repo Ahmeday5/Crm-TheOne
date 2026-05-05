@@ -1,0 +1,75 @@
+:host { display: contents; }
+
+.toast-stack {
+  position: fixed;
+  z-index: 1080;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: min(420px, calc(100vw - 2rem));
+  pointer-events: none;
+}
+.toast-stack > * { pointer-events: auto; }
+
+/* Position variants */
+.toast-stack.pos-top-right    { top: 1rem;    right: 1rem; }
+.toast-stack.pos-top-left     { top: 1rem;    left: 1rem; }
+.toast-stack.pos-top-center   { top: 1rem;    left: 50%; transform: translateX(-50%); }
+.toast-stack.pos-bottom-right { bottom: 1rem; right: 1rem; }
+.toast-stack.pos-bottom-left  { bottom: 1rem; left: 1rem; }
+.toast-stack.pos-bottom-center{ bottom: 1rem; left: 50%; transform: translateX(-50%); }
+
+.toast-card {
+  --tone-bg: var(--surface-0);
+  --tone-fg: var(--text-1);
+  --tone-accent: var(--brand);
+
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--tone-bg);
+  color: var(--tone-fg);
+  border: 1px solid var(--border);
+  border-inline-start: 4px solid var(--tone-accent);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  animation: toast-in 0.18s ease-out;
+}
+
+.toast-icon {
+  font-size: var(--fs-lg);
+  color: var(--tone-accent);
+  margin-top: 2px;
+}
+.toast-body { flex: 1 1 auto; min-width: 0; }
+.toast-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-inline-start: auto;
+}
+
+.btn-close-toast {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--text-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.btn-close-toast:hover { color: var(--text-1); background: var(--surface-2); }
+
+.toast-card.tone-success { --tone-accent: var(--success); }
+.toast-card.tone-error   { --tone-accent: var(--danger); }
+.toast-card.tone-warning { --tone-accent: var(--warning); }
+.toast-card.tone-info    { --tone-accent: var(--info); }
+
+@keyframes toast-in {
+  from { transform: translateY(-6px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}

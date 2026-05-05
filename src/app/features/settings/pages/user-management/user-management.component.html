@@ -1,0 +1,203 @@
+<section class="user-management">
+  <!-- Section header -->
+  <header class="d-flex align-items-center gap-3 mb-4">
+    <span class="icon-tile xl tone-primary"><i class="fa-solid fa-users"></i></span>
+    <div>
+      <h2 class="fw-700 mb-1">{{ 'settings.users.title' | translate }}</h2>
+      <p class="text-muted mb-0">{{ 'settings.users.subtitle' | translate }}</p>
+    </div>
+  </header>
+
+  <!-- KPI grid -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card kpi-card">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div>
+            <p class="text-muted small mb-1">{{ 'settings.users.kpi.total' | translate }}</p>
+            <h3 class="fw-700 mb-0 kpi-value">{{ kpis().total }}</h3>
+          </div>
+          <span class="icon-tile xl tone-primary"><i class="fa-solid fa-users"></i></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card kpi-card">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div>
+            <p class="text-muted small mb-1">{{ 'settings.users.kpi.active' | translate }}</p>
+            <h3 class="fw-700 mb-0 kpi-value text-success">{{ kpis().active }}</h3>
+          </div>
+          <span class="icon-tile xl tone-success"><i class="fa-solid fa-power-off"></i></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card kpi-card">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div>
+            <p class="text-muted small mb-1">{{ 'settings.users.kpi.inactive' | translate }}</p>
+            <h3 class="fw-700 mb-0 kpi-value text-muted">{{ kpis().inactive }}</h3>
+          </div>
+          <span class="icon-tile xl tone-gray"><i class="fa-solid fa-power-off"></i></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card kpi-card">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div>
+            <p class="text-muted small mb-1">{{ 'settings.users.kpi.roles' | translate }}</p>
+            <h3 class="fw-700 mb-0 kpi-value text-purple">{{ kpis().rolesCount }}</h3>
+          </div>
+          <span class="icon-tile xl tone-purple"><i class="fa-solid fa-user-shield"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters bar -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-6 col-lg flex-grow-1">
+          <div class="position-relative">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input class="form-control ps-5"
+                   [placeholder]="'settings.users.filters.searchPlaceholder' | translate"
+                   [ngModel]="searchTerm"
+                   (ngModelChange)="onSearchInput($event)" />
+          </div>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+          <select class="form-select"
+                  [ngModel]="roleFilter()"
+                  (ngModelChange)="onRoleFilterChange($event)">
+            <option value="all">{{ 'settings.users.filters.allRoles' | translate }}</option>
+            @for (r of roles; track r) {
+              <option [value]="r">{{ roleLabelFor(r) }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+          <select class="form-select" disabled>
+            <option>{{ 'settings.users.filters.allStatuses' | translate }}</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-auto">
+          <button type="button" class="btn btn-primary w-100 w-md-auto" (click)="openAdd()">
+            <i class="fa-solid fa-plus me-1"></i>
+            {{ 'settings.users.add' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users table -->
+  <div class="card">
+    <div class="card-header d-flex align-items-center gap-2">
+      <i class="fa-solid fa-users text-primary"></i>
+      <h5 class="mb-0">
+        {{ 'settings.users.list.title' | translate }} ({{ visible().length }})
+      </h5>
+    </div>
+    <div class="card-body p-0">
+      @if (loading()) {
+        <div class="p-5 text-center text-muted">
+          <span class="spinner-border spinner-border-sm me-2"></span>
+        </div>
+      } @else if (loadError()) {
+        <div class="alert alert-danger m-3 mb-0">
+          <i class="fa-solid fa-circle-exclamation me-2"></i>
+          {{ loadError() }}
+        </div>
+      } @else if (visible().length === 0) {
+        <div class="p-5 text-center text-muted">
+          {{ 'settings.users.list.empty' | translate }}
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th>{{ 'settings.users.list.col.name' | translate }}</th>
+                <th>{{ 'settings.users.list.col.email' | translate }}</th>
+                <th>{{ 'settings.users.list.col.phone' | translate }}</th>
+                <th>{{ 'settings.users.list.col.status' | translate }}</th>
+                <th class="text-end">{{ 'settings.users.list.col.actions' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (u of visible(); track trackById($index, u)) {
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center gap-3">
+                      <span class="user-avatar">{{ initialOf(u) }}</span>
+                      <span class="fw-600 text-truncate">{{ displayName(u) }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2 text-truncate">
+                      <i class="fa-solid fa-envelope text-muted"></i>
+                      <span class="small" dir="ltr">{{ u.email }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <i class="fa-solid fa-phone text-muted"></i>
+                      <span class="small" dir="ltr">{{ displayPhone(u) }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge success">
+                      {{ 'settings.users.filters.active' | translate }}
+                    </span>
+                  </td>
+                  <td class="text-end">
+                    <div class="position-relative d-inline-block"
+                         (appClickOutside)="openMenuId() === u.userId && closeMenus()">
+                      <button type="button" class="btn btn-icon"
+                              (click)="toggleMenu(u.userId)"
+                              [attr.aria-expanded]="openMenuId() === u.userId">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                      </button>
+
+                      @if (openMenuId() === u.userId) {
+                        <div class="row-menu">
+                          <button type="button" class="row-menu-item" (click)="openEdit(u)">
+                            <i class="fa-solid fa-pen"></i>
+                            {{ 'settings.users.edit' | translate }}
+                          </button>
+                          <button type="button" class="row-menu-item danger" (click)="confirmDelete(u)">
+                            <i class="fa-solid fa-trash"></i>
+                            {{ 'settings.users.delete' | translate }}
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+@if (dialogMode()) {
+  <app-user-form-dialog
+    [mode]="dialogMode()!"
+    [user]="editingUser()"
+    (close)="onDialogSuccess()"
+    (cancel)="closeDialog()"
+  ></app-user-form-dialog>
+}

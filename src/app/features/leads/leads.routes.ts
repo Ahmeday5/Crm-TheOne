@@ -1,15 +1,16 @@
 import { Routes } from '@angular/router';
-import { authGuard } from '../../core/guards/auth.guard';
-import { marketingGuard } from '../../core/guards/marketing.guard';
+import { roleGuard } from '../../core/guards/role.guard';
 
 export const LEADS_ROUTES: Routes = [
   {
     path: 'leads',
-    canActivate: [authGuard],
+    canActivate: [roleGuard],
     children: [
       {
         path: 'marketing-leadsCustomer',
         title: 'إدارة العملاء المحتملين',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Marketing'] },
         loadComponent: () =>
           import('./pages/marketing-leads/marketing-leads.component').then(
             (m) => m.MarketingLeadsComponent,
@@ -18,6 +19,8 @@ export const LEADS_ROUTES: Routes = [
       {
         path: 'sales-leadsCustomer',
         title: 'إدارة العملاء المحتملين',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Sales'] },
         loadComponent: () =>
           import('./pages/sales-leads/sales-leads.component').then(
             (m) => m.SalesLeadsComponent,
@@ -26,7 +29,8 @@ export const LEADS_ROUTES: Routes = [
       {
         path: 'add-leadCustomer',
         title: 'إضافة عميل محتمل',
-        canActivate: [marketingGuard],
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Marketing'] },
         loadComponent: () =>
           import('./pages/add-lead/add-lead.component').then((m) => m.AddLeadComponent),
       },

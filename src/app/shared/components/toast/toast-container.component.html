@@ -1,0 +1,28 @@
+<div class="toast-stack" [class]="'pos-' + position()">
+  @for (t of toasts(); track t.id) {
+    <div class="toast-card"
+         [class]="'toast-card tone-' + t.type"
+         role="status"
+         (mouseenter)="pause(t.id)"
+         (mouseleave)="resume(t.id)">
+      <span class="toast-icon"><i [class]="iconOf(t.type)"></i></span>
+      <div class="toast-body">
+        @if (t.title) { <strong class="d-block">{{ t.title }}</strong> }
+        <span>{{ t.message }}</span>
+      </div>
+      <div class="toast-actions">
+        @if (t.action) {
+          <button type="button" class="btn btn-link p-0 fw-700"
+                  (click)="t.action.handler(); dismiss(t.id)">
+            {{ t.action.label }}
+          </button>
+        }
+        @if (t.closable) {
+          <button type="button" class="btn-close-toast" (click)="dismiss(t.id)" aria-label="close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        }
+      </div>
+    </div>
+  }
+</div>

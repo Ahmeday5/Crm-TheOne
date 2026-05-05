@@ -7,7 +7,9 @@ import {
   OnDestroy,
   OnInit,
   ViewChild,
+  computed,
   inject,
+  signal,
 } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import {
@@ -17,22 +19,17 @@ import {
   fromEvent,
   map,
 } from 'rxjs';
+import {
+  NAV_SECTIONS,
+  NavItem,
+  NavSection,
+} from '../../../core/constants/nav-sections.const';
+import { TRANSLATIONS, resolveKey } from '../../../core/i18n';
+import { UserRole } from '../../../core/models/auth.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
-import { TRANSLATIONS, resolveKey } from '../../../core/i18n';
 import { TranslatePipe } from '../../pipes/translate.pipe';
-
-interface MenuItem {
-  label: string; // translation key
-  path: string;
-  icon: string;
-  isOpen?: boolean;
-  submenu?: MenuItem[];
-}
-interface MenuSection {
-  title: string; // translation key
-  items: MenuItem[];
-}
 
 const SIDEBAR_TOGGLE_ATTR = 'data-sidebar-toggle';
 const COLLAPSED_KEY = 'sidebarCollapsed';
@@ -49,10 +46,11 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
   isCollapsed = false;
   isMobile = false;
 
-  menuItems: MenuSection[] = [];
-  filteredMenuItems: MenuSection[] = [];
+  /** Debounced search query — drives `visibleSections` recomputation. */
+  private readonly searchQuery = signal('');
+  /** Tied to the language service so changing language re-filters labels too. */
+  private readonly currentLang = inject(LanguageService).lang;
 
-  /** Search input is always rendered, so the ref is reliable. */
   @ViewChild('searchInput') searchInputRef?: ElementRef<HTMLInputElement>;
 
   private searchSub?: Subscription;
@@ -60,19 +58,25 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private host = inject(ElementRef<HTMLElement>);
   private sidebarService = inject(SidebarService);
-  private language = inject(LanguageService);
+  private auth = inject(AuthService);
+  private readonly currentRole = this.auth.currentRole;
+
+  /** Filtered nav, recomputes on (role, lang, query) change. */
+  readonly visibleSections = computed<NavSection[]>(() =>
+    this.filterSections(
+      NAV_SECTIONS,
+      this.currentRole(),
+      this.searchQuery().toLowerCase().trim(),
+      this.currentLang(),
+    ),
+  );
 
   ngOnInit(): void {
-    this.menuItems = this.buildMenu();
-    this.filteredMenuItems = this.cloneMenu(this.menuItems);
-
     const saved = localStorage.getItem(COLLAPSED_KEY);
     if (saved) this.isCollapsed = saved === 'true';
 
     this.computeViewportState();
 
-    // Drive isSidebarOpen from the service. On mobile we follow the service's
-    // state; on desktop the drawer is always "open" (laid out as a column).
     this.sidebarSub = this.sidebarService.sidebar$.subscribe((open) => {
       if (this.isMobile) this.isSidebarOpen = open;
       else this.isSidebarOpen = true;
@@ -80,7 +84,6 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // Search input is now ALWAYS rendered, so this is safe; guard anyway.
     const input = this.searchInputRef?.nativeElement;
     if (!input) return;
     this.searchSub = fromEvent(input, 'input')
@@ -89,7 +92,7 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
         debounceTime(200),
         distinctUntilChanged(),
       )
-      .subscribe((q) => this.applyFilter(q));
+      .subscribe((q) => this.searchQuery.set(q));
   }
 
   ngOnDestroy(): void {
@@ -102,15 +105,13 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
     this.computeViewportState();
   }
 
-  /** Close the drawer when the user clicks anywhere outside it on mobile. */
+  /** Close the drawer when clicking outside on mobile. */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (!this.isMobile || !this.isSidebarOpen) return;
     const target = event.target as HTMLElement | null;
     if (!target) return;
-    // Click inside the sidebar itself? leave it open.
     if (this.host.nativeElement.contains(target)) return;
-    // Click on the hamburger toggle? let its own handler decide.
     if (target.closest(`[${SIDEBAR_TOGGLE_ATTR}]`)) return;
     this.sidebarService.close();
   }
@@ -119,7 +120,6 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
     this.sidebarService.close();
   }
 
-  /** Auto-close mobile drawer when a link is tapped. */
   onLinkClicked(): void {
     if (this.isMobile) this.sidebarService.close();
   }
@@ -130,9 +130,29 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
     localStorage.setItem(COLLAPSED_KEY, String(this.isCollapsed));
   }
 
-  toggleSubmenu(sectionIndex: number, itemIndex: number): void {
-    const item = this.filteredMenuItems[sectionIndex]?.items[itemIndex];
-    if (item) item.isOpen = !item.isOpen;
+  // ─────────── filtering ───────────
+
+  private filterSections(
+    sections: ReadonlyArray<NavSection>,
+    role: UserRole | null,
+    query: string,
+    lang: 'ar' | 'en',
+  ): NavSection[] {
+    if (!role) return [];
+
+    const dict = TRANSLATIONS[lang];
+    const matchesQuery = (item: NavItem) =>
+      !query || resolveKey(dict, item.labelKey).toLowerCase().includes(query);
+
+    return sections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter(
+          (item) =>
+            (!item.roles || item.roles.includes(role)) && matchesQuery(item),
+        ),
+      }))
+      .filter((section) => section.items.length > 0);
   }
 
   private computeViewportState(): void {
@@ -141,188 +161,9 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (this.isMobile) {
       this.isCollapsed = false;
-      // crossing into mobile: drawer starts CLOSED
       if (!wasMobile) this.isSidebarOpen = false;
     } else {
-      // desktop: laid out as a column, always "open"
       this.isSidebarOpen = true;
     }
-  }
-
-  private applyFilter(query: string): void {
-    if (!query) {
-      this.filteredMenuItems = this.cloneMenu(this.menuItems);
-      return;
-    }
-    const q = query.toLowerCase();
-    const dict = TRANSLATIONS[this.language.lang()];
-    const translated = (key: string) => resolveKey(dict, key).toLowerCase();
-    this.filteredMenuItems = this.menuItems
-      .map((s) => ({
-        ...s,
-        items: s.items.filter((it) => translated(it.label).includes(q)),
-      }))
-      .filter((s) => s.items.length > 0);
-  }
-
-  private cloneMenu(menu: MenuSection[]): MenuSection[] {
-    return JSON.parse(JSON.stringify(menu));
-  }
-
-  private buildMenu(): MenuSection[] {
-    return [
-      // Role selector
-      {
-        title: 'sidebar.sections.role',
-        items: [
-          {
-            label: 'sidebar.items.admin',
-            path: '/',
-            icon: 'fa-solid fa-table-cells-large',
-          },
-          {
-            label: 'sidebar.items.marketing',
-            path: '/marketing-dashboard',
-            icon: 'fa-solid fa-users',
-          },
-          {
-            label: 'sidebar.items.sales',
-            path: '/sales-dashboard',
-            icon: 'fa-solid fa-chart-line',
-          },
-          {
-            label: 'sidebar.items.support',
-            path: '/appsupport-dashboard',
-            icon: 'fa-solid fa-headset',
-          },
-          {
-            label: 'sidebar.items.developers',
-            path: '/developer-dashboard',
-            icon: 'fa-solid fa-code',
-          },
-        ],
-      },
-      // Marketing & sales
-      {
-        title: 'sidebar.sections.marketingSales',
-        items: [
-          {
-            label: 'sidebar.items.campaigns',
-            path: '/marketing-campaigns',
-            icon: 'fa-solid fa-bullhorn',
-          },
-          {
-            label: 'sidebar.items.salesAnalysis',
-            path: '/sales-analysis',
-            icon: 'fa-solid fa-chart-column',
-          },
-        ],
-      },
-      // Main modules
-      {
-        title: 'sidebar.sections.mainModules',
-        items: [
-          {
-            label: 'sidebar.items.leads',
-            path: '/leads/marketing-leadsCustomer',
-            icon: 'fa-solid fa-address-card',
-          },
-          {
-            label: 'sidebar.items.salesLine',
-            path: '/line',
-            icon: 'fa-solid fa-chart-line',
-          },
-          {
-            label: 'sidebar.items.support',
-            path: '/dashboardSupport',
-            icon: 'fa-solid fa-headset',
-          },
-          {
-            label: 'sidebar.items.projects',
-            path: '/ProjectManage',
-            icon: 'fa-solid fa-table-columns',
-          },
-          {
-            label: 'sidebar.items.reports',
-            path: '/ReportAndAnalytics',
-            icon: 'fa-solid fa-chart-bar',
-          },
-          {
-            label: 'sidebar.items.chat',
-            path: '/internal-chat',
-            icon: 'fa-regular fa-comment-dots',
-          },
-        ],
-      },
-      // System administration
-      {
-        title: 'sidebar.sections.system',
-        items: [
-          {
-            label: 'sidebar.items.settings',
-            path: '/settings',
-            icon: 'fa-solid fa-gear',
-          },
-          {
-            label: 'sidebar.items.kb',
-            path: '/knowledge-base',
-            icon: 'fa-solid fa-book',
-          },
-          {
-            label: 'sidebar.items.improvements',
-            path: '/system-improvements',
-            icon: 'fa-solid fa-bolt',
-          },
-          {
-            label: 'sidebar.items.resources',
-            path: '/resources',
-            icon: 'fa-solid fa-users-gear',
-          },
-          {
-            label: 'sidebar.items.notifications',
-            path: '/notifications',
-            icon: 'fa-solid fa-bell',
-          },
-        ],
-      },
-      // Contracts & schedule
-      {
-        title: 'sidebar.sections.contracts',
-        items: [
-          {
-            label: 'sidebar.items.contractsManage',
-            path: '/contracts-management',
-            icon: 'fa-solid fa-file-contract',
-          },
-          {
-            label: 'sidebar.items.schedule',
-            path: '/schedule',
-            icon: 'fa-solid fa-calendar-days',
-          },
-        ],
-      },
-      // Performance & motivation
-      {
-        title: 'sidebar.sections.performance',
-        items: [
-          {
-            label: 'sidebar.items.goals',
-            path: '/goals',
-            icon: 'fa-solid fa-trophy',
-          },
-        ],
-      },
-      // Security
-      {
-        title: 'sidebar.sections.security',
-        items: [
-          {
-            label: 'sidebar.items.mfa',
-            path: '/security/mfa',
-            icon: 'fa-solid fa-shield-halved',
-          },
-        ],
-      },
-    ];
   }
 }

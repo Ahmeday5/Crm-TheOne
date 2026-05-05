@@ -1,0 +1,31 @@
+<section class="not-found-page">
+  <div class="nf-card">
+    <!-- Animated 404 illustration -->
+    <div class="nf-art" aria-hidden="true">
+      <span class="digit d-1">4</span>
+      <span class="orb">
+        <i class="fa-solid fa-compass"></i>
+      </span>
+      <span class="digit d-2">4</span>
+    </div>
+
+    <h1 class="nf-title">{{ 'notFound.title' | translate }}</h1>
+    <p class="nf-message">{{ 'notFound.message' | translate }}</p>
+
+    <div class="nf-actions">
+      <button type="button" class="btn btn-light" (click)="goBack()">
+        <i class="fa-solid fa-arrow-right ms-1"></i>
+        {{ 'notFound.back' | translate }}
+      </button>
+      <a class="btn btn-primary" [routerLink]="homeUrl()">
+        <i class="fa-solid fa-house me-1"></i>
+        {{ 'notFound.home' | translate }}
+      </a>
+    </div>
+
+    <p class="nf-hint">
+      <i class="fa-solid fa-circle-info me-1"></i>
+      {{ 'notFound.hint' | translate }}
+    </p>
+  </div>
+</section>

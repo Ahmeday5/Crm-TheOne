@@ -2,7 +2,7 @@
        [class.is-open]="isSidebarOpen && isMobile"
        [class.is-mini]="isCollapsed && !isMobile">
 
-  <!-- Header: search (always rendered) + toggle / close button -->
+  <!-- Header: search + collapse / close button -->
   <div class="sidebar-head d-flex align-items-center gap-2">
     <div class="search-wrap flex-grow-1">
       <i class="fa-solid fa-magnifying-glass"></i>
@@ -29,45 +29,21 @@
 
   <!-- Nav -->
   <nav class="sidebar-nav">
-    @for (section of filteredMenuItems; track section.title; let si = $index) {
+    @for (section of visibleSections(); track section.titleKey) {
       <div class="nav-section">
-        <h6 class="nav-section-title">{{ section.title | translate }}</h6>
+        <h6 class="nav-section-title">{{ section.titleKey | translate }}</h6>
         <ul class="list-unstyled nav-list">
-          @for (item of section.items; track item.path; let ii = $index) {
-            <li class="nav-item" [class.has-submenu]="item.submenu" [class.is-open]="item.isOpen">
-              @if (item.submenu) {
-                <button type="button" class="nav-link"
-                        (click)="toggleSubmenu(si, ii)">
-                  <i [class]="item.icon"></i>
-                  <span class="nav-label">{{ item.label | translate }}</span>
-                  <i class="fa-solid fa-chevron-down submenu-arrow ms-auto"
-                     [class.rotated]="item.isOpen"></i>
-                </button>
-                <ul class="list-unstyled submenu" [class.show]="item.isOpen">
-                  @for (sub of item.submenu; track sub.path) {
-                    <li>
-                      <a class="nav-link sub-link"
-                         [routerLink]="sub.path"
-                         routerLinkActive="active"
-                         [routerLinkActiveOptions]="{ exact: true }"
-                         (click)="onLinkClicked()">
-                        <i [class]="sub.icon"></i>
-                        <span class="nav-label">{{ sub.label | translate }}</span>
-                      </a>
-                    </li>
-                  }
-                </ul>
-              } @else {
-                <a class="nav-link"
-                   [routerLink]="item.path"
-                   routerLinkActive="active"
-                   [routerLinkActiveOptions]="{ exact: true }"
-                   [title]="item.label | translate"
-                   (click)="onLinkClicked()">
-                  <i [class]="item.icon"></i>
-                  <span class="nav-label">{{ item.label | translate }}</span>
-                </a>
-              }
+          @for (item of section.items; track item.path) {
+            <li class="nav-item">
+              <a class="nav-link"
+                 [routerLink]="item.path"
+                 routerLinkActive="active"
+                 [routerLinkActiveOptions]="{ exact: true }"
+                 [title]="item.labelKey | translate"
+                 (click)="onLinkClicked()">
+                <i [class]="item.icon"></i>
+                <span class="nav-label">{{ item.labelKey | translate }}</span>
+              </a>
             </li>
           }
         </ul>

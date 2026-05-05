@@ -1,0 +1,11 @@
+<div class="flex-grow-1">
+  <app-page-header
+    [title]="'settings.title' | translate"
+    [subtitle]="'settings.subtitle' | translate"
+    icon="fa-solid fa-gear"
+  ></app-page-header>
+
+  <app-tabbed-nav-card [items]="tabs"></app-tabbed-nav-card>
+
+  <router-outlet></router-outlet>
+</div>

@@ -25,24 +25,36 @@
         <i class="fa-solid fa-bell fs-5"></i>
         <span class="notif-dot"></span>
       </button>
-      
+
       <div class="dropdown">
         <button class="btn btn-light d-flex align-items-center gap-2 user-pill"
                 type="button" data-bs-toggle="dropdown">
           <span class="user-avatar"><i class="fa-solid fa-user"></i></span>
           <span class="d-none d-md-inline-block text-start">
-            <span class="d-block fw-700">محمد أحمد السعيد</span>
-            <small class="text-muted">{{ 'sidebar.items.marketing' | translate }}</small>
+            <span class="d-block fw-700 text-truncate" style="max-width: 180px;">{{ currentUser()?.email || ('header.profile' | translate) }}</span>
+            <small class="text-muted">{{ currentRoleLabel() }}</small>
           </span>
         </button>
 
         <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item"><i class="fa-regular fa-user me-2"></i>{{ 'header.profile' | translate }}</a></li>
-          <li><a class="dropdown-item"><i class="fa-solid fa-gear me-2"></i>{{ 'header.settings' | translate }}</a></li>
-          <li><hr class="dropdown-divider"></li>
-          <li><button type="button" class="dropdown-item text-danger" (click)="logout()">
-            <i class="fa-solid fa-right-from-bracket me-2"></i>{{ 'header.logout' | translate }}
-          </button></li>
+          <li>
+            <a class="dropdown-item">
+              <i class="fa-regular fa-user me-2"></i>{{ 'header.profile' | translate }}
+            </a>
+          </li>
+          <li>
+            <a routerLink="/settings/users" class="dropdown-item">
+              <i class="fa-solid fa-gear me-2"></i>{{ 'header.settings' | translate }}
+            </a>
+          </li>
+          <li>
+            <hr class="dropdown-divider">
+          </li>
+          <li>
+            <button type="button" class="dropdown-item text-danger" (click)="logout()">
+              <i class="fa-solid fa-right-from-bracket me-2"></i>{{ 'header.logout' | translate }}
+            </button>
+          </li>
         </ul>
       </div>
     </div>

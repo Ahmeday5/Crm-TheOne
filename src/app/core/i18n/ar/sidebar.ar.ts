@@ -36,6 +36,8 @@ const sidebar: TranslationFile<'sidebar'> = {
       improvements: 'تحسينات النظام',
       resources: 'إدارة الموارد',
       notifications: 'مركز الإشعارات',
+      devAnalytics: 'تحليلات المطورين',
+      webhooks: 'إدارة الويبهوكس',
       // Contracts & schedule
       contractsManage: 'إدارة العقود',
       schedule: 'جدول المواعيد',

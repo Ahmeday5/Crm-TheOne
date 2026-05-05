@@ -2,30 +2,18 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
-export const authGuard: CanActivateFn = (route, state) => {
-  const authService = inject(AuthService);
+/**
+ * Bounces unauthenticated users to the login page, preserving the intended
+ * destination as a `returnUrl` query param so we can come back after login.
+ */
+export const authGuard: CanActivateFn = (_route, state) => {
+  const auth = inject(AuthService);
   const router = inject(Router);
-  const role = authService.getUserRole();
 
-  // لو مش مسجل دخول خالص → روح للوجين
-  if (!role) {
-    router.navigate(['/auth/login']);
-    return false;
-  }
+  if (auth.isLoggedIn()) return true;
 
-  // لو الـ URL الحالي هو /leads بالظبط (مش sub-route)
-  // وجهه للشكل المناسب حسب الـ Role
-  if (route.routeConfig?.path === 'leads' && !route.firstChild) {
-    if (role === 'marketing' || role === 'admin') {
-      router.navigate(['/leads/marketing-leadsCustomer']);  // ← غيرناه للمسار الصح اللي عندك
-    } else if (role === 'sales') {
-      router.navigate(['/leads/sales-leadsCustomer']);     // ← غيرناه للمسار الصح
-    } else {
-      router.navigate(['/']);  // لو Role غريب، روح للداش بورد الرئيسي
-    }
-    return true;   // ← المهم: رجع true عشان يسمح بالتنقل
-  }
-
-  // لو الـ route مش /leads، أو فيه child، خليه يمر عادي
-  return true;
+  router.navigate(['/auth/login'], {
+    queryParams: state.url && state.url !== '/' ? { returnUrl: state.url } : {},
+  });
+  return false;
 };

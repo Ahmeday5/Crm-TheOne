@@ -1,0 +1,90 @@
+<div class="user-form-backdrop" (click)="onBackdropClick()">
+  <div class="user-form-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <header class="d-flex align-items-center justify-content-between mb-3">
+      <h5 class="fw-700 mb-0">
+        @if (mode === 'add') { {{ 'settings.users.addDialog.title' | translate }} }
+        @else { {{ 'settings.users.editDialog.title' | translate }} }
+      </h5>
+      <button type="button" class="btn-icon" (click)="onBackdropClick()" [disabled]="submitting()" aria-label="close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+
+    <form #ngForm="ngForm" (ngSubmit)="submit(ngForm)" novalidate>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-600">{{ 'settings.users.addDialog.fullName' | translate }}</label>
+          <input class="form-control"
+                 name="fullName" [(ngModel)]="form.fullName" required
+                 [disabled]="submitting()" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-600">{{ 'settings.users.addDialog.email' | translate }}</label>
+          <input type="email" class="form-control"
+                 name="email" [(ngModel)]="form.email" required email
+                 [disabled]="submitting()" autocomplete="email" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-600">{{ 'settings.users.addDialog.phone' | translate }}</label>
+          <input class="form-control" dir="ltr"
+                 name="phone" [(ngModel)]="form.phone" required
+                 [disabled]="submitting()" autocomplete="tel" />
+        </div>
+
+        @if (mode === 'add') {
+          <div class="col-md-6">
+            <label class="form-label fw-600">{{ 'settings.users.addDialog.role' | translate }}</label>
+            <select class="form-select"
+                    name="role" [(ngModel)]="form.role" required
+                    [disabled]="submitting()">
+              @for (r of roles; track r) {
+                <option [value]="r">{{ r }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-600">{{ 'settings.users.addDialog.address' | translate }}</label>
+            <input class="form-control"
+                   name="address" [(ngModel)]="form.address" required
+                   [disabled]="submitting()" />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-600">{{ 'settings.users.addDialog.password' | translate }}</label>
+            <input type="password" class="form-control"
+                   name="password" [(ngModel)]="form.password" required minlength="6"
+                   [disabled]="submitting()" autocomplete="new-password" />
+          </div>
+        }
+      </div>
+
+      @if (errorMessage()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mt-3 mb-0" role="alert">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      <footer class="d-flex justify-content-end gap-2 mt-4">
+        <button type="button" class="btn btn-light" (click)="onBackdropClick()" [disabled]="submitting()">
+          @if (mode === 'add') { {{ 'settings.users.addDialog.cancel' | translate }} }
+          @else { {{ 'settings.users.editDialog.cancel' | translate }} }
+        </button>
+        <button type="submit" class="btn btn-primary"
+                [disabled]="submitting() || ngForm.invalid">
+          @if (submitting()) {
+            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            @if (mode === 'add') { {{ 'settings.users.addDialog.submitting' | translate }} }
+            @else { {{ 'settings.users.editDialog.submitting' | translate }} }
+          } @else {
+            @if (mode === 'add') { {{ 'settings.users.addDialog.submit' | translate }} }
+            @else { {{ 'settings.users.editDialog.submit' | translate }} }
+          }
+        </button>
+      </footer>
+    </form>
+  </div>
+</div>
