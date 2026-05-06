@@ -1,82 +1,209 @@
 <div class="flex-1">
-  <app-page-header [title]="'leads.add' | translate"
-                   [subtitle]="'leads.subtitle' | translate"
+  <app-page-header [title]="'customers.form.addTitle' | translate"
+                   [subtitle]="'customers.welcomeSubtitle' | translate"
                    icon="fa-solid fa-user-plus"></app-page-header>
   <div>
-    <button class="btn btn-view mb-4" (click)="goBack()">
-      <i class="fas fa-arrow-right ml-2"></i> العودة لقائمة العملاء المحتملين
+    <button class="btn btn-light mb-4" (click)="goBack()">
+      <i class="fa-solid fa-arrow-right me-2"></i>{{ 'customers.backToList' | translate }}
     </button>
+
     <div class="card">
       <div class="card-header d-flex align-items-center gap-2">
-        <i class="fas fa-user-plus w-6 h-6"></i>
-        <h5 class="mt-2">إضافة عميل محتمل جديد</h5>
+        <span class="icon-tile tone-primary"><i class="fa-solid fa-user-plus"></i></span>
+        <h5 class="mb-0">{{ 'customers.form.addTitle' | translate }}</h5>
       </div>
       <div class="card-body">
-        <form (ngSubmit)="addLead()" #addForm="ngForm">
-          <div class="row">
-            <div class="col-md-6 form-group mb-3">
-              <label class="form-label" for="fullName">الاسم الكامل *</label>
-              <input type="text" class="form-control" id="fullName" [(ngModel)]="newLead.fullName" name="fullName"
-                required placeholder="أدخل الاسم الكامل">
+        <form [formGroup]="form" id="add-lead-form" novalidate (ngSubmit)="saveOnly()">
+          <div class="row g-3">
+            <!-- Full Name -->
+            <div class="col-md-6">
+              <label for="add-fullName" class="form-label fw-600">
+                {{ 'customers.form.fullName' | translate }} <span class="text-danger">*</span>
+              </label>
+              <input id="add-fullName"
+                     class="form-control"
+                     formControlName="fullName"
+                     [class.is-invalid]="form.controls.fullName.invalid && (form.controls.fullName.dirty || form.controls.fullName.touched)"
+                     [placeholder]="'customers.form.fullNamePh' | translate" />
+              <app-form-error
+                [control]="form.controls.fullName"
+                [label]="'customers.form.fullName' | translate" />
             </div>
-            <div class="col-md-6 form-group mb-3">
-              <label class="form-label" for="phoneNumber">رقم الهاتف *</label>
-              <input type="text" class="form-control" id="phoneNumber" [(ngModel)]="newLead.phoneNumber"
-                name="phoneNumber" required placeholder="+966 50 000 0000">
+
+            <!-- Phone -->
+            <div class="col-md-6">
+              <label for="add-phone" class="form-label fw-600">
+                {{ 'customers.form.phone' | translate }} <span class="text-danger">*</span>
+              </label>
+              <input id="add-phone"
+                     class="form-control"
+                     formControlName="phone"
+                     [class.is-invalid]="form.controls.phone.invalid && (form.controls.phone.dirty || form.controls.phone.touched)"
+                     [placeholder]="'customers.form.phonePh' | translate" />
+              <app-form-error
+                [control]="form.controls.phone"
+                [label]="'customers.form.phone' | translate" />
             </div>
-            <div class="col-md-6 form-group mb-3">
-              <label class="form-label" for="email">البريد الإلكتروني</label>
-              <input type="email" class="form-control" id="email" [(ngModel)]="newLead.email" name="email"
-                placeholder="example@email.com">
+
+            <!-- Email -->
+            <div class="col-md-6">
+              <label for="add-email" class="form-label fw-600">
+                {{ 'customers.form.email' | translate }}
+              </label>
+              <input id="add-email"
+                     class="form-control"
+                     formControlName="email"
+                     type="email"
+                     [placeholder]="'customers.form.emailPh' | translate" />
             </div>
-            <div class="col-md-6 form-group mb-3">
-              <label class="form-label" for="companyName">اسم الشركة</label>
-              <input type="text" class="form-control" id="companyName" [(ngModel)]="newLead.companyName"
-                name="companyName" placeholder="أدخل اسم الشركة">
+
+            <!-- Company -->
+            <div class="col-md-6">
+              <label for="add-company" class="form-label fw-600">
+                {{ 'customers.form.companyName' | translate }}
+              </label>
+              <input id="add-company"
+                     class="form-control"
+                     formControlName="companyName"
+                     [placeholder]="'customers.form.companyNamePh' | translate" />
             </div>
-            <div class="col-md-6 form-group mb-3">
-              <label class="form-label" for="leadSource">مصدر العميل المحتمل *</label>
-              <select class="form-select" id="leadSource" [(ngModel)]="newLead.leadSource" name="leadSource" required>
-                <option value="" disabled selected>اختر المصدر</option>
-                <option value="فيسبوك">فيسبوك</option>
-                <option value="إنستغرام">إنستغرام</option>
-                <option value="إعلانات جوجل">إعلانات جوجل</option>
-                <option value="الموقع الإلكتروني">الموقع الإلكتروني</option>
-                <option value="إحالة">إحالة</option>
-                <option value="لينكد إن">لينكد إن</option>
+
+            <!-- Campaign -->
+            <div class="col-md-6">
+              <label for="add-campaign" class="form-label fw-600">
+                {{ 'customers.form.campaign' | translate }}
+              </label>
+              <select id="add-campaign" class="form-select" formControlName="campaignId">
+                <option [ngValue]="null">{{ 'customers.form.campaignPh' | translate }}</option>
+                @for (c of campaigns(); track c.id) {
+                  <option [ngValue]="c.id">{{ c.name }}</option>
+                }
               </select>
             </div>
-            <div class="col-md-6 form-group mb-3">
-              <label class="form-label" for="campaignName">اسم الحملة</label>
-              <input type="text" class="form-control" id="campaignName" [(ngModel)]="newLead.campaignName"
-                name="campaignName" placeholder="أدخل اسم الحملة">
+
+            <!-- Services multi-select -->
+            <div class="col-md-6">
+              <label class="form-label fw-600">{{ 'customers.form.services' | translate }}</label>
+              <div class="services-picker">
+                @if (servicesList().length === 0) {
+                  <span class="text-muted small">{{ 'customers.form.noServices' | translate }}</span>
+                } @else {
+                  @for (svc of servicesList(); track svc.id) {
+                    <div class="form-check">
+                      <input class="form-check-input"
+                             type="checkbox"
+                             [id]="'add-svc-' + svc.id"
+                             [checked]="isServiceSelected(svc.id)"
+                             (change)="toggleService(svc.id)" />
+                      <label class="form-check-label" [for]="'add-svc-' + svc.id">
+                        {{ serviceName(svc) }}
+                      </label>
+                    </div>
+                  }
+                }
+              </div>
             </div>
-            <div class="col-md-12 form-group mb-3">
-              <label class="form-label" for="interestedService">الخدمة المهتم بها</label>
-              <select class="form-select" id="interestedService" [(ngModel)]="newLead.interestedService"
-                name="interestedService">
-                <option value="" disabled selected>اختر الخدمة</option>
-                <option value="برنامج محاسبي">برنامج محاسبي</option>
-                <option value="تطبيق جوال">تطبيق جوال</option>
-                <option value="موقع إلكتروني">موقع إلكتروني</option>
-                <option value="منصة تجارة إلكترونية">منصة تجارة إلكترونية</option>
-                <option value="نظام إدارة علاقات العملاء">نظام إدارة علاقات العملاء</option>
-              </select>
-            </div>
-            <div class="col-md-12 form-group mb-3">
-              <label class="form-label" for="notes">ملاحظات</label>
-              <textarea class="form-control" id="notes" [(ngModel)]="newLead.notes" name="notes" rows="4"
-                placeholder="أي ملاحظات إضافية..."></textarea>
+
+            <!-- Notes -->
+            <div class="col-12">
+              <label for="add-notes" class="form-label fw-600">
+                {{ 'customers.form.notes' | translate }}
+              </label>
+              <textarea id="add-notes"
+                        class="form-control"
+                        formControlName="notes"
+                        rows="4"
+                        [placeholder]="'customers.form.notesPh' | translate"></textarea>
             </div>
           </div>
-          <div class="d-flex justify-content-end gap-3 pt-4 border-top">
-            <button type="button" class="btn btn-outline-secondary" (click)="goBack()">إلغاء</button>
-            <button type="submit" class="btn btn-view"><i class="fas fa-save ml-2"></i>حفظ فقط</button>
-            <button type="button" class="btn btn-view active" (click)="saveAndAssign()"><i
-                class="fas fa-user-plus ml-2"></i>حفظ وتعيين لفريق المبيعات</button>
-          </div>
+
+          @if (errorMessage()) {
+            <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mt-3" role="alert">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
         </form>
+
+        <!-- Action buttons -->
+        <div class="d-flex justify-content-end gap-3 pt-4 mt-4 border-top">
+          <button type="button" class="btn btn-light" (click)="goBack()" [disabled]="submitting()">
+            {{ 'customers.form.cancel' | translate }}
+          </button>
+          <button type="submit"
+                  form="add-lead-form"
+                  class="btn btn-primary"
+                  [disabled]="submitting()">
+            @if (submitting()) {
+              <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            } @else {
+              <i class="fa-solid fa-floppy-disk me-1"></i>
+            }
+            {{ 'customers.form.save' | translate }}
+          </button>
+          <button type="button"
+                  class="btn btn-success"
+                  [disabled]="submitting()"
+                  (click)="openSalesModal()">
+            <i class="fa-solid fa-user-plus me-1"></i>
+            {{ 'customers.form.saveAndAssign' | translate }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Sales Person Picker Modal -->
+@if (showSalesModal()) {
+  <app-modal
+    [open]="true"
+    [title]="'customers.form.selectSalesPerson' | translate"
+    icon="fa-solid fa-user-tie"
+    iconTone="success"
+    size="md"
+    (closed)="closeSalesModal()">
+
+    <p class="text-muted mb-3">{{ 'customers.assignModal.hint' | translate }}</p>
+
+    @if (salesTeam().length === 0) {
+      <div class="text-center py-4">
+        <span class="spinner-border text-primary" role="status"></span>
+      </div>
+    } @else {
+      <div class="list-group">
+        @for (person of salesTeam(); track person.userId) {
+          <label class="list-group-item list-group-item-action d-flex align-items-center gap-3"
+                 [class.active]="selectedSalesPersonId === person.userId"
+                 style="cursor: pointer;">
+            <input type="radio"
+                   class="form-check-input mt-0"
+                   name="addSalesPerson"
+                   [value]="person.userId"
+                   [(ngModel)]="selectedSalesPersonId" />
+            <div>
+              <span class="fw-600 d-block">{{ person.fullName }}</span>
+              <small class="text-muted">{{ person.email }}</small>
+              @if (person.phone) {
+                <small class="text-muted d-block">{{ person.phone }}</small>
+              }
+            </div>
+          </label>
+        }
+      </div>
+    }
+
+    <ng-container modal-footer>
+      <button type="button" class="btn btn-light" (click)="closeSalesModal()">
+        {{ 'customers.assignModal.cancel' | translate }}
+      </button>
+      <button type="button"
+              class="btn btn-success"
+              [disabled]="!selectedSalesPersonId"
+              (click)="confirmSalesAssign()">
+        <i class="fa-solid fa-check me-1"></i>
+        {{ 'customers.assignModal.submit' | translate }}
+      </button>
+    </ng-container>
+  </app-modal>
+}

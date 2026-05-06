@@ -1,0 +1,22 @@
+:host { display: block; }
+
+.search-icon {
+  position: absolute;
+  inset-inline-end: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+.btn-danger-soft {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--border);
+}
+.btn-danger-soft:hover,
+.btn-danger-soft:focus {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}

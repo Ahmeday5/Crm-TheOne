@@ -1,135 +1,271 @@
-<app-page-header [title]="'leads.title' | translate"
-                 [subtitle]="'leads.subtitle' | translate"
-                 icon="fa-solid fa-address-card">
-  <button class="btn btn-primary" (click)="goToAddLead()">
-    <i class="fa-solid fa-plus me-1"></i>{{ 'leads.addNew' | translate }}
-  </button>
-</app-page-header>
-
-<div class="d-flex align-items-center justify-content-between mb-3">
-  <div>
-    <h4 class="mb-1">{{ 'leads.listTitle' | translate }}</h4>
-    <p class="text-muted mb-0">{{ 'leads.listSubtitle' | translate }}</p>
+<section class="customers-page">
+  <!-- Welcome strip -->
+  <div class="mb-4">
+    <h2 class="fw-700 mb-1">{{ 'customers.welcomeTitle' | translate }}</h2>
+    <p class="text-muted mb-0">{{ 'customers.welcomeSubtitle' | translate }}</p>
   </div>
-</div>
 
-<!-- Filters -->
-<div class="card mb-3">
-  <div class="card-body">
-    <div class="row g-3">
-      <div class="col-md-6">
-        <input type="text" class="form-control"
-               [placeholder]="'leads.searchPh' | translate"
-               [(ngModel)]="searchQuery" (input)="filterLeads()">
-      </div>
-      <div class="col-md-3">
-        <select class="form-select" [(ngModel)]="selectedSource" (change)="filterLeads()">
-          <option value="">{{ 'leads.allSources' | translate }}</option>
-          <option value="فيسبوك">{{ 'dashboard.sources.facebook' | translate }}</option>
-          <option value="إنستغرام">{{ 'dashboard.sources.instagram' | translate }}</option>
-          <option value="جوجل">{{ 'dashboard.sources.google' | translate }}</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <select class="form-select" [(ngModel)]="selectedStatus" (change)="filterLeads()">
-          <option value="">{{ 'leads.allStatuses' | translate }}</option>
-          <option value="جديد">{{ 'leads.statuses.new' | translate }}</option>
-          <option value="معين لفريق المبيعات">{{ 'leads.statuses.assigned' | translate }}</option>
-          <option value="تم الاتصال">{{ 'leads.statuses.contacted' | translate }}</option>
-        </select>
+  <!-- Page header -->
+  <header class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <span class="icon-tile xl tone-primary"><i class="fa-solid fa-address-card"></i></span>
+      <div>
+        <h3 class="fw-700 mb-1">{{ 'customers.title' | translate }}</h3>
+        <p class="text-muted mb-0">{{ 'customers.subtitle' | translate }}</p>
       </div>
     </div>
-  </div>
-</div>
+    <button type="button" class="btn btn-primary" (click)="goToAddLead()">
+      <i class="fa-solid fa-plus me-1"></i>
+      {{ 'customers.addNew' | translate }}
+    </button>
+  </header>
 
-<!-- Table -->
-<div class="card">
-  <div class="card-header d-flex align-items-center justify-content-between">
-    <h5 class="mb-0">{{ 'leads.total' | translate }}: {{ filteredLeads.length }}</h5>
-    <button class="btn btn-light"><i class="fa-solid fa-download me-1"></i>{{ 'leads.export' | translate }}</button>
-  </div>
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead>
-          <tr>
-            <th>{{ 'leads.name' | translate }}</th>
-            <th>{{ 'leads.phone' | translate }}</th>
-            <th>{{ 'leads.source' | translate }}</th>
-            <th>{{ 'leads.campaign' | translate }}</th>
-            <th>{{ 'leads.service' | translate }}</th>
-            <th>{{ 'leads.status' | translate }}</th>
-            <th>{{ 'leads.salesRep' | translate }}</th>
-            <th>{{ 'leads.createdAt' | translate }}</th>
-            <th>{{ 'leads.actions' | translate }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let lead of filteredLeads">
-            <td>{{ lead.name }}</td>
-            <td>{{ lead.phone }}</td>
-            <td>{{ lead.source }}</td>
-            <td>{{ lead.campaign }}</td>
-            <td>{{ lead.service }}</td>
-            <td>
-              <span class="badge"
-                    [ngClass]="{
-                      'bg-primary-subtle': lead.status === 'جديد',
-                      'bg-success-subtle': lead.status === 'معين لفريق المبيعات',
-                      'bg-warning-subtle': lead.status === 'تم الاتصال'
-                    }">{{ lead.status }}</span>
-            </td>
-            <td>{{ lead.salesRep || '—' }}</td>
-            <td>{{ lead.createdDate }}</td>
-            <td>
-              <div class="d-flex gap-1 justify-content-center">
-                <button class="btn-icon" [title]="'leads.actionTitles.assignToSales' | translate"
-                        (click)="openModal(lead)"><i class="fa-solid fa-user-plus"></i></button>
-                <button class="btn-icon" [title]="'leads.actionTitles.edit' | translate"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn-icon text-danger" [title]="'leads.actionTitles.delete' | translate"><i class="fa-solid fa-trash"></i></button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <!-- KPIs -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-lg-3">
+      <app-stat-card
+        [label]="'customers.kpi.total' | translate"
+        [value]="kpis().total"
+        icon="fa-solid fa-users"
+        tone="primary">
+      </app-stat-card>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+      <app-stat-card
+        [label]="'customers.kpi.visible' | translate"
+        [value]="kpis().visible"
+        icon="fa-solid fa-eye"
+        tone="success">
+      </app-stat-card>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+      <app-stat-card
+        [label]="'customers.kpi.page' | translate"
+        [value]="kpis().page"
+        icon="fa-solid fa-layer-group"
+        tone="info">
+      </app-stat-card>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+      <app-stat-card
+        [label]="'customers.kpi.pageSize' | translate"
+        [value]="kpis().pageSize"
+        icon="fa-solid fa-table-list"
+        tone="orange">
+      </app-stat-card>
     </div>
   </div>
-</div>
 
-<!-- Assign modal -->
-@if (showAssignModal) {
-  <div class="modal fade show d-block" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <div>
-            <h5 class="mb-1">{{ 'leads.assignModal.title' | translate }}</h5>
-            <small class="text-muted">{{ 'leads.assignModal.hint' | translate }}</small>
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <!-- Search -->
+        <div class="col-12 col-md-4">
+          <div class="position-relative">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input class="form-control ps-5"
+                   [placeholder]="'customers.filters.searchPlaceholder' | translate"
+                   [ngModel]="searchTerm"
+                   (ngModelChange)="onSearchInput($event)" />
           </div>
-          <button class="btn-close" (click)="closeModal()"></button>
         </div>
-
-        <div class="modal-body">
-          <div class="card bg-light p-3 mb-3">
-            <p class="fw-600 mb-1">{{ selectedLead?.name }}</p>
-            <small class="text-muted d-block">{{ selectedLead?.phone }}</small>
-            <small class="text-muted d-block">{{ selectedLead?.service }}</small>
-          </div>
-
-          <label class="form-label">{{ 'leads.assignModal.pickRep' | translate }}</label>
-          <select class="form-select">
-            <option value="">{{ 'leads.assignModal.pickRep' | translate }}</option>
-            <option>عمر حسن الشهري</option>
-            <option>فاطمة علي الدوسري</option>
+        <!-- Status filter -->
+        <div class="col-12 col-md-4">
+          <select class="form-select"
+                  [ngModel]="selectedStatusId() ?? ''"
+                  (ngModelChange)="onStatusChange($event)">
+            <option value="">{{ 'customers.filters.allStatuses' | translate }}</option>
+            @for (s of statuses(); track s.id) {
+              <option [value]="s.id">{{ s.name }}</option>
+            }
           </select>
         </div>
-
-        <div class="modal-footer">
-          <button class="btn btn-light" (click)="closeModal()">{{ 'common.cancel' | translate }}</button>
-          <button class="btn btn-primary">{{ 'leads.assignModal.submit' | translate }}</button>
+        <!-- Source filter -->
+        <div class="col-12 col-md-4">
+          <select class="form-select"
+                  [ngModel]="selectedSourceId() ?? ''"
+                  (ngModelChange)="onSourceChange($event)">
+            <option value="">{{ 'customers.filters.allSources' | translate }}</option>
+            @for (src of sources(); track src.id) {
+              <option [value]="src.id">{{ src.name }}</option>
+            }
+          </select>
         </div>
       </div>
     </div>
   </div>
-  <div class="modal-backdrop fade show"></div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="card-header d-flex align-items-center gap-2">
+      <i class="fa-solid fa-address-card text-primary"></i>
+      <h5 class="mb-0">
+        {{ 'customers.title' | translate }}
+        <span class="text-muted small">({{ count() }})</span>
+      </h5>
+    </div>
+
+    @if (loadError()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 m-3 mb-0" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ loadError() }}</span>
+        <button type="button" class="btn btn-link p-0 ms-auto" (click)="reload()">
+          {{ 'common.retry' | translate }}
+        </button>
+      </div>
+    }
+
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        @if (loading()) {
+          <div class="text-center py-5">
+            <span class="spinner-border text-primary" role="status"></span>
+          </div>
+        } @else if (rows().length === 0) {
+          <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-inbox fa-3x mb-3 d-block opacity-50"></i>
+            <p class="mb-0">
+              {{ searchSignal() || selectedStatusId() || selectedSourceId()
+                ? ('customers.table.emptyFiltered' | translate)
+                : ('customers.table.empty' | translate) }}
+            </p>
+          </div>
+        } @else {
+          <table class="table table-hover mb-0 align-middle">
+            <thead>
+              <tr>
+                <th class="ps-3">{{ 'customers.table.fullName' | translate }}</th>
+                <th>{{ 'customers.table.phone' | translate }}</th>
+                <th>{{ 'customers.table.source' | translate }}</th>
+                <th>{{ 'customers.table.campaign' | translate }}</th>
+                <th>{{ 'customers.table.services' | translate }}</th>
+                <th>{{ 'customers.table.status' | translate }}</th>
+                <th>{{ 'customers.table.salesPerson' | translate }}</th>
+                <th>{{ 'customers.table.createdAt' | translate }}</th>
+                <th class="text-center">{{ 'customers.table.actions' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track row.id) {
+                <tr>
+                  <td class="ps-3 fw-600">{{ row.fullName }}</td>
+                  <td class="font-monospace small">{{ row.phone }}</td>
+                  <td>
+                    @if (row.source) {
+                      <span class="badge bg-info-subtle text-info">{{ row.source }}</span>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  <td>{{ row.campaignName || '—' }}</td>
+                  <td>
+                    @if (row.services && row.services.length > 0) {
+                      @for (svc of row.services; track svc) {
+                        <span class="badge bg-primary-subtle text-primary me-1 mb-1">{{ svc }}</span>
+                      }
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  <td>
+                    <span class="badge {{ statusBadgeClass(row.status) }}">
+                      {{ resolveStatus(row.status) }}
+                    </span>
+                  </td>
+                  <td>
+                    @if (row.salesPersonName) {
+                      <span class="d-flex align-items-center gap-1">
+                        <i class="fa-solid fa-user-tie text-success small"></i>
+                        {{ row.salesPersonName }}
+                      </span>
+                    } @else {
+                      <span class="text-muted fst-italic">{{ 'customers.table.notAssigned' | translate }}</span>
+                    }
+                  </td>
+                  <td class="small text-muted">{{ formatDate(row.createdAt) }}</td>
+                  <td>
+                    <div class="d-inline-flex gap-1 justify-content-center">
+                      <!-- View details -->
+                      <button type="button"
+                              class="btn btn-sm btn-light"
+                              [disabled]="busyId() === row.id"
+                              [title]="'customers.table.view' | translate"
+                              (click)="openDetails(row)">
+                        <i class="fa-solid fa-eye"></i>
+                      </button>
+                      <!-- Edit -->
+                      <button type="button"
+                              class="btn btn-sm btn-light"
+                              [disabled]="busyId() === row.id"
+                              [title]="'customers.table.edit' | translate"
+                              (click)="openEdit(row)">
+                        <i class="fa-solid fa-pen"></i>
+                      </button>
+                      <!-- Assign to sales -->
+                      <button type="button"
+                              class="btn btn-sm btn-success-soft"
+                              [disabled]="busyId() === row.id"
+                              [title]="'customers.table.assign' | translate"
+                              (click)="openAssign(row)">
+                        <i class="fa-solid fa-user-plus"></i>
+                      </button>
+                      <!-- Delete -->
+                      <button type="button"
+                              class="btn btn-sm btn-icon btn-danger-soft"
+                              [disabled]="busyId() === row.id"
+                              [title]="'customers.table.delete' | translate"
+                              (click)="confirmDelete(row)">
+                        <i class="fa-solid fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    </div>
+
+    @if (count() > 0) {
+      <div class="card-footer">
+        <app-pagination
+          [pageIndex]="pageIndex()"
+          [pageSize]="pageSize()"
+          [count]="count()"
+          [disabled]="loading()"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)">
+        </app-pagination>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- Assign to Sales Dialog -->
+@if (assignDialog(); as dlg) {
+  <app-assign-sales-dialog
+    [customerId]="dlg.customerId"
+    [customerName]="dlg.customerName"
+    (assigned)="onAssigned()"
+    (cancel)="closeAssign()">
+  </app-assign-sales-dialog>
+}
+
+<!-- Customer Details Dialog -->
+@if (detailsDialog(); as id) {
+  <app-customer-details-dialog
+    [customerId]="id"
+    (closed)="closeDetails()">
+  </app-customer-details-dialog>
+}
+
+<!-- Customer Edit Dialog -->
+@if (editDialog(); as id) {
+  <app-customer-edit-dialog
+    [customerId]="id"
+    (saved)="onEdited()"
+    (cancel)="closeEdit()">
+  </app-customer-edit-dialog>
 }

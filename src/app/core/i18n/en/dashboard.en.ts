@@ -222,7 +222,7 @@ const dashboard: TranslationFile<'dashboard'> = {
       snapchat: 'Snapchat',
     },
     currency: 'EGP',
-    sar: 'SAR',
+    sar: 'EGP',
   },
 };
 

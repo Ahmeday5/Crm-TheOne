@@ -11,6 +11,9 @@ import projects from './projects.en';
 import reportAnalysis from './reportAnalysis.en';
 import notFound from './notFound.en';
 import settings from './settings.en';
+import campaigns from './campaigns.en';
+import services from './services.en';
+import customers from './customers.en';
 
 const en: Translations = {
   ...common,
@@ -25,6 +28,9 @@ const en: Translations = {
   ...reportAnalysis,
   ...notFound,
   ...settings,
+  ...campaigns,
+  ...services,
+  ...customers,
 };
 
 export default en;

@@ -1,0 +1,226 @@
+<app-modal [open]="true" [title]="'campaigns.create.title' | translate" icon="fa-solid fa-bullseye" iconTone="primary"
+  size="lg" [closeOnBackdrop]="!submitting()" [closeOnEsc]="!submitting()" (closed)="cancel.emit()">
+
+  <form [formGroup]="form" id="campaign-form" novalidate (ngSubmit)="submit()">
+    <!-- Basic info -->
+    <section class="form-section">
+      <h6 class="section-title">
+        <i class="fa-solid fa-circle-info text-primary"></i>
+        {{ 'campaigns.create.sectionInfo' | translate }}
+      </h6>
+
+      <div class="row g-3">
+        <div class="col-12">
+          <label for="campaign-name" class="form-label fw-600">
+            {{ 'campaigns.create.name' | translate }} <span class="text-danger">*</span>
+          </label>
+          <input id="campaign-name" class="form-control" formControlName="name"
+            [class.is-invalid]="isInvalid(form.controls.name)"
+            [placeholder]="'campaigns.create.namePlaceholder' | translate" />
+          <app-form-error [control]="form.controls.name" [label]="'campaigns.create.name' | translate" />
+        </div>
+
+        <div class="col-12">
+          <label for="campaign-description" class="form-label fw-600">
+            {{ 'campaigns.create.description' | translate }}
+          </label>
+          <textarea id="campaign-description" class="form-control" formControlName="description" rows="3"
+            [placeholder]="'campaigns.create.descriptionPlaceholder' | translate"></textarea>
+        </div>
+
+        <div class="col-md-6">
+          <label for="campaign-channel"
+            class="form-label fw-600 d-flex align-items-center justify-content-between gap-2">
+            <span>{{ 'campaigns.create.platform' | translate }} <span class="text-danger">*</span></span>
+            <button type="button" class="btn btn-link p-0 small fw-600" (click)="openChannelSourceDialog()">
+              <i class="fa-solid fa-plus me-1"></i>
+              {{ 'campaigns.create.addChannelSource' | translate }}
+            </button>
+          </label>
+          <select id="campaign-channel" class="form-select" formControlName="channelSourceId"
+            [class.is-invalid]="isInvalid(form.controls.channelSourceId)"
+            [attr.disabled]="loadingSources() ? '' : null">
+            <option [ngValue]="null" disabled>
+              @if (loadingSources()) {
+              {{ 'common.loading' | translate }}
+              } @else {
+              {{ 'campaigns.create.platformPlaceholder' | translate }}
+              }
+            </option>
+            @for (s of channelSources(); track s.id) {
+            <option [ngValue]="s.id">{{ s.name }}</option>
+            }
+          </select>
+          <app-form-error [control]="form.controls.channelSourceId" [label]="'campaigns.create.platform' | translate" />
+        </div>
+
+        <div class="col-md-6">
+          <label for="campaign-status" class="form-label fw-600">
+            {{ 'campaigns.create.status' | translate }} <span class="text-danger">*</span>
+          </label>
+          <select id="campaign-status" class="form-select" formControlName="status">
+            @for (s of statuses; track s) {
+            <option [ngValue]="s === 'Active' ? 1 : (s === 'NotActive' ? 2 : (s === 'Completed' ? 3 : 4))">
+              {{ 'campaigns.status.' + s.toLowerCase() | translate }}
+            </option>
+            }
+          </select>
+          <small class="text-muted">{{ 'campaigns.create.statusHint' | translate }}</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- Budget & duration -->
+    <section class="form-section">
+      <h6 class="section-title">
+        <i class="fa-solid fa-money-bill-wave text-success"></i>
+        {{ 'campaigns.create.sectionBudget' | translate }}
+      </h6>
+
+      <div class="row g-3">
+        <div class="col-12">
+          <label for="campaign-budget" class="form-label fw-600">
+            {{ 'campaigns.create.budget' | translate }} <span class="text-danger">*</span>
+          </label>
+          <input id="campaign-budget" type="number" min="0" step="100" class="form-control" formControlName="budget"
+            [class.is-invalid]="isInvalid(form.controls.budget)" placeholder="15000" />
+          <app-form-error [control]="form.controls.budget" [label]="'campaigns.create.budget' | translate" />
+        </div>
+
+        <div class="col-md-6">
+          <label for="campaign-start" class="form-label fw-600">
+            <i class="fa-solid fa-calendar text-primary me-1"></i>
+            {{ 'campaigns.create.startDate' | translate }} <span class="text-danger">*</span>
+          </label>
+          <input id="campaign-start" type="date" class="form-control" formControlName="startDate"
+            [class.is-invalid]="isInvalid(form.controls.startDate)" [min]="today" />
+          <app-form-error [control]="form.controls.startDate" [label]="'campaigns.create.startDate' | translate" />
+        </div>
+
+        <div class="col-md-6">
+          <label for="campaign-end" class="form-label fw-600">
+            <i class="fa-solid fa-calendar-check text-primary me-1"></i>
+            {{ 'campaigns.create.endDate' | translate }} <span class="text-danger">*</span>
+          </label>
+          <input id="campaign-end" type="date" class="form-control" formControlName="endDate"
+            [class.is-invalid]="isInvalid(form.controls.endDate) || (form.errors?.['endBeforeStart'] && form.controls.endDate.touched)"
+            [min]="form.controls.startDate.value || today" />
+          <app-form-error [control]="form.controls.endDate" [label]="'campaigns.create.endDate' | translate" />
+          @if (form.errors?.['endBeforeStart'] && form.controls.endDate.touched) {
+          <div class="invalid-feedback d-block">
+            <i class="fa-solid fa-circle-exclamation me-1"></i>
+            {{ 'campaigns.create.errors.endBeforeStart' | translate }}
+          </div>
+          }
+        </div>
+
+        <div class="col-12">
+          <small class="text-muted d-flex align-items-center gap-2">
+            <i class="fa-solid fa-clock"></i>
+            {{ 'campaigns.create.durationHint' | translate }}
+            @if (durationDays() > 0) {
+            — <strong class="text-primary">
+              {{ durationDays() }} {{ 'campaigns.days' | translate }}
+            </strong>
+            } @else if (form.controls.startDate.value && form.controls.endDate.value) {
+            — <span class="text-danger small">
+              {{ 'campaigns.create.invalidDuration' | translate }}
+            </span>
+            }
+          </small>
+        </div>
+      </div>
+    </section>
+
+    <!-- Targeting -->
+    <section class="form-section">
+      <h6 class="section-title">
+        <i class="fa-solid fa-users text-purple"></i>
+        {{ 'campaigns.create.sectionAudience' | translate }}
+      </h6>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="campaign-min-age" class="form-label fw-600">
+            {{ 'campaigns.create.minAge' | translate }}
+          </label>
+          <input id="campaign-min-age" type="number" min="0" max="120" class="form-control" formControlName="minAge"
+            [class.is-invalid]="isInvalid(form.controls.minAge)" placeholder="18" />
+          <app-form-error [control]="form.controls.minAge" [label]="'campaigns.create.minAge' | translate" />
+        </div>
+
+        <div class="col-md-6">
+          <label for="campaign-max-age" class="form-label fw-600">
+            {{ 'campaigns.create.maxAge' | translate }}
+          </label>
+          <input id="campaign-max-age" type="number" min="0" max="120" class="form-control" formControlName="maxAge"
+            [class.is-invalid]="isInvalid(form.controls.maxAge) || (form.errors?.['ageRangeInvalid'] && form.controls.maxAge.touched)"
+            placeholder="65" />
+          <app-form-error [control]="form.controls.maxAge" [label]="'campaigns.create.maxAge' | translate" />
+          @if (form.errors?.['ageRangeInvalid'] && form.controls.maxAge.touched) {
+          <div class="invalid-feedback d-block">
+            <i class="fa-solid fa-circle-exclamation me-1"></i>
+            {{ 'campaigns.create.errors.ageRangeInvalid' | translate }}
+          </div>
+          }
+        </div>
+
+        <div class="col-12">
+          <label class="form-label fw-600">{{ 'campaigns.create.gender' | translate }}</label>
+          <div class="d-flex flex-wrap gap-2">
+            <label class="gender-pill" [class.active]="form.controls.gender.value === Gender.All">
+              <input type="radio" formControlName="gender" [value]="Gender.All" hidden />
+              <i class="fa-solid fa-users"></i>
+              {{ 'campaigns.create.genders.all' | translate }}
+            </label>
+            <label class="gender-pill" [class.active]="form.controls.gender.value === Gender.Male">
+              <input type="radio" formControlName="gender" [value]="Gender.Male" hidden />
+              <i class="fa-solid fa-mars"></i>
+              {{ 'campaigns.create.genders.male' | translate }}
+            </label>
+            <label class="gender-pill" [class.active]="form.controls.gender.value === Gender.Female">
+              <input type="radio" formControlName="gender" [value]="Gender.Female" hidden />
+              <i class="fa-solid fa-venus"></i>
+              {{ 'campaigns.create.genders.female' | translate }}
+            </label>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label for="campaign-countries" class="form-label fw-600">
+            {{ 'campaigns.create.countries' | translate }}
+          </label>
+          <input id="campaign-countries" class="form-control" formControlName="countriesText"
+            [placeholder]="'campaigns.create.countriesPlaceholder' | translate" />
+          <small class="text-muted">{{ 'campaigns.create.countriesHint' | translate }}</small>
+        </div>
+      </div>
+    </section>
+
+    @if (errorMessage()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0" role="alert">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+    }
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="cancel.emit()">
+      {{ 'campaigns.create.cancel' | translate }}
+    </button>
+    <button type="submit" form="campaign-form" class="btn btn-primary" [disabled]="submitting() || form.invalid">
+      @if (submitting()) {
+      <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+      <i class="fa-solid fa-bullseye me-1"></i>
+      }
+      {{ 'campaigns.create.submit' | translate }}
+    </button>
+  </ng-container>
+</app-modal>
+
+@if (channelSourceDialogOpen()) {
+<app-channel-source-dialog (created)="onChannelSourceCreated($event)" (cancel)="closeChannelSourceDialog()">
+</app-channel-source-dialog>
+}

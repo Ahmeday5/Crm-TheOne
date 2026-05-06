@@ -4,11 +4,18 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnChanges,
   Output,
+  SimpleChanges,
   inject,
   signal,
 } from '@angular/core';
-import { FormsModule, NgForm } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { ALL_ROLES } from '../../../../../core/constants/roles.const';
 import { TRANSLATIONS, resolveKey } from '../../../../../core/i18n';
 import { ApiError } from '../../../../../core/models/api-response.model';
@@ -21,40 +28,20 @@ import {
 import { LanguageService } from '../../../../../core/services/language.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 import { UsersService } from '../../../../../core/services/users.service';
+import { FormErrorComponent } from '../../../../../shared/components/form-error/form-error.component';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 
 type Mode = 'add' | 'edit';
 
-interface FormState {
-  fullName: string;
-  email: string;
-  phone: string;
-  address: string;
-  password: string;
-  role: UserRole;
-}
-
-/**
- * Add / edit user modal — same form, two modes.
- *
- *   <app-user-form-dialog
- *      mode="add"
- *      (close)="reload()"
- *      (cancel)="dialogOpen = false">
- *   </app-user-form-dialog>
- *
- * The host component shows/hides via `*ngIf` and feeds the existing user
- * in edit mode through `[user]`.
- */
 @Component({
   selector: 'app-user-form-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, FormErrorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-form-dialog.component.html',
   styleUrl: './user-form-dialog.component.scss',
 })
-export class UserFormDialogComponent {
+export class UserFormDialogComponent implements OnChanges {
   @Input({ required: true }) mode!: Mode;
   /** Required in edit mode. */
   @Input() user: AppUser | null = null;
@@ -68,33 +55,77 @@ export class UserFormDialogComponent {
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
-  form: FormState = this.makeInitialState();
-
+  private readonly fb = inject(FormBuilder);
   private readonly users = inject(UsersService);
   private readonly toast = inject(ToastService);
   private readonly lang = inject(LanguageService);
 
-  ngOnChanges(): void {
-    this.form = this.makeInitialState();
-    this.errorMessage.set(null);
-    this.submitting.set(false);
+  /**
+   * Reactive form. The "add"-only fields (`address`, `password`, `role`) are
+   * always declared so we can validate them; their `required` validators only
+   * fire when the form is in add mode (we toggle it in `ngOnChanges`).
+   */
+  readonly form = this.fb.nonNullable.group({
+    fullName: ['', [Validators.required, Validators.minLength(2)]],
+    email: ['', [Validators.required, Validators.email]],
+    phone: ['', [Validators.required, Validators.minLength(6)]],
+    address: [''],
+    password: [''],
+    role: ['Sales' as UserRole],
+  });
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if ('mode' in changes || 'user' in changes) {
+      this.errorMessage.set(null);
+      this.submitting.set(false);
+
+      this.form.reset({
+        fullName: this.user?.fullName ?? '',
+        email: this.user?.email ?? '',
+        phone: this.user?.phone ?? '',
+        address: '',
+        password: '',
+        role: 'Sales',
+      });
+
+      // Add-only validators
+      const addressC = this.form.controls.address;
+      const passwordC = this.form.controls.password;
+      const roleC = this.form.controls.role;
+      if (this.mode === 'add') {
+        addressC.setValidators([Validators.required]);
+        passwordC.setValidators([Validators.required, Validators.minLength(6)]);
+        roleC.setValidators([Validators.required]);
+      } else {
+        addressC.clearValidators();
+        passwordC.clearValidators();
+        roleC.clearValidators();
+      }
+      addressC.updateValueAndValidity({ emitEvent: false });
+      passwordC.updateValueAndValidity({ emitEvent: false });
+      roleC.updateValueAndValidity({ emitEvent: false });
+    }
   }
 
-  submit(ngForm: NgForm): void {
+  submit(): void {
     if (this.submitting()) return;
-    if (ngForm.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
     this.errorMessage.set(null);
     this.submitting.set(true);
 
     if (this.mode === 'add') {
+      const v = this.form.getRawValue();
       const payload: AddUserRequest = {
-        fullName: this.form.fullName.trim(),
-        address: this.form.address.trim(),
-        password: this.form.password,
-        email: this.form.email.trim(),
-        phoneNumber: this.form.phone.trim(),
-        role: this.form.role,
+        fullName: v.fullName.trim(),
+        address: v.address.trim(),
+        password: v.password,
+        email: v.email.trim(),
+        phoneNumber: v.phone.trim(),
+        role: v.role,
       };
       this.users.add(payload).subscribe({
         next: () => {
@@ -110,12 +141,12 @@ export class UserFormDialogComponent {
       return;
     }
 
-    // Edit mode
     if (!this.user) return;
+    const v = this.form.getRawValue();
     const payload: UpdateUserRequest = {
-      email: this.form.email.trim(),
-      phone: this.form.phone.trim(),
-      fullName: this.form.fullName.trim(),
+      email: v.email.trim(),
+      phone: v.phone.trim(),
+      fullName: v.fullName.trim(),
     };
     this.users.update(this.user.userId, payload).subscribe({
       next: () => {
@@ -135,28 +166,11 @@ export class UserFormDialogComponent {
     this.cancel.emit();
   }
 
-  private makeInitialState(): FormState {
-    if (this.mode === 'edit' && this.user) {
-      return {
-        fullName: this.user.fullName ?? '',
-        email: this.user.email,
-        phone: this.user.phone ?? '',
-        address: '',
-        password: '',
-        role: 'Sales',
-      };
-    }
-    return {
-      fullName: '',
-      email: '',
-      phone: '',
-      address: '',
-      password: '',
-      role: 'Sales',
-    };
+  isInvalid(ctrl: AbstractControl): boolean {
+    return ctrl.invalid && (ctrl.dirty || ctrl.touched);
   }
 
-  /** Inline translation helper for toast messages. */
+  /** Inline translation helper. */
   private t(key: string): string {
     return resolveKey(TRANSLATIONS[this.lang.lang()], key);
   }

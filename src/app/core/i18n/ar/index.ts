@@ -11,6 +11,9 @@ import projects from './projects.ar';
 import reportAnalysis from './reportAnalysis.ar';
 import notFound from './notFound.ar';
 import settings from './settings.ar';
+import campaigns from './campaigns.ar';
+import services from './services.ar';
+import customers from './customers.ar';
 
 const ar: Translations = {
   ...common,
@@ -25,6 +28,9 @@ const ar: Translations = {
   ...reportAnalysis,
   ...notFound,
   ...settings,
+  ...campaigns,
+  ...services,
+  ...customers,
 };
 
 export default ar;

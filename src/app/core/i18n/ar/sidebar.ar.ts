@@ -32,6 +32,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       chat: 'الدردشة الداخلية',
       // System administration
       settings: 'إعدادات النظام',
+      services: 'إدارة الخدمات',
       kb: 'قاعدة المعرفة',
       improvements: 'تحسينات النظام',
       resources: 'إدارة الموارد',

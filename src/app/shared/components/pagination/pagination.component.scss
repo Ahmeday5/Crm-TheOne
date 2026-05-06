@@ -1,0 +1,91 @@
+:host { display: block; }
+
+.app-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem 0.25rem 0;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+
+  strong { color: var(--text-1); font-weight: var(--fw-600); }
+}
+
+.app-pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.app-pagination-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+
+  select { width: auto; min-width: 80px; }
+}
+
+.app-pagination-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.page-btn {
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-500);
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.65rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-0);
+  color: var(--text-1);
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+
+  &:hover:not(:disabled):not(.active) {
+    background: var(--surface-2);
+    border-color: var(--border-strong);
+  }
+
+  &:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--brand-soft);
+    border-color: var(--brand);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &.active {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+    cursor: default;
+  }
+
+  &.page-step {
+    font-size: var(--fs-md);
+    line-height: 1;
+  }
+}
+
+/* Chevrons follow the page direction. In RTL the layout already mirrors,
+ * so chevron-right naturally means "previous". Flip them in LTR. */
+:host-context([dir="ltr"]) .page-step i { transform: scaleX(-1); }
+
+.page-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  color: var(--text-3);
+}

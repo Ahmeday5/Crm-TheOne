@@ -231,7 +231,7 @@ const dashboard: TranslationFile<'dashboard'> = {
       snapchat: 'سناب شات',
     },
     currency: 'ج.م',
-    sar: 'ر.س',
+    sar: 'ج.م',
   },
 };
 

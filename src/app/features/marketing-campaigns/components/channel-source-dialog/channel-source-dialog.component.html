@@ -1,0 +1,50 @@
+<app-modal
+  [open]="true"
+  [title]="'campaigns.channelSource.title' | translate"
+  icon="fa-solid fa-tower-broadcast"
+  iconTone="info"
+  size="sm"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <form #ngForm="ngForm" id="channel-source-form" novalidate (ngSubmit)="submit(ngForm)">
+    <div class="mb-3">
+      <label for="channel-source-name" class="form-label fw-600">
+        {{ 'campaigns.channelSource.name' | translate }} <span class="text-danger">*</span>
+      </label>
+      <input id="channel-source-name"
+             class="form-control"
+             name="name" required
+             [(ngModel)]="name"
+             [placeholder]="'campaigns.channelSource.namePlaceholder' | translate" />
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button"
+            class="btn btn-light"
+            [disabled]="submitting()"
+            (click)="cancel.emit()">
+      {{ 'campaigns.create.cancel' | translate }}
+    </button>
+    <button type="submit"
+            form="channel-source-form"
+            class="btn btn-primary"
+            [disabled]="submitting() || ngForm.invalid">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-plus me-1"></i>
+      }
+      {{ 'campaigns.channelSource.submit' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

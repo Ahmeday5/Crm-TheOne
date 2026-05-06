@@ -1,0 +1,93 @@
+<div class="card campaign-card hover-rise h-100">
+  <div class="card-body d-flex flex-column gap-3">
+    <!-- Title -->
+    <div class="d-flex align-items-start justify-content-between gap-3">
+      <div class="flex-grow-1">
+        <h4 class="fw-700 mb-1">{{ campaign.name }}</h4>
+        <p class="text-muted mb-0 small">{{ campaign.description }}</p>
+      </div>
+      <span class="status-badge {{ statusBadgeClass(campaign.status) }}">
+        <i [class]="statusIcon(campaign.status)"></i>
+        {{ statusKey(campaign.status) | translate }}
+      </span>
+    </div>
+
+    <!-- Meta -->
+    <div class="d-flex flex-wrap align-items-center gap-3 text-muted small">
+      <span class="d-inline-flex align-items-center gap-2">
+        <i class="fa-solid fa-tower-broadcast"></i>
+        {{ campaign.channelSource || ('campaigns.details.platformUnknown' | translate) }}
+      </span>
+      <span class="d-inline-flex align-items-center gap-2">
+        <i class="fa-solid fa-calendar"></i>
+        {{ campaign.durationDays }} {{ 'campaigns.days' | translate }}
+      </span>
+      <span class="d-inline-flex align-items-center gap-2">
+        <i class="fa-regular fa-calendar"></i>
+        {{ formatDate(campaign.startDate) }}
+      </span>
+    </div>
+
+    <!-- Budget -->
+    <div class="budget-panel row g-3">
+      <div class="col-6">
+        <p class="text-muted mb-1 small">{{ 'campaigns.card.totalBudget' | translate }}</p>
+        <p class="fw-700 mb-0">
+          {{ formatNumber(campaign.budget) }} {{ 'campaigns.sar' | translate }}
+        </p>
+      </div>
+      <div class="col-6">
+        <p class="text-muted mb-1 small">{{ 'campaigns.card.dailyBudget' | translate }}</p>
+        <p class="fw-700 mb-0">
+          {{ formatNumber(campaign.dailyBudget) }} {{ 'campaigns.sar' | translate }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Audience -->
+    <div>
+      <p class="fw-600 mb-2 d-flex align-items-center gap-2">
+        <i class="fa-solid fa-users text-primary"></i>
+        {{ 'campaigns.card.audience' | translate }}
+      </p>
+      <div class="d-flex flex-wrap gap-2">
+        <span class="badge gray">
+          {{ 'campaigns.targeting.ageLabel' | translate }}: {{ ageRange(campaign) }}
+        </span>
+        <span class="badge gray">
+          {{ 'campaigns.create.genders.' + campaign.gender.toLowerCase() | translate }}
+        </span>
+        @for (c of campaign.countries; track c) {
+          <span class="badge blue">{{ c }}</span>
+        }
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex gap-2 pt-3 border-top mt-auto">
+      <button type="button"
+              class="btn btn-light btn-sm flex-grow-1"
+              [disabled]="busy"
+              (click)="view.emit(campaign)">
+        <i class="fa-solid fa-eye me-1"></i>
+        {{ 'campaigns.card.details' | translate }}
+      </button>
+
+      <button type="button"
+              class="btn btn-light btn-sm flex-grow-1"
+              [disabled]="busy"
+              (click)="toggle.emit(campaign)">
+        <i [class]="toggleIcon(campaign.status)"></i>
+        <span class="ms-1">{{ toggleKey(campaign.status) | translate }}</span>
+      </button>
+
+      <button type="button"
+              class="btn btn-icon btn-danger-soft"
+              [disabled]="busy"
+              [attr.aria-label]="'campaigns.card.delete' | translate"
+              (click)="delete.emit(campaign)">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>
+  </div>
+</div>

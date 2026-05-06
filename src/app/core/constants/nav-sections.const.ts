@@ -143,6 +143,12 @@ export const NAV_SECTIONS: NavSection[] = [
         roles: ['Admin'],
       },
       {
+        labelKey: 'sidebar.items.services',
+        path: '/services',
+        icon: 'fa-solid fa-screwdriver-wrench',
+        roles: ['Admin'],
+      },
+      {
         labelKey: 'sidebar.items.kb',
         path: '/knowledge-base',
         icon: 'fa-solid fa-book',
@@ -269,6 +275,7 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   // Admin-only
   'ReportAndAnalytics': ['Admin'],
   'settings': ['Admin'],
+  'services': ['Admin'],
   'system-improvements': ['Admin'],
   'resources': ['Admin'],
   'notifications': ['Admin'],

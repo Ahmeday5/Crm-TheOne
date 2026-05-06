@@ -1,0 +1,43 @@
+:host { display: block; height: 100%; }
+
+.campaign-card .budget-panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  margin: 0;
+}
+
+.campaign-card .metrics-row {
+  border-top: 1px solid var(--border);
+  padding-top: 0.85rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: var(--fw-600);
+  font-size: var(--fs-xs);
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+
+  i { font-size: var(--fs-xs); }
+}
+.status-active    { background: var(--success-soft); color: var(--success); }
+.status-paused    { background: var(--warning-soft); color: var(--warning); }
+.status-completed { background: var(--info-soft);    color: var(--info); }
+.status-cancelled { background: var(--danger-soft);  color: var(--danger); }
+
+.btn-danger-soft {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--border);
+}
+.btn-danger-soft:hover,
+.btn-danger-soft:focus {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}

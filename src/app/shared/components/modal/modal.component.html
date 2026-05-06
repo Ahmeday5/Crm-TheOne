@@ -1,0 +1,45 @@
+@if (open()) {
+  <div class="app-modal-backdrop"
+       role="presentation"
+       (click)="onBackdropClick()">
+    <div #dialog
+         class="app-modal app-modal--{{ size() }}"
+         role="dialog"
+         aria-modal="true"
+         [attr.aria-label]="title() || null"
+         tabindex="-1"
+         (click)="$event.stopPropagation()">
+
+      @if (showHeader()) {
+        <header class="app-modal-header">
+          <h5 class="app-modal-title">
+            @if (icon()) {
+              <span class="icon-tile tone-{{ iconTone() }}">
+                <i [class]="icon()"></i>
+              </span>
+            }
+            <span>{{ title() }}</span>
+          </h5>
+          @if (showClose()) {
+            <button type="button"
+                    class="app-modal-close"
+                    aria-label="close"
+                    (click)="close()">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          }
+        </header>
+      }
+
+      <div class="app-modal-body">
+        <ng-content></ng-content>
+      </div>
+
+      @if (showFooter()) {
+        <footer class="app-modal-footer">
+          <ng-content select="[modal-footer]"></ng-content>
+        </footer>
+      }
+    </div>
+  </div>
+}

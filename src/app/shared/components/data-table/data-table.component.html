@@ -1,0 +1,64 @@
+<div class="table-responsive app-data-table">
+  <table class="table table-hover align-middle mb-0">
+    <thead>
+      <tr>
+        @for (col of columns(); track trackByColumn($index, col)) {
+          <th [style.width]="col.width" [class]="alignClass(col)">
+            @if (col.i18nLabel) {
+              {{ col.label | translate }}
+            } @else {
+              {{ col.label }}
+            }
+          </th>
+        }
+        @if (hasActions()) {
+          <th class="text-center actions-col">
+            {{ 'common.actions' | translate }}
+          </th>
+        }
+      </tr>
+    </thead>
+    
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td [attr.colspan]="hasActions() ? columns().length + 1 : columns().length"
+              class="text-center py-5 text-muted">
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            {{ 'common.loading' | translate }}
+          </td>
+        </tr>
+      } @else if (data().length === 0) {
+        <tr>
+          <td [attr.colspan]="hasActions() ? columns().length + 1 : columns().length"
+              class="text-center py-5 text-muted">
+            <i class="fa-solid fa-inbox fs-3 d-block mb-2 opacity-50"></i>
+            {{ emptyMessage() || ('common.no_results' | translate) }}
+          </td>
+        </tr>
+      } @else {
+        @for (row of data(); track trackByRow($index, row)) {
+          <tr [class.row-clickable]="rowClickable()"
+              (click)="rowClickable() && rowClick.emit(row)">
+            @for (col of columns(); track trackByColumn($index, col)) {
+              <td [class]="alignClass(col)">
+                @if (col.cellTemplate) {
+                  <ng-container *ngTemplateOutlet="col.cellTemplate; context: { $implicit: row }"></ng-container>
+                } @else {
+                  {{ getCellValue(row, col.key) }}
+                }
+              </td>
+            }
+            @if (hasActions()) {
+              <td class="text-center actions-col" (click)="$event.stopPropagation()">
+                @if (actionsTemplate()) {
+                  <ng-container *ngTemplateOutlet="actionsTemplate()!; context: { $implicit: row }"></ng-container>
+                }
+              </td>
+            }
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

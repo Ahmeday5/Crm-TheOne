@@ -1,0 +1,163 @@
+<section class="campaigns">
+  <!-- Welcome strip -->
+  <div class="mb-4">
+    <h2 class="fw-700 mb-1">{{ 'campaigns.welcomeTitle' | translate }}</h2>
+    <p class="text-muted mb-0">{{ 'campaigns.welcomeSubtitle' | translate }}</p>
+  </div>
+
+  <!-- Page header -->
+  <header class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <span class="icon-tile xl tone-primary"><i class="fa-solid fa-bullhorn"></i></span>
+      <div>
+        <h3 class="fw-700 mb-1">{{ 'campaigns.title' | translate }}</h3>
+        <p class="text-muted mb-0">{{ 'campaigns.subtitle' | translate }}</p>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="openCreate()">
+      <i class="fa-solid fa-plus me-1"></i>
+      {{ 'campaigns.new' | translate }}
+    </button>
+  </header>
+
+  <!-- KPI grid -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-lg-3">
+      <app-stat-card
+        [label]="'campaigns.kpi.totalBudget' | translate"
+        [value]="formatNumber(kpis().totalBudget) + ' ' + ('campaigns.sar' | translate)"
+        icon="fa-solid fa-money-bill-wave"
+        tone="primary">
+      </app-stat-card>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+      <app-stat-card
+        [label]="'campaigns.card.dailyBudget' | translate"
+        [value]="formatNumber(kpis().dailyBudget) + ' ' + ('campaigns.sar' | translate)"
+        icon="fa-solid fa-coins"
+        tone="orange">
+      </app-stat-card>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+      <app-stat-card
+        [label]="'campaigns.kpi.active' | translate"
+        [value]="kpis().active"
+        icon="fa-solid fa-bullhorn"
+        tone="purple"
+        valueClass="text-purple">
+      </app-stat-card>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+      <app-stat-card
+        [label]="'common.showing' | translate"
+        [value]="kpis().total"
+        icon="fa-solid fa-list"
+        tone="info">
+      </app-stat-card>
+    </div>
+  </div>
+
+  <!-- Filters bar -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-6 col-lg flex-grow-1">
+          <div class="position-relative">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input class="form-control ps-5"
+                   [placeholder]="'campaigns.filters.searchPlaceholder' | translate"
+                   [ngModel]="searchTerm"
+                   (ngModelChange)="onSearchInput($event)" />
+          </div>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+          <select class="form-select"
+                  [ngModel]="statusFilter()"
+                  (ngModelChange)="onStatusFilterChange($event)">
+            <option value="all">{{ 'campaigns.filters.allStatuses' | translate }}</option>
+            @for (s of statuses; track s) {
+              <option [value]="s">{{ 'campaigns.status.' + s.toLowerCase() | translate }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+          <select class="form-select"
+                  [ngModel]="channelFilter()"
+                  (ngModelChange)="onChannelFilterChange($event)">
+            <option value="all">{{ 'campaigns.filters.allPlatforms' | translate }}</option>
+            @for (s of channelSources(); track s.id) {
+              <option [ngValue]="s.id">{{ s.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campaign list -->
+  @if (loading()) {
+    <div class="card">
+      <div class="card-body p-5 text-center text-muted">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        {{ 'common.loading' | translate }}
+      </div>
+    </div>
+  } @else if (loadError()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ loadError() }}</span>
+      <button type="button" class="btn btn-link p-0 ms-auto" (click)="reload()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else if (all().length === 0) {
+    <div class="card">
+      <div class="card-body p-5 text-center text-muted">
+        <i class="fa-solid fa-bullhorn fs-2 d-block mb-2 opacity-50"></i>
+        {{ 'campaigns.card.empty' | translate }}
+      </div>
+    </div>
+  } @else {
+    <div class="row g-3">
+      @for (c of all(); track trackById($index, c)) {
+        <div class="col-12 col-lg-6">
+          <app-campaign-card
+            [campaign]="c"
+            [busy]="busyId() === c.id"
+            (view)="openDetails($event)"
+            (toggle)="toggleStatus($event)"
+            (delete)="confirmDelete($event)">
+          </app-campaign-card>
+        </div>
+      }
+    </div>
+
+    <div class="mt-3">
+      <app-pagination
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [count]="totalCount()"
+        [disabled]="loading()"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)">
+      </app-pagination>
+    </div>
+  }
+</section>
+
+@if (formOpen()) {
+  <app-campaign-form-dialog
+    [initialSources]="channelSources()"
+    (created)="onCreated()"
+    (cancel)="closeCreate()">
+  </app-campaign-form-dialog>
+}
+
+@if (detailsId() !== null) {
+  <app-campaign-details-dialog
+    [campaignId]="detailsId()!"
+    (cancel)="closeDetails()">
+  </app-campaign-details-dialog>
+}

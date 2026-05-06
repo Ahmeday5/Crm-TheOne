@@ -1,0 +1,31 @@
+:host { display: block; }
+
+.app-data-table {
+  .table {
+    --bs-table-bg: transparent;
+    color: var(--text-1);
+    margin: 0;
+
+    thead th {
+      background: var(--surface-1);
+      color: var(--text-2);
+      font-weight: var(--fw-600);
+      font-size: var(--fs-sm);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1rem;
+      white-space: nowrap;
+    }
+
+    tbody td {
+      border-color: var(--border);
+      padding: 0.85rem 1rem;
+      font-size: var(--fs-md);
+      vertical-align: middle;
+    }
+
+    tbody tr.row-clickable { cursor: pointer; }
+    tbody tr:hover { background: var(--surface-1); }
+  }
+
+  .actions-col { width: 110px; }
+}

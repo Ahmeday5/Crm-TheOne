@@ -1,0 +1,167 @@
+<app-modal
+  [open]="true"
+  [title]="'campaigns.details.title' | translate"
+  icon="fa-solid fa-circle-info"
+  iconTone="primary"
+  size="lg"
+  (closed)="cancel.emit()">
+
+  @if (loading()) {
+    <div class="d-flex flex-column align-items-center justify-content-center py-5 text-muted">
+      <div class="spinner-border text-primary mb-2" role="status">
+        <span class="visually-hidden">{{ 'common.loading' | translate }}</span>
+      </div>
+      <span>{{ 'common.loading' | translate }}</span>
+    </div>
+  } @else if (!details()) {
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-0">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ 'campaigns.details.notFound' | translate }}</span>
+    </div>
+  } @else {
+    <div class="details-grid">
+      <!-- Header card -->
+      <div class="details-header">
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+          <div>
+            <h4 class="fw-700 mb-1">{{ details()!.name }}</h4>
+            <p class="text-muted mb-0">{{ details()!.description }}</p>
+          </div>
+          <span class="badge status-badge status-{{ details()!.status.toLowerCase() }}">
+            {{ 'campaigns.status.' + details()!.status.toLowerCase() | translate }}
+          </span>
+        </div>
+
+        <div class="d-flex flex-wrap gap-3 mt-3 text-muted small">
+          <span class="d-inline-flex align-items-center gap-1">
+            <i class="fa-solid fa-tower-broadcast"></i>
+            {{ details()!.channelSource || ('campaigns.details.platformUnknown' | translate) }}
+          </span>
+          <span class="d-inline-flex align-items-center gap-1">
+            <i class="fa-solid fa-calendar"></i>
+            {{ formatDate(details()!.startDate) }}
+            @if (details()!.endDate) {
+              <span> &mdash; {{ formatDate(details()!.endDate) }}</span>
+            }
+          </span>
+          @if (details()!.appUserName) {
+            <span class="d-inline-flex align-items-center gap-1">
+              <i class="fa-solid fa-user"></i>
+              {{ details()!.appUserName }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <!-- Budget panel -->
+      <div class="details-section">
+        <h6 class="section-title">
+          <i class="fa-solid fa-dollar-sign text-success"></i>
+          {{ 'campaigns.details.budget' | translate }}
+        </h6>
+
+        <div class="row g-3">
+          <div class="col-6 col-md-3">
+            <p class="text-muted small mb-1">{{ 'campaigns.card.totalBudget' | translate }}</p>
+            <p class="fw-700 mb-0">
+              {{ formatNumber(details()!.budget) }} {{ 'campaigns.sar' | translate }}
+            </p>
+          </div>
+          <div class="col-6 col-md-3">
+            <p class="text-muted small mb-1">{{ 'campaigns.card.dailyBudget' | translate }}</p>
+            <p class="fw-700 mb-0">
+              {{ formatNumber(details()!.dailyBudget) }} {{ 'campaigns.sar' | translate }}
+            </p>
+          </div>
+          <div class="col-6 col-md-3">
+            <p class="text-muted small mb-1">{{ 'campaigns.kpi.spent' | translate }}</p>
+            <p class="fw-700 mb-0 text-success">
+              {{ formatNumber(details()!.spent) }} {{ 'campaigns.sar' | translate }}
+            </p>
+          </div>
+          <div class="col-6 col-md-3">
+            <p class="text-muted small mb-1">{{ 'campaigns.details.remaining' | translate }}</p>
+            <p class="fw-700 mb-0">
+              {{ formatNumber(details()!.remaining) }} {{ 'campaigns.sar' | translate }}
+            </p>
+          </div>
+
+          <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between small mb-1">
+              <span class="text-muted">{{ 'campaigns.details.spentProgress' | translate }}</span>
+              <span class="fw-600">{{ spentPercent() }}%</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+              <div class="progress-bar bg-success"
+                   role="progressbar"
+                   [style.width.%]="spentPercent()"
+                   [attr.aria-valuenow]="spentPercent()"
+                   aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Duration panel -->
+      <div class="details-section">
+        <h6 class="section-title">
+          <i class="fa-solid fa-clock text-primary"></i>
+          {{ 'campaigns.details.duration' | translate }}
+        </h6>
+
+        <div class="row g-3">
+          <div class="col-6 col-md-3">
+            <p class="text-muted small mb-1">{{ 'campaigns.create.duration' | translate }}</p>
+            <p class="fw-700 mb-0">
+              {{ details()!.durationDays }} {{ 'campaigns.days' | translate }}
+            </p>
+          </div>
+          <div class="col-6 col-md-3">
+            <p class="text-muted small mb-1">{{ 'campaigns.details.daysElapsed' | translate }}</p>
+            <p class="fw-700 mb-0">{{ details()!.daysElapsed }}</p>
+          </div>
+          <div class="col-6 col-md-3">
+            <p class="text-muted small mb-1">{{ 'campaigns.details.daysRemaining' | translate }}</p>
+            <p class="fw-700 mb-0">{{ details()!.daysRemaining }}</p>
+          </div>
+          <div class="col-6 col-md-3">
+            <p class="text-muted small mb-1">{{ 'campaigns.create.startDate' | translate }}</p>
+            <p class="fw-700 mb-0">{{ formatDate(details()!.startDate) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Targeting panel -->
+      <div class="details-section">
+        <h6 class="section-title">
+          <i class="fa-solid fa-users text-purple"></i>
+          {{ 'campaigns.card.audience' | translate }}
+        </h6>
+
+        <div class="d-flex flex-wrap gap-2">
+          <span class="badge gray">
+            {{ 'campaigns.targeting.ageLabel' | translate }}: {{ ageRangeLabel() }}
+          </span>
+          <span class="badge gray">
+            {{ 'campaigns.create.genders.' + details()!.gender.toLowerCase() | translate }}
+          </span>
+          @for (c of details()!.countries; track c) {
+            <span class="badge blue">{{ c }}</span>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <ng-container modal-footer>
+    @if (details()) {
+      <button type="button" class="btn btn-light" (click)="refresh()">
+        <i class="fa-solid fa-rotate me-1"></i>
+        {{ 'common.refresh' | translate }}
+      </button>
+    }
+    <button type="button" class="btn btn-primary" (click)="cancel.emit()">
+      {{ 'common.close' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

@@ -1,0 +1,129 @@
+<app-modal [open]="true" [title]="'customers.details.title' | translate" icon="fa-solid fa-address-card" iconTone="info"
+  size="lg" (closed)="closed.emit()">
+
+  @if (loading()) {
+  <div class="text-center py-5">
+    <span class="spinner-border text-primary" role="status"></span>
+  </div>
+  } @else {
+  @if (customer(); as c) {
+  <div class="details-grid">
+    <!-- Personal Information -->
+    <div class="details-section">
+      <h6 class="details-section-title">
+        <i class="fa-solid fa-user me-2"></i>
+        {{ 'customers.details.personalInfo' | translate }}
+      </h6>
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.details.name' | translate }}</span>
+        <span class="details-value">{{ c.name || c.phone || ('customers.details.notAvailable' | translate) }}</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.details.company' | translate }}</span>
+        <span class="details-value">{{ c.companyName || ('customers.details.notAvailable' | translate) }}</span>
+      </div>
+    </div>
+
+    <!-- Contact Information -->
+    <div class="details-section">
+      <h6 class="details-section-title">
+        <i class="fa-solid fa-phone me-2"></i>
+        {{ 'customers.details.contactInfo' | translate }}
+      </h6>
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.details.phone' | translate }}</span>
+        <span class="details-value font-monospace">{{ c.phone || ('customers.details.notAvailable' | translate)
+          }}</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.details.email' | translate }}</span>
+        <span class="details-value">{{ c.email || ('customers.details.notAvailable' | translate) }}</span>
+      </div>
+    </div>
+
+    <!-- Marketing Information -->
+    <div class="details-section">
+      <h6 class="details-section-title">
+        <i class="fa-solid fa-bullhorn me-2"></i>
+        {{ 'customers.details.marketingInfo' | translate }}
+      </h6>
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.details.source' | translate }}</span>
+        <span class="details-value">{{ c.sourceName || ('customers.details.notAvailable' | translate) }}</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.details.campaign' | translate }}</span>
+        <span class="details-value">{{ c.campaignName || ('customers.details.notAvailable' | translate) }}</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.details.services' | translate }}</span>
+        <span class="details-value">
+          @if (c.services && c.services.length > 0) {
+          @for (svc of c.services; track svc.id) {
+          <span class="badge bg-primary-subtle text-primary me-1 mb-1">{{ svc.name }}</span>
+          }
+          } @else {
+          {{ 'customers.details.notAvailable' | translate }}
+          }
+        </span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.details.status' | translate }}</span>
+        <span class="details-value">
+          <span class="badge" [class.bg-info-subtle]="c.statusName === 'none'"
+            [class.text-info]="c.statusName === 'none'" [class.bg-success-subtle]="c.statusName !== 'none'"
+            [class.text-success]="c.statusName !== 'none'">
+            {{ resolveStatus(c.statusName) }}
+          </span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Assignment Information -->
+    <div class="details-section">
+      <h6 class="details-section-title">
+        <i class="fa-solid fa-user-tie me-2"></i>
+        {{ 'customers.details.assignmentInfo' | translate }}
+      </h6>
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.details.salesPerson' | translate }}</span>
+        <span class="details-value">{{ c.salesPersonName || ('customers.table.notAssigned' | translate) }}</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.details.assignedAt' | translate }}</span>
+        <span class="details-value">{{ formatDate(c.assignedAt) }}</span>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    @if (c.notes) {
+    <div class="details-section">
+      <h6 class="details-section-title">
+        <i class="fa-solid fa-sticky-note me-2"></i>
+        {{ 'customers.details.notes' | translate }}
+      </h6>
+      <p class="mb-0 text-muted">{{ c.notes }}</p>
+    </div>
+    }
+
+    <!-- Timestamps -->
+    <div class="details-section">
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.details.createdAt' | translate }}</span>
+        <span class="details-value">{{ formatDate(c.createdAt) }}</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.details.updatedAt' | translate }}</span>
+        <span class="details-value">{{ formatDate(c.updatedAt ?? null) }}</span>
+      </div>
+    </div>
+  </div>
+  }
+  }
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" (click)="closed.emit()">
+      {{ 'customers.details.close' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

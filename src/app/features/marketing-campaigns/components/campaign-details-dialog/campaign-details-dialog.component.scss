@@ -1,0 +1,39 @@
+.details-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.details-header {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.1rem;
+}
+
+.details-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.1rem;
+}
+
+.section-title {
+  font-weight: var(--fw-700);
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-weight: var(--fw-600);
+  font-size: var(--fs-xs);
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-pill);
+}
+.status-active    { background: var(--success-soft); color: var(--success); }
+.status-notactive { background: var(--warning-soft); color: var(--warning); }
+.status-completed { background: var(--info-soft);    color: var(--info); }
+.status-cancelled { background: var(--danger-soft);  color: var(--danger); }

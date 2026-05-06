@@ -9,6 +9,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ALL_ROLES, roleLabel } from '../../../../core/constants/roles.const';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
+import { ApiError } from '../../../../core/models/api-response.model';
 import { UserRole } from '../../../../core/models/auth.model';
 import { AppUser } from '../../../../core/models/user.model';
 import { DialogService } from '../../../../core/services/dialog.service';
@@ -179,6 +180,9 @@ export class UserManagementComponent {
       next: () => {
         this.toast.success(this.t('settings.users.messages.deleted'));
         this.reload();
+      },
+      error: (err: ApiError) => {
+        if (err?.message) this.toast.error(err.message);
       },
     });
   }

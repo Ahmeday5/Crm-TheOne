@@ -1,0 +1,65 @@
+<div class="app-pagination" [attr.aria-busy]="disabled() ? 'true' : null">
+  <div class="app-pagination-info">
+    @if (count() === 0) {
+      <span class="text-muted">{{ 'common.no_results' | translate }}</span>
+    } @else {
+      <span class="text-muted">
+        {{ 'common.showing' | translate }}
+        <strong>{{ fromIndex() }}</strong>
+        –
+        <strong>{{ toIndex() }}</strong>
+        {{ 'common.of' | translate }}
+        <strong>{{ count() }}</strong>
+      </span>
+    }
+
+    @if (showPageSize()) {
+      <label class="app-pagination-size">
+        <span class="text-muted small">{{ 'common.pageSize' | translate }}</span>
+        <select class="form-select form-select-sm"
+                [ngModel]="pageSize()"
+                [disabled]="disabled()"
+                (ngModelChange)="onPageSizeChange($event)">
+          @for (opt of pageSizeOptions(); track opt) {
+            <option [ngValue]="opt">{{ opt }}</option>
+          }
+        </select>
+      </label>
+    }
+  </div>
+
+  @if (totalPages() > 1) {
+    <nav class="app-pagination-nav" aria-label="pagination">
+      <button type="button"
+              class="page-btn page-step"
+              [disabled]="!canPrev() || disabled()"
+              [attr.aria-label]="'common.prev_page' | translate"
+              (click)="prev()">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+
+      @for (item of windowItems(); track $index) {
+        @if (item.page === null) {
+          <span class="page-ellipsis" aria-hidden="true">…</span>
+        } @else {
+          <button type="button"
+                  class="page-btn"
+                  [class.active]="item.active"
+                  [disabled]="disabled()"
+                  [attr.aria-current]="item.active ? 'page' : null"
+                  (click)="goTo(item.page)">
+            {{ item.page }}
+          </button>
+        }
+      }
+
+      <button type="button"
+              class="page-btn page-step"
+              [disabled]="!canNext() || disabled()"
+              [attr.aria-label]="'common.next_page' | translate"
+              (click)="next()">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+    </nav>
+  }
+</div>

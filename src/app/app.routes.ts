@@ -10,6 +10,8 @@ import { APP_SUPPORT_ROUTES } from './features/appSupport/appSupport.routes';
 import { PROJECTS_TASKS_ROUTES } from './features/ProjectsTasks/projectsTasks.routes';
 import { REPORT_ROUTES } from './features/report-and-analytics/reportsAnalytics.routes';
 import { SETTINGS_ROUTES } from './features/settings/settings.routes';
+import { MARKETING_CAMPAIGNS_ROUTES } from './features/marketing-campaigns/marketingCampaigns.routes';
+import { SERVICES_ROUTES } from './features/services/services.routes';
 
 /**
  * Top-level route table.
@@ -44,6 +46,8 @@ export const routes: Routes = [
       ...SALES_PHASES_ROUTES,
       ...APP_SUPPORT_ROUTES,
       ...PROJECTS_TASKS_ROUTES,
+      ...MARKETING_CAMPAIGNS_ROUTES,
+      ...SERVICES_ROUTES,
       {
         path: 'ReportAndAnalytics',
         data: { roles: ['Admin'] },

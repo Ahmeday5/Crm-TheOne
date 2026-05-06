@@ -10,53 +10,74 @@
       </button>
     </header>
 
-    <form #ngForm="ngForm" (ngSubmit)="submit(ngForm)" novalidate>
+    <form [formGroup]="form" novalidate (ngSubmit)="submit()">
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label fw-600">{{ 'settings.users.addDialog.fullName' | translate }}</label>
           <input class="form-control"
-                 name="fullName" [(ngModel)]="form.fullName" required
-                 [disabled]="submitting()" />
+                 formControlName="fullName"
+                 [class.is-invalid]="isInvalid(form.controls.fullName)" />
+          <app-form-error
+            [control]="form.controls.fullName"
+            [label]="'settings.users.addDialog.fullName' | translate" />
         </div>
 
         <div class="col-md-6">
           <label class="form-label fw-600">{{ 'settings.users.addDialog.email' | translate }}</label>
           <input type="email" class="form-control"
-                 name="email" [(ngModel)]="form.email" required email
-                 [disabled]="submitting()" autocomplete="email" />
+                 formControlName="email"
+                 [class.is-invalid]="isInvalid(form.controls.email)"
+                 autocomplete="email" />
+          <app-form-error
+            [control]="form.controls.email"
+            [label]="'settings.users.addDialog.email' | translate" />
         </div>
 
         <div class="col-md-6">
           <label class="form-label fw-600">{{ 'settings.users.addDialog.phone' | translate }}</label>
           <input class="form-control" dir="ltr"
-                 name="phone" [(ngModel)]="form.phone" required
-                 [disabled]="submitting()" autocomplete="tel" />
+                 formControlName="phone"
+                 [class.is-invalid]="isInvalid(form.controls.phone)"
+                 autocomplete="tel" />
+          <app-form-error
+            [control]="form.controls.phone"
+            [label]="'settings.users.addDialog.phone' | translate" />
         </div>
 
         @if (mode === 'add') {
           <div class="col-md-6">
             <label class="form-label fw-600">{{ 'settings.users.addDialog.role' | translate }}</label>
             <select class="form-select"
-                    name="role" [(ngModel)]="form.role" required
-                    [disabled]="submitting()">
+                    formControlName="role"
+                    [class.is-invalid]="isInvalid(form.controls.role)">
               @for (r of roles; track r) {
                 <option [value]="r">{{ r }}</option>
               }
             </select>
+            <app-form-error
+              [control]="form.controls.role"
+              [label]="'settings.users.addDialog.role' | translate" />
           </div>
 
           <div class="col-md-6">
             <label class="form-label fw-600">{{ 'settings.users.addDialog.address' | translate }}</label>
             <input class="form-control"
-                   name="address" [(ngModel)]="form.address" required
-                   [disabled]="submitting()" />
+                   formControlName="address"
+                   [class.is-invalid]="isInvalid(form.controls.address)" />
+            <app-form-error
+              [control]="form.controls.address"
+              [label]="'settings.users.addDialog.address' | translate" />
           </div>
 
           <div class="col-md-6">
             <label class="form-label fw-600">{{ 'settings.users.addDialog.password' | translate }}</label>
             <input type="password" class="form-control"
-                   name="password" [(ngModel)]="form.password" required minlength="6"
-                   [disabled]="submitting()" autocomplete="new-password" />
+                   formControlName="password"
+                   [class.is-invalid]="isInvalid(form.controls.password)"
+                   autocomplete="new-password" />
+            <app-form-error
+              [control]="form.controls.password"
+              [label]="'settings.users.addDialog.password' | translate" />
           </div>
         }
       </div>
@@ -74,7 +95,7 @@
           @else { {{ 'settings.users.editDialog.cancel' | translate }} }
         </button>
         <button type="submit" class="btn btn-primary"
-                [disabled]="submitting() || ngForm.invalid">
+                [disabled]="submitting() || form.invalid">
           @if (submitting()) {
             <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
             @if (mode === 'add') { {{ 'settings.users.addDialog.submitting' | translate }} }

@@ -85,7 +85,7 @@ const reportAnalysis: TranslationFile<'reportAnalysis'> = {
         activeProjects: 'Active projects',
         openTickets: 'Open support tickets',
         vsLastMonth: 'vs. last month',
-        currency: 'SAR',
+        currency: 'EGP',
       },
       charts: {
         leadsOverTime: 'Leads over time',
@@ -113,7 +113,7 @@ const reportAnalysis: TranslationFile<'reportAnalysis'> = {
 
     common: {
       vsLastMonth: 'vs. last month',
-      currency: 'SAR',
+      currency: 'EGP',
       export: { pdf: 'PDF', excel: 'Excel' },
       period: 'Time period',
       last30Days: 'Last 30 days',

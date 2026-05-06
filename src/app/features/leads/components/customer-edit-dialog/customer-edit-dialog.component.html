@@ -1,0 +1,148 @@
+<app-modal
+  [open]="true"
+  [title]="'customers.form.editTitle' | translate"
+  icon="fa-solid fa-pen-to-square"
+  iconTone="primary"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <span class="spinner-border text-primary" role="status"></span>
+    </div>
+  } @else {
+    <form [formGroup]="form" id="customer-edit-form" novalidate (ngSubmit)="submit()">
+      <div class="row g-3">
+        <!-- Name -->
+        <div class="col-md-6">
+          <label for="edit-name" class="form-label fw-600">
+            {{ 'customers.form.fullName' | translate }} <span class="text-danger">*</span>
+          </label>
+          <input id="edit-name"
+                 class="form-control"
+                 formControlName="name"
+                 [class.is-invalid]="form.controls.name.invalid && (form.controls.name.dirty || form.controls.name.touched)"
+                 [placeholder]="'customers.form.fullNamePh' | translate" />
+          <app-form-error
+            [control]="form.controls.name"
+            [label]="'customers.form.fullName' | translate" />
+        </div>
+
+        <!-- Phone -->
+        <div class="col-md-6">
+          <label for="edit-phone" class="form-label fw-600">
+            {{ 'customers.form.phone' | translate }} <span class="text-danger">*</span>
+          </label>
+          <input id="edit-phone"
+                 class="form-control"
+                 formControlName="phone"
+                 [class.is-invalid]="form.controls.phone.invalid && (form.controls.phone.dirty || form.controls.phone.touched)"
+                 [placeholder]="'customers.form.phonePh' | translate" />
+          <app-form-error
+            [control]="form.controls.phone"
+            [label]="'customers.form.phone' | translate" />
+        </div>
+
+        <!-- Email -->
+        <div class="col-md-6">
+          <label for="edit-email" class="form-label fw-600">
+            {{ 'customers.form.email' | translate }}
+          </label>
+          <input id="edit-email"
+                 class="form-control"
+                 formControlName="email"
+                 type="email"
+                 [placeholder]="'customers.form.emailPh' | translate" />
+        </div>
+
+        <!-- Company -->
+        <div class="col-md-6">
+          <label for="edit-company" class="form-label fw-600">
+            {{ 'customers.form.companyName' | translate }}
+          </label>
+          <input id="edit-company"
+                 class="form-control"
+                 formControlName="companyName"
+                 [placeholder]="'customers.form.companyNamePh' | translate" />
+        </div>
+
+        <!-- Campaign -->
+        <div class="col-md-6">
+          <label for="edit-campaign" class="form-label fw-600">
+            {{ 'customers.form.campaign' | translate }}
+          </label>
+          <select id="edit-campaign" class="form-select" formControlName="campaignId">
+            <option [ngValue]="null">{{ 'customers.form.campaignPh' | translate }}</option>
+            @for (c of campaigns(); track c.id) {
+              <option [ngValue]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Services multi-select -->
+        <div class="col-md-6">
+          <label class="form-label fw-600">{{ 'customers.form.services' | translate }}</label>
+          <div class="services-picker">
+            @if (servicesList().length === 0) {
+              <span class="text-muted small">{{ 'customers.form.noServices' | translate }}</span>
+            } @else {
+              @for (svc of servicesList(); track svc.id) {
+                <div class="form-check">
+                  <input class="form-check-input"
+                         type="checkbox"
+                         [id]="'edit-svc-' + svc.id"
+                         [checked]="isServiceSelected(svc.id)"
+                         (change)="toggleService(svc.id)" />
+                  <label class="form-check-label" [for]="'edit-svc-' + svc.id">
+                    {{ serviceName(svc) }}
+                  </label>
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="col-12">
+          <label for="edit-notes" class="form-label fw-600">
+            {{ 'customers.form.notes' | translate }}
+          </label>
+          <textarea id="edit-notes"
+                    class="form-control"
+                    formControlName="notes"
+                    rows="3"
+                    [placeholder]="'customers.form.notesPh' | translate"></textarea>
+        </div>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+    </form>
+  }
+
+  <ng-container modal-footer>
+    <button type="button"
+            class="btn btn-light"
+            [disabled]="submitting()"
+            (click)="cancel.emit()">
+      {{ 'customers.form.cancel' | translate }}
+    </button>
+    <button type="submit"
+            form="customer-edit-form"
+            class="btn btn-primary"
+            [disabled]="submitting() || form.invalid">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-floppy-disk me-1"></i>
+      }
+      {{ 'customers.form.submitEdit' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

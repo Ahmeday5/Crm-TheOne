@@ -1,0 +1,10 @@
+:host { display: block; }
+
+.search-icon {
+  position: absolute;
+  inset-inline-end: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-3);
+  pointer-events: none;
+}

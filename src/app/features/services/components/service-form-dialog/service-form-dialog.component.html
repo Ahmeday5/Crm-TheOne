@@ -1,0 +1,74 @@
+<app-modal
+  [open]="true"
+  [title]="modalTitleKey() | translate"
+  icon="fa-solid fa-screwdriver-wrench"
+  iconTone="primary"
+  size="md"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <form [formGroup]="form" id="service-form" novalidate (ngSubmit)="submit()">
+    <div class="row g-3">
+      <div class="col-12">
+        <label for="service-name-ar" class="form-label fw-600">
+          {{ 'services.form.nameAr' | translate }} <span class="text-danger">*</span>
+        </label>
+        <input id="service-name-ar"
+               class="form-control"
+               formControlName="nameAr"
+               dir="rtl"
+               [class.is-invalid]="form.controls.nameAr.invalid && (form.controls.nameAr.dirty || form.controls.nameAr.touched)"
+               [placeholder]="'services.form.nameArPlaceholder' | translate" />
+        <app-form-error
+          [control]="form.controls.nameAr"
+          [label]="'services.form.nameAr' | translate" />
+      </div>
+
+      <div class="col-12">
+        <label for="service-name-en" class="form-label fw-600">
+          {{ 'services.form.nameEn' | translate }} <span class="text-danger">*</span>
+        </label>
+        <input id="service-name-en"
+               class="form-control"
+               formControlName="nameEn"
+               dir="ltr"
+               [class.is-invalid]="form.controls.nameEn.invalid && (form.controls.nameEn.dirty || form.controls.nameEn.touched)"
+               [placeholder]="'services.form.nameEnPlaceholder' | translate" />
+        <app-form-error
+          [control]="form.controls.nameEn"
+          [label]="'services.form.nameEn' | translate" />
+      </div>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button"
+            class="btn btn-light"
+            [disabled]="submitting()"
+            (click)="cancel.emit()">
+      {{ 'services.form.cancel' | translate }}
+    </button>
+    @if (mode !== 'view') {
+      <button type="submit"
+              form="service-form"
+              class="btn btn-primary"
+              [disabled]="submitting() || form.invalid">
+        @if (submitting()) {
+          <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        } @else {
+          <i class="fa-solid" [class.fa-plus]="mode === 'create'" [class.fa-floppy-disk]="mode === 'edit'"></i>
+          <span class="ms-1"></span>
+        }
+        {{ submitLabelKey() | translate }}
+      </button>
+    }
+  </ng-container>
+</app-modal>
