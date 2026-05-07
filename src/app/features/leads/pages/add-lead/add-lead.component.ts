@@ -2,15 +2,17 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   signal,
 } from '@angular/core';
 import {
   FormBuilder,
+  FormControl,
+  FormsModule,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
@@ -26,6 +28,11 @@ import {
   SalesPerson,
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import {
+  minSelected,
+  noWhitespaceValidator,
+  phoneValidator,
+} from '../../../../shared/utils/custom-validators.util';
 import { CustomersService } from '../../services/customers.service';
 import { ServicesService } from '../../../services/services/services.service';
 
@@ -55,24 +62,33 @@ export class AddLeadComponent {
 
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly submitAttempted = signal(false);
 
   readonly campaigns = signal<CampaignDropdownItem[]>([]);
   readonly servicesList = signal<AppService[]>([]);
   readonly salesTeam = signal<SalesPerson[]>([]);
-  readonly selectedServiceIds = signal<Set<number>>(new Set());
+  readonly salesTeamLoading = signal(false);
 
   /** When true, shows the sales person picker modal. */
   readonly showSalesModal = signal(false);
   selectedSalesPersonId = '';
 
   readonly form = this.fb.nonNullable.group({
-    fullName: ['', [Validators.required, Validators.minLength(2)]],
-    phone: ['', [Validators.required]],
-    email: [''],
-    companyName: [''],
-    notes: [''],
-    campaignId: [null as number | null],
+    fullName: [
+      '',
+      [Validators.required, noWhitespaceValidator(), Validators.minLength(2), Validators.maxLength(80)],
+    ],
+    phone: ['', [Validators.required, phoneValidator()]],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(120)]],
+    companyName: ['', [Validators.maxLength(120)]],
+    notes: ['', [Validators.maxLength(500)]],
+    campaignId: [null as number | null, [Validators.required]],
+    serviceIds: this.fb.nonNullable.control<number[]>([], [minSelected(1)]),
   });
+
+  readonly servicesControl = this.form.controls.serviceIds as FormControl<number[]>;
+
+  readonly selectedServiceIds = computed(() => new Set(this.servicesControl.value));
 
   ngOnInit(): void {
     this.loadDropdowns();
@@ -88,16 +104,25 @@ export class AddLeadComponent {
   }
 
   toggleService(id: number): void {
-    this.selectedServiceIds.update((set) => {
-      const next = new Set(set);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    const current = this.servicesControl.value ?? [];
+    const next = current.includes(id)
+      ? current.filter((x) => x !== id)
+      : [...current, id];
+    this.servicesControl.setValue(next);
+    this.servicesControl.markAsDirty();
+    this.servicesControl.markAsTouched();
   }
 
   isServiceSelected(id: number): boolean {
     return this.selectedServiceIds().has(id);
+  }
+
+  selectedCount(): number {
+    return this.servicesControl.value?.length ?? 0;
+  }
+
+  servicesCountLabel(): string {
+    return this.t('customers.form.servicesCount').replace('{n}', String(this.selectedCount()));
   }
 
   serviceName(svc: AppService): string {
@@ -108,8 +133,10 @@ export class AddLeadComponent {
 
   saveOnly(): void {
     if (this.submitting()) return;
+    this.submitAttempted.set(true);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.toast.warning(this.t('customers.messages.validationFailed'));
       return;
     }
 
@@ -119,15 +146,21 @@ export class AddLeadComponent {
   // ─────────── save & assign ───────────
 
   openSalesModal(): void {
+    this.submitAttempted.set(true);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.toast.warning(this.t('customers.messages.validationFailed'));
       return;
     }
 
-    // Load sales team if not loaded
     if (this.salesTeam().length === 0) {
+      this.salesTeamLoading.set(true);
       this.customers.salesTeam().subscribe({
-        next: (team) => this.salesTeam.set(team),
+        next: (team) => {
+          this.salesTeam.set(team);
+          this.salesTeamLoading.set(false);
+        },
+        error: () => this.salesTeamLoading.set(false),
       });
     }
     this.showSalesModal.set(true);
@@ -155,7 +188,7 @@ export class AddLeadComponent {
       companyName: v.companyName.trim(),
       notes: v.notes.trim(),
       campaignId: v.campaignId,
-      serviceIds: Array.from(this.selectedServiceIds()),
+      serviceIds: v.serviceIds,
       assignToSalesTeam: assignToSales,
       salesPersonId: assignToSales ? salesPersonId : 'null',
     };
@@ -166,12 +199,19 @@ export class AddLeadComponent {
     this.customers.create(payload).subscribe({
       next: () => {
         this.submitting.set(false);
-        this.toast.success(this.t('customers.messages.created'));
+        this.toast.success(
+          assignToSales
+            ? this.t('customers.messages.assigned')
+            : this.t('customers.messages.created'),
+        );
         this.goBack();
       },
       error: (err: ApiError) => {
         this.submitting.set(false);
-        this.errorMessage.set(err?.message ?? null);
+        const message =
+          err?.message?.trim() || this.t('customers.messages.genericError');
+        this.errorMessage.set(message);
+        this.toast.error(message);
       },
     });
   }

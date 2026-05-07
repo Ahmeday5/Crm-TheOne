@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged, forkJoin, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { DialogService } from '../../../../core/services/dialog.service';
@@ -82,7 +82,12 @@ export class MarketingLeadsComponent {
   readonly sources = signal<SourceItem[]>([]);
 
   // ─────────── dialogs ───────────
-  readonly assignDialog = signal<{ customerId: number; customerName: string } | null>(null);
+  readonly assignDialog = signal<{
+    customerId: number;
+    customerName: string;
+    currentSalesPersonId: string | null;
+    currentSalesPersonName: string | null;
+  } | null>(null);
   readonly detailsDialog = signal<number | null>(null);
   readonly editDialog = signal<number | null>(null);
 
@@ -192,7 +197,58 @@ export class MarketingLeadsComponent {
   // ─────────── assign dialog ───────────
 
   openAssign(row: CustomerListItem): void {
-    this.assignDialog.set({ customerId: row.id, customerName: row.fullName });
+    // If the list payload already carries the id, open immediately.
+    if (row.salesPersonId !== undefined) {
+      this.assignDialog.set({
+        customerId: row.id,
+        customerName: row.fullName,
+        currentSalesPersonId: row.salesPersonId ?? null,
+        currentSalesPersonName: row.salesPersonName ?? null,
+      });
+      return;
+    }
+
+    // Otherwise resolve the current rep id from the detail endpoint
+    // (cached), so the dialog can pre-select and switch to "change" mode.
+    if (!row.salesPersonName) {
+      this.assignDialog.set({
+        customerId: row.id,
+        customerName: row.fullName,
+        currentSalesPersonId: null,
+        currentSalesPersonName: null,
+      });
+      return;
+    }
+
+    this.busyId.set(row.id);
+    this.customers.getById(row.id).subscribe({
+      next: (detail) => {
+        this.busyId.set(null);
+        this.assignDialog.set({
+          customerId: row.id,
+          customerName: row.fullName,
+          currentSalesPersonId: detail.salesPersonId ?? null,
+          currentSalesPersonName: detail.salesPersonName ?? row.salesPersonName ?? null,
+        });
+      },
+      error: () => {
+        this.busyId.set(null);
+        // Fall back to plain assign-mode if details fail.
+        this.assignDialog.set({
+          customerId: row.id,
+          customerName: row.fullName,
+          currentSalesPersonId: null,
+          currentSalesPersonName: row.salesPersonName ?? null,
+        });
+      },
+    });
+  }
+
+  /** Hover/aria title for the assign action — switches based on assignment state. */
+  assignTitle(row: CustomerListItem): string {
+    return row.salesPersonName
+      ? this.t('customers.table.reassign')
+      : this.t('customers.table.assign');
   }
 
   onAssigned(): void {

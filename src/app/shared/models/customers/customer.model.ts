@@ -13,6 +13,7 @@ export interface CustomerListItem {
   campaignName: string | null;
   services: string[];
   status: string;
+  salesPersonId?: string | null;
   salesPersonName: string | null;
   createdAt: string;
 }

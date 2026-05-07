@@ -5,8 +5,9 @@
   z-index: 1080;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  max-width: min(420px, calc(100vw - 2rem));
+  gap: 0.6rem;
+  width: min(380px, calc(100vw - 2rem));
+  max-width: min(380px, calc(100vw - 2rem));
   pointer-events: none;
 }
 .toast-stack > * { pointer-events: auto; }
@@ -23,32 +24,84 @@
   --tone-bg: var(--surface-0);
   --tone-fg: var(--text-1);
   --tone-accent: var(--brand);
+  --tone-soft:   rgba(13, 110, 253, 0.08);
+  --toast-duration: 3500ms;
 
+  position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 0.9rem;
+  padding: 0.85rem 1rem;
   background: var(--tone-bg);
   color: var(--tone-fg);
   border: 1px solid var(--border);
   border-inline-start: 4px solid var(--tone-accent);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
-  animation: toast-in 0.18s ease-out;
+  overflow: hidden;
+  animation: toast-slide-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.12));
+  }
 }
 
 .toast-icon {
-  font-size: var(--fs-lg);
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-md, 1rem);
   color: var(--tone-accent);
-  margin-top: 2px;
+  background: var(--tone-soft);
+  animation: toast-icon-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
-.toast-body { flex: 1 1 auto; min-width: 0; }
+
+.toast-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.15rem;
+  padding-inline: 0.25rem;
+}
+
+.toast-title {
+  font-size: var(--fs-sm, 0.9rem);
+  font-weight: 700;
+  color: var(--text-1);
+  line-height: 1.3;
+}
+
+.toast-message {
+  font-size: var(--fs-sm, 0.875rem);
+  line-height: 1.4;
+  color: var(--text-2, var(--text-1));
+  word-break: break-word;
+  unicode-bidi: plaintext; /* render Arabic & English in their natural order */
+}
+
 .toast-actions {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+  flex: 0 0 auto;
   margin-inline-start: auto;
 }
+
+.toast-action-btn {
+  color: var(--tone-accent);
+  text-decoration: none;
+  font-size: var(--fs-xs, 0.8rem);
+}
+.toast-action-btn:hover { text-decoration: underline; }
 
 .btn-close-toast {
   width: 26px;
@@ -61,15 +114,65 @@
   color: var(--text-3);
   border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
-.btn-close-toast:hover { color: var(--text-1); background: var(--surface-2); }
+.btn-close-toast:hover {
+  color: var(--text-1);
+  background: var(--surface-2);
+}
 
-.toast-card.tone-success { --tone-accent: var(--success); }
-.toast-card.tone-error   { --tone-accent: var(--danger); }
-.toast-card.tone-warning { --tone-accent: var(--warning); }
-.toast-card.tone-info    { --tone-accent: var(--info); }
+/* Progress bar — depletes from 100% → 0% over `--toast-duration`. */
+.toast-progress {
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--tone-accent);
+  opacity: 0.85;
+  animation: toast-countdown var(--toast-duration) linear forwards;
+}
 
-@keyframes toast-in {
-  from { transform: translateY(-6px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+.toast-card.is-paused .toast-progress { animation-play-state: paused; }
+
+/* Tone palettes */
+.toast-card.tone-success {
+  --tone-accent: var(--success, #198754);
+  --tone-soft:   rgba(25, 135, 84, 0.12);
+}
+.toast-card.tone-error {
+  --tone-accent: var(--danger, #dc3545);
+  --tone-soft:   rgba(220, 53, 69, 0.12);
+}
+.toast-card.tone-warning {
+  --tone-accent: var(--warning, #f59e0b);
+  --tone-soft:   rgba(245, 158, 11, 0.15);
+}
+.toast-card.tone-info {
+  --tone-accent: var(--info, #0dcaf0);
+  --tone-soft:   rgba(13, 202, 240, 0.12);
+}
+
+/* Animations */
+@keyframes toast-slide-in {
+  0%   { transform: translateY(-12px) scale(0.96); opacity: 0; }
+  60%  { transform: translateY(2px)   scale(1.01); opacity: 1; }
+  100% { transform: translateY(0)     scale(1);    opacity: 1; }
+}
+
+@keyframes toast-icon-pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes toast-countdown {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+/* Reduced-motion: disable bounce + countdown animations */
+@media (prefers-reduced-motion: reduce) {
+  .toast-card,
+  .toast-icon { animation: none; }
+  .toast-progress { animation-duration: var(--toast-duration); }
 }

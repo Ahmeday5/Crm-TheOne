@@ -2,27 +2,45 @@
   @for (t of toasts(); track t.id) {
     <div class="toast-card"
          [class]="'toast-card tone-' + t.type"
+         [class.is-paused]="t.pausedAt !== null"
+         [style.--toast-duration]="t.duration + 'ms'"
          role="status"
+         aria-live="polite"
          (mouseenter)="pause(t.id)"
          (mouseleave)="resume(t.id)">
-      <span class="toast-icon"><i [class]="iconOf(t.type)"></i></span>
+
+      <span class="toast-icon" aria-hidden="true">
+        <i [class]="iconOf(t.type)"></i>
+      </span>
+
       <div class="toast-body">
-        @if (t.title) { <strong class="d-block">{{ t.title }}</strong> }
-        <span>{{ t.message }}</span>
+        @if (t.title) {
+          <strong class="toast-title">{{ t.title }}</strong>
+        }
+        <span class="toast-message">{{ t.message }}</span>
       </div>
+
       <div class="toast-actions">
         @if (t.action) {
-          <button type="button" class="btn btn-link p-0 fw-700"
+          <button type="button"
+                  class="btn btn-link p-0 fw-700 toast-action-btn"
                   (click)="t.action.handler(); dismiss(t.id)">
             {{ t.action.label }}
           </button>
         }
         @if (t.closable) {
-          <button type="button" class="btn-close-toast" (click)="dismiss(t.id)" aria-label="close">
+          <button type="button"
+                  class="btn-close-toast"
+                  (click)="dismiss(t.id)"
+                  aria-label="close">
             <i class="fa-solid fa-xmark"></i>
           </button>
         }
       </div>
+
+      @if (t.duration > 0) {
+        <span class="toast-progress" aria-hidden="true"></span>
+      }
     </div>
   }
 </div>

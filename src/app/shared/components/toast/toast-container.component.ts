@@ -5,6 +5,12 @@ import { ToastService } from '../../../core/services/toast.service';
 /**
  * Global toast stack — mount once near the app root. Reads
  * `ToastService.toasts()` directly so toasts appear instantly.
+ *
+ * Each toast renders with:
+ *  - tone-coloured leading icon and accent border
+ *  - flexible body (title + message), centered for legibility on either edge
+ *  - hover-pause via the service (timer pauses + progress bar pauses with it)
+ *  - a thin progress bar at the bottom that depletes over `duration`
  */
 @Component({
   selector: 'app-toast-container',

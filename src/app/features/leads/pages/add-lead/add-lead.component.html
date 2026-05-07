@@ -23,10 +23,12 @@
               <input id="add-fullName"
                      class="form-control"
                      formControlName="fullName"
-                     [class.is-invalid]="form.controls.fullName.invalid && (form.controls.fullName.dirty || form.controls.fullName.touched)"
+                     maxlength="80"
+                     [class.is-invalid]="form.controls.fullName.invalid && (form.controls.fullName.dirty || form.controls.fullName.touched || submitAttempted())"
                      [placeholder]="'customers.form.fullNamePh' | translate" />
               <app-form-error
                 [control]="form.controls.fullName"
+                [forceShow]="submitAttempted()"
                 [label]="'customers.form.fullName' | translate" />
             </div>
 
@@ -38,23 +40,32 @@
               <input id="add-phone"
                      class="form-control"
                      formControlName="phone"
-                     [class.is-invalid]="form.controls.phone.invalid && (form.controls.phone.dirty || form.controls.phone.touched)"
+                     inputmode="tel"
+                     [class.is-invalid]="form.controls.phone.invalid && (form.controls.phone.dirty || form.controls.phone.touched || submitAttempted())"
                      [placeholder]="'customers.form.phonePh' | translate" />
               <app-form-error
                 [control]="form.controls.phone"
+                [forceShow]="submitAttempted()"
                 [label]="'customers.form.phone' | translate" />
             </div>
 
             <!-- Email -->
             <div class="col-md-6">
               <label for="add-email" class="form-label fw-600">
-                {{ 'customers.form.email' | translate }}
+                {{ 'customers.form.email' | translate }} <span class="text-danger">*</span>
               </label>
               <input id="add-email"
                      class="form-control"
                      formControlName="email"
                      type="email"
+                     inputmode="email"
+                     maxlength="120"
+                     [class.is-invalid]="form.controls.email.invalid && (form.controls.email.dirty || form.controls.email.touched || submitAttempted())"
                      [placeholder]="'customers.form.emailPh' | translate" />
+              <app-form-error
+                [control]="form.controls.email"
+                [forceShow]="submitAttempted()"
+                [label]="'customers.form.email' | translate" />
             </div>
 
             <!-- Company -->
@@ -65,26 +76,53 @@
               <input id="add-company"
                      class="form-control"
                      formControlName="companyName"
+                     maxlength="120"
+                     [class.is-invalid]="form.controls.companyName.invalid && (form.controls.companyName.dirty || form.controls.companyName.touched)"
                      [placeholder]="'customers.form.companyNamePh' | translate" />
+              <app-form-error
+                [control]="form.controls.companyName"
+                [label]="'customers.form.companyName' | translate" />
             </div>
 
             <!-- Campaign -->
             <div class="col-md-6">
               <label for="add-campaign" class="form-label fw-600">
-                {{ 'customers.form.campaign' | translate }}
+                {{ 'customers.form.campaign' | translate }} <span class="text-danger">*</span>
               </label>
-              <select id="add-campaign" class="form-select" formControlName="campaignId">
+              <select id="add-campaign"
+                      class="form-select"
+                      formControlName="campaignId"
+                      [class.is-invalid]="form.controls.campaignId.invalid && (form.controls.campaignId.dirty || form.controls.campaignId.touched || submitAttempted())">
                 <option [ngValue]="null">{{ 'customers.form.campaignPh' | translate }}</option>
                 @for (c of campaigns(); track c.id) {
                   <option [ngValue]="c.id">{{ c.name }}</option>
                 }
               </select>
+              @if (campaigns().length === 0) {
+                <small class="text-muted d-block mt-1">
+                  <i class="fa-solid fa-circle-info me-1"></i>{{ 'customers.form.noCampaigns' | translate }}
+                </small>
+              }
+              <app-form-error
+                [control]="form.controls.campaignId"
+                [forceShow]="submitAttempted()"
+                [label]="'customers.form.campaignName' | translate" />
             </div>
 
-            <!-- Services multi-select -->
+            <!-- Services multi-select (required) -->
             <div class="col-md-6">
-              <label class="form-label fw-600">{{ 'customers.form.services' | translate }}</label>
-              <div class="services-picker">
+              <div class="d-flex align-items-center justify-content-between mb-1">
+                <label class="form-label fw-600 mb-0">
+                  {{ 'customers.form.services' | translate }} <span class="text-danger">*</span>
+                </label>
+                @if (selectedCount() > 0) {
+                  <span class="badge bg-primary-subtle text-primary">
+                    {{ servicesCountLabel() }}
+                  </span>
+                }
+              </div>
+              <div class="services-picker"
+                   [class.is-invalid]="servicesControl.invalid && (servicesControl.touched || submitAttempted())">
                 @if (servicesList().length === 0) {
                   <span class="text-muted small">{{ 'customers.form.noServices' | translate }}</span>
                 } @else {
@@ -102,6 +140,13 @@
                   }
                 }
               </div>
+              <small class="text-muted d-block mt-1">
+                <i class="fa-solid fa-circle-info me-1"></i>{{ 'customers.form.servicesHint' | translate }}
+              </small>
+              <app-form-error
+                [control]="servicesControl"
+                [forceShow]="submitAttempted()"
+                [label]="'customers.form.service' | translate" />
             </div>
 
             <!-- Notes -->
@@ -113,7 +158,12 @@
                         class="form-control"
                         formControlName="notes"
                         rows="4"
+                        maxlength="500"
+                        [class.is-invalid]="form.controls.notes.invalid && (form.controls.notes.dirty || form.controls.notes.touched)"
                         [placeholder]="'customers.form.notesPh' | translate"></textarea>
+              <app-form-error
+                [control]="form.controls.notes"
+                [label]="'customers.form.notes' | translate" />
             </div>
           </div>
 
@@ -166,9 +216,14 @@
 
     <p class="text-muted mb-3">{{ 'customers.assignModal.hint' | translate }}</p>
 
-    @if (salesTeam().length === 0) {
+    @if (salesTeamLoading()) {
       <div class="text-center py-4">
         <span class="spinner-border text-primary" role="status"></span>
+      </div>
+    } @else if (salesTeam().length === 0) {
+      <div class="alert alert-warning py-2 mb-0">
+        <i class="fa-solid fa-circle-info me-1"></i>
+        {{ 'customers.assignModal.noSalesTeam' | translate }}
       </div>
     } @else {
       <div class="list-group">

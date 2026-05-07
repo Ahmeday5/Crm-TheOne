@@ -202,13 +202,18 @@
                               (click)="openEdit(row)">
                         <i class="fa-solid fa-pen"></i>
                       </button>
-                      <!-- Assign to sales -->
+                      <!-- Assign / change sales rep -->
                       <button type="button"
-                              class="btn btn-sm btn-success-soft"
+                              [class]="row.salesPersonName ? 'btn btn-sm btn-primary-soft' : 'btn btn-sm btn-success-soft'"
                               [disabled]="busyId() === row.id"
-                              [title]="'customers.table.assign' | translate"
+                              [title]="assignTitle(row)"
+                              [attr.aria-label]="assignTitle(row)"
                               (click)="openAssign(row)">
-                        <i class="fa-solid fa-user-plus"></i>
+                        @if (busyId() === row.id) {
+                          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        } @else {
+                          <i [class]="row.salesPersonName ? 'fa-solid fa-user-pen' : 'fa-solid fa-user-plus'"></i>
+                        }
                       </button>
                       <!-- Delete -->
                       <button type="button"
@@ -243,11 +248,13 @@
   </div>
 </section>
 
-<!-- Assign to Sales Dialog -->
+<!-- Assign / Change Sales Rep Dialog -->
 @if (assignDialog(); as dlg) {
   <app-assign-sales-dialog
     [customerId]="dlg.customerId"
     [customerName]="dlg.customerName"
+    [currentSalesPersonId]="dlg.currentSalesPersonId"
+    [currentSalesPersonName]="dlg.currentSalesPersonName"
     (assigned)="onAssigned()"
     (cancel)="closeAssign()">
   </app-assign-sales-dialog>

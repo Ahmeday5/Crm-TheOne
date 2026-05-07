@@ -65,6 +65,9 @@ function resolveMessage(
   }
   if (errors['pattern'] !== undefined) return msg('pattern', { label }, lang);
   if (errors['mismatch'] !== undefined) return msg('mismatch', { label }, lang);
+  if (errors['phone'] !== undefined) return msg('phone', { label }, lang);
+  if (errors['atLeastOne'] !== undefined) return msg('atLeastOne', { label }, lang);
+  if (errors['whitespace'] !== undefined) return msg('whitespace', { label }, lang);
 
   // Unknown validator — fall back to a string error if the validator gave one.
   const firstKey = Object.keys(errors)[0];
