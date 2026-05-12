@@ -84,6 +84,17 @@ const dashboard: TranslationFile<'dashboard'> = {
       latestLeads: 'Latest leads',
       campaignsPerformance: 'Campaigns performance',
       monthlySummary: 'Marketing performance — current month',
+      noData: 'No data to display',
+      loadFailed: 'Failed to load data',
+      retry: 'Retry',
+      customers: 'Customers',
+      budget: 'Budget',
+      stats: {
+        totalCustomers: 'Total potential customers',
+        todayCustomers: "Today's customers",
+        activeCampaigns: 'Active campaigns',
+        customerCost: 'Customer cost',
+      },
       summary: {
         totalLeads: 'Total leads',
         totalBudget: 'Total budget',

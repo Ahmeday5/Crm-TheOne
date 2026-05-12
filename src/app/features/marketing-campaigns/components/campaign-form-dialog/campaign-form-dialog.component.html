@@ -187,11 +187,18 @@
         </div>
 
         <div class="col-12">
-          <label for="campaign-countries" class="form-label fw-600">
+          <label class="form-label fw-600">
             {{ 'campaigns.create.countries' | translate }}
           </label>
-          <input id="campaign-countries" class="form-control" formControlName="countriesText"
-            [placeholder]="'campaigns.create.countriesPlaceholder' | translate" />
+          <app-multi-select
+            formControlName="countries"
+            [options]="countries()"
+            [loading]="loadingCountries()"
+            [placeholder]="'campaigns.create.countriesPlaceholder' | translate"
+            [searchPlaceholder]="'campaigns.create.countriesSearch' | translate"
+            [emptyText]="'campaigns.create.countriesEmpty' | translate"
+            [maxVisibleChips]="4">
+          </app-multi-select>
           <small class="text-muted">{{ 'campaigns.create.countriesHint' | translate }}</small>
         </div>
       </div>

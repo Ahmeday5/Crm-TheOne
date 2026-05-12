@@ -49,6 +49,15 @@ export const routes: Routes = [
       ...MARKETING_CAMPAIGNS_ROUTES,
       ...SERVICES_ROUTES,
       {
+        path: 'sales-analysis',
+        title: 'تحليل نتائج المبيعات',
+        data: { roles: ['Admin', 'Marketing'] },
+        loadComponent: () =>
+          import(
+            './features/report-and-analytics/pages/sales-reports/sales-reports.component'
+          ).then((m) => m.SalesReportsComponent),
+      },
+      {
         path: 'ReportAndAnalytics',
         data: { roles: ['Admin'] },
         children: REPORT_ROUTES,

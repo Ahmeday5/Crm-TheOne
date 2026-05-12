@@ -10,7 +10,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
@@ -23,7 +22,7 @@ import { CustomersService } from '../../services/customers.service';
 @Component({
   selector: 'app-assign-sales-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, ModalComponent],
+  imports: [CommonModule, TranslatePipe, ModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './assign-sales-dialog.component.html',
 })
@@ -49,23 +48,23 @@ export class AssignSalesDialogComponent implements OnInit {
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
-  selectedSalesPersonId = '';
+  /** Selected rep id — signal so `canSubmit` recomputes when ngModel writes. */
+  readonly selectedId = signal('');
 
   /** True when there is already an assigned rep — switches all copy to "change". */
   readonly isChangeMode = computed(() => !!this.currentSalesPersonId);
 
   /** Disable submit if nothing selected, or selection is unchanged in change-mode. */
   readonly canSubmit = computed(() => {
-    if (!this.selectedSalesPersonId || this.submitting()) return false;
-    if (this.isChangeMode() && this.selectedSalesPersonId === this.currentSalesPersonId) {
-      return false;
-    }
+    const id = this.selectedId();
+    if (!id || this.submitting()) return false;
+    if (this.isChangeMode() && id === this.currentSalesPersonId) return false;
     return true;
   });
 
   ngOnInit(): void {
     if (this.currentSalesPersonId) {
-      this.selectedSalesPersonId = this.currentSalesPersonId;
+      this.selectedId.set(this.currentSalesPersonId);
     }
 
     this.loading.set(true);
@@ -78,13 +77,16 @@ export class AssignSalesDialogComponent implements OnInit {
     });
   }
 
-  submit(): void {
-    if (!this.selectedSalesPersonId || this.submitting()) return;
+  onSelect(id: string): void {
+    this.selectedId.set(id);
+    this.errorMessage.set(null);
+  }
 
-    if (
-      this.isChangeMode() &&
-      this.selectedSalesPersonId === this.currentSalesPersonId
-    ) {
+  submit(): void {
+    const id = this.selectedId();
+    if (!id || this.submitting()) return;
+
+    if (this.isChangeMode() && id === this.currentSalesPersonId) {
       this.errorMessage.set(this.t('customers.assignModal.sameRepError'));
       this.toast.warning(this.t('customers.assignModal.sameRepError'));
       return;
@@ -95,26 +97,24 @@ export class AssignSalesDialogComponent implements OnInit {
     this.submitting.set(true);
     this.errorMessage.set(null);
 
-    this.customers
-      .assign(this.customerId, { salesPersonId: this.selectedSalesPersonId })
-      .subscribe({
-        next: () => {
-          this.submitting.set(false);
-          this.toast.success(
-            wasReassign
-              ? this.t('customers.messages.reassigned')
-              : this.t('customers.messages.assigned'),
-          );
-          this.assigned.emit();
-        },
-        error: (err: ApiError) => {
-          this.submitting.set(false);
-          const message =
-            err?.message?.trim() || this.t('customers.messages.assignFailed');
-          this.errorMessage.set(message);
-          this.toast.error(message);
-        },
-      });
+    this.customers.assign(this.customerId, { salesPersonId: id }).subscribe({
+      next: () => {
+        this.submitting.set(false);
+        this.toast.success(
+          wasReassign
+            ? this.t('customers.messages.reassigned')
+            : this.t('customers.messages.assigned'),
+        );
+        this.assigned.emit();
+      },
+      error: (err: ApiError) => {
+        this.submitting.set(false);
+        const message =
+          err?.message?.trim() || this.t('customers.messages.assignFailed');
+        this.errorMessage.set(message);
+        this.toast.error(message);
+      },
+    });
   }
 
   private t(key: string): string {

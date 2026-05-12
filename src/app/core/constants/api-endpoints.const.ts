@@ -21,11 +21,13 @@ export const API_ENDPOINTS = {
   campaigns: {
     list: 'Campaigns/GetAllCampaigns',
     dropdown: 'Campaigns/dropdown',
-    statistics: 'Campaigns/Statistics-Dashboard',
+    dropdownCountries: 'Campaigns/dropdownCountries',
+    statistics: 'Campaigns/StatisticsDashboard',
+    performance: 'Campaigns/CampaignPerformance',
     byId: (id: number | string) => `Campaigns/${id}/getCampaignById`,
     add: 'Campaigns',
     delete: (id: number | string) => `Campaigns/${id}/deleteCampaign`,
-    toggleStatus: (id: number | string) => `Campaigns/${id}/toggle-status`,
+    toggleStatus: (id: number | string) => `Campaigns/${id}/toggleStatus`,
   },
   channelSources: {
     list: 'ChannelSources',
@@ -46,5 +48,11 @@ export const API_ENDPOINTS = {
     delete: (id: number | string) => `Customers/${id}`,
     assign: (id: number | string) => `Customers/${id}/assign`,
     statuses: 'Customers/statuses',
+  },
+  marketing: {
+    statistics: 'Marketing/DashboardsStatistics',
+    sourcePerformance: 'Marketing/SourcePerformance',
+    last7Days: 'Marketing/potentialCustomersLastdays',
+    salesStatistics: 'Marketing/statistics',
   },
 } as const;

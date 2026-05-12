@@ -23,11 +23,13 @@ import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { MultiSelectComponent } from '../../../../shared/components/multi-select/multi-select.component';
 import {
   CAMPAIGN_STATUSES,
   CAMPAIGN_STATUS_CODE,
   CampaignStatus,
   ChannelSource,
+  CountryOption,
   CreateCampaignRequest,
   GenderCode,
 } from '../../../../shared/models';
@@ -46,6 +48,7 @@ import { ChannelSourceDialogComponent } from '../channel-source-dialog/channel-s
     ModalComponent,
     FormErrorComponent,
     ChannelSourceDialogComponent,
+    MultiSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './campaign-form-dialog.component.html',
@@ -70,7 +73,9 @@ export class CampaignFormDialogComponent implements OnInit {
   readonly statuses: ReadonlyArray<CampaignStatus> = CAMPAIGN_STATUSES;
 
   readonly channelSources = signal<ChannelSource[]>([]);
+  readonly countries = signal<CountryOption[]>([]);
   readonly loadingSources = signal(false);
+  readonly loadingCountries = signal(false);
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly channelSourceDialogOpen = signal(false);
@@ -101,7 +106,7 @@ export class CampaignFormDialogComponent implements OnInit {
         Validators.max(120),
       ]),
       gender: [GenderCode.All as number, Validators.required],
-      countriesText: [''],
+      countries: this.fb.nonNullable.control<number[]>([]),
     },
     { validators: [this.dateRangeValidator, this.ageRangeValidator] },
   );
@@ -127,8 +132,8 @@ export class CampaignFormDialogComponent implements OnInit {
     } else {
       this.loadSources();
     }
+    this.loadCountries();
 
-    // 👇 ده المهم
     this.form.controls.startDate.valueChanges.subscribe((v) => {
       this.startDateSig.set(v);
     });
@@ -146,6 +151,17 @@ export class CampaignFormDialogComponent implements OnInit {
         this.loadingSources.set(false);
       },
       error: () => this.loadingSources.set(false),
+    });
+  }
+
+  loadCountries(): void {
+    this.loadingCountries.set(true);
+    this.campaigns.countriesDropdown().subscribe({
+      next: (rows) => {
+        this.countries.set(rows ?? []);
+        this.loadingCountries.set(false);
+      },
+      error: () => this.loadingCountries.set(false),
     });
   }
 
@@ -168,7 +184,7 @@ export class CampaignFormDialogComponent implements OnInit {
       gender: Number(v.gender) as GenderCode,
       minAge: Number(v.minAge) || 0,
       maxAge: Number(v.maxAge) || 0,
-      countries: this.parseCountries(v.countriesText ?? ''),
+      countries: (v.countries ?? []).map((id) => Number(id)).filter((n) => Number.isFinite(n)),
       status: Number(v.status) || CAMPAIGN_STATUS_CODE.Active,
     };
 
@@ -212,15 +228,6 @@ export class CampaignFormDialogComponent implements OnInit {
 
   isInvalid(ctrl: AbstractControl): boolean {
     return ctrl.invalid && (ctrl.dirty || ctrl.touched);
-  }
-
-  private parseCountries(value: string): number[] {
-    return value
-      .split(',')
-      .map((v) => v.trim())
-      .filter((v) => v.length > 0)
-      .map((v) => Number(v))
-      .filter((n) => Number.isFinite(n));
   }
 
   private toIsoDateTime(date: string): string {

@@ -29,6 +29,8 @@ export interface Campaign {
   maxAge: number;
   gender: GenderName;
   countries: number[];
+  /** Customers attributed to this campaign — present on list + detail responses. */
+  customersCount?: number;
 
   // Detail-only fields — populated by `GET /Campaigns/{id}/getCampaignById`.
   spent?: number;
@@ -85,12 +87,30 @@ export interface CampaignDropdownItem {
   name: string;
 }
 
-/** Aggregate KPIs returned by `GET /Campaigns/Statistics-Dashboard`. */
+/** Country option returned by `GET /Campaigns/dropdownCountries`. */
+export interface CountryOption {
+  id: number;
+  name: string;
+}
+
+/** Per-campaign outcome row returned by `GET /Campaigns/CampaignPerformance`. */
+export interface CampaignPerformanceRow {
+  campaignId: number;
+  campaignName: string;
+  totalCustomers: number;
+  buyers: number;
+  nonBuyers: number;
+  /** Percentage 0–100. */
+  conversionRate: number;
+}
+
+/** Aggregate KPIs returned by `GET /Campaigns/StatisticsDashboard`. */
 export interface CampaignsStatistics {
-  totalBudget: number;
-  totalSpent: number;
-  activeCampaigns: number;
-  totalConversions: number;
+  totalBudget?: number;
+  totalSpent?: number;
+  totalCampaigns?: number;
+  activeCampaigns?: number;
+  totalConversions?: number;
   // The endpoint may evolve; keep it forgiving so new fields don't break the
   // build. Consumers should fall back to client-side aggregation when a field
   // is missing.

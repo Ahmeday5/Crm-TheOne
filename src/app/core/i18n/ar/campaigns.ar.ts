@@ -11,10 +11,12 @@ const campaigns: TranslationFile<'campaigns'> = {
     days: 'يوم',
 
     kpi: {
+      totalCampaigns: 'إجمالي الحملات',
       totalBudget: 'إجمالي الميزانية',
       spent: 'تم الإنفاق',
       active: 'الحملات النشطة',
       remaining: 'المتبقي',
+      conversions: 'التحويلات',
     },
 
     filters: {
@@ -68,8 +70,10 @@ const campaigns: TranslationFile<'campaigns'> = {
       maxAge: 'الحد الأقصى للعمر',
       gender: 'الجنس',
       countries: 'الدول المستهدفة',
-      countriesPlaceholder: 'مثال: 1, 2, 3',
-      countriesHint: 'أدخل أرقام معرفات الدول مفصولة بفواصل',
+      countriesPlaceholder: 'اختر دولة أو أكثر',
+      countriesHint: 'يمكنك اختيار أكثر من دولة من القائمة.',
+      countriesSearch: 'ابحث عن دولة...',
+      countriesEmpty: 'لا توجد دول مطابقة',
       cancel: 'إلغاء',
       submit: 'إنشاء الحملة',
       genders: {

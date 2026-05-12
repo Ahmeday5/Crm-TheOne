@@ -12,10 +12,12 @@ const campaigns: TranslationFile<'campaigns'> = {
     days: 'days',
 
     kpi: {
+      totalCampaigns: 'Total campaigns',
       totalBudget: 'Total budget',
       spent: 'Spent',
       active: 'Active campaigns',
       remaining: 'Remaining',
+      conversions: 'Conversions',
     },
 
     filters: {
@@ -69,8 +71,10 @@ const campaigns: TranslationFile<'campaigns'> = {
       maxAge: 'Maximum age',
       gender: 'Gender',
       countries: 'Target countries',
-      countriesPlaceholder: 'e.g. 1, 2, 3',
-      countriesHint: 'Enter country IDs separated by commas',
+      countriesPlaceholder: 'Select one or more countries',
+      countriesHint: 'You can pick multiple countries from the list.',
+      countriesSearch: 'Search countries...',
+      countriesEmpty: 'No matching countries',
       cancel: 'Cancel',
       submit: 'Create campaign',
       invalidDuration: 'End date must be after the start date.',

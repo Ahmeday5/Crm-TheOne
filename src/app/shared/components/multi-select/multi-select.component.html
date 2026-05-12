@@ -1,0 +1,110 @@
+<div class="ms-wrapper" [class.is-open]="open()" [class.is-disabled]="disabledSig()">
+  <!-- Trigger -->
+  <button type="button"
+          class="ms-trigger"
+          [class.has-value]="selectedOptions().length > 0"
+          [disabled]="disabledSig()"
+          [attr.aria-expanded]="open()"
+          aria-haspopup="listbox"
+          (click)="toggleOpen()">
+    <div class="ms-trigger-content">
+      @if (selectedOptions().length === 0) {
+        <span class="ms-placeholder">{{ placeholder() }}</span>
+      } @else {
+        <span class="ms-chips">
+          @for (opt of visibleChips(); track opt.id) {
+            <span class="ms-chip">
+              <span class="ms-chip-text">{{ opt.name }}</span>
+              <button type="button"
+                      class="ms-chip-remove"
+                      [disabled]="disabledSig()"
+                      [attr.aria-label]="'Remove ' + opt.name"
+                      (click)="removeChip(opt.id, $event)">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </span>
+          }
+          @if (extraCount() > 0) {
+            <span class="ms-chip ms-chip-more">+{{ extraCount() }}</span>
+          }
+        </span>
+      }
+    </div>
+    <i class="fa-solid fa-chevron-down ms-caret" aria-hidden="true"></i>
+  </button>
+
+  <!-- Dropdown panel -->
+  @if (open()) {
+    <div class="ms-panel" role="listbox">
+      <div class="ms-search">
+        <i class="fa-solid fa-magnifying-glass ms-search-icon" aria-hidden="true"></i>
+        <input type="text"
+               class="ms-search-input"
+               [placeholder]="searchPlaceholder()"
+               [ngModel]="query()"
+               (ngModelChange)="onQueryChange($event)"
+               (click)="$event.stopPropagation()"
+               autocomplete="off" />
+        @if (query()) {
+          <button type="button"
+                  class="ms-search-clear"
+                  aria-label="clear search"
+                  (click)="onQueryChange(''); $event.stopPropagation()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        }
+      </div>
+
+      @if (showBulkActions() && filteredOptions().length > 0) {
+        <div class="ms-bulk">
+          <button type="button" class="ms-bulk-btn" (click)="selectAll($event)">
+            <i class="fa-solid fa-check-double me-1"></i>
+            Select all
+          </button>
+          @if (selectedIds().length > 0) {
+            <button type="button" class="ms-bulk-btn ms-bulk-clear" (click)="clearAll($event)">
+              <i class="fa-solid fa-eraser me-1"></i>
+              Clear ({{ selectedIds().length }})
+            </button>
+          }
+        </div>
+      }
+
+      <div class="ms-list">
+        @if (loading()) {
+          <div class="ms-state">
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Loading…
+          </div>
+        } @else if (filteredOptions().length === 0) {
+          <div class="ms-state ms-empty">
+            <i class="fa-solid fa-inbox me-2 opacity-50"></i>
+            {{ emptyText() }}
+          </div>
+        } @else {
+          @for (opt of filteredOptions(); track opt.id) {
+            <button type="button"
+                    class="ms-option"
+                    [class.is-selected]="isSelected(opt.id)"
+                    role="option"
+                    [attr.aria-selected]="isSelected(opt.id)"
+                    (click)="toggleOption(opt.id, $event)">
+              <span class="ms-checkbox" [class.is-checked]="isSelected(opt.id)">
+                @if (isSelected(opt.id)) {
+                  <i class="fa-solid fa-check"></i>
+                }
+              </span>
+              <span class="ms-option-label">{{ opt.name }}</span>
+            </button>
+          }
+        }
+      </div>
+
+      @if (selectedIds().length > 0) {
+        <div class="ms-footer">
+          <span class="ms-count">{{ selectedIds().length }} selected</span>
+        </div>
+      }
+    </div>
+  }
+</div>

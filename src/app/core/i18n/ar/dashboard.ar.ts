@@ -84,6 +84,17 @@ const dashboard: TranslationFile<'dashboard'> = {
       latestLeads: 'آخر العملاء المضافين',
       campaignsPerformance: 'أداء الحملات',
       monthlySummary: 'ملخص الأداء التسويقي - الشهر الحالي',
+      noData: 'لا توجد بيانات لعرضها',
+      loadFailed: 'تعذر تحميل البيانات',
+      retry: 'إعادة المحاولة',
+      customers: 'العملاء',
+      budget: 'الميزانية',
+      stats: {
+        totalCustomers: 'إجمالي العملاء المحتملين',
+        todayCustomers: 'عملاء اليوم',
+        activeCampaigns: 'الحملات النشطة',
+        customerCost: 'تكلفة العميل',
+      },
       summary: {
         totalLeads: 'إجمالي العملاء',
         totalBudget: 'الميزانية الكلية',

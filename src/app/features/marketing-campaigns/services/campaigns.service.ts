@@ -14,7 +14,9 @@ import {
   CampaignDetails,
   CampaignDropdownItem,
   CampaignListQuery,
+  CampaignPerformanceRow,
   CampaignsStatistics,
+  CountryOption,
   CreateCampaignRequest,
   PagedResult,
 } from '../../../shared/models';
@@ -55,10 +57,26 @@ export class CampaignsService {
     );
   }
 
+  /** Countries options list — long-TTL cache (rarely changes). */
+  countriesDropdown(): Observable<CountryOption[]> {
+    return this.api.get<CountryOption[]>(
+      API_ENDPOINTS.campaigns.dropdownCountries,
+      { context: withCache({ ttlMs: CACHE_TTL.LONG }) },
+    );
+  }
+
   statistics(): Observable<CampaignsStatistics> {
     return this.api.get<CampaignsStatistics>(
       API_ENDPOINTS.campaigns.statistics,
       { context: withCache({ ttlMs: CACHE_TTL.MEDIUM }) },
+    );
+  }
+
+  /** Per-campaign outcome breakdown (buyers / non-buyers / conversion). */
+  performance(): Observable<CampaignPerformanceRow[]> {
+    return this.api.get<CampaignPerformanceRow[]>(
+      API_ENDPOINTS.campaigns.performance,
+      { context: withCache({ ttlMs: CACHE_TTL.SHORT }) },
     );
   }
 

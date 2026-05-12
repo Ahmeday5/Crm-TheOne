@@ -20,9 +20,26 @@
     </button>
   </header>
 
-  <!-- KPI grid -->
+  <!-- KPI grid (5 cards from /Campaigns/StatisticsDashboard) -->
   <div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-12 col-sm-6 col-lg">
+      <app-stat-card
+        [label]="'campaigns.kpi.totalCampaigns' | translate"
+        [value]="formatNumber(kpis().totalCampaigns)"
+        icon="fa-solid fa-list"
+        tone="info">
+      </app-stat-card>
+    </div>
+    <div class="col-12 col-sm-6 col-lg">
+      <app-stat-card
+        [label]="'campaigns.kpi.active' | translate"
+        [value]="formatNumber(kpis().activeCampaigns)"
+        icon="fa-solid fa-bullhorn"
+        tone="purple"
+        valueClass="text-purple">
+      </app-stat-card>
+    </div>
+    <div class="col-12 col-sm-6 col-lg">
       <app-stat-card
         [label]="'campaigns.kpi.totalBudget' | translate"
         [value]="formatNumber(kpis().totalBudget) + ' ' + ('campaigns.sar' | translate)"
@@ -30,29 +47,20 @@
         tone="primary">
       </app-stat-card>
     </div>
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-12 col-sm-6 col-lg">
       <app-stat-card
-        [label]="'campaigns.card.dailyBudget' | translate"
-        [value]="formatNumber(kpis().dailyBudget) + ' ' + ('campaigns.sar' | translate)"
+        [label]="'campaigns.kpi.spent' | translate"
+        [value]="formatNumber(kpis().totalSpent) + ' ' + ('campaigns.sar' | translate)"
         icon="fa-solid fa-coins"
         tone="orange">
       </app-stat-card>
     </div>
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-12 col-sm-6 col-lg">
       <app-stat-card
-        [label]="'campaigns.kpi.active' | translate"
-        [value]="kpis().active"
-        icon="fa-solid fa-bullhorn"
-        tone="purple"
-        valueClass="text-purple">
-      </app-stat-card>
-    </div>
-    <div class="col-12 col-sm-6 col-lg-3">
-      <app-stat-card
-        [label]="'common.showing' | translate"
-        [value]="kpis().total"
-        icon="fa-solid fa-list"
-        tone="info">
+        [label]="'campaigns.kpi.conversions' | translate"
+        [value]="formatNumber(kpis().totalConversions)"
+        icon="fa-solid fa-bullseye"
+        tone="success">
       </app-stat-card>
     </div>
   </div>

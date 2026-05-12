@@ -1,149 +1,158 @@
-<section>
-  <header class="d-flex align-items-center gap-3 mb-4">
-    <span class="icon-tile xl tone-warning"><i class="fa-solid fa-arrow-trend-up"></i></span>
-    <div>
-      <h2 class="fw-700 mb-1">{{ 'reportAnalysis.sales.title' | translate }}</h2>
-      <p class="text-muted mb-0">{{ 'reportAnalysis.sales.subtitle' | translate }}</p>
+<section class="sales-analysis">
+  <!-- Page Header -->
+  <header class="mb-4">
+    <div class="d-flex align-items-center gap-3 mb-2">
+      <span class="icon-tile xl tone-primary"><i class="fa-solid fa-chart-column"></i></span>
+      <div>
+        <h2 class="fw-700 mb-1">{{ 'reportAnalysis.sales.title' | translate }}</h2>
+        <p class="text-muted mb-0">{{ 'reportAnalysis.sales.subtitle' | translate }}</p>
+      </div>
     </div>
   </header>
 
-  <div class="card mb-4">
+  <!-- Info / data-flow card -->
+  <div class="card info-card mb-4">
     <div class="card-body">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-6 col-lg-3">
-          <label class="form-label d-flex align-items-center gap-2">
-            <i class="fa-solid fa-calendar text-muted"></i>
-            {{ 'reportAnalysis.common.period' | translate }}
-          </label>
-          <select class="form-select" [(ngModel)]="period">
-            <option *ngFor="let opt of periodOptions" [value]="opt">
-              {{ ('reportAnalysis.common.' + opt) | translate }}
-            </option>
-          </select>
-        </div>
-        <div class="col-md-6 col-lg-3">
-          <label class="form-label d-flex align-items-center gap-2">
-            <i class="fa-solid fa-users text-muted"></i>
-            {{ 'reportAnalysis.sales.filters.team' | translate }}
-          </label>
-          <select class="form-select" [(ngModel)]="team">
-            <option *ngFor="let opt of teamOptions" [value]="opt">
-              {{ ('reportAnalysis.sales.filters.' + opt) | translate }}
-            </option>
-          </select>
-        </div>
-        <div class="col-md-6 col-lg-3">
-          <label class="form-label d-flex align-items-center gap-2">
-            <i class="fa-solid fa-box text-muted"></i>
-            {{ 'reportAnalysis.sales.filters.product' | translate }}
-          </label>
-          <select class="form-select" [(ngModel)]="product">
-            <option *ngFor="let opt of productOptions" [value]="opt">
-              {{ ('reportAnalysis.sales.filters.' + opt) | translate }}
-            </option>
-          </select>
-        </div>
-        <div class="col-md-6 col-lg-3">
-          <div class="d-flex gap-2 justify-content-md-end">
-            <button type="button" class="btn btn-light flex-grow-1 flex-md-grow-0">
-              <i class="fa-solid fa-file-pdf me-1"></i>{{ 'reportAnalysis.common.export.pdf' | translate }}
-            </button>
-            <button type="button" class="btn btn-light flex-grow-1 flex-md-grow-0">
-              <i class="fa-solid fa-file-excel me-1"></i>{{ 'reportAnalysis.common.export.excel' | translate }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+      <div class="d-flex align-items-start gap-3">
+        <span class="icon-tile tone-primary flex-shrink-0">
+          <i class="fa-solid fa-circle-info"></i>
+        </span>
+        <div class="flex-grow-1">
+          <h6 class="fw-700 mb-2">{{ 'reportAnalysis.sales.info.title' | translate }}</h6>
+          <p class="text-muted small mb-3" [innerHTML]="'reportAnalysis.sales.info.intro' | translate"></p>
 
-  <div class="row g-3 mb-4">
-    <div *ngFor="let kpi of kpis" class="col-12 col-sm-6 col-lg-4 col-xl">
-      <div class="card kpi-card">
-        <div class="card-body d-flex align-items-center justify-content-between gap-3">
-          <div class="flex-grow-1 min-w-0">
-            <p class="text-muted small mb-1 text-truncate">{{ kpi.labelKey | translate }}</p>
-            <h3 class="fw-700 mb-2 kpi-value">
-              {{ kpi.value }}
-              <ng-container *ngIf="kpi.labelKey === 'reportAnalysis.sales.kpi.revenue' || kpi.labelKey === 'reportAnalysis.sales.kpi.avgDeal' || kpi.labelKey === 'reportAnalysis.sales.kpi.pipeline'">
-                <small class="fs-6 text-muted fw-500">{{ 'reportAnalysis.common.currency' | translate }}</small>
-              </ng-container>
-            </h3>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <span class="badge"
-                    [class.success]="kpi.deltaTone === 'success'"
-                    [class.danger]="kpi.deltaTone === 'danger'">
-                {{ kpi.delta }}
-              </span>
-              <small class="text-muted">{{ 'reportAnalysis.common.vsLastMonth' | translate }}</small>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="info-tile info-tile-success">
+                <p class="info-tile-title">
+                  <i class="fa-solid fa-circle-check"></i>
+                  {{ 'reportAnalysis.sales.info.buyersTitle' | translate }}
+                </p>
+                <p class="info-tile-desc" [innerHTML]="'reportAnalysis.sales.info.buyersDesc' | translate"></p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="info-tile info-tile-danger">
+                <p class="info-tile-title">
+                  <i class="fa-solid fa-circle-xmark"></i>
+                  {{ 'reportAnalysis.sales.info.nonBuyersTitle' | translate }}
+                </p>
+                <p class="info-tile-desc" [innerHTML]="'reportAnalysis.sales.info.nonBuyersDesc' | translate"></p>
+              </div>
             </div>
           </div>
-          <span [class]="'icon-tile xl tone-' + kpi.iconTone"><i [class]="kpi.icon"></i></span>
+
+          <div class="info-goal mt-3">
+            <strong>{{ 'reportAnalysis.sales.info.goalTitle' | translate }}</strong>
+            <span class="text-muted">{{ 'reportAnalysis.sales.info.goalDesc' | translate }}</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- KPI cards (from /Marketing/statistics) -->
+  @if (loadError()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3" role="alert">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span class="flex-grow-1">{{ loadError() }}</span>
+      <button type="button" class="btn btn-sm btn-light" (click)="reload()">
+        <i class="fa-solid fa-rotate me-1"></i>{{ 'common.retry' | translate }}
+      </button>
+    </div>
+  }
 
   <div class="row g-3 mb-4">
-    <div class="col-lg-6">
-      <div class="card h-100">
-        <div class="card-header d-flex align-items-center gap-2">
-          <i class="fa-solid fa-dollar-sign text-warning"></i>
-          <h5 class="mb-0">{{ 'reportAnalysis.sales.charts.revenueByMonth' | translate }}</h5>
-        </div>
-        <div class="card-body">
-          <apx-chart
-            [series]="revenueByMonthChart().series"
-            [chart]="revenueByMonthChart().chart"
-            [xaxis]="revenueByMonthChart().xaxis"
-            [yaxis]="revenueByMonthChart().yaxis"
-            [colors]="revenueByMonthChart().colors"
-            [plotOptions]="revenueByMonthChart().plotOptions"
-            [grid]="revenueByMonthChart().grid"
-            [dataLabels]="revenueByMonthChart().dataLabels"
-          ></apx-chart>
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card kpi-card h-100">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div class="flex-grow-1 min-w-0">
+            <p class="text-muted small mb-1">{{ 'reportAnalysis.sales.kpi.totalCustomers' | translate }}</p>
+            @if (loadingStats()) {
+              <span class="placeholder-glow"><span class="placeholder col-5 fs-3"></span></span>
+            } @else {
+              <h3 class="fw-700 mb-0">{{ formatCurrency(totals().total) }}</h3>
+            }
+          </div>
+          <span class="icon-tile tone-primary"><i class="fa-solid fa-users"></i></span>
         </div>
       </div>
     </div>
 
-    <div class="col-lg-6">
-      <div class="card h-100">
-        <div class="card-header d-flex align-items-center gap-2">
-          <i class="fa-solid fa-handshake text-success"></i>
-          <h5 class="mb-0">{{ 'reportAnalysis.sales.charts.dealsByRep' | translate }}</h5>
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card kpi-card h-100">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div class="flex-grow-1 min-w-0">
+            <p class="text-muted small mb-1">{{ 'reportAnalysis.sales.kpi.buyers' | translate }}</p>
+            @if (loadingStats()) {
+              <span class="placeholder-glow"><span class="placeholder col-4 fs-3"></span></span>
+            } @else {
+              <h3 class="fw-700 mb-0 text-success">{{ formatCurrency(totals().buyers) }}</h3>
+            }
+          </div>
+          <span class="icon-tile tone-success"><i class="fa-solid fa-circle-check"></i></span>
         </div>
-        <div class="card-body">
-          <apx-chart
-            [series]="dealsByRepChart().series"
-            [chart]="dealsByRepChart().chart"
-            [xaxis]="dealsByRepChart().xaxis"
-            [colors]="dealsByRepChart().colors"
-            [plotOptions]="dealsByRepChart().plotOptions"
-            [grid]="dealsByRepChart().grid"
-            [dataLabels]="dealsByRepChart().dataLabels"
-          ></apx-chart>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card kpi-card h-100">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div class="flex-grow-1 min-w-0">
+            <p class="text-muted small mb-1">{{ 'reportAnalysis.sales.kpi.nonBuyers' | translate }}</p>
+            @if (loadingStats()) {
+              <span class="placeholder-glow"><span class="placeholder col-4 fs-3"></span></span>
+            } @else {
+              <h3 class="fw-700 mb-0 text-danger">{{ formatCurrency(totals().nonBuyers) }}</h3>
+            }
+          </div>
+          <span class="icon-tile tone-danger"><i class="fa-solid fa-circle-xmark"></i></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card kpi-card h-100">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div class="flex-grow-1 min-w-0">
+            <p class="text-muted small mb-1">{{ 'reportAnalysis.sales.kpi.conversionRate' | translate }}</p>
+            @if (loadingStats()) {
+              <span class="placeholder-glow"><span class="placeholder col-6 fs-3"></span></span>
+            } @else {
+              <h3 class="fw-700 mb-0 text-primary">{{ totals().conversionRate.toFixed(1) }}%</h3>
+            }
+            <small class="text-muted mt-1 d-block">{{ 'reportAnalysis.sales.kpi.ofTotal' | translate }}</small>
+          </div>
+          <span class="icon-tile tone-primary"><i class="fa-solid fa-bullseye"></i></span>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="row g-3">
+  <!-- Charts row -->
+  <div class="row g-3 mb-4">
     <div class="col-lg-6">
       <div class="card h-100">
         <div class="card-header d-flex align-items-center gap-2">
           <i class="fa-solid fa-chart-pie text-primary"></i>
-          <h5 class="mb-0">{{ 'reportAnalysis.sales.charts.pipelineByStage' | translate }}</h5>
+          <h5 class="mb-0">{{ 'reportAnalysis.sales.charts.nonPurchaseReasons' | translate }}</h5>
         </div>
         <div class="card-body">
-          <apx-chart
-            [series]="pipelineChart().series"
-            [chart]="pipelineChart().chart"
-            [labels]="pipelineChart().labels"
-            [colors]="pipelineChart().colors"
-            [legend]="pipelineChart().legend"
-            [stroke]="pipelineChart().stroke"
-            [dataLabels]="pipelineChart().dataLabels"
-          ></apx-chart>
+          @if (reasonSlices().length === 0) {
+            <div class="text-center py-5 text-muted">
+              <i class="fa-solid fa-chart-pie fa-2x mb-2 opacity-50 d-block"></i>
+              <p class="mb-0 small">{{ 'reportAnalysis.sales.customersList.empty' | translate }}</p>
+            </div>
+          } @else {
+            <apx-chart
+              [series]="reasonsChart().series"
+              [chart]="reasonsChart().chart"
+              [labels]="reasonsChart().labels"
+              [colors]="reasonsChart().colors"
+              [legend]="reasonsChart().legend"
+              [dataLabels]="reasonsChart().dataLabels"
+              [stroke]="reasonsChart().stroke"></apx-chart>
+          }
         </div>
       </div>
     </div>
@@ -151,21 +160,202 @@
     <div class="col-lg-6">
       <div class="card h-100">
         <div class="card-header d-flex align-items-center gap-2">
-          <i class="fa-solid fa-crown text-purple"></i>
-          <h5 class="mb-0">{{ 'reportAnalysis.sales.charts.topCustomers' | translate }}</h5>
+          <i class="fa-solid fa-chart-column text-success"></i>
+          <h5 class="mb-0">{{ 'reportAnalysis.sales.charts.platformPerformance' | translate }}</h5>
         </div>
         <div class="card-body">
           <apx-chart
-            [series]="topCustomersChart().series"
-            [chart]="topCustomersChart().chart"
-            [xaxis]="topCustomersChart().xaxis"
-            [colors]="topCustomersChart().colors"
-            [plotOptions]="topCustomersChart().plotOptions"
-            [grid]="topCustomersChart().grid"
-            [dataLabels]="topCustomersChart().dataLabels"
-          ></apx-chart>
+            [series]="platformChart().series"
+            [chart]="platformChart().chart"
+            [xaxis]="platformChart().xaxis"
+            [colors]="platformChart().colors"
+            [plotOptions]="platformChart().plotOptions"
+            [dataLabels]="platformChart().dataLabels"
+            [legend]="platformChart().legend"
+            [grid]="platformChart().grid"></apx-chart>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Campaigns performance table (from /Campaigns/CampaignPerformance) -->
+  <div class="card mb-4">
+    <div class="card-header d-flex align-items-center gap-2">
+      <i class="fa-solid fa-bullhorn text-warning"></i>
+      <h5 class="mb-0 flex-grow-1">{{ 'reportAnalysis.sales.campaignsTable.title' | translate }}</h5>
+      <span class="badge bg-light text-muted">{{ campaigns().length }}</span>
+    </div>
+    <div class="card-body p-0">
+      @if (loadingCampaigns()) {
+        <div class="text-center py-5">
+          <span class="spinner-border text-primary" role="status"></span>
+        </div>
+      } @else if (campaigns().length === 0) {
+        <div class="text-center py-5 text-muted">
+          <i class="fa-solid fa-bullhorn fa-2x mb-2 opacity-50 d-block"></i>
+          <p class="mb-0 small">{{ 'reportAnalysis.sales.customersList.empty' | translate }}</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead>
+              <tr>
+                <th class="ps-3">{{ 'reportAnalysis.sales.campaignsTable.name' | translate }}</th>
+                <th class="text-center">{{ 'reportAnalysis.sales.campaignsTable.totalCustomers' | translate }}</th>
+                <th class="text-center">{{ 'reportAnalysis.sales.campaignsTable.buyers' | translate }}</th>
+                <th class="text-center">{{ 'reportAnalysis.sales.campaignsTable.nonBuyers' | translate }}</th>
+                <th class="text-center pe-3">{{ 'reportAnalysis.sales.campaignsTable.conversion' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of campaigns(); track row.campaignId) {
+                <tr>
+                  <td class="ps-3 fw-600">{{ row.campaignName }}</td>
+                  <td class="text-center text-muted">{{ row.totalCustomers }}</td>
+                  <td class="text-center">
+                    <span class="badge bg-success-subtle text-success">{{ row.buyers }}</span>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-danger-subtle text-danger">{{ row.nonBuyers }}</span>
+                  </td>
+                  <td class="text-center pe-3 fw-700" [class]="conversionTone(row.conversionRate)">
+                    {{ row.conversionRate.toFixed(1) }}%
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Detailed customer list -->
+  <div class="card">
+    <div class="card-header d-flex align-items-center gap-2">
+      <i class="fa-solid fa-users text-primary"></i>
+      <h5 class="mb-0 flex-grow-1">{{ 'reportAnalysis.sales.customersList.title' | translate }}</h5>
+      <span class="badge bg-light text-muted">{{ filteredCustomers().length }}</span>
+    </div>
+    <div class="card-body">
+      <!-- Filters -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="position-relative">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text"
+                   class="form-control ps-5"
+                   [placeholder]="'reportAnalysis.sales.customersList.searchPlaceholder' | translate"
+                   [(ngModel)]="searchTerm" />
+          </div>
+        </div>
+        <div class="col-md-3 col-lg-3">
+          <select class="form-select" [(ngModel)]="statusFilter">
+            <option value="">{{ 'reportAnalysis.sales.customersList.allStatuses' | translate }}</option>
+            <option value="buyer">{{ 'reportAnalysis.sales.customersList.buyer' | translate }}</option>
+            <option value="nonBuyer">{{ 'reportAnalysis.sales.customersList.nonBuyer' | translate }}</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-lg-3">
+          <select class="form-select" [(ngModel)]="platformFilter">
+            <option value="">{{ 'reportAnalysis.sales.customersList.allPlatforms' | translate }}</option>
+            @for (p of platforms(); track p) {
+              <option [value]="p">{{ p }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-12 col-lg-2 d-flex">
+          <button type="button"
+                  class="btn btn-light w-100"
+                  [disabled]="!searchTerm && !statusFilter && !platformFilter"
+                  (click)="resetFilters()">
+            <i class="fa-solid fa-rotate-left me-1"></i>{{ 'common.reset' | translate }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Customer cards -->
+      @if (filteredCustomers().length === 0) {
+        <div class="text-center py-5 text-muted">
+          <i class="fa-solid fa-inbox fa-3x mb-3 opacity-50 d-block"></i>
+          <p class="mb-0">{{ 'reportAnalysis.sales.customersList.empty' | translate }}</p>
+        </div>
+      } @else {
+        <div class="d-flex flex-column gap-3">
+          @for (c of filteredCustomers(); track c.name) {
+            <div class="customer-card" [class.is-buyer]="c.status === 'buyer'" [class.is-non-buyer]="c.status === 'nonBuyer'">
+              <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                <div class="flex-grow-1 min-w-0">
+                  <!-- Header row -->
+                  <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                    <h6 class="fw-700 mb-0">{{ c.name }}</h6>
+                    @if (c.status === 'buyer') {
+                      <span class="badge bg-success-subtle text-success">
+                        <i class="fa-solid fa-circle-check me-1"></i>
+                        {{ 'reportAnalysis.sales.customersList.buyer' | translate }}
+                      </span>
+                    } @else {
+                      <span class="badge bg-danger-subtle text-danger">
+                        <i class="fa-solid fa-circle-xmark me-1"></i>
+                        {{ 'reportAnalysis.sales.customersList.nonBuyer' | translate }}
+                      </span>
+                    }
+                  </div>
+
+                  <p class="text-muted small mb-2">{{ c.company }}</p>
+
+                  <!-- Stats row -->
+                  <div class="row row-cols-1 row-cols-md-3 g-2 small mb-2">
+                    <div class="d-flex align-items-center gap-2 text-muted">
+                      <i class="fa-solid fa-bullseye"></i>
+                      <span>{{ c.service }}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 text-muted">
+                      <i class="fa-solid fa-sack-dollar"></i>
+                      <span>{{ formatCurrency(c.value) }} {{ 'reportAnalysis.sales.customersList.currency' | translate }}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 text-muted">
+                      <i class="fa-solid fa-calendar"></i>
+                      <span>{{ c.daysInPipeline }} {{ 'reportAnalysis.sales.customersList.daysInPipeline' | translate }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Meta row -->
+                  <div class="d-flex flex-wrap gap-3 small text-muted">
+                    <span><strong>{{ 'reportAnalysis.sales.customersList.campaign' | translate }}:</strong> {{ c.campaign }}</span>
+                    <span><strong>{{ 'reportAnalysis.sales.customersList.platform' | translate }}:</strong> {{ c.platform }}</span>
+                    <span><strong>{{ 'reportAnalysis.sales.customersList.assignee' | translate }}:</strong> {{ c.assignee }}</span>
+                  </div>
+
+                  <!-- Loss reason (non-buyer only) -->
+                  @if (c.status === 'nonBuyer' && c.lossReason) {
+                    <div class="loss-reason mt-3">
+                      <i class="fa-solid fa-circle-exclamation mt-1"></i>
+                      <div>
+                        <p class="fw-700 mb-1">{{ 'reportAnalysis.sales.customersList.nonPurchaseReason' | translate }}:</p>
+                        <p class="mb-0">{{ c.lossReason }}</p>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <!-- Date column -->
+                <div class="text-end ms-auto">
+                  @if (c.status === 'buyer') {
+                    <i class="fa-solid fa-arrow-trend-up text-success fs-4"></i>
+                  } @else {
+                    <i class="fa-solid fa-arrow-trend-down text-danger fs-4"></i>
+                  }
+                  <p class="text-muted small mb-0 mt-1 text-nowrap">
+                    {{ (c.status === 'buyer' ? 'reportAnalysis.sales.customersList.wonOn' : 'reportAnalysis.sales.customersList.lostOn') | translate }}
+                    {{ formatDate(c.date) }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
     </div>
   </div>
 </section>

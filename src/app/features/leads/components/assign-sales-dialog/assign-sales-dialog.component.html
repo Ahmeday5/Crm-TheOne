@@ -54,13 +54,15 @@
         <div class="list-group">
           @for (person of salesTeam(); track person.userId) {
             <label class="list-group-item list-group-item-action d-flex align-items-center gap-3"
-                   [class.active]="selectedSalesPersonId === person.userId"
-                   style="cursor: pointer;">
+                   [class.active]="selectedId() === person.userId"
+                   style="cursor: pointer;"
+                   (click)="onSelect(person.userId)">
               <input type="radio"
                      class="form-check-input mt-0"
                      name="salesPerson"
                      [value]="person.userId"
-                     [(ngModel)]="selectedSalesPersonId" />
+                     [checked]="selectedId() === person.userId"
+                     (change)="onSelect(person.userId)" />
               <div class="flex-1">
                 <span class="fw-600 d-block">{{ person.fullName }}</span>
                 <small class="text-muted">{{ person.email }}</small>

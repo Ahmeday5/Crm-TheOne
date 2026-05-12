@@ -20,6 +20,7 @@ import {
   CAMPAIGN_STATUS_CODE,
   Campaign,
   CampaignStatus,
+  CampaignsStatistics,
   ChannelSource,
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -63,6 +64,8 @@ export class CampaignsComponent {
   /** Current page rows. */
   readonly all = signal<Campaign[]>([]);
   readonly channelSources = signal<ChannelSource[]>([]);
+  readonly stats = signal<CampaignsStatistics | null>(null);
+  readonly statsLoading = signal(false);
   readonly loading = signal(false);
   readonly loadError = signal<string | null>(null);
 
@@ -83,13 +86,29 @@ export class CampaignsComponent {
   readonly formOpen = signal(false);
   readonly detailsId = signal<number | null>(null);
 
-  /** KPI summary — only fields the list endpoint guarantees. */
+  /**
+   * KPI summary — prefers values from the dashboard statistics endpoint and
+   * falls back to client-side aggregation when a field is missing. This keeps
+   * the page resilient if the backend trims its response.
+   */
   readonly kpis = computed(() => {
+    const stats = this.stats();
     const list = this.all();
-    const totalBudget = list.reduce((s, c) => s + (c.budget ?? 0), 0);
-    const dailyBudget = list.reduce((s, c) => s + (c.dailyBudget ?? 0), 0);
-    const active = list.filter((c) => c.status === 'Active').length;
-    return { totalBudget, dailyBudget, active, total: this.totalCount() };
+    const clientTotalBudget = list.reduce((s, c) => s + (c.budget ?? 0), 0);
+    const clientActive = list.filter((c) => c.status === 'Active').length;
+
+    const num = (v: number | string | null | undefined): number => {
+      const n = typeof v === 'string' ? Number(v) : v;
+      return typeof n === 'number' && Number.isFinite(n) ? n : 0;
+    };
+
+    return {
+      totalBudget: num(stats?.totalBudget) || clientTotalBudget,
+      totalSpent: num(stats?.totalSpent),
+      activeCampaigns: num(stats?.activeCampaigns) || clientActive,
+      totalConversions: num(stats?.totalConversions),
+      totalCampaigns: num(stats?.totalCampaigns) || this.totalCount(),
+    };
   });
 
   // Debounced search → server query.
@@ -106,6 +125,18 @@ export class CampaignsComponent {
       });
     this.reload();
     this.loadChannelSources();
+    this.loadStats();
+  }
+
+  loadStats(): void {
+    this.statsLoading.set(true);
+    this.campaigns.statistics().subscribe({
+      next: (s) => {
+        this.stats.set(s);
+        this.statsLoading.set(false);
+      },
+      error: () => this.statsLoading.set(false),
+    });
   }
 
   ngOnDestroy(): void {
@@ -196,6 +227,7 @@ export class CampaignsComponent {
   onCreated(): void {
     this.closeCreate();
     this.loadChannelSources();
+    this.loadStats();
     this.reload();
   }
 
