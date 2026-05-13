@@ -25,9 +25,18 @@ export const API_ENDPOINTS = {
     statistics: 'Campaigns/StatisticsDashboard',
     performance: 'Campaigns/CampaignPerformance',
     byId: (id: number | string) => `Campaigns/${id}/getCampaignById`,
-    add: 'Campaigns',
+    add: 'Campaigns/CreateCampaign',
+    update: (id: number | string) => `Campaigns/UpdateCampaign/${id}`,
     delete: (id: number | string) => `Campaigns/${id}/deleteCampaign`,
     toggleStatus: (id: number | string) => `Campaigns/${id}/toggleStatus`,
+  },
+  reports: {
+    list: 'Reports',
+    myReports: 'Reports/myreports',
+    byId: (id: number | string) => `Reports/${id}`,
+    create: 'Reports',
+    update: (id: number | string) => `Reports/${id}`,
+    delete: (id: number | string) => `Reports/${id}`,
   },
   channelSources: {
     list: 'ChannelSources',
@@ -42,6 +51,12 @@ export const API_ENDPOINTS = {
   },
   customers: {
     list: 'Customers/getLeadCustomer',
+    /**
+     * Sales-scoped customers — backend filters by the caller's role:
+     *   - Sales:  only customers assigned to them
+     *   - Admin:  every assigned customer across the team
+     */
+    salesCustomers: 'Customers/getSalesCustomers',
     byId: (id: number | string) => `Customers/${id}/getCustomerById`,
     create: 'Customers',
     update: (id: number | string) => `Customers/updateCustomer/${id}`,

@@ -82,9 +82,19 @@
       </button>
 
       <button type="button"
+              class="btn btn-icon btn-primary-soft"
+              [disabled]="busy"
+              [attr.aria-label]="'campaigns.card.edit' | translate"
+              [attr.title]="'campaigns.card.edit' | translate"
+              (click)="edit.emit(campaign)">
+        <i class="fa-solid fa-pen-to-square"></i>
+      </button>
+
+      <button type="button"
               class="btn btn-icon btn-danger-soft"
               [disabled]="busy"
               [attr.aria-label]="'campaigns.card.delete' | translate"
+              [attr.title]="'campaigns.card.delete' | translate"
               (click)="delete.emit(campaign)">
         <i class="fa-solid fa-trash"></i>
       </button>

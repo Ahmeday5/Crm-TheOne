@@ -41,3 +41,15 @@
   border-color: var(--danger);
   color: var(--danger);
 }
+
+.btn-primary-soft {
+  background: transparent;
+  color: var(--brand);
+  border: 1px solid var(--border);
+}
+.btn-primary-soft:hover,
+.btn-primary-soft:focus {
+  background: var(--primary-soft, rgba(13, 110, 253, 0.1));
+  border-color: var(--brand);
+  color: var(--brand);
+}

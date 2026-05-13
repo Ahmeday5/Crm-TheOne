@@ -93,6 +93,16 @@ export class CampaignsService {
   }
 
   /**
+   * Full-replace update. Body shape mirrors `add()` — backend reads the id
+   * from the URL, not the body, so we don't include it here.
+   */
+  update(id: number, payload: CreateCampaignRequest): Observable<unknown> {
+    return this.api.put<unknown>(API_ENDPOINTS.campaigns.update(id), payload, {
+      context: withInlineHandling(withCacheInvalidate(['Campaigns'])),
+    });
+  }
+
+  /**
    * Hard delete. Errors (e.g. FK constraint 409s) flow to the global toast
    * because the page has no inline error slot for delete; we only skip the
    * global loader so the row spinner is the single in-flight indicator.

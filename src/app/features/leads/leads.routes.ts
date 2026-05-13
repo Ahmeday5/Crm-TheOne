@@ -17,8 +17,11 @@ export const LEADS_ROUTES: Routes = [
           ),
       },
       {
+        // Sales view of customers — visible to Admin too (the backend
+        // returns every customer for admins and only the caller's assigned
+        // customers for Sales reps).
         path: 'sales-leadsCustomer',
-        title: 'إدارة العملاء المحتملين',
+        title: 'عملاء المبيعات',
         canActivate: [roleGuard],
         data: { roles: ['Admin', 'Sales'] },
         loadComponent: () =>

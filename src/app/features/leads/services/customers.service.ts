@@ -49,6 +49,25 @@ export class CustomersService {
     });
   }
 
+  /**
+   * Sales-scoped customers. Same query/page envelope as `list()`, but the
+   * server applies a per-role filter:
+   *   - Sales: only customers assigned to the caller
+   *   - Admin: every assigned customer across the team
+   *
+   * Caching is keyed on the request URL, so admin vs sales results never
+   * stomp on each other.
+   */
+  listForSales(query: CustomerListQuery = {}): Observable<PagedResult<CustomerListItem>> {
+    return this.api.get<PagedResult<CustomerListItem>>(
+      API_ENDPOINTS.customers.salesCustomers,
+      {
+        params: query as Record<string, unknown>,
+        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
+      },
+    );
+  }
+
   getById(id: number): Observable<CustomerDetails> {
     return this.api.get<CustomerDetails>(API_ENDPOINTS.customers.byId(id), {
       context: withSkipLoader(withCache({ ttlMs: CACHE_TTL.SHORT })),

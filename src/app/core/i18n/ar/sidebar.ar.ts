@@ -26,10 +26,12 @@ const sidebar: TranslationFile<'sidebar'> = {
       salesAnalysis: 'تحليل نتائج المبيعات',
       // Main modules
       leads: 'إدارة العملاء المحتملين',
+      salesCustomers: 'عملاء المبيعات',
       salesLine: 'خط المبيعات',
       projects: 'المشاريع والمهام',
       reports: 'التقارير والتحليلات',
       chat: 'الدردشة الداخلية',
+      dailyReports: 'التقارير اليومية',
       // System administration
       settings: 'إعدادات النظام',
       services: 'إدارة الخدمات',

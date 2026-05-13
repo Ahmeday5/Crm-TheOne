@@ -9,6 +9,17 @@ const customers: TranslationFile<'customers'> = {
     addNew: 'Add new customer',
     backToList: 'Back to customers list',
 
+    sales: {
+      title: 'Sales customers',
+      subtitleSales: 'Customers assigned to you by the marketing team',
+      subtitleAdmin: 'All customers assigned to the sales team',
+      welcomeTitle: 'Sales customers',
+      welcomeSubtitleSales: 'Welcome! Here are your active customers.',
+      welcomeSubtitleAdmin: 'Welcome! An overview of every sales-assigned customer.',
+      empty: 'No customers assigned to you yet — check in with the marketing team.',
+      emptyAdmin: 'No customers have been assigned to the sales team yet.',
+    },
+
     kpi: {
       total: 'Total customers',
       visible: 'Currently visible',

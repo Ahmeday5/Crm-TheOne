@@ -84,6 +84,8 @@ export class CampaignsComponent {
   readonly totalCount = signal(0);
 
   readonly formOpen = signal(false);
+  /** When set, the form dialog renders in edit mode for this campaign. */
+  readonly editTarget = signal<Campaign | null>(null);
   readonly detailsId = signal<number | null>(null);
 
   /**
@@ -214,19 +216,37 @@ export class CampaignsComponent {
     this.reload();
   }
 
-  // ─────────── create dialog ───────────
+  // ─────────── create / edit dialog ───────────
 
   openCreate(): void {
+    this.editTarget.set(null);
     this.formOpen.set(true);
   }
 
-  closeCreate(): void {
+  openEdit(campaign: Campaign): void {
+    this.editTarget.set(campaign);
+    this.formOpen.set(true);
+  }
+
+  closeForm(): void {
     this.formOpen.set(false);
+    this.editTarget.set(null);
+  }
+
+  /** Legacy alias kept for the template binding. */
+  closeCreate(): void {
+    this.closeForm();
   }
 
   onCreated(): void {
-    this.closeCreate();
+    this.closeForm();
     this.loadChannelSources();
+    this.loadStats();
+    this.reload();
+  }
+
+  onUpdated(): void {
+    this.closeForm();
     this.loadStats();
     this.reload();
   }

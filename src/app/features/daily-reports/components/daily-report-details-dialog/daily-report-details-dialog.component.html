@@ -1,0 +1,101 @@
+<app-modal [open]="true"
+  [title]="'dailyReports.details.title' | translate"
+  icon="fa-solid fa-file-lines" iconTone="primary"
+  size="lg" (closed)="cancel.emit()">
+
+  @if (loading()) {
+    <div class="p-5 text-center text-muted">
+      <span class="spinner-border me-2"></span>
+      {{ 'common.loading' | translate }}
+    </div>
+  } @else if (!details()) {
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-0">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ 'dailyReports.details.notFound' | translate }}</span>
+    </div>
+  } @else {
+    @let r = details()!;
+
+    <div class="report-meta d-flex flex-wrap align-items-center gap-3 mb-3">
+      <span class="meta-pill">
+        <i class="fa-solid fa-user"></i>
+        {{ r.userName }}
+      </span>
+      <span class="meta-pill">
+        <i class="fa-solid fa-calendar"></i>
+        {{ formatDate(r.reportDate) }}
+      </span>
+      <span class="meta-pill tone-purple">
+        <i class="fa-solid fa-clock"></i>
+        {{ r.workHours }} {{ 'dailyReports.hours' | translate }}
+      </span>
+    </div>
+
+    <div class="report-block">
+      <h6 class="block-title">
+        <i class="fa-solid fa-circle-check text-success"></i>
+        {{ 'dailyReports.create.completedTasks' | translate }}
+      </h6>
+      <p class="block-body">{{ r.completedTasks || '-' }}</p>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="report-block">
+          <h6 class="block-title">
+            <i class="fa-solid fa-spinner text-info"></i>
+            {{ 'dailyReports.create.tasksInProgress' | translate }}
+          </h6>
+          <p class="block-body">{{ r.tasksInProgress || '-' }}</p>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="report-block">
+          <h6 class="block-title">
+            <i class="fa-solid fa-list-check text-primary"></i>
+            {{ 'dailyReports.create.plannedTasks' | translate }}
+          </h6>
+          <p class="block-body">{{ r.plannedTasks || '-' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-block">
+      <h6 class="block-title">
+        <i class="fa-solid fa-triangle-exclamation text-warning"></i>
+        {{ 'dailyReports.create.challenges' | translate }}
+      </h6>
+      <p class="block-body">{{ r.challenges || '-' }}</p>
+    </div>
+
+    <div class="report-block">
+      <h6 class="block-title">
+        <i class="fa-solid fa-note-sticky text-muted"></i>
+        {{ 'dailyReports.create.additionalNotes' | translate }}
+      </h6>
+      <p class="block-body">{{ r.additionalNotes || '-' }}</p>
+    </div>
+
+    <div class="text-muted small mt-3">
+      <i class="fa-regular fa-clock me-1"></i>
+      {{ 'dailyReports.details.createdAt' | translate }}:
+      {{ formatDateTime(r.createdAt) }}
+      @if (r.updatedAt) {
+        · {{ 'dailyReports.details.updatedAt' | translate }}:
+        {{ formatDateTime(r.updatedAt) }}
+      }
+    </div>
+  }
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" (click)="cancel.emit()">
+      {{ 'common.close' | translate }}
+    </button>
+    @if (details()) {
+      <button type="button" class="btn btn-primary" (click)="requestEdit()">
+        <i class="fa-solid fa-pen-to-square me-1"></i>
+        {{ 'dailyReports.card.edit' | translate }}
+      </button>
+    }
+  </ng-container>
+</app-modal>

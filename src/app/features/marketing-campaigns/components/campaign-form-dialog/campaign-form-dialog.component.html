@@ -1,4 +1,6 @@
-<app-modal [open]="true" [title]="'campaigns.create.title' | translate" icon="fa-solid fa-bullseye" iconTone="primary"
+<app-modal [open]="true"
+  [title]="(isEditMode ? 'campaigns.create.editTitle' : 'campaigns.create.title') | translate"
+  [icon]="isEditMode ? 'fa-solid fa-pen-to-square' : 'fa-solid fa-bullseye'" iconTone="primary"
   size="lg" [closeOnBackdrop]="!submitting()" [closeOnEsc]="!submitting()" (closed)="cancel.emit()">
 
   <form [formGroup]="form" id="campaign-form" novalidate (ngSubmit)="submit()">
@@ -220,9 +222,9 @@
       @if (submitting()) {
       <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
       } @else {
-      <i class="fa-solid fa-bullseye me-1"></i>
+      <i [class]="isEditMode ? 'fa-solid fa-floppy-disk me-1' : 'fa-solid fa-bullseye me-1'"></i>
       }
-      {{ 'campaigns.create.submit' | translate }}
+      {{ (isEditMode ? 'campaigns.create.editSubmit' : 'campaigns.create.submit') | translate }}
     </button>
   </ng-container>
 </app-modal>

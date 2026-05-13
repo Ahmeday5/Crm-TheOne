@@ -43,12 +43,15 @@ const campaigns: TranslationFile<'campaigns'> = {
       details: 'التفاصيل',
       pause: 'إيقاف',
       resume: 'تشغيل',
+      edit: 'تعديل',
       delete: 'حذف',
       empty: 'لا توجد حملات مطابقة لمعايير البحث',
     },
 
     create: {
       title: 'إنشاء حملة تسويقية جديدة',
+      editTitle: 'تعديل بيانات الحملة',
+      editSubmit: 'حفظ التعديلات',
       sectionInfo: 'المعلومات الأساسية',
       sectionBudget: 'الميزانية والمدة',
       sectionAudience: 'الجمهور المستهدف',
@@ -110,6 +113,7 @@ const campaigns: TranslationFile<'campaigns'> = {
 
     messages: {
       created: 'تم إنشاء الحملة بنجاح',
+      updated: 'تم تحديث الحملة بنجاح',
       paused: 'تم إيقاف الحملة',
       resumed: 'تم تشغيل الحملة',
       deleted: 'تم حذف الحملة',

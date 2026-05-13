@@ -1,0 +1,15 @@
+.form-section {
+  padding-block: 0.75rem;
+  border-bottom: 1px solid var(--border);
+
+  &:last-of-type { border-bottom: 0; }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: var(--fw-700);
+    margin-bottom: 0.75rem;
+    color: var(--text-1);
+  }
+}

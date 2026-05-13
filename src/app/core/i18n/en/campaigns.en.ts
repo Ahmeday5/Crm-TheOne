@@ -44,12 +44,15 @@ const campaigns: TranslationFile<'campaigns'> = {
       details: 'Details',
       pause: 'Pause',
       resume: 'Resume',
+      edit: 'Edit',
       delete: 'Delete',
       empty: 'No campaigns match your filters',
     },
 
     create: {
       title: 'Create new marketing campaign',
+      editTitle: 'Edit campaign',
+      editSubmit: 'Save changes',
       sectionInfo: 'Basic information',
       sectionBudget: 'Budget and duration',
       sectionAudience: 'Target audience',
@@ -112,6 +115,7 @@ const campaigns: TranslationFile<'campaigns'> = {
 
     messages: {
       created: 'Campaign created successfully',
+      updated: 'Campaign updated successfully',
       paused: 'Campaign paused',
       resumed: 'Campaign resumed',
       deleted: 'Campaign deleted',

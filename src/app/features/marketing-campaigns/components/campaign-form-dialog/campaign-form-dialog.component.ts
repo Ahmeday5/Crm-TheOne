@@ -27,10 +27,12 @@ import { MultiSelectComponent } from '../../../../shared/components/multi-select
 import {
   CAMPAIGN_STATUSES,
   CAMPAIGN_STATUS_CODE,
+  Campaign,
   CampaignStatus,
   ChannelSource,
   CountryOption,
   CreateCampaignRequest,
+  GENDER_NAME_TO_CODE,
   GenderCode,
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -59,8 +61,21 @@ export class CampaignFormDialogComponent implements OnInit {
    * it can pass them in to skip a network round-trip. */
   @Input() initialSources: ChannelSource[] | null = null;
 
+  /**
+   * When provided, the dialog switches to edit mode: form is pre-filled,
+   * the submit button hits `update()` instead of `add()`, and the title
+   * + button label change accordingly.
+   */
+  @Input() campaign: Campaign | null = null;
+
   @Output() created = new EventEmitter<void>();
+  @Output() updated = new EventEmitter<void>();
   @Output() cancel = new EventEmitter<void>();
+
+  /** True when an existing campaign is being edited. */
+  get isEditMode(): boolean {
+    return this.campaign != null;
+  }
 
   private readonly fb = inject(FormBuilder);
   private readonly campaigns = inject(CampaignsService);
@@ -141,6 +156,32 @@ export class CampaignFormDialogComponent implements OnInit {
     this.form.controls.endDate.valueChanges.subscribe((v) => {
       this.endDateSig.set(v);
     });
+
+    if (this.campaign) this.patchFromCampaign(this.campaign);
+  }
+
+  /** Mirrors backend → form. Date inputs need `yyyy-MM-dd` slices. */
+  private patchFromCampaign(c: Campaign): void {
+    const toDateInput = (iso: string | null | undefined): string => {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime()) || d.getFullYear() <= 1) return '';
+      return d.toISOString().slice(0, 10);
+    };
+
+    this.form.patchValue({
+      name: c.name ?? '',
+      description: c.description ?? '',
+      channelSourceId: c.channelSourceId ?? null,
+      status: CAMPAIGN_STATUS_CODE[c.status] ?? CAMPAIGN_STATUS_CODE.Active,
+      budget: c.budget ?? null,
+      startDate: toDateInput(c.startDate),
+      endDate: toDateInput(c.endDate),
+      minAge: c.minAge ?? null,
+      maxAge: c.maxAge ?? null,
+      gender: GENDER_NAME_TO_CODE[c.gender] ?? GenderCode.All,
+      countries: Array.isArray(c.countries) ? [...c.countries] : [],
+    });
   }
 
   loadSources(): void {
@@ -190,11 +231,20 @@ export class CampaignFormDialogComponent implements OnInit {
 
     this.submitting.set(true);
     this.errorMessage.set(null);
-    this.campaigns.add(payload).subscribe({
+
+    const request$ = this.isEditMode
+      ? this.campaigns.update(this.campaign!.id, payload)
+      : this.campaigns.add(payload);
+    const successKey = this.isEditMode
+      ? 'campaigns.messages.updated'
+      : 'campaigns.messages.created';
+    const emitter = this.isEditMode ? this.updated : this.created;
+
+    request$.subscribe({
       next: () => {
         this.submitting.set(false);
-        this.toast.success(this.t('campaigns.messages.created'));
-        this.created.emit();
+        this.toast.success(this.t(successKey));
+        emitter.emit();
       },
       error: (err: ApiError) => {
         this.submitting.set(false);

@@ -1,0 +1,141 @@
+<app-modal [open]="true"
+  [title]="(isEditMode ? 'dailyReports.create.editTitle' : 'dailyReports.create.title') | translate"
+  [icon]="isEditMode ? 'fa-solid fa-pen-to-square' : 'fa-solid fa-file-pen'"
+  iconTone="primary" size="lg"
+  [closeOnBackdrop]="!submitting()" [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <form [formGroup]="form" id="daily-report-form" novalidate (ngSubmit)="submit()">
+    <section class="form-section">
+      <h6 class="section-title">
+        <i class="fa-solid fa-circle-info text-primary"></i>
+        {{ 'dailyReports.create.sectionMeta' | translate }}
+      </h6>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="report-date" class="form-label fw-600">
+            <i class="fa-solid fa-calendar text-primary me-1"></i>
+            {{ 'dailyReports.create.reportDate' | translate }}
+            <span class="text-danger">*</span>
+          </label>
+          <input id="report-date" type="date" class="form-control"
+            formControlName="reportDate"
+            [class.is-invalid]="isInvalid(form.controls.reportDate)"
+            [max]="today" />
+          <app-form-error [control]="form.controls.reportDate"
+            [label]="'dailyReports.create.reportDate' | translate" />
+        </div>
+
+        <div class="col-md-6">
+          <label for="work-hours" class="form-label fw-600">
+            <i class="fa-solid fa-clock text-purple me-1"></i>
+            {{ 'dailyReports.create.workHours' | translate }}
+            <span class="text-danger">*</span>
+          </label>
+          <input id="work-hours" type="number" min="0" max="24" step="0.5"
+            class="form-control" formControlName="workHours"
+            [class.is-invalid]="isInvalid(form.controls.workHours)"
+            placeholder="8" />
+          <app-form-error [control]="form.controls.workHours"
+            [label]="'dailyReports.create.workHours' | translate" />
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <h6 class="section-title">
+        <i class="fa-solid fa-circle-check text-success"></i>
+        {{ 'dailyReports.create.sectionWork' | translate }}
+      </h6>
+
+      <div class="row g-3">
+        <div class="col-12">
+          <label for="completed-tasks" class="form-label fw-600">
+            {{ 'dailyReports.create.completedTasks' | translate }}
+            <span class="text-danger">*</span>
+          </label>
+          <textarea id="completed-tasks" class="form-control" rows="3"
+            formControlName="completedTasks"
+            [class.is-invalid]="isInvalid(form.controls.completedTasks)"
+            [placeholder]="'dailyReports.create.completedTasksPlaceholder' | translate">
+          </textarea>
+          <app-form-error [control]="form.controls.completedTasks"
+            [label]="'dailyReports.create.completedTasks' | translate" />
+        </div>
+
+        <div class="col-md-6">
+          <label for="tasks-in-progress" class="form-label fw-600">
+            {{ 'dailyReports.create.tasksInProgress' | translate }}
+          </label>
+          <textarea id="tasks-in-progress" class="form-control" rows="3"
+            formControlName="tasksInProgress"
+            [placeholder]="'dailyReports.create.tasksInProgressPlaceholder' | translate">
+          </textarea>
+        </div>
+
+        <div class="col-md-6">
+          <label for="planned-tasks" class="form-label fw-600">
+            {{ 'dailyReports.create.plannedTasks' | translate }}
+          </label>
+          <textarea id="planned-tasks" class="form-control" rows="3"
+            formControlName="plannedTasks"
+            [placeholder]="'dailyReports.create.plannedTasksPlaceholder' | translate">
+          </textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <h6 class="section-title">
+        <i class="fa-solid fa-triangle-exclamation text-warning"></i>
+        {{ 'dailyReports.create.sectionExtra' | translate }}
+      </h6>
+
+      <div class="row g-3">
+        <div class="col-12">
+          <label for="challenges" class="form-label fw-600">
+            {{ 'dailyReports.create.challenges' | translate }}
+          </label>
+          <textarea id="challenges" class="form-control" rows="2"
+            formControlName="challenges"
+            [placeholder]="'dailyReports.create.challengesPlaceholder' | translate">
+          </textarea>
+        </div>
+
+        <div class="col-12">
+          <label for="additional-notes" class="form-label fw-600">
+            {{ 'dailyReports.create.additionalNotes' | translate }}
+          </label>
+          <textarea id="additional-notes" class="form-control" rows="2"
+            formControlName="additionalNotes"
+            [placeholder]="'dailyReports.create.additionalNotesPlaceholder' | translate">
+          </textarea>
+        </div>
+      </div>
+    </section>
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light"
+      [disabled]="submitting()" (click)="cancel.emit()">
+      {{ 'dailyReports.create.cancel' | translate }}
+    </button>
+    <button type="submit" form="daily-report-form" class="btn btn-primary"
+      [disabled]="submitting() || form.invalid">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i [class]="isEditMode ? 'fa-solid fa-floppy-disk me-1' : 'fa-solid fa-paper-plane me-1'"></i>
+      }
+      {{ (isEditMode ? 'dailyReports.create.editSubmit' : 'dailyReports.create.submit') | translate }}
+    </button>
+  </ng-container>
+</app-modal>

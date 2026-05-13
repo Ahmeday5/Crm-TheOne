@@ -14,6 +14,7 @@ import settings from './settings.ar';
 import campaigns from './campaigns.ar';
 import services from './services.ar';
 import customers from './customers.ar';
+import dailyReports from './dailyReports.ar';
 
 const ar: Translations = {
   ...common,
@@ -31,6 +32,7 @@ const ar: Translations = {
   ...campaigns,
   ...services,
   ...customers,
+  ...dailyReports,
 };
 
 export default ar;

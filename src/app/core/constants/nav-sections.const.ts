@@ -94,12 +94,13 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: 'fa-solid fa-address-card',
         roles: ['Admin', 'Marketing'],
       },
-      // Sales-side leads list (only visible to Sales — Admin already sees the marketing one).
+      // Sales-side customers — backend returns the caller's assigned
+      // customers for Sales, and every customer for Admin.
       {
-        labelKey: 'sidebar.items.leads',
+        labelKey: 'sidebar.items.salesCustomers',
         path: '/leads/sales-leadsCustomer',
-        icon: 'fa-solid fa-address-card',
-        roles: ['Sales'],
+        icon: 'fa-solid fa-user-tie',
+        roles: ['Admin', 'Sales'],
       },
       {
         labelKey: 'sidebar.items.salesLine',
@@ -130,6 +131,12 @@ export const NAV_SECTIONS: NavSection[] = [
         labelKey: 'sidebar.items.chat',
         path: '/internal-chat',
         icon: 'fa-regular fa-comment-dots',
+      },
+      // Daily reports — every authenticated user can submit; admins see all.
+      {
+        labelKey: 'sidebar.items.dailyReports',
+        path: '/daily-reports',
+        icon: 'fa-solid fa-file-lines',
       },
     ],
   },

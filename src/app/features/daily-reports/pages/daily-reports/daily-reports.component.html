@@ -1,0 +1,234 @@
+<section class="daily-reports">
+  <!-- Welcome strip -->
+  <div class="mb-4">
+    <h2 class="fw-700 mb-1">{{ 'dailyReports.welcomeTitle' | translate }}</h2>
+    <p class="text-muted mb-0">{{ 'dailyReports.welcomeSubtitle' | translate }}</p>
+  </div>
+
+  <!-- Page header -->
+  <header class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <span class="icon-tile xl tone-primary"><i class="fa-solid fa-file-lines"></i></span>
+      <div>
+        <h3 class="fw-700 mb-1">{{ 'dailyReports.title' | translate }}</h3>
+        <p class="text-muted mb-0">{{ 'dailyReports.subtitle' | translate }}</p>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="openCreate()">
+      <i class="fa-solid fa-plus me-1"></i>
+      {{ 'dailyReports.new' | translate }}
+    </button>
+  </header>
+
+  <!-- KPIs -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-lg-3">
+      <app-stat-card
+        [label]="'dailyReports.kpi.total' | translate"
+        [value]="formatNumber(kpis().total)"
+        icon="fa-solid fa-file-lines"
+        tone="primary">
+      </app-stat-card>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+      <app-stat-card
+        [label]="'dailyReports.kpi.submitted' | translate"
+        [value]="formatNumber(kpis().submitted)"
+        icon="fa-solid fa-paper-plane"
+        tone="info">
+      </app-stat-card>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+      <app-stat-card
+        [label]="'dailyReports.kpi.reviewed' | translate"
+        [value]="formatNumber(kpis().reviewed)"
+        icon="fa-solid fa-circle-check"
+        tone="success">
+      </app-stat-card>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+      <app-stat-card
+        [label]="'dailyReports.kpi.avgHours' | translate"
+        [value]="formatHours(kpis().avgHours)"
+        icon="fa-solid fa-clock"
+        tone="purple">
+      </app-stat-card>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-6 col-lg flex-grow-1">
+          <label class="form-label fw-600">{{ 'dailyReports.filters.search' | translate }}</label>
+          <div class="position-relative">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input class="form-control ps-5"
+                   [placeholder]="'dailyReports.filters.searchPlaceholder' | translate"
+                   [ngModel]="searchTerm"
+                   (ngModelChange)="onSearchInput($event)" />
+          </div>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+          <label class="form-label fw-600">{{ 'dailyReports.filters.month' | translate }}</label>
+          <select class="form-select"
+                  [ngModel]="selectedMonth()"
+                  (ngModelChange)="onMonthChange($event)">
+            @for (m of months(); track m.value) {
+              <option [ngValue]="m.value">{{ m.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+          <label class="form-label fw-600">{{ 'dailyReports.filters.year' | translate }}</label>
+          <select class="form-select"
+                  [ngModel]="selectedYear()"
+                  (ngModelChange)="onYearChange($event)">
+            @for (y of years(); track y) {
+              <option [ngValue]="y">{{ y }}</option>
+            }
+          </select>
+        </div>
+
+        @if (isAdmin()) {
+          <div class="col-12 col-md-auto">
+            <label class="form-label fw-600">{{ 'dailyReports.filters.scope' | translate }}</label>
+            <div class="btn-group w-100" role="group" [attr.aria-label]="'dailyReports.filters.scope' | translate">
+              <button type="button" class="btn"
+                [class.btn-primary]="scope() === 'all'"
+                [class.btn-light]="scope() !== 'all'"
+                (click)="onScopeChange('all')">
+                <i class="fa-solid fa-users me-1"></i>
+                {{ 'dailyReports.filters.allReports' | translate }}
+              </button>
+              <button type="button" class="btn"
+                [class.btn-primary]="scope() === 'mine'"
+                [class.btn-light]="scope() !== 'mine'"
+                (click)="onScopeChange('mine')">
+                <i class="fa-solid fa-user me-1"></i>
+                {{ 'dailyReports.filters.mine' | translate }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- List -->
+  @if (loading()) {
+    <div class="card">
+      <div class="card-body p-5 text-center text-muted">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        {{ 'common.loading' | translate }}
+      </div>
+    </div>
+  } @else if (loadError()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ loadError() }}</span>
+      <button type="button" class="btn btn-link p-0 ms-auto" (click)="reload()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else if (rows().length === 0) {
+    <div class="card empty-state">
+      <div class="card-body p-5 text-center text-muted">
+        <i class="fa-regular fa-file-lines fs-1 d-block mb-3 opacity-50"></i>
+        <p class="mb-1 fw-600">{{ 'dailyReports.empty.title' | translate }}</p>
+        <p class="small mb-3">{{ 'dailyReports.empty.hint' | translate }}</p>
+        <button type="button" class="btn btn-primary" (click)="openCreate()">
+          <i class="fa-solid fa-plus me-1"></i>
+          {{ 'dailyReports.new' | translate }}
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="row g-3">
+      @for (r of rows(); track trackById($index, r)) {
+        <div class="col-12 col-lg-6">
+          <div class="card report-card hover-rise h-100">
+            <div class="card-body d-flex flex-column gap-3">
+              <div class="d-flex align-items-start justify-content-between gap-3">
+                <div class="flex-grow-1">
+                  <h5 class="fw-700 mb-1">{{ r.userName }}</h5>
+                  <p class="text-muted mb-0 small">
+                    <i class="fa-solid fa-calendar me-1"></i>
+                    {{ formatDate(r.reportDate) }}
+                  </p>
+                </div>
+                <span class="hours-badge">
+                  <i class="fa-solid fa-clock"></i>
+                  {{ formatHours(r.workHours) }}
+                  {{ 'dailyReports.hours' | translate }}
+                </span>
+              </div>
+
+              <div class="preview-block">
+                <p class="text-muted mb-1 small fw-600">
+                  <i class="fa-solid fa-circle-check text-success me-1"></i>
+                  {{ 'dailyReports.create.completedTasks' | translate }}
+                </p>
+                <p class="mb-0">{{ previewText(r.completedTasksPreview) }}</p>
+              </div>
+
+              <div class="d-flex gap-2 pt-3 border-top mt-auto">
+                <button type="button" class="btn btn-light btn-sm flex-grow-1"
+                        [disabled]="busyId() === r.id"
+                        (click)="openDetails(r)">
+                  <i class="fa-solid fa-eye me-1"></i>
+                  {{ 'dailyReports.card.details' | translate }}
+                </button>
+                <button type="button" class="btn btn-icon btn-primary-soft"
+                        [disabled]="busyId() === r.id"
+                        [attr.aria-label]="'dailyReports.card.edit' | translate"
+                        [attr.title]="'dailyReports.card.edit' | translate"
+                        (click)="openEdit(r)">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" class="btn btn-icon btn-danger-soft"
+                        [disabled]="busyId() === r.id"
+                        [attr.aria-label]="'dailyReports.card.delete' | translate"
+                        [attr.title]="'dailyReports.card.delete' | translate"
+                        (click)="confirmDelete(r)">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="mt-3">
+      <app-pagination
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [count]="totalCount()"
+        [disabled]="loading()"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)">
+      </app-pagination>
+    </div>
+  }
+</section>
+
+@if (formOpen()) {
+  <app-daily-report-form-dialog
+    [report]="editTarget()"
+    (created)="onCreated()"
+    (updated)="onUpdated()"
+    (cancel)="closeForm()">
+  </app-daily-report-form-dialog>
+}
+
+@if (detailsId() !== null) {
+  <app-daily-report-details-dialog
+    [reportId]="detailsId()!"
+    (editRequested)="openEditFromDetails($event)"
+    (cancel)="closeDetails()">
+  </app-daily-report-details-dialog>
+}

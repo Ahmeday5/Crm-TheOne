@@ -12,6 +12,7 @@ import { REPORT_ROUTES } from './features/report-and-analytics/reportsAnalytics.
 import { SETTINGS_ROUTES } from './features/settings/settings.routes';
 import { MARKETING_CAMPAIGNS_ROUTES } from './features/marketing-campaigns/marketingCampaigns.routes';
 import { SERVICES_ROUTES } from './features/services/services.routes';
+import { DAILY_REPORTS_ROUTES } from './features/daily-reports/dailyReports.routes';
 
 /**
  * Top-level route table.
@@ -48,6 +49,7 @@ export const routes: Routes = [
       ...PROJECTS_TASKS_ROUTES,
       ...MARKETING_CAMPAIGNS_ROUTES,
       ...SERVICES_ROUTES,
+      ...DAILY_REPORTS_ROUTES,
       {
         path: 'sales-analysis',
         title: 'تحليل نتائج المبيعات',

@@ -9,6 +9,17 @@ const customers: TranslationFile<'customers'> = {
     addNew: 'إضافة عميل جديد',
     backToList: 'العودة لقائمة العملاء',
 
+    sales: {
+      title: 'عملاء المبيعات',
+      subtitleSales: 'العملاء المعيّنين إليك من فريق التسويق',
+      subtitleAdmin: 'عرض جميع العملاء المعيّنين لفريق المبيعات',
+      welcomeTitle: 'عملاء المبيعات',
+      welcomeSubtitleSales: 'مرحباً بك! هذه قائمة بعملائك النشطين.',
+      welcomeSubtitleAdmin: 'مرحباً بك! إليك نظرة عامة على عملاء فريق المبيعات.',
+      empty: 'لم يتم تعيين أي عملاء لك بعد — تواصل مع فريق التسويق.',
+      emptyAdmin: 'لا يوجد عملاء معيّنين بعد لفريق المبيعات.',
+    },
+
     kpi: {
       total: 'إجمالي العملاء',
       visible: 'المعروضين حالياً',

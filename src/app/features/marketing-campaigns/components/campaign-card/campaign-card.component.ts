@@ -32,6 +32,7 @@ export class CampaignCardComponent {
   @Input() busy = false;
 
   @Output() view = new EventEmitter<Campaign>();
+  @Output() edit = new EventEmitter<Campaign>();
   @Output() toggle = new EventEmitter<Campaign>();
   @Output() delete = new EventEmitter<Campaign>();
 

@@ -1,0 +1,45 @@
+.report-meta {
+  .meta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    color: var(--text-1);
+    font-size: var(--fs-sm);
+
+    i { color: var(--brand); }
+
+    &.tone-purple {
+      background: rgba(124, 58, 237, 0.08);
+      border-color: rgba(124, 58, 237, 0.25);
+      i { color: #7c3aed; }
+    }
+  }
+}
+
+.report-block {
+  margin-bottom: 1rem;
+
+  .block-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: var(--fw-700);
+    margin-bottom: 0.35rem;
+    color: var(--text-1);
+  }
+
+  .block-body {
+    margin: 0;
+    padding: 0.65rem 0.85rem;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-2);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}

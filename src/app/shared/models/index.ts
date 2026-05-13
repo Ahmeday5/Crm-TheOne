@@ -4,3 +4,4 @@ export * from './campaigns';
 export * from './services';
 export * from './customers';
 export * from './marketing';
+export * from './reports';

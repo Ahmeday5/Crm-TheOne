@@ -26,10 +26,12 @@ const sidebar: TranslationFile<'sidebar'> = {
       salesAnalysis: 'Sales analysis',
       // Main modules
       leads: 'Leads management',
+      salesCustomers: 'Sales customers',
       salesLine: 'Sales pipeline',
       projects: 'Projects & tasks',
       reports: 'Reports & analytics',
       chat: 'Internal chat',
+      dailyReports: 'Daily reports',
       // System administration
       settings: 'System settings',
       services: 'Services management',

@@ -135,6 +135,7 @@
             [campaign]="c"
             [busy]="busyId() === c.id"
             (view)="openDetails($event)"
+            (edit)="openEdit($event)"
             (toggle)="toggleStatus($event)"
             (delete)="confirmDelete($event)">
           </app-campaign-card>
@@ -158,8 +159,10 @@
 @if (formOpen()) {
   <app-campaign-form-dialog
     [initialSources]="channelSources()"
+    [campaign]="editTarget()"
     (created)="onCreated()"
-    (cancel)="closeCreate()">
+    (updated)="onUpdated()"
+    (cancel)="closeForm()">
   </app-campaign-form-dialog>
 }
 
