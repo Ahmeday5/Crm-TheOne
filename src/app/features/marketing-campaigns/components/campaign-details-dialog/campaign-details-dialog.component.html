@@ -6,6 +6,10 @@
   size="lg"
   (closed)="cancel.emit()">
 
+  @if (loadError()) {
+    <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
+  }
+
   @if (loading()) {
     <div class="d-flex flex-column align-items-center justify-content-center py-5 text-muted">
       <div class="spinner-border text-primary mb-2" role="status">
@@ -13,7 +17,7 @@
       </div>
       <span>{{ 'common.loading' | translate }}</span>
     </div>
-  } @else if (!details()) {
+  } @else if (!details() && !loadError()) {
     <div class="alert alert-warning d-flex align-items-center gap-2 mb-0">
       <i class="fa-solid fa-circle-exclamation"></i>
       <span>{{ 'campaigns.details.notFound' | translate }}</span>

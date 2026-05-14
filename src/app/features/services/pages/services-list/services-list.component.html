@@ -84,12 +84,8 @@
     </div>
 
     @if (loadError()) {
-      <div class="alert alert-danger d-flex align-items-center gap-2 m-3 mb-0" role="alert">
-        <i class="fa-solid fa-circle-exclamation"></i>
-        <span>{{ loadError() }}</span>
-        <button type="button" class="btn btn-link p-0 ms-auto" (click)="reload()">
-          {{ 'common.retry' | translate }}
-        </button>
+      <div class="m-3 mb-0">
+        <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
       </div>
     }
 

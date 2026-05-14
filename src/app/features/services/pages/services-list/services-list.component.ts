@@ -17,6 +17,7 @@ import {
   DataTableComponent,
   TableColumn,
 } from '../../../../shared/components/data-table/data-table.component';
+import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import { AppService, FormMode } from '../../../../shared/models';
@@ -34,6 +35,7 @@ const DEFAULT_PAGE_SIZE = 10;
     FormsModule,
     TranslatePipe,
     DataTableComponent,
+    LoadErrorComponent,
     PaginationComponent,
     StatCardComponent,
     ServiceFormDialogComponent,

@@ -23,6 +23,7 @@ const common: TranslationFile<'common'> = {
     upload: 'رفع',
     refresh: 'تحديث',
     retry: 'إعادة المحاولة',
+    loadFailed: 'تعذر تحميل البيانات',
     close: 'إغلاق',
     loading: 'جارٍ التحميل…',
     saving: 'جارٍ الحفظ…',

@@ -3,12 +3,16 @@
   icon="fa-solid fa-file-lines" iconTone="primary"
   size="lg" (closed)="cancel.emit()">
 
+  @if (loadError()) {
+    <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
+  }
+
   @if (loading()) {
     <div class="p-5 text-center text-muted">
       <span class="spinner-border me-2"></span>
       {{ 'common.loading' | translate }}
     </div>
-  } @else if (!details()) {
+  } @else if (!details() && !loadError()) {
     <div class="alert alert-warning d-flex align-items-center gap-2 mb-0">
       <i class="fa-solid fa-circle-exclamation"></i>
       <span>{{ 'dailyReports.details.notFound' | translate }}</span>

@@ -3,13 +3,7 @@
                  icon="fa-solid fa-bullhorn"></app-page-header>
 
 @if (loadError()) {
-  <div class="alert alert-danger d-flex align-items-center gap-2 mb-3" role="alert">
-    <i class="fa-solid fa-circle-exclamation"></i>
-    <span class="flex-grow-1">{{ loadError() }}</span>
-    <button type="button" class="btn btn-sm btn-light" (click)="reload()">
-      <i class="fa-solid fa-rotate me-1"></i>{{ 'dashboard.marketing.retry' | translate }}
-    </button>
-  </div>
+  <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
 }
 
 <!-- KPI Cards -->

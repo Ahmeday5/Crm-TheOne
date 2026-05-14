@@ -14,6 +14,7 @@ import { ApiError } from '../../../../core/models/api-response.model';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import {
@@ -22,6 +23,7 @@ import {
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { CustomersService } from '../../services/customers.service';
+import { customerStatusBadgeClass, resolveCustomerStatus } from '../../utils/customer-status.util';
 import { AssignSalesDialogComponent } from '../../components/assign-sales-dialog/assign-sales-dialog.component';
 import { CustomerDetailsDialogComponent } from '../../components/customer-details-dialog/customer-details-dialog.component';
 import { CustomerEditDialogComponent } from '../../components/customer-edit-dialog/customer-edit-dialog.component';
@@ -42,6 +44,7 @@ interface SourceItem {
     CommonModule,
     FormsModule,
     TranslatePipe,
+    LoadErrorComponent,
     PaginationComponent,
     StatCardComponent,
     AssignSalesDialogComponent,
@@ -322,17 +325,17 @@ export class MarketingLeadsComponent {
 
   resolveStatus(status: string | null): string {
     if (!status || status === 'none') return this.t('customers.table.unknownStatus');
-    return status;
+    return resolveCustomerStatus(status, this.language.lang(), status);
   }
 
   statusBadgeClass(status: string | null): string {
-    if (!status || status === 'none') return 'badge-status-unknown';
-    const lower = status.toLowerCase();
-    if (lower.includes('جديد') || lower === 'new') return 'badge-status-new';
-    if (lower.includes('تفاوض') || lower === 'negotiating') return 'badge-status-negotiating';
-    if (lower.includes('شراء') || lower === 'purchased') return 'badge-status-purchased';
-    if (lower.includes('غير مهتم') || lower === 'not interested') return 'badge-status-lost';
-    return 'badge-status-default';
+    if (!status) return 'badge-status-unknown';
+    return customerStatusBadgeClass(status);
+  }
+
+  /** Localized name for a status row coming from `Customers/statuses` (always Arabic). */
+  localizeStatusName(name: string): string {
+    return resolveCustomerStatus(name, this.language.lang(), name);
   }
 
   formatDate(dateStr: string): string {

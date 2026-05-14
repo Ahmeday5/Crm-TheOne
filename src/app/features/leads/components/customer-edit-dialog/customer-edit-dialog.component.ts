@@ -18,6 +18,7 @@ import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
+import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import {
   AppService,
@@ -43,6 +44,7 @@ import { ServicesService } from '../../../services/services/services.service';
     TranslatePipe,
     ModalComponent,
     FormErrorComponent,
+    LoadErrorComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-edit-dialog.component.html',
@@ -62,6 +64,7 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
   readonly loading = signal(true);
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly loadError = signal<string | null>(null);
   readonly submitAttempted = signal(false);
 
   readonly campaigns = signal<CampaignDropdownItem[]>([]);
@@ -90,8 +93,12 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if ('customerId' in changes) {
-      this.loadCustomer();
+      this.reload();
     }
+  }
+
+  reload(): void {
+    this.loadCustomer();
   }
 
   private loadDropdowns(): void {
@@ -107,6 +114,7 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
   private loadCustomer(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.loadError.set(null);
     this.customers.getById(this.customerId).subscribe({
       next: (c: CustomerDetails) => {
         this.form.patchValue({
@@ -122,7 +130,7 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
       },
       error: () => {
         this.loading.set(false);
-        this.errorMessage.set(this.t('customers.messages.loadCustomerFailed'));
+        this.loadError.set(this.t('customers.messages.loadCustomerFailed'));
       },
     });
   }

@@ -1,5 +1,10 @@
 /** Backend roles — keep in sync with `roles.const.ts`. */
-export type UserRole = 'Admin' | 'Developer' | 'Sales' | 'Marketing' | 'Support';
+export type UserRole =
+  | 'Admin'
+  | 'Developer'
+  | 'Sales'
+  | 'Marketing'
+  | 'Support';
 
 /** Body of POST /Auth/login */
 export interface LoginRequest {
@@ -31,6 +36,8 @@ export interface User {
   userId: string;
   email: string;
   role: UserRole;
+  fullName?: string | null;
+  phone?: string | null;
 }
 
 /** Tokens returned by login / refresh — consumed by the auth interceptor. */

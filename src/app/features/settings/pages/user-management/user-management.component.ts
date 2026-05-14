@@ -17,6 +17,7 @@ import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { UsersService } from '../../../../core/services/users.service';
 import { ClickOutsideDirective } from '../../../../shared/directives/click-outside.directive';
+import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { UserFormDialogComponent } from './user-form-dialog/user-form-dialog.component';
 
@@ -29,6 +30,7 @@ type RoleFilter = 'all' | UserRole;
     CommonModule,
     FormsModule,
     TranslatePipe,
+    LoadErrorComponent,
     UserFormDialogComponent,
     ClickOutsideDirective,
   ],

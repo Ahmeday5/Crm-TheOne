@@ -1,0 +1,91 @@
+<app-modal
+  [open]="true"
+  [title]="'customers.supportModal.title' | translate"
+  icon="fa-solid fa-headset"
+  iconTone="info"
+  size="md"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <div class="mb-3">
+    <p class="text-muted mb-2">{{ 'customers.supportModal.hint' | translate }}</p>
+
+    @if (customerName) {
+      <div class="card bg-light p-3">
+        <p class="fw-600 mb-0">
+          <i class="fa-solid fa-user me-2 text-primary"></i>{{ customerName }}
+        </p>
+      </div>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-4">
+      <span class="spinner-border text-primary" role="status"></span>
+    </div>
+  } @else {
+    <div class="mb-3">
+      <label class="form-label fw-600">
+        {{ 'customers.supportModal.pickPerson' | translate }}
+        <span class="text-danger">*</span>
+      </label>
+      @if (supportTeam().length === 0) {
+        <div class="alert alert-warning py-2 mb-0">
+          <i class="fa-solid fa-circle-info me-1"></i>
+          {{ 'customers.supportModal.noTeam' | translate }}
+        </div>
+      } @else {
+        <div class="list-group">
+          @for (person of supportTeam(); track person.userId) {
+            <label class="list-group-item list-group-item-action d-flex align-items-center gap-3"
+                   [class.active]="selectedId() === person.userId"
+                   style="cursor: pointer;"
+                   (click)="onSelect(person.userId)">
+              <input type="radio"
+                     class="form-check-input mt-0"
+                     name="supportPerson"
+                     [value]="person.userId"
+                     [checked]="selectedId() === person.userId"
+                     (change)="onSelect(person.userId)" />
+              <div class="flex-1">
+                <span class="fw-600 d-block">{{ person.fullName }}</span>
+                <small class="text-muted">{{ person.email }}</small>
+                @if (person.phone) {
+                  <small class="text-muted d-block">{{ person.phone }}</small>
+                }
+              </div>
+            </label>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <ng-container modal-footer>
+    <button type="button"
+            class="btn btn-light"
+            [disabled]="submitting()"
+            (click)="cancel.emit()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button type="button"
+            class="btn btn-info text-white"
+            [disabled]="!canSubmit()"
+            (click)="submit()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-headset me-1"></i>
+      }
+      {{ 'customers.supportModal.submit' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

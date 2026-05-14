@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
     logout: 'Auth/logout',
     me: 'Auth/me',
     sales: 'Auth/sales',
+    support: 'Auth/support',
   },
   users: {
     list: 'Auth/GetAllUsers',
@@ -58,10 +59,13 @@ export const API_ENDPOINTS = {
      */
     salesCustomers: 'Customers/getSalesCustomers',
     byId: (id: number | string) => `Customers/${id}/getCustomerById`,
-    create: 'Customers',
+    create: 'Customers/CreateCustomer',
     update: (id: number | string) => `Customers/updateCustomer/${id}`,
     delete: (id: number | string) => `Customers/${id}`,
     assign: (id: number | string) => `Customers/${id}/assign`,
+    assignSupport: (id: number | string) => `Customers/${id}/AssignToSupportPerson`,
+    changeStatus: (id: number | string) => `Customers/${id}/status`,
+    followUp: (id: number | string) => `Customers/${id}/followUp`,
     statuses: 'Customers/statuses',
   },
   marketing: {

@@ -1,0 +1,84 @@
+<app-modal
+  [open]="true"
+  [title]="'customers.statusModal.title' | translate"
+  icon="fa-solid fa-arrows-spin"
+  iconTone="warning"
+  size="md"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <div class="mb-3">
+    <p class="text-muted mb-2">{{ 'customers.statusModal.hint' | translate }}</p>
+
+    @if (customerName) {
+      <div class="card bg-light p-3">
+        <p class="fw-600 mb-1">
+          <i class="fa-solid fa-user me-2 text-primary"></i>{{ customerName }}
+        </p>
+        @if (currentStatus) {
+          <p class="mb-0 small text-muted">
+            <span class="fw-600">{{ 'customers.statusModal.currentStatus' | translate }}:</span>
+            <span class="badge bg-secondary-subtle text-secondary ms-1">{{ statusLabel(currentStatus) }}</span>
+          </p>
+        }
+      </div>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-4">
+      <span class="spinner-border text-primary" role="status"></span>
+    </div>
+  } @else {
+    <div class="mb-3">
+      <label class="form-label fw-600">
+        {{ 'customers.statusModal.pickStatus' | translate }}
+        <span class="text-danger">*</span>
+      </label>
+      <div class="list-group">
+        @for (s of statuses(); track s.id) {
+          <label class="list-group-item list-group-item-action d-flex align-items-center gap-3"
+                 [class.active]="selectedId() === s.id"
+                 style="cursor: pointer;"
+                 (click)="onSelect(s.id)">
+            <input type="radio"
+                   class="form-check-input mt-0"
+                   name="customerStatus"
+                   [value]="s.id"
+                   [checked]="selectedId() === s.id"
+                   (change)="onSelect(s.id)" />
+            <span class="fw-600">{{ statusLabel(s.name) }}</span>
+          </label>
+        }
+      </div>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <ng-container modal-footer>
+    <button type="button"
+            class="btn btn-light"
+            [disabled]="submitting()"
+            (click)="cancel.emit()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button type="button"
+            class="btn btn-warning"
+            [disabled]="!canSubmit()"
+            (click)="submit()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-check me-1"></i>
+      }
+      {{ 'customers.statusModal.submit' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

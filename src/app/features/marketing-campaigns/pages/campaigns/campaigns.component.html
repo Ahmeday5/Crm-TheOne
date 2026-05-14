@@ -113,13 +113,7 @@
       </div>
     </div>
   } @else if (loadError()) {
-    <div class="alert alert-danger d-flex align-items-center gap-2">
-      <i class="fa-solid fa-circle-exclamation"></i>
-      <span>{{ loadError() }}</span>
-      <button type="button" class="btn btn-link p-0 ms-auto" (click)="reload()">
-        {{ 'common.retry' | translate }}
-      </button>
-    </div>
+    <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
   } @else if (all().length === 0) {
     <div class="card">
       <div class="card-body p-5 text-center text-muted">

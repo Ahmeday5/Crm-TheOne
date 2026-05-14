@@ -1,0 +1,76 @@
+<app-modal
+  [open]="true"
+  [title]="'customers.followUpModal.title' | translate"
+  icon="fa-solid fa-calendar-check"
+  iconTone="purple"
+  size="md"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <div class="mb-3">
+    <p class="text-muted mb-2">{{ 'customers.followUpModal.hint' | translate }}</p>
+
+    @if (customerName) {
+      <div class="card bg-light p-3">
+        <p class="fw-600 mb-0">
+          <i class="fa-solid fa-user me-2 text-primary"></i>{{ customerName }}
+        </p>
+      </div>
+    }
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label fw-600">
+        <i class="fa-solid fa-clock-rotate-left me-1 text-muted"></i>
+        {{ 'customers.followUpModal.last' | translate }}
+        <span class="text-danger">*</span>
+      </label>
+      <input type="datetime-local"
+             class="form-control"
+             [ngModel]="lastInput()"
+             (ngModelChange)="onLastChange($event)"
+             [disabled]="submitting()" />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-600">
+        <i class="fa-solid fa-calendar-day me-1 text-muted"></i>
+        {{ 'customers.followUpModal.next' | translate }}
+        <span class="text-danger">*</span>
+      </label>
+      <input type="datetime-local"
+             class="form-control"
+             [ngModel]="nextInput()"
+             (ngModelChange)="onNextChange($event)"
+             [disabled]="submitting()" />
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <ng-container modal-footer>
+    <button type="button"
+            class="btn btn-light"
+            [disabled]="submitting()"
+            (click)="cancel.emit()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button type="button"
+            class="btn btn-primary"
+            [disabled]="!canSubmit()"
+            (click)="submit()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-floppy-disk me-1"></i>
+      }
+      {{ 'customers.followUpModal.submit' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

@@ -114,9 +114,8 @@
           <span class="spinner-border spinner-border-sm me-2"></span>
         </div>
       } @else if (loadError()) {
-        <div class="alert alert-danger m-3 mb-0">
-          <i class="fa-solid fa-circle-exclamation me-2"></i>
-          {{ loadError() }}
+        <div class="m-3 mb-0">
+          <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
         </div>
       } @else if (visible().length === 0) {
         <div class="p-5 text-center text-muted">

@@ -27,11 +27,11 @@
       </button>
 
       <div class="dropdown">
-        <button class="btn btn-light d-flex align-items-center gap-2 user-pill"
-                type="button" data-bs-toggle="dropdown">
+        <button class="btn btn-light d-flex align-items-center gap-2 user-pill" type="button" data-bs-toggle="dropdown">
           <span class="user-avatar"><i class="fa-solid fa-user"></i></span>
           <span class="d-none d-md-inline-block text-start">
-            <span class="d-block fw-700 text-truncate" style="max-width: 180px;">{{ currentUser()?.email || ('header.profile' | translate) }}</span>
+            <span class="d-block fw-700 text-truncate" style="max-width: 180px;">{{ currentUser()?.fullName ||
+              currentUser()?.email || ('header.profile' | translate) }}</span>
             <small class="text-muted">{{ currentRoleLabel() }}</small>
           </span>
         </button>

@@ -10,7 +10,9 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
+import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { formatCalendarDate } from '../../../../core/utils/calendar-date.util';
 import { DailyReport } from '../../../../shared/models';
@@ -24,7 +26,7 @@ import { DailyReportsService } from '../../services/daily-reports.service';
 @Component({
   selector: 'app-daily-report-details-dialog',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, ModalComponent],
+  imports: [CommonModule, TranslatePipe, ModalComponent, LoadErrorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './daily-report-details-dialog.component.html',
   styleUrl: './daily-report-details-dialog.component.scss',
@@ -41,12 +43,17 @@ export class DailyReportDetailsDialogComponent implements OnChanges {
   readonly details = signal<DailyReport | null>(null);
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly loadError = signal<string | null>(null);
 
   ngOnChanges(changes: SimpleChanges): void {
     if ('reportId' in changes) this.fetch();
   }
 
   refresh(): void {
+    this.fetch();
+  }
+
+  reload(): void {
     this.fetch();
   }
 
@@ -77,6 +84,7 @@ export class DailyReportDetailsDialogComponent implements OnChanges {
     if (this.reportId == null) return;
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.loadError.set(null);
     this.reports.getById(this.reportId).subscribe({
       next: (row) => {
         this.details.set(row);
@@ -85,7 +93,12 @@ export class DailyReportDetailsDialogComponent implements OnChanges {
       error: () => {
         this.loading.set(false);
         this.details.set(null);
+        this.loadError.set(this.t('dailyReports.messages.loadFailed'));
       },
     });
+  }
+
+  private t(key: string): string {
+    return resolveKey(TRANSLATIONS[this.language.lang()], key);
   }
 }

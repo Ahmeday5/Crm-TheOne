@@ -13,6 +13,7 @@ import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
 import { CustomersService } from '../../../leads/services/customers.service';
 import { CampaignsService } from '../../../marketing-campaigns/services/campaigns.service';
+import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import {
   Campaign,
@@ -27,7 +28,7 @@ import { MarketingService } from '../../services/marketing.service';
 @Component({
   selector: 'app-marketing-dashboard',
   standalone: true,
-  imports: [CommonModule, NgApexchartsModule, TranslatePipe, PageHeaderComponent],
+  imports: [CommonModule, NgApexchartsModule, TranslatePipe, PageHeaderComponent, LoadErrorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './marketing-dashboard.component.html',
   styleUrl: './marketing-dashboard.component.scss',

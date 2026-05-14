@@ -16,6 +16,7 @@ import {
   UserRole,
 } from '../models/auth.model';
 import { ApiError } from '../models/api-response.model';
+import { AppUser } from '../models/user.model';
 import { API_ENDPOINTS } from '../constants/api-endpoints.const';
 import {
   withInlineHandling,
@@ -53,18 +54,6 @@ interface LogoutOptions {
   reason?: string;
 }
 
-/**
- * Source of truth for the user session.
- *
- *   - `currentUser()` is a signal — components/guards/sidebar read it directly.
- *   - Tokens live in localStorage (so a refresh keeps the session) and are
- *     mirrored in-memory for hot reads.
- *   - A proactive timer fires `refreshToken()` ~1 min before the JWT's `exp`,
- *     so users never hit a 401 round-trip during normal use.
- *   - BroadcastChannel keeps every tab in sync on login/logout/refresh.
- *   - Auth-fatal errors (400/401/403) clear the session; transient errors
- *     (CORS/network/5xx) just back-off and retry, keeping the user signed in.
- */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly api = inject(ApiService);
@@ -88,6 +77,9 @@ export class AuthService {
     this.initCrossTabSync();
     if (this.isLoggedIn()) {
       this.scheduleProactiveRefresh();
+      // Refresh profile fields (fullName/phone) on boot in case the user is
+      // missing them from an older session or they changed server-side.
+      this.hydrateProfile();
     }
   }
 
@@ -105,8 +97,41 @@ export class AuthService {
       })
       .pipe(
         tap((data) => this.persistSession(data)),
+        tap(() => this.hydrateProfile()),
         map((data) => this.toUser(data)),
       );
+  }
+
+  /**
+   * Best-effort fetch of the full profile (fullName, phone) and merge into the
+   * current user. The login endpoint only returns email/role/userId, so we
+   * top up from `Auth/GetUserbyId` so the header can show fullName.
+   * Failures are silent — the UI falls back to email.
+   */
+  private hydrateProfile(): void {
+    const current = this.currentUserSignal();
+    if (!current) return;
+
+    this.api
+      .get<AppUser>(API_ENDPOINTS.users.byId(current.userId), {
+        context: withInlineHandling(),
+      })
+      .subscribe({
+        next: (profile) => {
+          const latest = this.currentUserSignal();
+          if (!latest || latest.userId !== profile.userId) return;
+          const merged: User = {
+            ...latest,
+            fullName: profile.fullName ?? latest.fullName ?? null,
+            phone: profile.phone ?? latest.phone ?? null,
+          };
+          this.storage.setJson(environment.userKey, merged);
+          this.currentUserSignal.set(merged);
+        },
+        error: () => {
+          /* silent — header gracefully falls back to email */
+        },
+      });
   }
 
   logout(opts: LogoutOptions = {}): void {

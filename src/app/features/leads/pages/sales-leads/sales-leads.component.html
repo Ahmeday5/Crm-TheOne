@@ -67,7 +67,7 @@
                   (ngModelChange)="onStatusChange($event)">
             <option value="">{{ 'customers.filters.allStatuses' | translate }}</option>
             @for (s of statuses(); track s.id) {
-              <option [value]="s.id">{{ s.name }}</option>
+              <option [value]="s.id">{{ localizeStatusName(s.name) }}</option>
             }
           </select>
         </div>
@@ -96,12 +96,8 @@
     </div>
 
     @if (loadError()) {
-      <div class="alert alert-danger d-flex align-items-center gap-2 m-3 mb-0" role="alert">
-        <i class="fa-solid fa-circle-exclamation"></i>
-        <span>{{ loadError() }}</span>
-        <button type="button" class="btn btn-link p-0 ms-auto" (click)="reload()">
-          {{ 'common.retry' | translate }}
-        </button>
+      <div class="m-3 mb-0">
+        <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
       </div>
     }
 
@@ -180,12 +176,65 @@
                   }
                   <td class="small text-muted">{{ formatDate(row.createdAt) }}</td>
                   <td>
-                    <div class="d-inline-flex gap-1 justify-content-center">
+                    <div class="d-inline-flex gap-1 justify-content-center flex-wrap">
                       <button type="button"
                               class="btn btn-sm btn-light"
                               [title]="'customers.table.view' | translate"
                               (click)="openDetails(row)">
                         <i class="fa-solid fa-eye"></i>
+                      </button>
+
+                      @if (telHref(row.phone); as href) {
+                        <a [href]="href"
+                           class="btn btn-sm btn-outline-primary"
+                           [title]="'customers.table.call' | translate">
+                          <i class="fa-solid fa-phone"></i>
+                        </a>
+                      } @else {
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                disabled
+                                [title]="'customers.table.noPhone' | translate">
+                          <i class="fa-solid fa-phone"></i>
+                        </button>
+                      }
+
+                      @if (whatsAppHref(row.phone); as href) {
+                        <a [href]="href"
+                           target="_blank"
+                           rel="noopener"
+                           class="btn btn-sm btn-outline-success"
+                           [title]="'customers.table.whatsapp' | translate">
+                          <i class="fa-brands fa-whatsapp"></i>
+                        </a>
+                      } @else {
+                        <button type="button"
+                                class="btn btn-sm btn-outline-success"
+                                disabled
+                                [title]="'customers.table.noPhone' | translate">
+                          <i class="fa-brands fa-whatsapp"></i>
+                        </button>
+                      }
+
+                      <button type="button"
+                              class="btn btn-sm btn-outline-info"
+                              [title]="'customers.table.assignSupport' | translate"
+                              (click)="openAssignSupport(row)">
+                        <i class="fa-solid fa-headset"></i>
+                      </button>
+
+                      <button type="button"
+                              class="btn btn-sm btn-outline-warning"
+                              [title]="'customers.table.changeStatus' | translate"
+                              (click)="openChangeStatus(row)">
+                        <i class="fa-solid fa-arrows-spin"></i>
+                      </button>
+
+                      <button type="button"
+                              class="btn btn-sm btn-outline-secondary"
+                              [title]="'customers.table.followUp' | translate"
+                              (click)="openFollowUp(row)">
+                        <i class="fa-solid fa-calendar-check"></i>
                       </button>
                     </div>
                   </td>
@@ -217,4 +266,34 @@
     [customerId]="id"
     (closed)="closeDetails()">
   </app-customer-details-dialog>
+}
+
+@if (assignSupportDialog(); as row) {
+  <app-assign-support-dialog
+    [customerId]="row.id"
+    [customerName]="row.fullName"
+    (assigned)="onSupportAssigned()"
+    (cancel)="closeAssignSupport()">
+  </app-assign-support-dialog>
+}
+
+@if (changeStatusDialog(); as row) {
+  <app-change-status-dialog
+    [customerId]="row.id"
+    [customerName]="row.fullName"
+    [currentStatus]="row.status"
+    (changed)="onStatusChanged($event)"
+    (cancel)="closeChangeStatus()">
+  </app-change-status-dialog>
+}
+
+@if (followUpDialog(); as row) {
+  <app-follow-up-dialog
+    [customerId]="row.id"
+    [customerName]="row.fullName"
+    [lastFollowUpDate]="row.lastFollowUpDate"
+    [nextFollowUpDate]="row.nextFollowUpDate"
+    (updated)="onFollowUpUpdated($event)"
+    (cancel)="closeFollowUp()">
+  </app-follow-up-dialog>
 }

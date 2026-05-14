@@ -16,6 +16,8 @@ export interface CustomerListItem {
   salesPersonId?: string | null;
   salesPersonName: string | null;
   createdAt: string;
+  lastFollowUpDate: string | null;
+  nextFollowUpDate: string | null;
 }
 
 /**
@@ -72,6 +74,30 @@ export interface AssignCustomerRequest {
   salesPersonId: string;
 }
 
+/** Body for `POST /Customers/{id}/AssignToSupportPerson`. */
+export interface AssignSupportRequest {
+  supportPersonId: string;
+}
+
+/** Body for `POST /Customers/{id}/status`. */
+export interface ChangeCustomerStatusRequest {
+  status: number;
+}
+
+/** Body for `POST /Customers/{id}/followUp`. */
+export interface UpdateFollowUpRequest {
+  lastFollowUpDate: string;
+  nextFollowUpDate: string;
+}
+
+/** Returned by `POST /Customers/{id}/followUp` and `…/status`. */
+export interface CustomerFollowUpResponse {
+  id: number;
+  fullName: string;
+  lastFollowUpDate: string | null;
+  nextFollowUpDate: string | null;
+}
+
 /** Dropdown item returned by `GET /Customers/statuses`. */
 export interface CustomerStatus {
   id: number;
@@ -80,6 +106,16 @@ export interface CustomerStatus {
 
 /** Sales team member returned by `GET /Auth/sales`. */
 export interface SalesPerson {
+  userId: string;
+  email: string;
+  phone: string;
+  fullName: string;
+  role: string;
+  address: string | null;
+}
+
+/** Support team member returned by `GET /Auth/support`. Same shape as SalesPerson. */
+export interface SupportPerson {
   userId: string;
   email: string;
   phone: string;

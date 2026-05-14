@@ -54,6 +54,14 @@ const customers: TranslationFile<'customers'> = {
       reassign: 'Change sales rep',
       notAssigned: 'Not assigned',
       unknownStatus: 'Unknown',
+      call: 'Call',
+      whatsapp: 'WhatsApp',
+      assignSupport: 'Assign to support',
+      changeStatus: 'Change status',
+      followUp: 'Update follow-up',
+      lastFollowUp: 'Last follow-up',
+      nextFollowUp: 'Next follow-up',
+      noPhone: 'Phone number not available',
     },
 
     form: {
@@ -124,6 +132,37 @@ const customers: TranslationFile<'customers'> = {
       cancel: 'Cancel',
       noSalesTeam: 'No sales reps available — please add one first.',
       sameRepError: 'This rep is already assigned — pick a different one.',
+    },
+
+    supportModal: {
+      title: 'Assign to Support Team',
+      hint: 'Pick a support agent to take over this customer.',
+      pickPerson: 'Select support agent',
+      submit: 'Assign',
+      noTeam: 'No support agents available right now.',
+      success: 'Customer assigned to support team ✓',
+      failed: 'Could not assign customer — please try again.',
+    },
+
+    statusModal: {
+      title: 'Change customer status',
+      hint: 'Pick the new status for this customer.',
+      currentStatus: 'Current status',
+      pickStatus: 'Select status',
+      submit: 'Confirm change',
+      success: 'Status updated ✓',
+      failed: 'Could not update status — please try again.',
+    },
+
+    followUpModal: {
+      title: 'Update follow-up',
+      hint: 'Set the last and next follow-up date/time.',
+      last: 'Last follow-up',
+      next: 'Next follow-up',
+      submit: 'Save',
+      success: 'Follow-up updated ✓',
+      failed: 'Could not update follow-up — please try again.',
+      invalidRange: 'Next follow-up must be after the last one.',
     },
 
     messages: {

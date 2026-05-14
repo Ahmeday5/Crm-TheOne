@@ -17,6 +17,7 @@ import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { formatCalendarDate } from '../../../../core/utils/calendar-date.util';
+import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import {
@@ -65,6 +66,7 @@ interface MonthOption {
     CommonModule,
     FormsModule,
     TranslatePipe,
+    LoadErrorComponent,
     StatCardComponent,
     PaginationComponent,
     DailyReportFormDialogComponent,

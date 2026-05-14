@@ -13,17 +13,24 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { toTelHref, toWhatsAppHref } from '../../../../core/utils/phone.util';
+import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import {
+  CustomerFollowUpResponse,
   CustomerListItem,
   CustomerStatus,
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ChannelSourcesService } from '../../../marketing-campaigns/services/channel-sources.service';
+import { AssignSupportDialogComponent } from '../../components/assign-support-dialog/assign-support-dialog.component';
+import { ChangeStatusDialogComponent } from '../../components/change-status-dialog/change-status-dialog.component';
 import { CustomerDetailsDialogComponent } from '../../components/customer-details-dialog/customer-details-dialog.component';
+import { FollowUpDialogComponent } from '../../components/follow-up-dialog/follow-up-dialog.component';
 import { CustomersService } from '../../services/customers.service';
+import { customerStatusBadgeClass, resolveCustomerStatus } from '../../utils/customer-status.util';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -54,7 +61,11 @@ interface SourceItem {
     PageHeaderComponent,
     PaginationComponent,
     StatCardComponent,
+    LoadErrorComponent,
     CustomerDetailsDialogComponent,
+    AssignSupportDialogComponent,
+    ChangeStatusDialogComponent,
+    FollowUpDialogComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-leads.component.html',
@@ -89,6 +100,9 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
   // ─────────── dialogs ───────────
   readonly detailsDialog = signal<number | null>(null);
+  readonly assignSupportDialog = signal<CustomerListItem | null>(null);
+  readonly changeStatusDialog = signal<CustomerListItem | null>(null);
+  readonly followUpDialog = signal<CustomerListItem | null>(null);
 
   /** True when the current user is an Admin. Drives copy + headers. */
   readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
@@ -217,21 +231,85 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     this.detailsDialog.set(null);
   }
 
+  // ─────────── row actions ───────────
+
+  /** Returns `tel:+<E.164>` href or `null` when the phone is unusable. */
+  telHref(phone: string | null | undefined): string | null {
+    return toTelHref(phone);
+  }
+
+  /** Returns `https://wa.me/<E.164>` href or `null` when the phone is unusable. */
+  whatsAppHref(phone: string | null | undefined): string | null {
+    return toWhatsAppHref(phone);
+  }
+
+  openAssignSupport(row: CustomerListItem): void {
+    this.assignSupportDialog.set(row);
+  }
+
+  closeAssignSupport(): void {
+    this.assignSupportDialog.set(null);
+  }
+
+  onSupportAssigned(): void {
+    this.closeAssignSupport();
+    this.reload();
+  }
+
+  openChangeStatus(row: CustomerListItem): void {
+    this.changeStatusDialog.set(row);
+  }
+
+  closeChangeStatus(): void {
+    this.changeStatusDialog.set(null);
+  }
+
+  onStatusChanged(_res: CustomerFollowUpResponse): void {
+    this.closeChangeStatus();
+    this.reload();
+  }
+
+  openFollowUp(row: CustomerListItem): void {
+    this.followUpDialog.set(row);
+  }
+
+  closeFollowUp(): void {
+    this.followUpDialog.set(null);
+  }
+
+  onFollowUpUpdated(res: CustomerFollowUpResponse): void {
+    // Optimistic in-place patch so the row reflects the new dates without a
+    // full reload — the cache invalidation in the service will pick up any
+    // server-side changes on the next navigation.
+    this.rows.update((list) =>
+      list.map((row) =>
+        row.id === res.id
+          ? {
+              ...row,
+              lastFollowUpDate: res.lastFollowUpDate,
+              nextFollowUpDate: res.nextFollowUpDate,
+            }
+          : row,
+      ),
+    );
+    this.closeFollowUp();
+  }
+
   // ─────────── helpers ───────────
 
   resolveStatus(status: string | null): string {
     if (!status || status === 'none') return this.t('customers.table.unknownStatus');
-    return status;
+    return resolveCustomerStatus(status, this.language.lang(), status);
   }
 
   statusBadgeClass(status: string | null): string {
-    if (!status || status === 'none') return 'badge-status-unknown';
-    const lower = status.toLowerCase();
-    if (lower.includes('جديد') || lower === 'new') return 'badge-status-new';
-    if (lower.includes('تفاوض') || lower === 'negotiating') return 'badge-status-negotiating';
-    if (lower.includes('شراء') || lower === 'purchased' || lower === 'buyer') return 'badge-status-purchased';
-    if (lower.includes('غير مهتم') || lower === 'not interested') return 'badge-status-lost';
-    return 'badge-status-default';
+    if (!status) return 'badge-status-unknown';
+    return customerStatusBadgeClass(status);
+  }
+
+  /** Localized name for a status row coming from `Customers/statuses` (always Arabic). */
+  localizeStatusName(name: string): string {
+    return resolveCustomerStatus(name, this.language.lang(), name);
   }
 
   formatDate(dateStr: string): string {

@@ -15,6 +15,7 @@ import {
   CampaignPerformanceRow,
   SalesAnalysisStats,
 } from '../../../../shared/models';
+import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { MarketingService } from '../../../dashboard/services/marketing.service';
 import { CampaignsService } from '../../../marketing-campaigns/services/campaigns.service';
@@ -44,7 +45,7 @@ interface ReasonSlice {
 @Component({
   selector: 'app-sales-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgApexchartsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, NgApexchartsModule, TranslatePipe, LoadErrorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-reports.component.html',
   styleUrl: './sales-reports.component.scss',

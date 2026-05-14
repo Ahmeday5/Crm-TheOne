@@ -10,7 +10,9 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
+import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { CampaignDetails } from '../../../../shared/models';
@@ -19,7 +21,7 @@ import { CampaignsService } from '../../services/campaigns.service';
 @Component({
   selector: 'app-campaign-details-dialog',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, ModalComponent],
+  imports: [CommonModule, TranslatePipe, ModalComponent, LoadErrorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './campaign-details-dialog.component.html',
   styleUrl: './campaign-details-dialog.component.scss',
@@ -35,6 +37,7 @@ export class CampaignDetailsDialogComponent implements OnChanges {
   readonly details = signal<CampaignDetails | null>(null);
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly loadError = signal<string | null>(null);
 
   ngOnChanges(changes: SimpleChanges): void {
     if ('campaignId' in changes) {
@@ -43,6 +46,10 @@ export class CampaignDetailsDialogComponent implements OnChanges {
   }
 
   refresh(): void {
+    this.fetch();
+  }
+
+  reload(): void {
     this.fetch();
   }
 
@@ -83,6 +90,7 @@ export class CampaignDetailsDialogComponent implements OnChanges {
     if (this.campaignId == null) return;
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.loadError.set(null);
     this.campaigns.getById(this.campaignId).subscribe({
       next: (row) => {
         this.details.set(row);
@@ -90,9 +98,13 @@ export class CampaignDetailsDialogComponent implements OnChanges {
       },
       error: () => {
         this.loading.set(false);
-        this.errorMessage.set(null);
         this.details.set(null);
+        this.loadError.set(this.t('campaigns.messages.loadFailed'));
       },
     });
+  }
+
+  private t(key: string): string {
+    return resolveKey(TRANSLATIONS[this.language.lang()], key);
   }
 }

@@ -53,13 +53,7 @@
 
   <!-- KPI cards (from /Marketing/statistics) -->
   @if (loadError()) {
-    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3" role="alert">
-      <i class="fa-solid fa-circle-exclamation"></i>
-      <span class="flex-grow-1">{{ loadError() }}</span>
-      <button type="button" class="btn btn-sm btn-light" (click)="reload()">
-        <i class="fa-solid fa-rotate me-1"></i>{{ 'common.retry' | translate }}
-      </button>
-    </div>
+    <app-load-error [message]="loadError()" [loading]="loadingStats() || loadingCampaigns()" (retry)="reload()"></app-load-error>
   }
 
   <div class="row g-3 mb-4">
