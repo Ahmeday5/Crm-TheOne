@@ -43,7 +43,7 @@
         </p>
       </div>
     </div>
-
+    
     <!-- Audience -->
     <div>
       <p class="fw-600 mb-2 d-flex align-items-center gap-2">
@@ -57,8 +57,8 @@
         <span class="badge gray">
           {{ 'campaigns.create.genders.' + campaign.gender.toLowerCase() | translate }}
         </span>
-        @for (c of campaign.countries; track c) {
-          <span class="badge blue">{{ c }}</span>
+        @for (c of campaign.countries; track c.countryId) {
+          <span class="badge blue">{{ c.countryName }}</span>
         }
       </div>
     </div>

@@ -15,14 +15,61 @@ export interface CustomerListItem {
   status: string;
   salesPersonId?: string | null;
   salesPersonName: string | null;
+  supportPersonId?: string | null;
+  supportPersonName?: string | null;
   createdAt: string;
   lastFollowUpDate: string | null;
   nextFollowUpDate: string | null;
+  isMarketingToSales?: boolean;
+  isSalesToSupport?: boolean;
+  isSupportToSales?: boolean;
+  /** Latest note left by the marketing team (read-only here). */
+  noteMarketing?: string | null;
+  /** Latest note left by the sales team (read-only here). */
+  noteSales?: string | null;
+  /** Latest note left by the support team (read-only here). */
+  noteSupport?: string | null;
+  /**
+   * Reason supplied when the customer was moved to `NotBuyer`.
+   *
+   * Non-null only when `status === 'NotBuyer'`. For buyers and any other
+   * status the backend returns `null` — and the field is omitted entirely
+   * by older endpoint versions that don't yet emit it.
+   */
+  notBuyerReason?: string | null;
 }
 
+/** Role-specific slot of a customer note. */
+export type CustomerNoteRole = 'Marketing' | 'Sales' | 'Support';
+
 /**
- * Full detail shape returned by `GET /Customers/{id}/getCustomerById`.
+ * Body for `PUT /CustomerNotes/customer/{id}/myNote`.
+ *
+ * The backend reads the caller's role from the JWT and writes the value
+ * into the matching slot — the request is just `{ note }`, never role-keyed.
  */
+export interface SaveCustomerNoteRequest {
+  note: string;
+}
+
+/** Response payload for `PUT /CustomerNotes/customer/{id}/myNote`. */
+export interface CustomerNoteResponse {
+  id: number;
+  customerId: number;
+  customerName: string | null;
+  noteMarketing: string | null;
+  marketingRole: string | null;
+  noteSales: string | null;
+  salesRole: string | null;
+  noteSupport: string | null;
+  supportRole: string | null;
+  createdById: string | null;
+  noteMarketingName: string | null;
+  noteSalesName: string | null;
+  noteSupportName: string | null;
+  createdAt: string;
+}
+
 export interface CustomerDetails {
   id: number;
   name: string | null;
@@ -79,9 +126,17 @@ export interface AssignSupportRequest {
   supportPersonId: string;
 }
 
-/** Body for `POST /Customers/{id}/status`. */
+/**
+ * Body for `PUT /Customers/{id}/status`.
+ *
+ * The backend enforces that `notBuyingReason` is non-empty when `status`
+ * resolves to `NotBuyer` (statusId 5) and rejects with HTTP 400 otherwise.
+ * For any other status the field should be omitted.
+ */
 export interface ChangeCustomerStatusRequest {
   status: number;
+  /** Required only when transitioning to `NotBuyer`. */
+  notBuyingReason?: string;
 }
 
 /** Body for `POST /Customers/{id}/followUp`. */

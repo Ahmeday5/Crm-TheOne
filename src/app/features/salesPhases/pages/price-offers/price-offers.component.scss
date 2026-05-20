@@ -1,1 +1,38 @@
-/* Styling driven entirely by global theme — see src/styles/_tokens.scss */
+.po-table {
+  thead th {
+    background: var(--surface-1);
+    color: var(--text-2, var(--text-1));
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: none;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    transition: background-color 0.15s ease;
+  }
+
+  .min-w-0 {
+    min-width: 0;
+  }
+}
+
+.po-id {
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.po-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand-soft);
+  color: var(--brand-dark, var(--brand));
+  font-weight: 700;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}

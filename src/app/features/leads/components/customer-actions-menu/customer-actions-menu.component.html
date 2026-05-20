@@ -1,0 +1,114 @@
+<div class="crm-actions">
+  <!-- View — always rendered when enabled, highest-frequency action. -->
+  @if (actions().view) {
+    <button type="button"
+            class="crm-action-btn tone-primary"
+            [disabled]="busy()"
+            [title]="'customers.table.view' | translate"
+            [attr.aria-label]="'customers.table.view' | translate"
+            (click)="view.emit()">
+      <i class="fa-solid fa-eye"></i>
+    </button>
+  }
+
+  <!-- Note — second most-used action across all variants. -->
+  @if (actions().note) {
+    <button type="button"
+            class="crm-action-btn tone-info"
+            [disabled]="busy()"
+            [title]="'customers.table.editNote' | translate"
+            [attr.aria-label]="'customers.table.editNote' | translate"
+            (click)="note.emit()">
+      <i class="fa-solid fa-pen-to-square"></i>
+    </button>
+  }
+
+  <!-- Phone-derived actions (no events — pure anchors). -->
+  @if (telHref(); as href) {
+    <a class="crm-action-btn tone-primary"
+       [href]="href"
+       [title]="'customers.table.call' | translate"
+       [attr.aria-label]="'customers.table.call' | translate">
+      <i class="fa-solid fa-phone"></i>
+    </a>
+  }
+  @if (waHref(); as href) {
+    <a class="crm-action-btn tone-success"
+       [href]="href"
+       target="_blank"
+       rel="noopener"
+       [title]="'customers.table.whatsapp' | translate"
+       [attr.aria-label]="'customers.table.whatsapp' | translate">
+      <i class="fa-brands fa-whatsapp"></i>
+    </a>
+  }
+
+  <!-- Secondary actions live behind a kebab to keep the row narrow. -->
+  @if (hasMenu()) {
+    <div class="dropdown">
+      <button type="button"
+              class="crm-action-btn"
+              data-bs-toggle="dropdown"
+              data-bs-auto-close="true"
+              data-bs-strategy="fixed"
+              data-bs-display="dynamic"
+              [disabled]="busy()"
+              [title]="moreLabel()"
+              [attr.aria-label]="moreLabel()"
+              aria-expanded="false">
+        <i class="fa-solid fa-ellipsis-vertical"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        @if (actions().edit) {
+          <li>
+            <button type="button" class="dropdown-item" (click)="edit.emit()">
+              <i class="fa-solid fa-pen"></i>
+              <span>{{ 'customers.table.edit' | translate }}</span>
+            </button>
+          </li>
+        }
+        @if (actions().assignSales) {
+          <li>
+            <button type="button" class="dropdown-item" (click)="assignSales.emit()">
+              <i class="fa-solid fa-user-plus"></i>
+              <span>{{ 'customers.table.assign' | translate }}</span>
+            </button>
+          </li>
+        }
+        @if (actions().assignSupport) {
+          <li>
+            <button type="button" class="dropdown-item" (click)="assignSupport.emit()">
+              <i class="fa-solid fa-headset"></i>
+              <span>{{ 'customers.table.assignSupport' | translate }}</span>
+            </button>
+          </li>
+        }
+        @if (actions().changeStatus) {
+          <li>
+            <button type="button" class="dropdown-item" (click)="changeStatus.emit()">
+              <i class="fa-solid fa-arrows-spin"></i>
+              <span>{{ 'customers.table.changeStatus' | translate }}</span>
+            </button>
+          </li>
+        }
+        @if (actions().followUp) {
+          <li>
+            <button type="button" class="dropdown-item" (click)="followUp.emit()">
+              <i class="fa-solid fa-calendar-check"></i>
+              <span>{{ 'customers.table.followUp' | translate }}</span>
+            </button>
+          </li>
+        }
+        @if (actions().delete) {
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <button type="button" class="dropdown-item text-danger" (click)="delete.emit()">
+              <i class="fa-solid fa-trash"></i>
+              <span>{{ 'customers.table.delete' | translate }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</div>

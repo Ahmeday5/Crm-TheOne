@@ -1,1 +1,10 @@
-/* Styling driven entirely by global theme — see src/styles/_tokens.scss */
+:host { display: block; }
+
+.support-customers-page .search-icon {
+  position: absolute;
+  inset-inline-end: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-3);
+  pointer-events: none;
+}

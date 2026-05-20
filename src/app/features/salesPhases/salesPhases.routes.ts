@@ -8,15 +8,7 @@ export const SALES_PHASES_ROUTES: Routes = [
         (m) => m.SalesPhaseComponent,
       ),
     children: [
-      { path: '', redirectTo: 'line', pathMatch: 'full' },
-      {
-        path: 'line',
-        title: 'خط المبيعات',
-        loadComponent: () =>
-          import('./pages/sales-line/sales-line.component').then(
-            (m) => m.SalesLineComponent,
-          ),
-      },
+      { path: '', redirectTo: 'price-offers', pathMatch: 'full' },
       {
         path: 'price-offers',
         title: 'عروض الاسعار',
@@ -52,11 +44,38 @@ export const SALES_PHASES_ROUTES: Routes = [
       ),
   },
   {
-    path: 'add-price-offer',
-    title: 'إضافة عرض السعر',
+    path: 'price-offer-contract/:id',
+    title: 'عقد عرض السعر',
     loadComponent: () =>
-      import('./pages/price-offers/add-price-offer/add-price-offer.component').then(
-        (m) => m.AddPriceOfferComponent,
+      import(
+        './pages/price-offers/price-offer-contract/price-offer-contract.component'
+      ).then((m) => m.PriceOfferContractComponent),
+  },
+  {
+    path: 'contracts-management',
+    title: 'إدارة العقود والوثائق',
+    data: { roles: ['Admin', 'Sales'] },
+    loadComponent: () =>
+      import(
+        './pages/contracts-management/contracts-management.component'
+      ).then((m) => m.ContractsManagementComponent),
+  },
+  {
+    path: 'sale-contract/:id',
+    title: 'عقد بيع',
+    data: { roles: ['Admin', 'Sales'] },
+    loadComponent: () =>
+      import(
+        './pages/contracts-management/sale-contract/sale-contract.component'
+      ).then((m) => m.SaleContractComponent),
+  },
+  {
+    path: 'schedule',
+    title: 'جدول المواعيد',
+    data: { roles: ['Admin', 'Sales', 'Support'] },
+    loadComponent: () =>
+      import('./pages/appointments/appointments.component').then(
+        (m) => m.AppointmentsComponent,
       ),
   },
 ];

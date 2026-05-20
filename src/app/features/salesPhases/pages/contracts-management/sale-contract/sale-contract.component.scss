@@ -1,0 +1,92 @@
+/*
+ * Sale-contract document — contract-specific styles only.
+ *
+ * The shared document chrome (toolbar, sheet, A4 pages, branded header,
+ * title bar, terms list, footer, print sizing) lives in the global
+ * `styles/_contract-document.scss` partial. This file only adds what is
+ * unique to the contract: the two-party blocks, the numbered clause
+ * headings, the hand-fill / price slots and the signature grid.
+ */
+:host {
+  display: block;
+}
+
+.c-party {
+  margin: 14px 0;
+  font-size: 0.92rem;
+  line-height: 2;
+
+  p {
+    margin: 2px 0;
+  }
+
+  strong {
+    color: #003d7a;
+  }
+}
+
+.c-party-tag {
+  color: #003d7a;
+  font-weight: 700;
+  margin-inline-start: 6px;
+}
+
+/* Hand-fill slot — dotted underline, grows with the page. */
+.c-fill {
+  display: inline-block;
+  min-width: 200px;
+  border-bottom: 1px dotted #94a3b8;
+  padding: 0 6px 2px;
+  font-weight: 700;
+}
+
+.c-article {
+  color: #003d7a;
+  font-weight: 800;
+  font-size: 0.98rem;
+  text-align: center;
+  text-decoration: underline;
+  margin: 18px 0 8px;
+}
+
+.c-price {
+  display: inline-block;
+  min-width: 220px;
+  text-align: center;
+  border-bottom: 1px solid #003d7a;
+  font-weight: 800;
+  color: #003d7a;
+  font-size: 1rem;
+  padding: 0 8px 2px;
+}
+
+.c-signatures {
+  display: flex;
+  gap: 24px;
+  margin-top: 40px;
+
+  .c-sign-box {
+    flex: 1;
+    border: 1px solid #94a3b8;
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 0.88rem;
+    line-height: 1.9;
+    text-align: center;
+
+    p {
+      margin: 3px 0;
+    }
+  }
+
+  .c-sign-title {
+    font-weight: 800;
+    color: #003d7a;
+    font-size: 1rem;
+  }
+
+  .c-sign-line {
+    margin-top: 28px !important;
+    font-weight: 700;
+  }
+}

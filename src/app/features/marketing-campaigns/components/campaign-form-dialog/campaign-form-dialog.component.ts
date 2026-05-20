@@ -180,7 +180,9 @@ export class CampaignFormDialogComponent implements OnInit {
       minAge: c.minAge ?? null,
       maxAge: c.maxAge ?? null,
       gender: GENDER_NAME_TO_CODE[c.gender] ?? GenderCode.All,
-      countries: Array.isArray(c.countries) ? [...c.countries] : [],
+      countries: Array.isArray(c.countries)
+        ? c.countries.map((country) => country.countryId)
+        : [],
     });
   }
 

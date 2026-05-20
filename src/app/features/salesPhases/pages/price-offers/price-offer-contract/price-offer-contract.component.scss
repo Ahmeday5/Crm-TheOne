@@ -1,0 +1,132 @@
+/*
+ * Price-quotation document — quotation-specific styles only.
+ *
+ * The shared document chrome (toolbar, sheet, A4 pages, branded header,
+ * title bar, terms list, footer, print sizing) lives in the global
+ * `styles/_contract-document.scss` partial and is reused as-is here. This
+ * file only adds what is unique to the quotation: the addressee block and
+ * the line-item table.
+ */
+:host {
+  display: block;
+}
+
+/* ─────────── addressee block ─────────── */
+.c-meta {
+  margin: 20px 0 14px;
+}
+
+.c-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.c-label {
+  font-weight: 700;
+  color: #003d7a;
+  white-space: nowrap;
+}
+
+.c-value {
+  font-weight: 700;
+  min-width: 180px;
+  border-bottom: 1px dotted #94a3b8;
+  padding: 0 6px 2px;
+}
+
+.c-suffix {
+  color: #555;
+}
+
+.c-greeting {
+  font-weight: 700;
+  margin: 14px 0 6px;
+}
+
+/* ─────────── line-item table ─────────── */
+.c-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin-bottom: 16px;
+
+  th,
+  td {
+    border: 1px solid #94a3b8;
+    padding: 8px 10px;
+    text-align: center;
+  }
+
+  thead th {
+    background: #e6f0fb;
+    color: #003d7a;
+    font-weight: 700;
+  }
+
+  .col-desc {
+    text-align: start;
+    width: 42%;
+  }
+
+  .c-sum td {
+    font-weight: 700;
+    background: #f8fafc;
+  }
+
+  .c-sum td:first-child {
+    text-align: start;
+  }
+
+  .c-net td {
+    background: #e6f0fb;
+    color: #003d7a;
+    font-size: 0.95rem;
+  }
+}
+
+.c-note-line {
+  font-size: 0.88rem;
+  margin-bottom: 14px;
+}
+
+.c-terms-spaced li {
+  margin-bottom: 12px;
+}
+
+.c-disclaimer {
+  color: #dc2626;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: underline;
+  font-size: 0.92rem;
+  margin: 22px 0;
+}
+
+.c-closing {
+  font-weight: 700;
+  text-align: center;
+  margin: 26px 0 14px;
+}
+
+.c-signature {
+  text-align: center;
+  line-height: 1.9;
+
+  p {
+    margin: 2px 0;
+  }
+
+  .c-sign-brand {
+    font-weight: 800;
+    color: #003d7a;
+    font-size: 1.05rem;
+  }
+
+  .c-sign-name {
+    font-weight: 700;
+    font-style: italic;
+  }
+}

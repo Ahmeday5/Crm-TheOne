@@ -20,11 +20,28 @@ const customers: TranslationFile<'customers'> = {
       emptyAdmin: 'No customers have been assigned to the sales team yet.',
     },
 
+    support: {
+      title: 'Assigned customers list',
+      subtitle: 'Customers transferred to the technical support team',
+      welcomeTitle: 'Assigned customers',
+      welcomeSubtitle: 'Welcome! Here are the customers assigned to the support team.',
+      empty: 'No customers have been assigned to the support team yet.',
+      emptyAdmin: 'No customers have been assigned to any support agent yet.',
+      subtitleAdmin: 'All customers assigned to the technical support team.',
+      welcomeSubtitleAdmin: 'Welcome! Here is the support team activity overview.',
+    },
+
     kpi: {
       total: 'Total customers',
       visible: 'Currently visible',
       page: 'Current page',
       pageSize: 'Page size',
+      newLeads: 'New leads',
+      pendingFollowUp: 'Upcoming follow-ups',
+      transferredToSupport: 'Sent to support',
+      transferredFromMarketing: 'From marketing',
+      withNotes: 'With notes',
+      assignedCustomers: 'Assigned to you',
     },
 
     filters: {
@@ -43,6 +60,8 @@ const customers: TranslationFile<'customers'> = {
       services: 'Services',
       status: 'Status',
       salesPerson: 'Sales Person',
+      supportPerson: 'Support Person',
+      transferStatus: 'Transfer status',
       createdAt: 'Created At',
       actions: 'Actions',
       empty: 'No lead customers yet — add your first customer to get started.',
@@ -62,6 +81,18 @@ const customers: TranslationFile<'customers'> = {
       lastFollowUp: 'Last follow-up',
       nextFollowUp: 'Next follow-up',
       noPhone: 'Phone number not available',
+      notes: 'Notes',
+      editNote: 'Add / edit my note',
+      moreActions: 'More actions',
+      assignment: 'Assignment',
+      contact: 'Contact',
+      followUpHeader: 'Follow-up',
+    },
+
+    transfer: {
+      fromMarketing: 'From marketing',
+      toSupport: 'To support',
+      fromSupport: 'From support',
     },
 
     form: {
@@ -152,6 +183,26 @@ const customers: TranslationFile<'customers'> = {
       submit: 'Confirm change',
       success: 'Status updated ✓',
       failed: 'Could not update status — please try again.',
+      notBuyingReason: 'Reason for not buying',
+      notBuyingReasonPh: 'e.g. price too high, picked a competitor, insufficient budget…',
+      notBuyingReasonHelp: 'Only required when the new status is "Not buyer".',
+    },
+
+    noteModal: {
+      title: 'Customer notes',
+      hint: 'Review previous notes and edit your own slot — only the current assignee can save changes.',
+      placeholder: 'Type your note here…',
+      helper: 'Your note will be saved into your own role slot only.',
+      submit: 'Save note',
+      success: 'Note saved successfully ✓',
+      failed: 'Could not save the note — please try again.',
+      noRoleSlot: 'Your current role does not have an editable note slot on this customer.',
+      emptySlot: 'No note yet',
+      roles: {
+        marketing: 'Marketing note',
+        sales: 'Sales note',
+        support: 'Support note',
+      },
     },
 
     followUpModal: {

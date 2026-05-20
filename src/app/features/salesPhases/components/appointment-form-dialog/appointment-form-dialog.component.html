@@ -1,0 +1,187 @@
+<app-modal
+  [open]="true"
+  [title]="titleKey() | translate"
+  icon="fa-solid fa-calendar-plus"
+  iconTone="primary"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  @if (loadingAppointment()) {
+    <div class="p-5 text-center text-muted">
+      <span class="spinner-border spinner-border-sm me-2"></span>
+      {{ 'common.loading' | translate }}
+    </div>
+  } @else if (loadError()) {
+    <div class="alert alert-danger d-flex align-items-center justify-content-between gap-2 mb-0">
+      <span><i class="fa-solid fa-circle-exclamation me-2"></i>{{ loadError() }}</span>
+      <button type="button" class="btn btn-sm btn-light" (click)="retryLoad()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else {
+  <form [formGroup]="form" id="appointment-form" novalidate (ngSubmit)="submit()">
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label fw-600">
+          {{ 'sales.appointments.form.title' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <input class="form-control" formControlName="title"
+               [class.is-invalid]="isInvalid('title')"
+               [placeholder]="'sales.appointments.form.titlePlaceholder' | translate">
+        <app-form-error [control]="form.controls.title"
+          [label]="'sales.appointments.form.title' | translate" />
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'sales.appointments.form.customer' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <select class="form-select" formControlName="customerId"
+                [class.is-invalid]="isInvalid('customerId')">
+          <option [ngValue]="null" disabled>
+            @if (loadingCustomers()) {
+              {{ 'sales.priceOffers.form.loadingCustomers' | translate }}
+            } @else {
+              {{ 'sales.appointments.form.customerPlaceholder' | translate }}
+            }
+          </option>
+          @for (c of customers(); track c.id) {
+            <option [ngValue]="c.id">
+              {{ c.fullName }}@if (c.campanyName) { — {{ c.campanyName }} }
+            </option>
+          }
+        </select>
+        <app-form-error [control]="form.controls.customerId"
+          [label]="'sales.appointments.form.customer' | translate" />
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'sales.appointments.form.assignedTo' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <select class="form-select" formControlName="assignedToUserId"
+                [class.is-invalid]="isInvalid('assignedToUserId')">
+          <option value="" disabled>
+            @if (loadingUsers()) {
+              {{ 'sales.appointments.form.loadingUsers' | translate }}
+            } @else {
+              {{ 'sales.appointments.form.assignedToPlaceholder' | translate }}
+            }
+          </option>
+          @for (u of users(); track u.userId) {
+            <option [value]="u.userId">{{ u.fullName || u.email }}</option>
+          }
+        </select>
+        <app-form-error [control]="form.controls.assignedToUserId"
+          [label]="'sales.appointments.form.assignedTo' | translate" />
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'sales.appointments.form.type' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <select class="form-select" formControlName="type">
+          @for (t of types; track t.code) {
+            <option [ngValue]="t.code">{{ optionLabel(t) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'sales.appointments.form.priority' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <select class="form-select" formControlName="priority">
+          @for (p of priorities; track p.code) {
+            <option [ngValue]="p.code">{{ optionLabel(p) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'sales.appointments.form.startDate' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <input type="datetime-local" class="form-control" formControlName="startDate"
+               [class.is-invalid]="isInvalid('startDate')">
+        <app-form-error [control]="form.controls.startDate"
+          [label]="'sales.appointments.form.startDate' | translate" />
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'sales.appointments.form.endDate' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <input type="datetime-local" class="form-control" formControlName="endDate"
+               [class.is-invalid]="isInvalid('endDate')"
+               [min]="form.controls.startDate.value || null">
+        <app-form-error [control]="form.controls.endDate"
+          [label]="'sales.appointments.form.endDate' | translate" />
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'sales.appointments.form.location' | translate }}
+        </label>
+        <input class="form-control" formControlName="location"
+               [placeholder]="'sales.appointments.form.locationPlaceholder' | translate">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'sales.appointments.form.meetingLink' | translate }}
+        </label>
+        <input class="form-control" formControlName="meetingLink"
+               placeholder="https://meet.google.com/...">
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-600">
+          {{ 'sales.appointments.form.description' | translate }}
+        </label>
+        <textarea class="form-control" rows="2" formControlName="description"
+                  [placeholder]="'sales.appointments.form.descriptionPlaceholder' | translate"></textarea>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-600">
+          {{ 'sales.appointments.form.notes' | translate }}
+        </label>
+        <textarea class="form-control" rows="2" formControlName="notes"
+                  [placeholder]="'sales.appointments.form.notesPlaceholder' | translate"></textarea>
+      </div>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mt-3 mb-0">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </form>
+  }
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="cancel.emit()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button type="submit" form="appointment-form" class="btn btn-primary"
+            [disabled]="submitting() || form.invalid || loadingAppointment() || !!loadError()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-regular fa-floppy-disk me-1"></i>
+      }
+      {{ (isEditMode ? 'sales.appointments.form.update' : 'sales.appointments.form.save') | translate }}
+    </button>
+  </ng-container>
+</app-modal>

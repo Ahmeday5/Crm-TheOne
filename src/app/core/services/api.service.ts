@@ -14,6 +14,15 @@ export interface RequestOptions {
   headers?: HttpHeaders | Record<string, string>;
   context?: HttpContext;
   responseType?: 'json' | 'blob' | 'text';
+  /**
+   * Skip the `{ data }` envelope unwrap and hand the raw body back untouched.
+   *
+   * Needed for endpoints that put pagination metadata as *siblings* of
+   * `data` (a flat `{ statusCode, message, totalCount, …, data: [] }`
+   * envelope) instead of nesting the page inside `data` — the default
+   * unwrap would peel `data` and drop `totalCount`/`pageIndex`.
+   */
+  skipUnwrap?: boolean;
 }
 
 /**
@@ -36,7 +45,11 @@ export class ApiService {
   get<T>(endpoint: string, options: RequestOptions = {}): Observable<T> {
     return this.http
       .get<ApiResponse<T> | T>(this.url(endpoint), this.opts(options))
-      .pipe(map((res) => this.unwrap<T>(res)));
+      .pipe(
+        map((res) =>
+          options.skipUnwrap ? (res as T) : this.unwrap<T>(res),
+        ),
+      );
   }
 
   post<T>(

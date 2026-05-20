@@ -1,0 +1,249 @@
+<!-- Toolbar (hidden when printing) -->
+<div class="contract-toolbar no-print">
+  <button type="button" class="btn btn-light" (click)="goBack()">
+    <i class="fa-solid fa-arrow-right me-2"></i>
+    {{ 'sales.contractsMgmt.contract.back' | translate }}
+  </button>
+  <button type="button"
+          class="btn btn-primary"
+          [disabled]="!contract()"
+          (click)="print()">
+    <i class="fa-solid fa-print me-2"></i>
+    {{ 'sales.contractsMgmt.contract.print' | translate }}
+  </button>
+</div>
+
+@if (loading()) {
+  <div class="p-5 text-center text-muted no-print">
+    <span class="spinner-border spinner-border-sm me-2"></span>
+    {{ 'common.loading' | translate }}
+  </div>
+} @else if (loadError()) {
+  <div class="no-print">
+    <app-load-error [message]="loadError()" [loading]="loading()" (retry)="load()"></app-load-error>
+  </div>
+}
+
+@if (!loading() && !loadError() && contract(); as c) {
+
+  <!-- Shared branded header — one definition, reused on every page. -->
+  <ng-template #docHeader>
+    <header class="c-header">
+      <img src="/assets/img/logo.png" class="c-logo" alt="The One System">
+      <div class="c-company">
+        <h1>شركة ذا وان سيستم لتصميم و انتاج و تطوير البرامج</h1>
+        <p><i class="fa-solid fa-location-dot"></i> Kuwait – Hawally - Tunis Street</p>
+        <p><i class="fa-solid fa-phone"></i> +965 22281190 / +965 97272542 – 96560069662</p>
+        <p><i class="fa-solid fa-location-dot"></i> Egypt - Giza - Sahl Hamza - 139</p>
+        <p><i class="fa-solid fa-phone"></i> +201125727702 / 0237719600</p>
+        <p>
+          <i class="fa-solid fa-envelope"></i> info&#64;Theonesoftco.com
+          &nbsp;-&nbsp;
+          <a href="https://www.Theonesoftco.com" target="_blank" rel="noopener">www.Theonesoftco.com</a>
+        </p>
+      </div>
+    </header>
+  </ng-template>
+
+  <ng-template #docFooter>
+    <footer class="c-footer">It’s The One System Time</footer>
+  </ng-template>
+
+  <div class="contract-sheet" dir="rtl">
+
+    <!-- ═══════════════ PAGE 1 ═══════════════ -->
+    <section class="contract-page">
+      <ng-container *ngTemplateOutlet="docHeader"></ng-container>
+
+      <div class="c-title-bar">
+        عقد بيع حق استغلال واستخدام نسخة برنامج المحاسبة العامة والمخازن
+      </div>
+
+      <p class="c-intro">
+        أنـه في يـوم <strong>{{ issueDate().weekday }}</strong> المـوافـق
+        <strong>{{ issueDate().date }}</strong> حرر هذا العقد بين كل من :
+      </p>
+
+      <div class="c-party">
+        <p>
+          <strong>أولاً : السادة /</strong> شركة ذا ون سيستم لتصميم و انتاج و تطوير
+          البرامج <span class="c-party-tag">( طرف أول )</span>
+        </p>
+        <p>يمثلها بالتوقيع علي هذا العقد السيد / محمد فتحي محمد احمد</p>
+        <p>بصفته / المدير العام</p>
+        <p>العنوان : الجيزه – شارع الهرم – سهل حمزة – مبني رقم 139 الدور الرابع رقم 13</p>
+        <p>رقم الهاتف / 01125727702 - 0237719600</p>
+      </div>
+
+      <div class="c-party">
+        <p>
+          <strong>ثانياً : السادة شركة :</strong>
+          <span class="c-fill">{{ c.companyName || '' }}</span>
+          <span class="c-party-tag">( طرف ثاني )</span>
+        </p>
+        <p>
+          يمثلها بالتوقيع علي هذا العقد السيد م :
+          <span class="c-fill">{{ c.customerName || '' }}</span>
+        </p>
+        <p>بصفته : <span class="c-fill"></span></p>
+        <p>العنوان : <span class="c-fill"></span></p>
+        <p>رقم الهاتف : <span class="c-fill">{{ c.phone || '' }}</span></p>
+      </div>
+
+      <h3 class="c-section-title">تـمهـيد</h3>
+      <p class="c-clause">
+        لما كان الطرف الأول لديه شركة تجارية مرخصة لبيع وتجارة برامج وأجهزة
+        الكمبيوتر وحيث أن الطرف الثاني قد أبدى رغبة صريحة بشراء حق استغلال
+        واستخدام نسخة برنامج <strong>The One System</strong> للمحاسبة العامة
+        والمخازن حيث أبدى الطرف الأول رغبته في تقديم تلك الخدمات ، فقد تم الاتفاق
+        بين الطرفين على الشروط التالية :
+      </p>
+
+      <h4 class="c-article">مـــادة ( 1 )</h4>
+      <p class="c-clause">
+        يعتبر التمهيد السابق وعرض السعر جزء لا يتجزأ من هذا العقد و مكملاً له .
+      </p>
+
+      <h4 class="c-article">مـــادة ( 2 )</h4>
+      <p class="c-clause">
+        التعـاريف : العبـارات المبينـة فيمـا بعـد تحمـل المعـاني المبينة قرين كل
+        منها ما لم يتطلب النص خلاف ذلك .
+      </p>
+
+      <ng-container *ngTemplateOutlet="docFooter"></ng-container>
+    </section>
+
+    <!-- ═══════════════ PAGE 2 ═══════════════ -->
+    <section class="contract-page">
+      <ng-container *ngTemplateOutlet="docHeader"></ng-container>
+
+      <ul class="c-terms">
+        <li><strong>النسخ :</strong> النسخ المتفق عليها .</li>
+        <li><strong>الأسعار :</strong> تعني المبالغ المتفق عليها من قبل الطرفين .</li>
+        <li>
+          <strong>التدريب :</strong> تدريب كل قسم على الجزئية الخاصة به حسب جدول
+          التدريب ( بحد أقصى شهر ) .
+        </li>
+        <li>
+          <strong>الكـفالة :</strong> لمدة سـنة من تاريخ التوقيع على العقد
+          وتتضـمن الكفالة صـيانة النظام خلال فترة الكفالة ليكون في حالة فنية
+          جيدة وإبداء عمله بشكل صحيح من قسم الدعم الفني .
+        </li>
+      </ul>
+
+      <h4 class="c-article">مـــادة ( 3 )</h4>
+      <p class="c-clause">
+        يلتزم الطرف الثاني بتوفير أجهزة كمبيوتر حديثة تتماشـى مع طبيعة النظام
+        ( حسـب متطلبات التشغيل ) .
+      </p>
+      <ul class="c-terms">
+        <li><strong>الأجهزة :</strong> مواصفات لا تقل عن Core I5 – 4GB RAM .</li>
+        <li><strong>ربط الداخلي :</strong> توفير شبكه انترنت داخليه مع سويتش .</li>
+        <li>
+          <strong>الربط الخارجي :</strong> في حاله طلب نسـخه خارجيه يتم ربط
+          البرنامج بالمكتب الرئيسـي من خلال سيرفر و توفير انترنت و
+          Public IP + انترنت لكل فرع خارجي .
+        </li>
+      </ul>
+
+      <h4 class="c-article">مـــادة ( 4 )</h4>
+      <p class="c-clause">
+        يلتزم الطرف الأول للطرف الثاني بكافة أعمال الصيانة للنظام خلال فترة
+        الكفالة ليكون في حالة فنية جيدة وإبداء عمله بشكل صحيح وتكون أعمال
+        الصيانة بناء على اتصال مسبق من الطرف الثاني على قسم خدمة العملاء
+        ( 01125727702-0237719600 ) أو إرسال إيميل بالعطل
+        ( support&#64;TheOneSystemco.com ) خلال أوقات عمل الطرف الأول الرسمية
+        بالدخول على الداتا عن طريق الانترنت أو إرسال فني في حال تطلب الأمر ،
+        على أن يكون تلبية وتنفيذ طلب الخدمة خلال فترة 48 ساعة : من الأحد إلى
+        الخميس : من الساعة 09.00 صباحاً الى الساعة 17.00 مساءً و يستثنى منها
+        أيام الجمع والعطل الرسمية .
+      </p>
+
+      <h4 class="c-article">مـــادة ( 5 )</h4>
+      <p class="c-clause">
+        يلتزم الطرف الأول بـالحفـاظ على ســريـة المعلومـات وجميع البيـانـات التي
+        يتـاح لـه الاطلاع عليهـا من واقع تعـاملـه مع بيـانـات الطرف الثـاني، كمـا
+        انـه ملتزم بعـدم الإفصـاح عنهـا لموظفي الطرف الثـاني مـا لم يتلقى تعليمات
+        مكتوبة ومحددة من المسئول المعين من الطرف الثاني .
+      </p>
+
+      <ng-container *ngTemplateOutlet="docFooter"></ng-container>
+    </section>
+
+    <!-- ═══════════════ PAGE 3 ═══════════════ -->
+    <section class="contract-page">
+      <ng-container *ngTemplateOutlet="docHeader"></ng-container>
+
+      <h4 class="c-article">مـــادة ( 6 )</h4>
+      <p class="c-clause">
+        القيمة الإجمالية للبرنامج والتي تم الاتفاق والتراضي عليها من الطرفين هي
+        مبلغ <span class="c-price">( {{ formatMoney(c.price) }} )</span>
+      </p>
+
+      <h4 class="c-article">مـــادة ( 7 )</h4>
+      <p class="c-clause">
+        لا يتحمل الطرف الأول أي مسؤولية في حالة فقدان المعلومات لدى الطرف
+        الثاني ، وذلك نتيجة عدم عمل نسخ احتياطية للمعلومات على أجهزة خارجية،
+        ويكون الطرف الاول هو المسئول على البيانات بشكل كامل .
+      </p>
+
+      <h4 class="c-article">مـــادة ( 8 )</h4>
+      <p class="c-clause">
+        بعد إتمام عملية التركيب ، لا يحق للطرف الثاني المطالبة بفسخ العقد الا
+        عند حدوث خطأ جسيم لا يمكن إحالته .
+      </p>
+
+      <h4 class="c-article">مـــادة ( 9 )</h4>
+      <p class="c-clause">
+        في حاله طلب نسخ فرعيه مستقبلا يتم احتساب قيمه النسخه الواحده بقيمة
+        تدفع نقدا .
+      </p>
+
+      <h4 class="c-article">مـــادة ( 10 )</h4>
+      <p class="c-clause">
+        تكون الطرق الودية والمفاوضـات هي الطريقة المثلى لحل أي خلاف أو نزاع لا
+        قدر ينشـأ بين الطرفين وإلا تكون محـاكم جمهوريـه مصـر العربيـه
+        المختصـة، ويكون قـانون الجمهوريـه هو القانون الواجب التطبيق .
+      </p>
+
+      <h4 class="c-article">مـــادة ( 11 )</h4>
+      <p class="c-clause">
+        بعد انتهاء مدة الكفاله وفي حاله رغبه الطرف الثاني تجديد العقد لمده سنه
+        اضافيه يوقع عقد صـيانه ســنوي بواقع 20% من قيمه العقد يتضـمن كافه
+        اعمال الصـيانه للبرنامج والتحديثات الدوريه للبرنامج او يكون الدعم الفني
+        بالطلب حسب اختيار الطرف الثاني .
+      </p>
+
+      <ng-container *ngTemplateOutlet="docFooter"></ng-container>
+    </section>
+
+    <!-- ═══════════════ PAGE 4 ═══════════════ -->
+    <section class="contract-page">
+      <ng-container *ngTemplateOutlet="docHeader"></ng-container>
+
+      <h4 class="c-article">مـــادة ( 12 )</h4>
+      <p class="c-clause">
+        حرر هذا العقد باللغة العربية من نســختين بإيجاب وقبول صـحيحين بين أطرافه
+        ســلم ليد كل طرف نسخة منه للعمل بموجبها عند اللزوم والاقتضاء .
+      </p>
+
+      <div class="c-signatures">
+        <div class="c-sign-box">
+          <p class="c-sign-title">الطرف الأول</p>
+          <p>شركة ذا وان سيستم لتصميم و انتاج وتطوير البرامج</p>
+          <p>الاسم : محمد فتحي محمد احمد</p>
+          <p class="c-sign-line">التوقيع</p>
+        </div>
+        <div class="c-sign-box">
+          <p class="c-sign-title">الطرف الثاني</p>
+          <p>{{ c.companyName || '&nbsp;' }}</p>
+          <p>الاسم : {{ c.customerName || '' }}</p>
+          <p class="c-sign-line">التوقيع</p>
+        </div>
+      </div>
+
+      <ng-container *ngTemplateOutlet="docFooter"></ng-container>
+    </section>
+
+  </div>
+}

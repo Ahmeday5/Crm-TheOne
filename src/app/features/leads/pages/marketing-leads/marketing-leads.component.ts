@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
+  OnInit,
   computed,
   inject,
   signal,
@@ -19,16 +21,25 @@ import { PaginationComponent } from '../../../../shared/components/pagination/pa
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import {
   CustomerListItem,
+  CustomerNoteResponse,
   CustomerStatus,
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { CustomersService } from '../../services/customers.service';
-import { customerStatusBadgeClass, resolveCustomerStatus } from '../../utils/customer-status.util';
+import { ChannelSourcesService } from '../../../marketing-campaigns/services/channel-sources.service';
 import { AssignSalesDialogComponent } from '../../components/assign-sales-dialog/assign-sales-dialog.component';
+import {
+  CustomerActionsConfig,
+  CustomerActionsMenuComponent,
+} from '../../components/customer-actions-menu/customer-actions-menu.component';
 import { CustomerDetailsDialogComponent } from '../../components/customer-details-dialog/customer-details-dialog.component';
 import { CustomerEditDialogComponent } from '../../components/customer-edit-dialog/customer-edit-dialog.component';
-
-import { ChannelSourcesService } from '../../../marketing-campaigns/services/channel-sources.service';
+import { CustomerNoteDialogComponent } from '../../components/customer-note-dialog/customer-note-dialog.component';
+import { CustomerNotesCellComponent } from '../../components/customer-notes-cell/customer-notes-cell.component';
+import { CustomersService } from '../../services/customers.service';
+import {
+  customerStatusBadgeClass,
+  resolveCustomerStatus,
+} from '../../utils/customer-status.util';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -37,6 +48,13 @@ interface SourceItem {
   name: string;
 }
 
+/**
+ * Marketing leads queue.
+ *
+ * Shares the table chrome / notes cell / actions menu with the sales and
+ * support pages. Marketing-specific actions live inside the kebab menu:
+ * edit, assign-sales, delete.
+ */
 @Component({
   selector: 'app-marketing-leads',
   standalone: true,
@@ -50,12 +68,15 @@ interface SourceItem {
     AssignSalesDialogComponent,
     CustomerDetailsDialogComponent,
     CustomerEditDialogComponent,
+    CustomerNoteDialogComponent,
+    CustomerNotesCellComponent,
+    CustomerActionsMenuComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './marketing-leads.component.html',
   styleUrl: './marketing-leads.component.scss',
 })
-export class MarketingLeadsComponent {
+export class MarketingLeadsComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly customers = inject(CustomersService);
   private readonly channelSources = inject(ChannelSourcesService);
@@ -93,24 +114,42 @@ export class MarketingLeadsComponent {
   } | null>(null);
   readonly detailsDialog = signal<number | null>(null);
   readonly editDialog = signal<number | null>(null);
+  readonly noteDialog = signal<CustomerListItem | null>(null);
 
   /** Per-row spinner key. */
   readonly busyId = signal<number | null>(null);
 
-  readonly kpis = computed(() => ({
-    total: this.count(),
-    visible: this.rows().length,
-    page: this.pageIndex(),
-    pageSize: this.pageSize(),
-  }));
+  /**
+   * Marketing row toolbar — keeps the high-frequency actions inline and
+   * the destructive / chunky ones (edit, assign-sales, delete) in the
+   * kebab menu.
+   */
+  readonly actionsConfig: CustomerActionsConfig = {
+    view: true,
+    note: true,
+    edit: true,
+    assignSales: true,
+    delete: true,
+  };
+
+  readonly kpis = computed(() => {
+    const list = this.rows();
+    return {
+      total: this.count(),
+      newLeads: list.filter((r) => (r.status ?? '').trim().toLowerCase() === 'new').length,
+      transferred: list.filter((r) => !!r.isMarketingToSales).length,
+      withNotes: list.filter(
+        (r) =>
+          !!(r.noteMarketing?.trim()) ||
+          !!(r.noteSales?.trim()) ||
+          !!(r.noteSupport?.trim()),
+      ).length,
+    };
+  });
 
   ngOnInit(): void {
     this.searchInput$
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$),
-      )
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe((term) => {
         this.searchSignal.set(term);
         this.pageIndex.set(1);
@@ -197,10 +236,9 @@ export class MarketingLeadsComponent {
     this.router.navigate(['/leads/add-leadCustomer']);
   }
 
-  // ─────────── assign dialog ───────────
+  // ─────────── dialogs ───────────
 
   openAssign(row: CustomerListItem): void {
-    // If the list payload already carries the id, open immediately.
     if (row.salesPersonId !== undefined) {
       this.assignDialog.set({
         customerId: row.id,
@@ -211,8 +249,6 @@ export class MarketingLeadsComponent {
       return;
     }
 
-    // Otherwise resolve the current rep id from the detail endpoint
-    // (cached), so the dialog can pre-select and switch to "change" mode.
     if (!row.salesPersonName) {
       this.assignDialog.set({
         customerId: row.id,
@@ -236,7 +272,6 @@ export class MarketingLeadsComponent {
       },
       error: () => {
         this.busyId.set(null);
-        // Fall back to plain assign-mode if details fail.
         this.assignDialog.set({
           customerId: row.id,
           customerName: row.fullName,
@@ -245,13 +280,6 @@ export class MarketingLeadsComponent {
         });
       },
     });
-  }
-
-  /** Hover/aria title for the assign action — switches based on assignment state. */
-  assignTitle(row: CustomerListItem): string {
-    return row.salesPersonName
-      ? this.t('customers.table.reassign')
-      : this.t('customers.table.assign');
   }
 
   onAssigned(): void {
@@ -263,8 +291,6 @@ export class MarketingLeadsComponent {
     this.assignDialog.set(null);
   }
 
-  // ─────────── details dialog ───────────
-
   openDetails(row: CustomerListItem): void {
     this.detailsDialog.set(row.id);
   }
@@ -272,8 +298,6 @@ export class MarketingLeadsComponent {
   closeDetails(): void {
     this.detailsDialog.set(null);
   }
-
-  // ─────────── edit dialog ───────────
 
   openEdit(row: CustomerListItem): void {
     this.editDialog.set(row.id);
@@ -288,7 +312,29 @@ export class MarketingLeadsComponent {
     this.editDialog.set(null);
   }
 
-  // ─────────── delete ───────────
+  openNote(row: CustomerListItem): void {
+    this.noteDialog.set(row);
+  }
+
+  closeNote(): void {
+    this.noteDialog.set(null);
+  }
+
+  onNoteSaved(res: CustomerNoteResponse): void {
+    this.rows.update((list) =>
+      list.map((row) =>
+        row.id === res.customerId
+          ? {
+              ...row,
+              noteMarketing: res.noteMarketing,
+              noteSales: res.noteSales,
+              noteSupport: res.noteSupport,
+            }
+          : row,
+      ),
+    );
+    this.closeNote();
+  }
 
   async confirmDelete(row: CustomerListItem): Promise<void> {
     const ok = await this.dialog.confirm({
@@ -323,6 +369,13 @@ export class MarketingLeadsComponent {
 
   // ─────────── helpers ───────────
 
+  initials(name: string): string {
+    const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
   resolveStatus(status: string | null): string {
     if (!status || status === 'none') return this.t('customers.table.unknownStatus');
     return resolveCustomerStatus(status, this.language.lang(), status);
@@ -333,12 +386,12 @@ export class MarketingLeadsComponent {
     return customerStatusBadgeClass(status);
   }
 
-  /** Localized name for a status row coming from `Customers/statuses` (always Arabic). */
   localizeStatusName(name: string): string {
     return resolveCustomerStatus(name, this.language.lang(), name);
   }
 
-  formatDate(dateStr: string): string {
+  formatDate(dateStr: string | null | undefined): string {
+    if (!dateStr) return '—';
     try {
       return new Date(dateStr).toLocaleDateString(
         this.language.lang() === 'ar' ? 'ar-EG' : 'en-US',
@@ -348,6 +401,8 @@ export class MarketingLeadsComponent {
       return dateStr;
     }
   }
+
+  trackById = (_: number, r: CustomerListItem) => r.id;
 
   private t(key: string): string {
     return resolveKey(TRANSLATIONS[this.language.lang()], key);

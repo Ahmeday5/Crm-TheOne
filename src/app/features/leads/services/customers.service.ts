@@ -18,9 +18,11 @@ import {
   CustomerFollowUpResponse,
   CustomerListItem,
   CustomerListQuery,
+  CustomerNoteResponse,
   CustomerStatus,
   PagedResult,
   SalesPerson,
+  SaveCustomerNoteRequest,
   SupportPerson,
   UpdateCustomerRequest,
   UpdateFollowUpRequest,
@@ -50,6 +52,18 @@ export class CustomersService {
   ): Observable<PagedResult<CustomerListItem>> {
     return this.api.get<PagedResult<CustomerListItem>>(
       API_ENDPOINTS.customers.salesCustomers,
+      {
+        params: query as Record<string, unknown>,
+        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
+      },
+    );
+  }
+
+  listForSupport(
+    query: CustomerListQuery = {},
+  ): Observable<PagedResult<CustomerListItem>> {
+    return this.api.get<PagedResult<CustomerListItem>>(
+      API_ENDPOINTS.customers.supportCustomers,
       {
         params: query as Record<string, unknown>,
         context: withCache({ ttlMs: CACHE_TTL.SHORT }),
@@ -155,6 +169,28 @@ export class CustomersService {
   ): Observable<CustomerFollowUpResponse> {
     return this.api.put<CustomerFollowUpResponse>(
       API_ENDPOINTS.customers.followUp(customerId),
+      payload,
+      { context: withInlineHandling(withCacheInvalidate(['Customers'])) },
+    );
+  }
+
+  /**
+   * Upserts the caller's role-specific note for `customerId`.
+   *
+   * The backend identifies the slot (Marketing/Sales/Support) from the JWT
+   * role, so the payload is just `{ note }` — never role-keyed.
+   *
+   * Errors flow back as `ApiError` — typically `400` with
+   * "You are not the current assignee for this customer." when the user
+   * isn't the active owner.
+   */
+  saveMyNote(
+    customerId: number,
+    value: string,
+  ): Observable<CustomerNoteResponse> {
+    const payload: SaveCustomerNoteRequest = { note: value.trim() };
+    return this.api.put<CustomerNoteResponse>(
+      API_ENDPOINTS.customerNotes.myNote(customerId),
       payload,
       { context: withInlineHandling(withCacheInvalidate(['Customers'])) },
     );

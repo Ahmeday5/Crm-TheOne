@@ -20,11 +20,28 @@ const customers: TranslationFile<'customers'> = {
       emptyAdmin: 'لا يوجد عملاء معيّنين بعد لفريق المبيعات.',
     },
 
+    support: {
+      title: 'قائمة العملاء المعينون',
+      subtitle: 'العملاء المحوّلون إلى فريق الدعم الفني',
+      welcomeTitle: 'العملاء المعينون',
+      welcomeSubtitle: 'مرحباً بك! هذه قائمة العملاء المعيّنين لفريق الدعم.',
+      empty: 'لا يوجد عملاء معيّنون لفريق الدعم بعد.',
+      emptyAdmin: 'لا يوجد عملاء معيّنون لأي موظف دعم حتى الآن.',
+      subtitleAdmin: 'عرض جميع العملاء المعيّنين لفريق الدعم الفني.',
+      welcomeSubtitleAdmin: 'مرحباً بك! إليك نظرة عامة على عملاء فريق الدعم.',
+    },
+
     kpi: {
       total: 'إجمالي العملاء',
       visible: 'المعروضين حالياً',
       page: 'الصفحة الحالية',
       pageSize: 'عدد الصفوف',
+      newLeads: 'عملاء جدد',
+      pendingFollowUp: 'متابعات قادمة',
+      transferredToSupport: 'محوّلون للدعم',
+      transferredFromMarketing: 'محوّلون من التسويق',
+      withNotes: 'لديهم ملاحظات',
+      assignedCustomers: 'عملاء معيّنون لك',
     },
 
     filters: {
@@ -43,6 +60,8 @@ const customers: TranslationFile<'customers'> = {
       services: 'الخدمات',
       status: 'الحالة',
       salesPerson: 'مندوب المبيعات',
+      supportPerson: 'مندوب الدعم',
+      transferStatus: 'حالة التحويل',
       createdAt: 'تاريخ الإنشاء',
       actions: 'الإجراءات',
       empty: 'لا يوجد عملاء محتملين — أضف أول عميل لتبدأ.',
@@ -62,6 +81,18 @@ const customers: TranslationFile<'customers'> = {
       lastFollowUp: 'آخر متابعة',
       nextFollowUp: 'المتابعة القادمة',
       noPhone: 'رقم الهاتف غير متاح',
+      notes: 'الملاحظات',
+      editNote: 'إضافة / تعديل ملاحظتي',
+      moreActions: 'إجراءات إضافية',
+      assignment: 'التعيين',
+      contact: 'بيانات التواصل',
+      followUpHeader: 'المتابعة',
+    },
+
+    transfer: {
+      fromMarketing: 'من التسويق',
+      toSupport: 'إلى الدعم',
+      fromSupport: 'من الدعم',
     },
 
     form: {
@@ -152,6 +183,26 @@ const customers: TranslationFile<'customers'> = {
       submit: 'تأكيد التغيير',
       success: 'تم تحديث حالة العميل بنجاح ✓',
       failed: 'تعذر تحديث الحالة — يرجى المحاولة مجددًا.',
+      notBuyingReason: 'سبب عدم الشراء',
+      notBuyingReasonPh: 'مثال: السعر مرتفع، اختار منافس آخر، الميزانية غير كافية…',
+      notBuyingReasonHelp: 'هذا الحقل مطلوب عند تغيير الحالة إلى "غير مشتري" فقط.',
+    },
+
+    noteModal: {
+      title: 'ملاحظات العميل',
+      hint: 'يمكنك مراجعة الملاحظات السابقة، وتعديل ملاحظتك فقط إذا كنت المسؤول الحالي عن العميل.',
+      placeholder: 'اكتب ملاحظتك هنا…',
+      helper: 'ملاحظتك ستحفظ في خانة دورك فقط.',
+      submit: 'حفظ الملاحظة',
+      success: 'تم حفظ الملاحظة بنجاح ✓',
+      failed: 'تعذر حفظ الملاحظة — يرجى المحاولة مجددًا.',
+      noRoleSlot: 'دورك الحالي لا يملك ملاحظة قابلة للتعديل على العميل.',
+      emptySlot: 'لا توجد ملاحظة',
+      roles: {
+        marketing: 'ملاحظة التسويق',
+        sales: 'ملاحظة المبيعات',
+        support: 'ملاحظة الدعم',
+      },
     },
 
     followUpModal: {

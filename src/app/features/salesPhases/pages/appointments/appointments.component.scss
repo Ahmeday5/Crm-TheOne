@@ -1,0 +1,19 @@
+/*
+ * Schedule page — only the two bits the design system doesn't already cover:
+ * the brand-blue page title and the calendar-placeholder glyph. KPI tiles,
+ * cards, table, badges and pagination all reuse shared components/utilities.
+ */
+:host {
+  display: block;
+}
+
+.schedule-title {
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  font-weight: 800;
+  color: var(--brand-700);
+}
+
+.calendar-placeholder-icon {
+  font-size: 4rem;
+  color: var(--brand-200);
+}

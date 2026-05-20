@@ -1,0 +1,445 @@
+/*
+ * Shared visual language for the three customer tables
+ * (marketing-leads, sales-leads, designated-clients) and their child
+ * components (<app-customer-actions-menu>, <app-customer-notes-cell>).
+ *
+ * Lives in the global stylesheet — Angular's per-component emulation
+ * would otherwise prevent class selectors defined in a parent's scoped
+ * SCSS from reaching elements rendered inside the child components.
+ *
+ * Everything here is theme-aware via design tokens (no hard-coded colors)
+ * so dark mode + brand-color switches Just Work.
+ *
+ * Owns:
+ *   .crm-table              card chrome (compact rows, hover, sticky actions)
+ *   .crm-identity           avatar + name/phone stacked cell
+ *   .crm-chip / .crm-chip-row  inline tag chips (services, transfer state)
+ *   .crm-assignment         sales-rep / support-rep / transfer column
+ *   .crm-role-line          single rep line within the assignment cell
+ *   .crm-followup           last + next dates in one cell
+ *   .crm-actions-col        sticky last column (with trailing-edge shadow)
+ *   .crm-actions            row-level toolbar wrapper
+ *   .crm-action-btn         compact 32px icon button
+ *   .crm-notes-cell         column wrapper for the notes cell
+ *   .note-chip              role-coded note card with author/role tag
+ *   .badge-status-*         status badges (shared with status-utility)
+ *   .crm-search-affix       absolute search icon overlay for filter rows
+ */
+
+/* ── table chrome ──────────────────────────────────────────── */
+.crm-table {
+  .table {
+    margin-bottom: 0;
+    font-size: var(--fs-sm);
+    color: var(--text-1);
+
+    > thead {
+      background: var(--surface-1);
+      th {
+        font-weight: var(--fw-600);
+        color: var(--text-2);
+        font-size: var(--fs-xs);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.85rem 0.85rem;
+        white-space: nowrap;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface-1);
+      }
+    }
+
+    > tbody > tr {
+      transition: background-color 0.12s ease;
+      > td {
+        padding: 0.85rem 0.85rem;
+        vertical-align: middle;
+        border-color: var(--border);
+        background: var(--surface-0);
+      }
+      &:hover > td { background-color: var(--surface-1); }
+    }
+  }
+
+  .crm-table-scroll { overflow-x: auto; }
+}
+
+/* ── identity cell ─────────────────────────────────────────── */
+.crm-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 11rem;
+
+  .crm-avatar {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--brand-soft);
+    color: var(--brand);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--fw-700);
+    font-size: var(--fs-sm);
+    text-transform: uppercase;
+    user-select: none;
+    letter-spacing: 0.5px;
+  }
+
+  .crm-identity-text { min-width: 0; }
+  .crm-name {
+    font-weight: var(--fw-600);
+    color: var(--text-1);
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 14rem;
+  }
+  .crm-phone {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--text-3);
+    font-size: var(--fs-xs);
+    line-height: 1.2;
+    margin-top: 2px;
+    direction: ltr;
+    unicode-bidi: embed;
+  }
+}
+
+/* ── inline tag chips ──────────────────────────────────────── */
+.crm-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.crm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-500);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.crm-chip i { font-size: 0.7rem; }
+.crm-chip.tone-info    { background: var(--info-soft);    color: var(--info);    border-color: transparent; }
+.crm-chip.tone-success { background: var(--success-soft); color: var(--success); border-color: transparent; }
+.crm-chip.tone-warning { background: var(--warning-soft); color: var(--warning); border-color: transparent; }
+.crm-chip.tone-brand   { background: var(--brand-soft);   color: var(--brand);   border-color: transparent; }
+
+/* ── assignment cell ───────────────────────────────────────── */
+.crm-assignment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 11rem;
+}
+.crm-role-line {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  line-height: 1.2;
+}
+.crm-role-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+.crm-role-icon.is-sales   { background: var(--success-soft); color: var(--success); }
+.crm-role-icon.is-support { background: var(--info-soft);    color: var(--info); }
+.crm-person-name {
+  font-weight: var(--fw-500);
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 9rem;
+}
+.crm-person-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: var(--fs-xs);
+}
+
+/* ── follow-up cell ────────────────────────────────────────── */
+.crm-followup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: var(--fs-xs);
+  min-width: 8rem;
+}
+.crm-followup-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-2);
+  i { font-size: 0.7rem; opacity: 0.7; }
+}
+.crm-followup-empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ── notes cell + role chips ───────────────────────────────── */
+.crm-notes-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 20rem;
+}
+.crm-notes-empty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-style: italic;
+  i { opacity: 0.6; }
+}
+
+.note-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: 0.45rem;
+    inset-inline-start: 0;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--text-3);
+  }
+
+  .note-chip-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+  .note-chip-body { min-width: 0; flex: 1; }
+  .note-chip-head {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: var(--fw-600);
+    color: var(--text-2);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+  }
+  .note-chip-text {
+    color: var(--text-1);
+    font-size: var(--fs-xs);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &.role-marketing { padding-inline-start: 0.85rem; }
+  &.role-marketing::before        { background: var(--info); }
+  &.role-marketing .note-chip-icon { background: var(--info-soft); color: var(--info); }
+
+  &.role-sales     { padding-inline-start: 0.85rem; }
+  &.role-sales::before             { background: var(--success); }
+  &.role-sales .note-chip-icon     { background: var(--success-soft); color: var(--success); }
+
+  &.role-support   { padding-inline-start: 0.85rem; }
+  &.role-support::before           { background: var(--warning); }
+  &.role-support .note-chip-icon   { background: var(--warning-soft); color: var(--warning); }
+}
+
+/* ── sticky actions column ─────────────────────────────────── */
+.crm-actions-col {
+  position: sticky;
+  inset-inline-end: 0;
+  background: var(--surface-0);
+  z-index: 1;
+  box-shadow: inset 1px 0 0 var(--border),
+              -10px 0 14px -12px rgba(15, 23, 42, 0.18);
+}
+.crm-table .table > tbody > tr:hover > td.crm-actions-col {
+  background: var(--surface-1);
+}
+.crm-table .table > thead th.crm-actions-col {
+  background: var(--surface-1);
+}
+[dir="rtl"] .crm-actions-col {
+  box-shadow: inset -1px 0 0 var(--border),
+              10px 0 14px -12px rgba(15, 23, 42, 0.18);
+}
+
+/*
+ * When an action dropdown is open, lift its host actions-cell above every
+ * other sticky cell on the table. Each row's `.crm-actions-col` is its own
+ * stacking context at `z-index: 1`, so without this rule the next row's
+ * cell (same z-index, later in DOM) ends up painted on top of the open
+ * menu — making it disappear behind the row below.
+ *
+ * `:has()` is supported in every browser the app targets (Chrome / Edge /
+ * Firefox / Safari, 2023+).
+ */
+.crm-actions-col:has(.dropdown-menu.show) {
+  z-index: 1075;
+}
+
+/* ── row action toolbar ────────────────────────────────────── */
+.crm-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.crm-action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-0);
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease,
+              border-color 0.15s ease, transform 0.1s ease,
+              box-shadow 0.15s ease;
+
+  &:hover:not([disabled]):not(.is-disabled) {
+    background: var(--brand-soft);
+    color: var(--brand);
+    border-color: var(--brand-soft);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  }
+  &:active:not([disabled]) { transform: translateY(1px); }
+  &:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+  &[disabled], &.is-disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* tone hovers — used for semantic actions */
+  &.tone-primary:hover:not([disabled]) { background: var(--brand-soft);   color: var(--brand);   border-color: var(--brand-soft); }
+  &.tone-info:hover:not([disabled])    { background: var(--info-soft);    color: var(--info);    border-color: var(--info-soft); }
+  &.tone-success:hover:not([disabled]) { background: var(--success-soft); color: var(--success); border-color: var(--success-soft); }
+  &.tone-warning:hover:not([disabled]) { background: var(--warning-soft); color: var(--warning); border-color: var(--warning-soft); }
+  &.tone-danger:hover:not([disabled])  { background: var(--danger-soft);  color: var(--danger);  border-color: var(--danger-soft); }
+}
+
+/* ── kebab dropdown — Bootstrap behaviour, custom skin ─────── */
+.crm-actions .dropdown-menu {
+  /* Float above the sticky actions column and the trailing-edge shadow.
+   * The toggle uses Popper's `fixed` strategy (data-bs-strategy="fixed")
+   * so the menu escapes `.crm-table-scroll`'s overflow clipping — but it
+   * still needs to win the z-index race against the sticky column. */
+  z-index: 1080;
+  min-width: 13rem;
+  padding: 0.35rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  background: var(--surface-0);
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.6rem;
+    font-size: var(--fs-sm);
+    color: var(--text-1);
+    background: transparent;
+    border: 0;
+    text-align: start;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.12s ease, color 0.12s ease;
+
+    i { width: 18px; text-align: center; color: var(--text-3); flex-shrink: 0; }
+
+    &:hover, &:focus {
+      background: var(--brand-soft);
+      color: var(--brand);
+      outline: none;
+    }
+    &:hover i, &:focus i { color: inherit; }
+
+    &.text-danger:hover, &.text-danger:focus {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+    &.text-danger:hover i, &.text-danger:focus i { color: inherit; }
+  }
+
+  .dropdown-divider {
+    margin: 0.3rem 0;
+    border-top: 1px solid var(--border);
+    opacity: 1;
+  }
+}
+
+/* ── status badges (used across the three pages) ───────────── */
+.badge-status-unknown {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.badge-status-new {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.badge-status-negotiating {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.badge-status-purchased {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.badge-status-lost {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.badge-status-default {
+  background: var(--surface-2);
+  color: var(--text-1);
+}
+
+/* All badges in the customer tables share the same shape. */
+.crm-table .badge {
+  font-weight: var(--fw-600);
+  font-size: var(--fs-xs);
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.02em;
+}

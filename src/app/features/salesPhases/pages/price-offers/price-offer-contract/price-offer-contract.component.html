@@ -1,0 +1,189 @@
+<!-- Toolbar (hidden when printing) -->
+<div class="contract-toolbar no-print">
+  <button type="button" class="btn btn-light" (click)="goBack()">
+    <i class="fa-solid fa-arrow-right me-2"></i>
+    {{ 'sales.priceOffers.contract.back' | translate }}
+  </button>
+  <button type="button"
+          class="btn btn-primary"
+          [disabled]="!quote()"
+          (click)="print()">
+    <i class="fa-solid fa-print me-2"></i>
+    {{ 'sales.priceOffers.contract.print' | translate }}
+  </button>
+</div>
+
+@if (loading()) {
+  <div class="p-5 text-center text-muted no-print">
+    <span class="spinner-border spinner-border-sm me-2"></span>
+    {{ 'common.loading' | translate }}
+  </div>
+} @else if (loadError()) {
+  <div class="no-print">
+    <app-load-error [message]="loadError()" [loading]="loading()" (retry)="load()"></app-load-error>
+  </div>
+} @else if (quote()) {
+
+  <div class="contract-sheet" dir="rtl">
+
+    <!-- ═══════════════ PAGE 1 ═══════════════ -->
+    <section class="contract-page">
+
+      <header class="c-header">
+        <img src="/assets/img/logo.png" class="c-logo" alt="The One System">
+        <div class="c-company">
+          <h1>شركة ذا وان سيستم لتصميم و انتاج و تطوير البرامج</h1>
+          <p><i class="fa-solid fa-location-dot"></i> Kuwait – Hawally - Tunis Street</p>
+          <p><i class="fa-solid fa-phone"></i> +965 22281190 / +965 97272542 – 96560069662</p>
+          <p><i class="fa-solid fa-location-dot"></i> Egypt - Giza - Sahl Hamza - 139</p>
+          <p><i class="fa-solid fa-phone"></i> +201125727702 / 0237719600</p>
+          <p>
+            <i class="fa-solid fa-envelope"></i> info&#64;Theonesoftco.com
+            &nbsp;-&nbsp;
+            <a href="https://www.Theonesoftco.com" target="_blank" rel="noopener">www.Theonesoftco.com</a>
+          </p>
+        </div>
+      </header>
+
+      <div class="c-meta">
+        <div class="c-meta-row">
+          <span class="c-label">التاريخ :</span>
+          <span class="c-value">{{ issueDate() }}</span>
+        </div>
+        <div class="c-meta-row">
+          <span class="c-label">السادة شركة /</span>
+          <span class="c-value">{{ quote()!.campanyName || '..............' }}</span>
+          <span class="c-suffix">المحترمين...</span>
+        </div>
+        <div class="c-meta-row">
+          <span class="c-label">عناية السيد/</span>
+          <span class="c-value">{{ quote()!.customerName || '..............' }}</span>
+          <span class="c-suffix">المحترم......</span>
+        </div>
+      </div>
+
+      <div class="c-title-bar">عرض سعر لبرنامج The One System</div>
+
+      <p class="c-greeting">تحية طيبة وبعد ،،،</p>
+      <p class="c-intro">
+        يسـر شركة <strong>The One System</strong> الرائدة في مجال البرمجيات والنظم
+        المعلوماتيـة بالكويت و بجمهوريه مصر العربيه أن تقـدم لكم العرض المالي
+        لبرنامج <strong>The One System</strong> ثنائي اللغة حسب طلبكم ، آملين ان
+        ينال أعجابكم ....
+      </p>
+
+      <table class="c-table">
+        <thead>
+          <tr>
+            <th class="col-num">الرقم</th>
+            <th class="col-desc">الـوصـف</th>
+            <th class="col-qty">الكمية</th>
+            <th class="col-price">السعـر</th>
+            <th class="col-total">الإجمالي</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of quote()!.items; track item.id; let i = $index) {
+            <tr>
+              <td class="col-num">{{ i + 1 }}</td>
+              <td class="col-desc">{{ item.serviceName }}</td>
+              <td class="col-qty">{{ item.quantity }}</td>
+              <td class="col-price">{{ formatMoney(item.unitPrice) }}</td>
+              <td class="col-total">{{ formatMoney(item.totalPrice) }}</td>
+            </tr>
+          }
+          <tr class="c-sum">
+            <td colspan="4">القيمة الإجمالية</td>
+            <td class="col-total">{{ formatMoney(quote()!.subTotal) }}</td>
+          </tr>
+          <tr class="c-sum">
+            <td colspan="4">الخصم</td>
+            <td class="col-total">{{ formatMoney(quote()!.discount) }}</td>
+          </tr>
+          <tr class="c-sum c-net">
+            <td colspan="4">الصافي بعد الخصم</td>
+            <td class="col-total">{{ formatMoney(quote()!.netTotal) }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      @if (quote()!.notes) {
+        <p class="c-note-line"><strong>ملاحظة العميل:</strong> {{ quote()!.notes }}</p>
+      }
+
+      <h3 class="c-section-title">ملاحظات</h3>
+      <ul class="c-terms">
+        <li><strong>فترة التوريد :</strong> خلال اسبوع من تاريخ التوقيع على العقد .</li>
+        <li>
+          <strong>كفالة النظام :</strong> سنة من تاريخ التوقيع على العقد وتتضمن
+          صيانة النظام من خلال قسم الدعم الفني من الأحد إلى الخميس من الساعة 9
+          صباحًا إلى 5 مساءً ويستثنى منها أيام الجمعة والعطل الرسمية.
+        </li>
+        <li><strong>طريقة الدفع :</strong> 100% عند التوقيع على العقد .</li>
+      </ul>
+
+      <footer class="c-footer">It’s The One System Time</footer>
+    </section>
+
+    <!-- ═══════════════ PAGE 2 ═══════════════ -->
+    <section class="contract-page">
+
+      <header class="c-header">
+        <img src="/assets/img/logo.png" class="c-logo" alt="The One System">
+        <div class="c-company">
+          <h1>شركة ذا وان سيستم لتصميم و انتاج و تطوير البرامج</h1>
+          <p><i class="fa-solid fa-location-dot"></i> Kuwait – Hawally - Tunis Street</p>
+          <p><i class="fa-solid fa-phone"></i> +965 22281190 / +965 97272542 – 96560069662</p>
+          <p><i class="fa-solid fa-location-dot"></i> Egypt - Giza - Sahl Hamza - 139</p>
+          <p><i class="fa-solid fa-phone"></i> +201125727702 / 0237719600</p>
+          <p>
+            <i class="fa-solid fa-envelope"></i> info&#64;Theonesoftco.com
+            &nbsp;-&nbsp;
+            <a href="https://www.Theonesoftco.com" target="_blank" rel="noopener">www.Theonesoftco.com</a>
+          </p>
+        </div>
+      </header>
+
+      <ul class="c-terms c-terms-spaced">
+        <li>
+          <strong>التدريب :</strong> تدريب المستخدمين حسب جدول التدريب
+          ( بحد أقصى شهر ).
+        </li>
+        <li><strong>فترة العرض :</strong> أسبوع من تاريخ عرض السعر .</li>
+      </ul>
+
+      <h3 class="c-section-title">متطلبات التشغيل</h3>
+      <ul class="c-terms">
+        <li>
+          <strong>السيرفر :</strong> مواصفات Xeon E3 - 16GB Ram بنظام تشغيل
+          ويندوز سيرفر 2014 .
+        </li>
+        <li><strong>الأجهزة :</strong> مواصفات لا تقل عن Core i5 - 4GB Ram .</li>
+        <li>
+          <strong>ربط داخلي :</strong> توفير شبكة نت ورك داخلية مع سويتش .
+        </li>
+        <li>
+          <strong>ربط خارجي :</strong> في حال طلب نسخ إضافية خارجية يتم ربط
+          البرنامج بالمكتب الرئيسي من خلال الإنترنت ( يجب توفير إنترنت مع
+          IP PUBLIC ) بالرئيسي + إنترنت بكل فرع خارجي .
+        </li>
+      </ul>
+
+      <p class="c-disclaimer">
+        عرض السعر المرفق لا يشمل قيمة السيرفر والأجهزة والشبكة والإنترنت
+        و متطلبات التشغيل .
+      </p>
+
+      <p class="c-closing">وتفضلوا بقبول فائق التقدير والاحترام ،،،</p>
+
+      <div class="c-signature">
+        <p class="c-sign-brand">The One System</p>
+        <p>المدير التنفيذي</p>
+        <p class="c-sign-name">محمد فتحي محمد المصري</p>
+      </div>
+
+      <footer class="c-footer">It’s The One System Time</footer>
+    </section>
+
+  </div>
+}

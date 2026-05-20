@@ -1,0 +1,64 @@
+.contract-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  background: var(--surface-1);
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.contract-tab {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-1);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: var(--surface-0);
+  }
+
+  &.active {
+    background: var(--surface-0);
+    color: var(--brand);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+
+  .badge {
+    background: var(--brand-soft);
+    color: var(--brand-dark, var(--brand));
+    font-size: 0.72rem;
+  }
+
+  &.active .badge {
+    background: var(--brand);
+    color: #fff;
+  }
+}
+
+.contracts-table {
+  thead th {
+    background: var(--surface-1);
+    font-weight: 600;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .min-w-0 {
+    min-width: 0;
+  }
+
+  .contract-title-cell {
+    max-width: 240px;
+  }
+}

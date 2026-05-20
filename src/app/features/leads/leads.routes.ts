@@ -33,7 +33,7 @@ export const LEADS_ROUTES: Routes = [
         path: 'add-leadCustomer',
         title: 'إضافة عميل محتمل',
         canActivate: [roleGuard],
-        data: { roles: ['Admin', 'Marketing'] },
+        data: { roles: ['Admin', 'Marketing', 'Sales'] },
         loadComponent: () =>
           import('./pages/add-lead/add-lead.component').then((m) => m.AddLeadComponent),
       },

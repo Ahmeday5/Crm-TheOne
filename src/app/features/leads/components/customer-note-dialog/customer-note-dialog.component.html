@@ -1,0 +1,118 @@
+<app-modal
+  [open]="true"
+  [title]="'customers.noteModal.title' | translate"
+  icon="fa-solid fa-pen-to-square"
+  iconTone="info"
+  size="md"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <div class="mb-3">
+    <p class="text-muted mb-2">{{ 'customers.noteModal.hint' | translate }}</p>
+
+    @if (customerName) {
+      <div class="card bg-light p-3 mb-3">
+        <p class="fw-600 mb-0">
+          <i class="fa-solid fa-user me-2 text-primary"></i>{{ customerName }}
+        </p>
+      </div>
+    }
+  </div>
+
+  <!-- Read-only history strip — full conversation across the three roles. -->
+  <div class="d-flex flex-column gap-2 mb-3">
+    <!-- Marketing slot — read-only when caller isn't Marketing -->
+    @if (editableRole() !== 'Marketing') {
+      <div class="border rounded p-2 bg-body-tertiary">
+        <div class="d-flex align-items-center gap-2 small text-muted mb-1">
+          <i class="fa-solid fa-bullhorn text-info"></i>
+          <span class="fw-600">{{ slotLabelKey('Marketing') | translate }}</span>
+        </div>
+        <p class="mb-0 small" style="white-space: pre-wrap;">
+          {{ slotValue('Marketing') || ('customers.noteModal.emptySlot' | translate) }}
+        </p>
+      </div>
+    }
+
+    @if (editableRole() !== 'Sales') {
+      <div class="border rounded p-2 bg-body-tertiary">
+        <div class="d-flex align-items-center gap-2 small text-muted mb-1">
+          <i class="fa-solid fa-user-tie text-success"></i>
+          <span class="fw-600">{{ slotLabelKey('Sales') | translate }}</span>
+        </div>
+        <p class="mb-0 small" style="white-space: pre-wrap;">
+          {{ slotValue('Sales') || ('customers.noteModal.emptySlot' | translate) }}
+        </p>
+      </div>
+    }
+
+    @if (editableRole() !== 'Support') {
+      <div class="border rounded p-2 bg-body-tertiary">
+        <div class="d-flex align-items-center gap-2 small text-muted mb-1">
+          <i class="fa-solid fa-headset text-warning"></i>
+          <span class="fw-600">{{ slotLabelKey('Support') | translate }}</span>
+        </div>
+        <p class="mb-0 small" style="white-space: pre-wrap;">
+          {{ slotValue('Support') || ('customers.noteModal.emptySlot' | translate) }}
+        </p>
+      </div>
+    }
+  </div>
+
+  <!-- Editable slot — only rendered for roles that own one. -->
+  @if (editableRole(); as role) {
+    <div>
+      <label class="form-label fw-600">
+        <i class="fa-solid fa-pencil me-1 text-primary"></i>
+        @if (editableRoleLabelKey(); as labelKey) {
+          {{ labelKey | translate }}
+        }
+        <span class="text-danger">*</span>
+      </label>
+      <textarea class="form-control"
+                rows="4"
+                [maxlength]="maxLength"
+                [placeholder]="'customers.noteModal.placeholder' | translate"
+                [ngModel]="draft()"
+                (ngModelChange)="onDraftChange($event)"
+                [disabled]="submitting()"></textarea>
+      <div class="d-flex justify-content-between mt-1 small text-muted">
+        <span>{{ 'customers.noteModal.helper' | translate }}</span>
+        <span>{{ draft().length }} / {{ maxLength }}</span>
+      </div>
+    </div>
+  } @else {
+    <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-0" role="alert">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span>{{ 'customers.noteModal.noRoleSlot' | translate }}</span>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <ng-container modal-footer>
+    <button type="button"
+            class="btn btn-light"
+            [disabled]="submitting()"
+            (click)="cancel.emit()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button type="button"
+            class="btn btn-primary"
+            [disabled]="!canSubmit()"
+            (click)="submit()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-floppy-disk me-1"></i>
+      }
+      {{ 'customers.noteModal.submit' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

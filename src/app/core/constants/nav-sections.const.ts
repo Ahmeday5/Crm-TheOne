@@ -104,7 +104,7 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       {
         labelKey: 'sidebar.items.salesLine',
-        path: '/line',
+        path: '/price-offers',
         icon: 'fa-solid fa-chart-line',
         roles: ['Admin', 'Sales'],
       },
@@ -258,8 +258,9 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   'contracts': ['Admin', 'Sales'],
   'follow-ups': ['Admin', 'Sales'],
   'view-details-deal': ['Admin', 'Sales'],
-  'add-price-offer': ['Admin', 'Sales'],
+  'price-offer-contract': ['Admin', 'Sales'],
   'contracts-management': ['Admin', 'Sales'],
+  'sale-contract': ['Admin', 'Sales'],
 
   // Support modules
   'dashboardSupport': ['Admin', 'Support'],

@@ -125,3 +125,43 @@ body.app-modal-open { overflow: hidden; }
 .badge-orange { background: var(--warning-soft); color: var(--warning); }
 .badge-green  { background: var(--success-soft); color: var(--success); }
 .border-r-indicator { border-right: 4px solid var(--brand); }
+
+/*
+ * Shared soft action-button variants + search-input affix.
+ *
+ * Single source for the bordered "soft" buttons and the icon nestled inside
+ * a search field — used by the sales / contracts / appointments list pages
+ * (and anywhere else) so no component re-declares them.
+ */
+.btn-danger-soft {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--border);
+}
+.btn-danger-soft:hover,
+.btn-danger-soft:focus {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn-primary-soft {
+  background: transparent;
+  color: var(--brand);
+  border: 1px solid var(--border);
+}
+.btn-primary-soft:hover,
+.btn-primary-soft:focus {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.search-icon {
+  position: absolute;
+  inset-inline-start: 1rem;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  color: var(--text-3, #94a3b8);
+  pointer-events: none;
+}

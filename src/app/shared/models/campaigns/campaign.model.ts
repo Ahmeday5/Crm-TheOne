@@ -6,6 +6,20 @@ import {
 } from './campaign-enums';
 
 /**
+ * Country attached to a campaign.
+ *
+ * Both `GET /Campaigns/GetAllCampaigns` and
+ * `GET /Campaigns/{id}/getCampaignById` now return countries as a list of
+ * `{ countryId, countryName }` objects (previously bare numeric ids). Keep
+ * the id/name together so the UI can show the localized name without a
+ * second lookup against the countries dropdown.
+ */
+export interface CampaignCountry {
+  countryId: number;
+  countryName: string;
+}
+
+/**
  * Row shape returned by `GET /Campaigns/GetAllCampaigns`.
  *
  * The list endpoint projects a subset of the detail response — `spent`,
@@ -28,7 +42,7 @@ export interface Campaign {
   minAge: number;
   maxAge: number;
   gender: GenderName;
-  countries: number[];
+  countries: CampaignCountry[];
   /** Customers attributed to this campaign — present on list + detail responses. */
   customersCount?: number;
 

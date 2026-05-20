@@ -1,4 +1,4 @@
-<section class="customers-page">
+<section class="customers-page marketing-customers-page">
   <!-- Welcome strip -->
   <div class="mb-4">
     <h2 class="fw-700 mb-1">{{ 'customers.welcomeTitle' | translate }}</h2>
@@ -22,7 +22,7 @@
 
   <!-- KPIs -->
   <div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-6 col-lg-3">
       <app-stat-card
         [label]="'customers.kpi.total' | translate"
         [value]="kpis().total"
@@ -30,28 +30,28 @@
         tone="primary">
       </app-stat-card>
     </div>
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-6 col-lg-3">
       <app-stat-card
-        [label]="'customers.kpi.visible' | translate"
-        [value]="kpis().visible"
-        icon="fa-solid fa-eye"
-        tone="success">
-      </app-stat-card>
-    </div>
-    <div class="col-12 col-sm-6 col-lg-3">
-      <app-stat-card
-        [label]="'customers.kpi.page' | translate"
-        [value]="kpis().page"
-        icon="fa-solid fa-layer-group"
+        [label]="'customers.kpi.newLeads' | translate"
+        [value]="kpis().newLeads"
+        icon="fa-solid fa-user-plus"
         tone="info">
       </app-stat-card>
     </div>
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-6 col-lg-3">
       <app-stat-card
-        [label]="'customers.kpi.pageSize' | translate"
-        [value]="kpis().pageSize"
-        icon="fa-solid fa-table-list"
-        tone="orange">
+        [label]="'customers.kpi.transferredFromMarketing' | translate"
+        [value]="kpis().transferred"
+        icon="fa-solid fa-user-tie"
+        tone="success">
+      </app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card
+        [label]="'customers.kpi.withNotes' | translate"
+        [value]="kpis().withNotes"
+        icon="fa-solid fa-comment-dots"
+        tone="warning">
       </app-stat-card>
     </div>
   </div>
@@ -60,7 +60,6 @@
   <div class="card mb-4">
     <div class="card-body">
       <div class="row g-3 align-items-end">
-        <!-- Search -->
         <div class="col-12 col-md-4">
           <div class="position-relative">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
@@ -70,7 +69,6 @@
                    (ngModelChange)="onSearchInput($event)" />
           </div>
         </div>
-        <!-- Status filter -->
         <div class="col-12 col-md-4">
           <select class="form-select"
                   [ngModel]="selectedStatusId() ?? ''"
@@ -81,7 +79,6 @@
             }
           </select>
         </div>
-        <!-- Source filter -->
         <div class="col-12 col-md-4">
           <select class="form-select"
                   [ngModel]="selectedSourceId() ?? ''"
@@ -97,7 +94,7 @@
   </div>
 
   <!-- Table -->
-  <div class="card">
+  <div class="card crm-table">
     <div class="card-header d-flex align-items-center gap-2">
       <i class="fa-solid fa-address-card text-primary"></i>
       <h5 class="mb-0">
@@ -113,120 +110,117 @@
     }
 
     <div class="card-body p-0">
-      <div class="table-responsive">
-        @if (loading()) {
-          <div class="text-center py-5">
-            <span class="spinner-border text-primary" role="status"></span>
-          </div>
-        } @else if (rows().length === 0) {
-          <div class="text-center py-5 text-muted">
-            <i class="fa-solid fa-inbox fa-3x mb-3 d-block opacity-50"></i>
-            <p class="mb-0">
-              {{ searchSignal() || selectedStatusId() || selectedSourceId()
-                ? ('customers.table.emptyFiltered' | translate)
-                : ('customers.table.empty' | translate) }}
-            </p>
-          </div>
-        } @else {
-          <table class="table table-hover mb-0 align-middle">
+      @if (loading()) {
+        <div class="text-center py-5">
+          <span class="spinner-border text-primary" role="status"></span>
+        </div>
+      } @else if (rows().length === 0) {
+        <div class="text-center py-5 text-muted">
+          <i class="fa-solid fa-inbox fa-3x mb-3 d-block opacity-50"></i>
+          <p class="mb-0">
+            {{ searchSignal() || selectedStatusId() || selectedSourceId()
+              ? ('customers.table.emptyFiltered' | translate)
+              : ('customers.table.empty' | translate) }}
+          </p>
+        </div>
+      } @else {
+        <div class="crm-table-scroll">
+          <table class="table table-hover align-middle">
             <thead>
               <tr>
-                <th class="ps-3">{{ 'customers.table.fullName' | translate }}</th>
-                <th>{{ 'customers.table.phone' | translate }}</th>
-                <th>{{ 'customers.table.source' | translate }}</th>
-                <th>{{ 'customers.table.campaign' | translate }}</th>
+                <th>{{ 'customers.table.fullName' | translate }}</th>
+                <th>{{ 'customers.table.source' | translate }} / {{ 'customers.table.campaign' | translate }}</th>
                 <th>{{ 'customers.table.services' | translate }}</th>
                 <th>{{ 'customers.table.status' | translate }}</th>
                 <th>{{ 'customers.table.salesPerson' | translate }}</th>
+                <th>{{ 'customers.table.notes' | translate }}</th>
                 <th>{{ 'customers.table.createdAt' | translate }}</th>
-                <th class="text-center">{{ 'customers.table.actions' | translate }}</th>
+                <th class="crm-actions-col text-center">{{ 'customers.table.actions' | translate }}</th>
               </tr>
             </thead>
             <tbody>
-              @for (row of rows(); track row.id) {
+              @for (row of rows(); track trackById($index, row)) {
                 <tr>
-                  <td class="ps-3 fw-600">{{ row.fullName }}</td>
-                  <td class="font-monospace small">{{ row.phone }}</td>
+                  <td>
+                    <div class="crm-identity">
+                      <span class="crm-avatar" [attr.aria-hidden]="true">{{ initials(row.fullName) }}</span>
+                      <div class="crm-identity-text">
+                        <div class="crm-name" [title]="row.fullName">{{ row.fullName }}</div>
+                        <div class="crm-phone">{{ row.phone || '—' }}</div>
+                      </div>
+                    </div>
+                  </td>
+
                   <td>
                     @if (row.source) {
-                      <span class="badge bg-info-subtle text-info">{{ row.source }}</span>
+                      <span class="crm-chip tone-info">{{ row.source }}</span>
                     } @else {
                       <span class="text-muted">—</span>
                     }
+                    @if (row.campaignName) {
+                      <div class="small text-muted mt-1 text-truncate" style="max-width: 11rem;" [title]="row.campaignName">
+                        {{ row.campaignName }}
+                      </div>
+                    }
                   </td>
-                  <td>{{ row.campaignName || '—' }}</td>
+
                   <td>
-                    @if (row.services && row.services.length > 0) {
-                      @for (svc of row.services; track svc) {
-                        <span class="badge bg-primary-subtle text-primary me-1 mb-1">{{ svc }}</span>
-                      }
+                    @if (row.services && row.services.length) {
+                      <div class="crm-chip-row">
+                        @for (svc of row.services; track svc) {
+                          <span class="crm-chip tone-brand">{{ svc }}</span>
+                        }
+                      </div>
                     } @else {
                       <span class="text-muted">—</span>
                     }
                   </td>
+
                   <td>
                     <span class="badge {{ statusBadgeClass(row.status) }}">
                       {{ resolveStatus(row.status) }}
                     </span>
                   </td>
+
                   <td>
-                    @if (row.salesPersonName) {
-                      <span class="d-flex align-items-center gap-1">
-                        <i class="fa-solid fa-user-tie text-success small"></i>
-                        {{ row.salesPersonName }}
-                      </span>
-                    } @else {
-                      <span class="text-muted fst-italic">{{ 'customers.table.notAssigned' | translate }}</span>
-                    }
-                  </td>
-                  <td class="small text-muted">{{ formatDate(row.createdAt) }}</td>
-                  <td>
-                    <div class="d-inline-flex gap-1 justify-content-center">
-                      <!-- View details -->
-                      <button type="button"
-                              class="btn btn-sm btn-light"
-                              [disabled]="busyId() === row.id"
-                              [title]="'customers.table.view' | translate"
-                              (click)="openDetails(row)">
-                        <i class="fa-solid fa-eye"></i>
-                      </button>
-                      <!-- Edit -->
-                      <button type="button"
-                              class="btn btn-sm btn-light"
-                              [disabled]="busyId() === row.id"
-                              [title]="'customers.table.edit' | translate"
-                              (click)="openEdit(row)">
-                        <i class="fa-solid fa-pen"></i>
-                      </button>
-                      <!-- Assign / change sales rep -->
-                      <button type="button"
-                              [class]="row.salesPersonName ? 'btn btn-sm btn-primary-soft' : 'btn btn-sm btn-success-soft'"
-                              [disabled]="busyId() === row.id"
-                              [title]="assignTitle(row)"
-                              [attr.aria-label]="assignTitle(row)"
-                              (click)="openAssign(row)">
-                        @if (busyId() === row.id) {
-                          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        } @else {
-                          <i [class]="row.salesPersonName ? 'fa-solid fa-user-pen' : 'fa-solid fa-user-plus'"></i>
-                        }
-                      </button>
-                      <!-- Delete -->
-                      <button type="button"
-                              class="btn btn-sm btn-icon btn-danger-soft"
-                              [disabled]="busyId() === row.id"
-                              [title]="'customers.table.delete' | translate"
-                              (click)="confirmDelete(row)">
-                        <i class="fa-solid fa-trash"></i>
-                      </button>
+                    <div class="crm-role-line">
+                      <span class="crm-role-icon is-sales"><i class="fa-solid fa-user-tie"></i></span>
+                      @if (row.salesPersonName) {
+                        <span class="crm-person-name" [title]="row.salesPersonName">{{ row.salesPersonName }}</span>
+                      } @else {
+                        <span class="crm-person-empty">{{ 'customers.table.notAssigned' | translate }}</span>
+                      }
                     </div>
+                  </td>
+
+                  <td>
+                    <app-customer-notes-cell
+                      [noteMarketing]="row.noteMarketing"
+                      [noteSales]="row.noteSales"
+                      [noteSupport]="row.noteSupport">
+                    </app-customer-notes-cell>
+                  </td>
+
+                  <td class="small text-muted text-nowrap">{{ formatDate(row.createdAt) }}</td>
+
+                  <td class="crm-actions-col">
+                    <app-customer-actions-menu
+                      [phone]="row.phone"
+                      [actions]="actionsConfig"
+                      [busy]="busyId() === row.id"
+                      (view)="openDetails(row)"
+                      (note)="openNote(row)"
+                      (edit)="openEdit(row)"
+                      (assignSales)="openAssign(row)"
+                      (delete)="confirmDelete(row)">
+                    </app-customer-actions-menu>
                   </td>
                 </tr>
               }
             </tbody>
           </table>
-        }
-      </div>
+        </div>
+      }
     </div>
 
     @if (count() > 0) {
@@ -244,7 +238,6 @@
   </div>
 </section>
 
-<!-- Assign / Change Sales Rep Dialog -->
 @if (assignDialog(); as dlg) {
   <app-assign-sales-dialog
     [customerId]="dlg.customerId"
@@ -256,7 +249,6 @@
   </app-assign-sales-dialog>
 }
 
-<!-- Customer Details Dialog -->
 @if (detailsDialog(); as id) {
   <app-customer-details-dialog
     [customerId]="id"
@@ -264,11 +256,22 @@
   </app-customer-details-dialog>
 }
 
-<!-- Customer Edit Dialog -->
 @if (editDialog(); as id) {
   <app-customer-edit-dialog
     [customerId]="id"
     (saved)="onEdited()"
     (cancel)="closeEdit()">
   </app-customer-edit-dialog>
+}
+
+@if (noteDialog(); as row) {
+  <app-customer-note-dialog
+    [customerId]="row.id"
+    [customerName]="row.fullName"
+    [noteMarketing]="row.noteMarketing ?? null"
+    [noteSales]="row.noteSales ?? null"
+    [noteSupport]="row.noteSupport ?? null"
+    (saved)="onNoteSaved($event)"
+    (cancel)="closeNote()">
+  </app-customer-note-dialog>
 }

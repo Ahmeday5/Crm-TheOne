@@ -1,0 +1,199 @@
+<app-page-header [title]="'sales.contractsMgmt.title' | translate"
+  [subtitle]="'sales.contractsMgmt.subtitle' | translate" icon="fa-solid fa-file-contract">
+</app-page-header>
+
+<!-- KPI cards -->
+<div class="row g-3 mb-4">
+  <div class="col-12 col-sm-6 col-lg">
+    <app-stat-card [label]="'sales.contractsMgmt.stats.total' | translate" [value]="formatMoney(stats().total)"
+      icon="fa-solid fa-folder-open" tone="info">
+    </app-stat-card>
+  </div>
+  <div class="col-12 col-sm-6 col-lg">
+    <app-stat-card [label]="'sales.contractsMgmt.stats.active' | translate" [value]="formatMoney(stats().active)"
+      icon="fa-solid fa-file-circle-check" tone="success">
+    </app-stat-card>
+  </div>
+  <div class="col-12 col-sm-6 col-lg">
+    <app-stat-card [label]="'sales.contractsMgmt.stats.expiring' | translate" [value]="formatMoney(stats().expiring)"
+      icon="fa-solid fa-circle-exclamation" tone="orange">
+    </app-stat-card>
+  </div>
+  <div class="col-12 col-sm-6 col-lg">
+    <app-stat-card [label]="'sales.contractsMgmt.stats.expired' | translate" [value]="formatMoney(stats().expired)"
+      icon="fa-solid fa-file-circle-xmark" tone="danger">
+    </app-stat-card>
+  </div>
+  <div class="col-12 col-sm-6 col-lg">
+    <app-stat-card [label]="'sales.contractsMgmt.stats.cancelled' | translate" [value]="formatMoney(stats().cancelled)"
+      icon="fa-solid fa-ban" tone="purple">
+    </app-stat-card>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex align-items-center gap-2">
+    <i class="fa-solid fa-file-contract text-primary"></i>
+    <h5 class="mb-0">{{ 'sales.contractsMgmt.tableTitle' | translate }}</h5>
+  </div>
+
+  <div class="card-body">
+    <!-- Tabs -->
+    <div class="contract-tabs mb-3">
+      @for (tab of tabs; track tab.key) {
+      <button type="button" class="contract-tab" [class.active]="activeTab() === tab.key" (click)="setTab(tab.key)">
+        <i [class]="tab.icon"></i>
+        <span>{{ 'sales.contractsMgmt.tabs.' + tab.key | translate }}</span>
+        <span class="badge rounded-pill">{{ tabCounts()[tab.key] }}</span>
+      </button>
+      }
+    </div>
+
+    <!-- Search + add -->
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <div class="position-relative flex-grow-1" style="max-width:420px">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input class="form-control ps-5" [placeholder]="'sales.contractsMgmt.searchPlaceholder' | translate"
+          [ngModel]="search()" (ngModelChange)="onSearch($event)">
+      </div>
+      <button type="button" class="btn btn-primary d-flex align-items-center gap-2 ms-auto" (click)="openCreate()">
+        <i class="fa-solid fa-plus"></i>
+        {{ 'sales.contractsMgmt.add' | translate }}
+      </button>
+    </div>
+
+    @if (loading()) {
+    <div class="p-5 text-center text-muted">
+      <span class="spinner-border spinner-border-sm me-2"></span>
+      {{ 'common.loading' | translate }}
+    </div>
+    } @else if (loadError()) {
+    <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
+    } @else if (visibleRows().length === 0) {
+    <div class="p-5 text-center text-muted">
+      <i class="fa-solid fa-file-contract fs-2 d-block mb-2 opacity-50"></i>
+      {{ 'sales.contractsMgmt.empty' | translate }}
+    </div>
+    } @else {
+    <div class="table-responsive border rounded">
+      <table class="table table-hover align-middle mb-0 contracts-table">
+        <thead>
+          <tr>
+            <th class="ps-3">{{ 'sales.contractsMgmt.table.number' | translate }}</th>
+            <th>{{ 'sales.contractsMgmt.table.customer' | translate }}</th>
+            <th>{{ 'sales.contractsMgmt.table.contractTitle' | translate }}</th>
+            <th>{{ 'sales.contractsMgmt.table.status' | translate }}</th>
+            <th>{{ 'sales.contractsMgmt.table.startDate' | translate }}</th>
+            <th>{{ 'sales.contractsMgmt.table.endDate' | translate }}</th>
+            <th>{{ 'sales.contractsMgmt.table.createdAt' | translate }}</th>
+            <th>{{ 'sales.contractsMgmt.table.createdByName' | translate }}</th>
+            <th>{{ 'sales.contractsMgmt.table.daysLeft' | translate }}</th>
+            <th>{{ 'sales.contractsMgmt.table.value' | translate }}</th>
+            <th class="text-end pe-3" style="width:1%">
+              {{ 'sales.contractsMgmt.table.actions' | translate }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of visibleRows(); track trackById($index, row)) {
+          <tr>
+            <td class="ps-3 fw-bold text-primary">CNT-{{ row.id }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-user text-muted"></i>
+                <div class="min-w-0">
+                  <div class="fw-600 text-truncate">{{ row.customerName }}</div>
+                  <small class="text-muted text-truncate d-block">
+                    @if (row.companyName) { {{ row.companyName }} }
+                    @if (row.phone) { · {{ row.phone }} }
+                  </small>
+                </div>
+              </div>
+            </td>
+            <td class="contract-title-cell">
+              <span class="text-truncate d-block">{{ row.title }}</span>
+            </td>
+            <td>
+              @if (isExpiringSoon(row)) {
+              <span class="badge bg-warning-subtle text-warning">
+                {{ 'sales.contractsMgmt.status.expiringSoon' | translate }}
+              </span>
+              } @else {
+              <span class="badge {{ statusBadgeClass(row) }}">
+                {{ statusKey(row) | translate }}
+              </span>
+              }
+            </td>
+            <td class="text-nowrap">
+              <i class="fa-regular fa-calendar text-muted me-1"></i>{{ formatDate(row.startDate) }}
+            </td>
+            <td class="text-nowrap">
+              <i class="fa-regular fa-calendar text-muted me-1"></i>{{ formatDate(row.endDate) }}
+            </td>
+            <td class="text-nowrap">
+              <i class="fa-regular fa-calendar text-muted me-1"></i>{{ formatDate(row.createdAt) }}
+            </td>
+            <td class="text-nowrap">
+              {{ row.createdByName || ('sales.contractsMgmt.table.noCreator' | translate) }}
+            </td>
+            <td class="text-nowrap">
+              @if (daysRemaining(row) < 0) { <span class="fw-500 text-danger">{{ 'sales.contractsMgmt.expired' |
+                translate }}</span>
+                } @else {
+                <span class="fw-500" [class.text-warning]="isExpiringSoon(row)">
+                  {{ daysRemaining(row) }} {{ 'sales.contractsMgmt.day' | translate }}
+                </span>
+                }
+            </td>
+            <td class="fw-bold text-success text-nowrap">{{ formatMoney(row.price) }}</td>
+            <td class="text-end pe-3">
+              <div class="d-inline-flex gap-2 flex-nowrap">
+                <button type="button"
+                        class="btn btn-sm btn-primary d-inline-flex align-items-center gap-2 text-nowrap"
+                        [disabled]="busyId() === row.id"
+                        (click)="openContract(row)">
+                  <i class="fa-solid fa-file-contract"></i>
+                  <span class="d-none d-md-inline">{{ 'sales.contractsMgmt.table.contract' | translate }}</span>
+                </button>
+                <button type="button"
+                        class="btn btn-sm btn-light"
+                        [disabled]="busyId() === row.id"
+                        [attr.title]="'sales.contractsMgmt.table.edit' | translate"
+                        [attr.aria-label]="'sales.contractsMgmt.table.edit' | translate"
+                        (click)="openEdit(row)">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button"
+                        class="btn btn-sm btn-danger-soft"
+                        [disabled]="busyId() === row.id"
+                        [attr.title]="'sales.contractsMgmt.table.delete' | translate"
+                        [attr.aria-label]="'sales.contractsMgmt.table.delete' | translate"
+                        (click)="confirmDelete(row)">
+                  @if (busyId() === row.id) {
+                    <span class="spinner-border spinner-border-sm"></span>
+                  } @else {
+                    <i class="fa-solid fa-trash"></i>
+                  }
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-3">
+      <app-pagination [pageIndex]="pageIndex()" [pageSize]="pageSize()" [count]="totalCount()" [disabled]="loading()"
+        (pageChange)="onPageChange($event)" (pageSizeChange)="onPageSizeChange($event)">
+      </app-pagination>
+    </div>
+    }
+  </div>
+</div>
+
+@if (formOpen()) {
+<app-contract-form-dialog [contractId]="editId()" (created)="onSaved()" (updated)="onSaved()"
+  (cancel)="closeForm()">
+</app-contract-form-dialog>
+}

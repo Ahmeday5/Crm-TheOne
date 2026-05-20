@@ -1,0 +1,148 @@
+<app-modal
+  [open]="true"
+  [title]="titleKey() | translate"
+  icon="fa-solid fa-file-contract"
+  iconTone="primary"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  @if (loadingContract()) {
+    <div class="p-5 text-center text-muted">
+      <span class="spinner-border spinner-border-sm me-2"></span>
+      {{ 'common.loading' | translate }}
+    </div>
+  } @else if (loadError()) {
+    <div class="alert alert-danger d-flex align-items-center justify-content-between gap-2 mb-0">
+      <span><i class="fa-solid fa-circle-exclamation me-2"></i>{{ loadError() }}</span>
+      <button type="button" class="btn btn-sm btn-light" (click)="retryLoad()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else {
+  <form [formGroup]="form" id="contract-form" novalidate (ngSubmit)="submit()">
+
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label fw-600">
+          {{ 'sales.contractsMgmt.form.contractTitle' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <input class="form-control" formControlName="title"
+               [class.is-invalid]="isInvalid('title')"
+               [placeholder]="'sales.contractsMgmt.form.titlePlaceholder' | translate">
+        <app-form-error [control]="form.controls.title"
+          [label]="'sales.contractsMgmt.form.contractTitle' | translate" />
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'sales.contractsMgmt.form.customer' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <select class="form-select" formControlName="customerId"
+                [class.is-invalid]="isInvalid('customerId')">
+          <option [ngValue]="null" disabled>
+            @if (loadingCustomers()) {
+              {{ 'sales.priceOffers.form.loadingCustomers' | translate }}
+            } @else {
+              {{ 'sales.priceOffers.form.customerPlaceholder' | translate }}
+            }
+          </option>
+          @for (c of customers(); track c.id) {
+            <option [ngValue]="c.id">
+              {{ c.fullName }}@if (c.campanyName) { — {{ c.campanyName }} }
+            </option>
+          }
+        </select>
+        @if (isEditMode) {
+          <small class="text-muted">{{ 'sales.contractsMgmt.form.customerLocked' | translate }}</small>
+        } @else {
+          <app-form-error [control]="form.controls.customerId"
+            [label]="'sales.contractsMgmt.form.customer' | translate" />
+        }
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'sales.contractsMgmt.form.status' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <select class="form-select" formControlName="status">
+          @for (s of statuses; track s.code) {
+            <option [ngValue]="s.code">
+              {{ 'sales.contractsMgmt.status.' + s.name.toLowerCase() | translate }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'sales.contractsMgmt.form.price' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <input type="number" min="0" step="any" class="form-control"
+               formControlName="price"
+               [class.is-invalid]="isInvalid('price')" placeholder="0">
+        <app-form-error [control]="form.controls.price"
+          [label]="'sales.contractsMgmt.form.price' | translate" />
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label fw-600">
+          {{ 'sales.contractsMgmt.form.startDate' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <input type="date" class="form-control" formControlName="startDate"
+               [class.is-invalid]="isInvalid('startDate')">
+        <app-form-error [control]="form.controls.startDate"
+          [label]="'sales.contractsMgmt.form.startDate' | translate" />
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label fw-600">
+          {{ 'sales.contractsMgmt.form.endDate' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <input type="date" class="form-control" formControlName="endDate"
+               [class.is-invalid]="isInvalid('endDate')"
+               [min]="form.controls.startDate.value || null">
+        <app-form-error [control]="form.controls.endDate"
+          [label]="'sales.contractsMgmt.form.endDate' | translate" />
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-600">
+          {{ 'sales.contractsMgmt.form.description' | translate }}
+        </label>
+        <textarea class="form-control" rows="3" formControlName="description"
+                  [placeholder]="'sales.contractsMgmt.form.descriptionPlaceholder' | translate"></textarea>
+      </div>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mt-3 mb-0">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </form>
+  }
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="cancel.emit()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button type="submit" form="contract-form" class="btn btn-primary"
+            [disabled]="submitting() || form.invalid || loadingContract() || !!loadError()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-regular fa-floppy-disk me-1"></i>
+      }
+      {{ (isEditMode ? 'sales.contractsMgmt.form.update' : 'sales.contractsMgmt.form.save') | translate }}
+    </button>
+  </ng-container>
+</app-modal>

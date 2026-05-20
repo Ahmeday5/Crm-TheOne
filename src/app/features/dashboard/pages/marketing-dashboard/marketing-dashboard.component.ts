@@ -17,6 +17,7 @@ import { LoadErrorComponent } from '../../../../shared/components/load-error/loa
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import {
   Campaign,
+  CampaignStatus,
   CustomerListItem,
   DailyCustomersPoint,
   MarketingDashboardStats,
@@ -28,7 +29,13 @@ import { MarketingService } from '../../services/marketing.service';
 @Component({
   selector: 'app-marketing-dashboard',
   standalone: true,
-  imports: [CommonModule, NgApexchartsModule, TranslatePipe, PageHeaderComponent, LoadErrorComponent],
+  imports: [
+    CommonModule,
+    NgApexchartsModule,
+    TranslatePipe,
+    PageHeaderComponent,
+    LoadErrorComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './marketing-dashboard.component.html',
   styleUrl: './marketing-dashboard.component.scss',
@@ -57,14 +64,33 @@ export class MarketingDashboardComponent {
     const items = this.sourcePerformance();
     return {
       series: [
-        { name: this.t('dashboard.marketing.customers'), data: items.map((i) => i.customersCount) },
-        { name: this.t('dashboard.marketing.budget'), data: items.map((i) => i.totalBudget) },
+        {
+          name: this.t('dashboard.marketing.customers'),
+          data: items.map((i) => i.customersCount),
+        },
+        {
+          name: this.t('dashboard.marketing.budget'),
+          data: items.map((i) => i.totalBudget),
+        },
       ],
-      chart: { type: 'bar' as const, height: 320, toolbar: { show: false }, fontFamily: 'inherit' },
+      chart: {
+        type: 'bar' as const,
+        height: 320,
+        toolbar: { show: false },
+        fontFamily: 'inherit',
+      },
       xaxis: { categories: items.map((i) => i.sourceName) },
       yaxis: [
-        { seriesName: this.t('dashboard.marketing.customers'), title: { text: this.t('dashboard.marketing.customers') } },
-        { seriesName: this.t('dashboard.marketing.budget'), opposite: true, title: { text: this.t('dashboard.marketing.budget') }, labels: { formatter: (v: number) => this.formatCurrency(v) } },
+        {
+          seriesName: this.t('dashboard.marketing.customers'),
+          title: { text: this.t('dashboard.marketing.customers') },
+        },
+        {
+          seriesName: this.t('dashboard.marketing.budget'),
+          opposite: true,
+          title: { text: this.t('dashboard.marketing.budget') },
+          labels: { formatter: (v: number) => this.formatCurrency(v) },
+        },
       ],
       plotOptions: { bar: { columnWidth: '55%', borderRadius: 6 } },
       colors: ['#0066cc', '#10b981'],
@@ -86,15 +112,31 @@ export class MarketingDashboardComponent {
   readonly dailyChart = computed(() => {
     const points = this.daily();
     return {
-      series: [{ name: this.t('dashboard.marketing.customers'), data: points.map((p) => p.count) }],
-      chart: { type: 'area' as const, height: 320, toolbar: { show: false }, fontFamily: 'inherit', zoom: { enabled: false } },
+      series: [
+        {
+          name: this.t('dashboard.marketing.customers'),
+          data: points.map((p) => p.count),
+        },
+      ],
+      chart: {
+        type: 'area' as const,
+        height: 320,
+        toolbar: { show: false },
+        fontFamily: 'inherit',
+        zoom: { enabled: false },
+      },
       xaxis: { categories: points.map((p) => this.formatShortDate(p.date)) },
       yaxis: { labels: { formatter: (v: number) => `${Math.round(v)}` } },
       stroke: { curve: 'smooth' as const, width: 3 },
       colors: ['#0066cc'],
       fill: {
         type: 'gradient',
-        gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05, stops: [0, 90, 100] },
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.35,
+          opacityTo: 0.05,
+          stops: [0, 90, 100],
+        },
       },
       dataLabels: { enabled: false },
       grid: { borderColor: 'var(--border)' },
@@ -132,11 +174,17 @@ export class MarketingDashboardComponent {
     });
   }
 
+  statusKey(status: CampaignStatus): string {
+    return `campaigns.status.${status.toLowerCase()}`;
+  }
+
   // ─────────── helpers ───────────
 
   formatCurrency(value: number | null | undefined): string {
     if (value == null) return '0';
-    return new Intl.NumberFormat(this.lang.lang() === 'ar' ? 'ar-EG' : 'en-US').format(value);
+    return new Intl.NumberFormat(
+      this.lang.lang() === 'ar' ? 'ar-EG' : 'en-US',
+    ).format(value);
   }
 
   formatShortDate(iso: string): string {
@@ -166,9 +214,12 @@ export class MarketingDashboardComponent {
   statusBadgeClass(status: string | null | undefined): string {
     if (!status) return 'bg-secondary-subtle text-secondary';
     const s = status.toLowerCase();
-    if (s.includes('active') || s.includes('نش')) return 'bg-success-subtle text-success';
-    if (s.includes('paus') || s.includes('متوقف')) return 'bg-warning-subtle text-warning';
-    if (s.includes('end') || s.includes('منته')) return 'bg-secondary-subtle text-secondary';
+    if (s.includes('active') || s.includes('نش'))
+      return 'bg-success-subtle text-success';
+    if (s.includes('paus') || s.includes('متوقف'))
+      return 'bg-warning-subtle text-warning';
+    if (s.includes('end') || s.includes('منته'))
+      return 'bg-secondary-subtle text-secondary';
     return 'bg-primary-subtle text-primary';
   }
 
@@ -182,6 +233,10 @@ export class MarketingDashboardComponent {
 
   goToAddLead(): void {
     this.router.navigate(['/leads/add-leadCustomer']);
+  }
+
+  goToSalesAnalysis(): void {
+    this.router.navigate(['/sales-analysis']);
   }
 
   private t(key: string): string {

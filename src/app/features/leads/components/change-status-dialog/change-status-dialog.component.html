@@ -53,6 +53,28 @@
         }
       </div>
     </div>
+
+    <!-- Conditional NotBuyer reason — required only when the selected
+         status is NotBuyer; hidden + cleared otherwise. -->
+    @if (requiresReason()) {
+      <div class="mb-1">
+        <label class="form-label fw-600">
+          <i class="fa-solid fa-circle-question text-danger me-1"></i>
+          {{ 'customers.statusModal.notBuyingReason' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <textarea class="form-control"
+                  rows="3"
+                  [maxlength]="500"
+                  [placeholder]="'customers.statusModal.notBuyingReasonPh' | translate"
+                  [ngModel]="notBuyingReason()"
+                  (ngModelChange)="onReasonChange($event)"
+                  [disabled]="submitting()"></textarea>
+        <div class="form-text small">
+          {{ 'customers.statusModal.notBuyingReasonHelp' | translate }}
+        </div>
+      </div>
+    }
   }
 
   @if (errorMessage()) {

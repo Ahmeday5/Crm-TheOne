@@ -87,6 +87,27 @@
     }
   }
 
+  /* ─────────── Customer avatar (initials disc) ─────────── */
+  .customer-avatar {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--fw-700, 700);
+    font-size: var(--fs-sm, 0.875rem);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    user-select: none;
+    background: var(--brand-soft);
+    color: var(--brand);
+
+    &.is-buyer     { background: var(--success-soft); color: var(--success); }
+    &.is-non-buyer { background: var(--danger-soft);  color: var(--danger); }
+  }
+
   /* ─────────── Loss reason callout ─────────── */
   .loss-reason {
     display: flex;

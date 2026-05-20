@@ -29,3 +29,21 @@ export interface SalesAnalysisStats {
   /** Percentage 0–100. */
   conversionRate: number;
 }
+
+/** KPIs returned by `GET /Sales/SalesDashboardStatistics`. */
+export interface SalesDashboardStats {
+  buyerCustomers: number;
+  callsToday: number;
+  upcomingFollowUps: number;
+  overdueFollowUps: number;
+  transferredToSupport: number;
+  receivedFromMarketing: number;
+}
+
+/** Pipeline bucket returned by `GET /Sales/SalesCustomerStatusCount`. */
+export interface SalesStatusCount {
+  statusId: number;
+  /** Raw English enum code (e.g. `Negotiating`, `Buyer`, `NotBuyer`). */
+  statusName: string;
+  count: number;
+}

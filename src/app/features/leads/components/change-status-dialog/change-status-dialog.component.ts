@@ -16,7 +16,11 @@ import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
-import { CustomerFollowUpResponse, CustomerStatus } from '../../../../shared/models';
+import {
+  ChangeCustomerStatusRequest,
+  CustomerFollowUpResponse,
+  CustomerStatus,
+} from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { CustomersService } from '../../services/customers.service';
 import { customerStatusKey, resolveCustomerStatus } from '../../utils/customer-status.util';
@@ -47,9 +51,23 @@ export class ChangeStatusDialogComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly selectedId = signal<number | null>(null);
 
-  readonly canSubmit = computed(() => {
+  /** Free-text reason — only required when the selected status is NotBuyer. */
+  readonly notBuyingReason = signal('');
+
+  /** True when the currently-selected status maps to `NotBuyer`. */
+  readonly requiresReason = computed(() => {
     const id = this.selectedId();
-    return id !== null && !this.submitting();
+    if (id === null) return false;
+    const match = this.statuses().find((s) => s.id === id);
+    return !!match && customerStatusKey(match.name) === 'notBuyer';
+  });
+
+  readonly canSubmit = computed(() => {
+    if (this.submitting()) return false;
+    const id = this.selectedId();
+    if (id === null) return false;
+    if (this.requiresReason() && !this.notBuyingReason().trim()) return false;
+    return true;
   });
 
   ngOnInit(): void {
@@ -74,16 +92,30 @@ export class ChangeStatusDialogComponent implements OnInit {
   onSelect(id: number): void {
     this.selectedId.set(id);
     this.errorMessage.set(null);
+    // Drop a stale reason whenever the user moves off NotBuyer — keeps the
+    // payload clean and the field hidden without leaving an orphan value.
+    if (!this.requiresReason()) this.notBuyingReason.set('');
+  }
+
+  onReasonChange(value: string): void {
+    this.notBuyingReason.set(value);
+    if (this.errorMessage()) this.errorMessage.set(null);
   }
 
   submit(): void {
+    if (!this.canSubmit()) return;
     const id = this.selectedId();
-    if (id === null || this.submitting()) return;
+    if (id === null) return;
 
     this.submitting.set(true);
     this.errorMessage.set(null);
 
-    this.customers.changeStatus(this.customerId, { status: id }).subscribe({
+    const payload: ChangeCustomerStatusRequest = { status: id };
+    if (this.requiresReason()) {
+      payload.notBuyingReason = this.notBuyingReason().trim();
+    }
+
+    this.customers.changeStatus(this.customerId, payload).subscribe({
       next: (res) => {
         this.submitting.set(false);
         this.toast.success(this.t('customers.statusModal.success'));

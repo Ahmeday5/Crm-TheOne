@@ -1,198 +1,244 @@
-<div class="flex-grow-1">
-  <app-page-header [title]="'dashboard.sales.title' | translate"
-                   [subtitle]="'dashboard.sales.subtitle' | translate"
-                   icon="fa-solid fa-chart-line"></app-page-header>
+<div class="sales-dashboard flex-grow-1">
+  <app-page-header
+    [title]="'dashboard.sales.title' | translate"
+    [subtitle]="'dashboard.sales.subtitle' | translate"
+    icon="fa-solid fa-chart-line">
+  </app-page-header>
 
-  <div class="row g-3">
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
-        <div>
-          <p class="text-muted mb-1 small">{{ 'dashboard.kpi.myActiveClients' | translate }}</p>
-          <h3 class="fw-700 mb-0">1,234</h3>
-        </div>
-        <span class="icon-tile"><i class="fa-solid fa-users"></i></span>
-      </div></div>
+  @if (loadError()) {
+    <div class="mb-3">
+      <app-load-error
+        [message]="loadError()"
+        [loading]="loadingStats() || loadingPipeline() || loadingLeads()"
+        (retry)="reload()">
+      </app-load-error>
     </div>
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
-        <div>
-          <p class="text-muted mb-1 small">{{ 'dashboard.kpi.todayCalls' | translate }}</p>
-          <h3 class="fw-700 mb-0">14</h3>
+  }
+
+  <!-- ─── KPI strip (4 large cards) ─── -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card kpi-card h-100">
+        <div class="card-body d-flex justify-content-between align-items-start gap-3">
+          <div class="flex-grow-1 min-w-0">
+            <p class="text-muted small mb-1 text-truncate">{{ 'dashboard.kpi.buyerCustomers' | translate }}</p>
+            <h3 class="fw-700 mb-0">{{ kpis().buyerCustomers }}</h3>
+          </div>
+          <span class="icon-tile lg tone-info"><i class="fa-solid fa-users"></i></span>
         </div>
-        <span class="icon-tile"><i class="fa-solid fa-phone"></i></span>
-      </div></div>
+      </div>
     </div>
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
-        <div>
-          <p class="text-muted mb-1 small">{{ 'dashboard.kpi.activeDeals' | translate }}</p>
-          <h3 class="fw-700 mb-0">680K <small>{{ 'dashboard.sar' | translate }}</small></h3>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card kpi-card h-100">
+        <div class="card-body d-flex justify-content-between align-items-start gap-3">
+          <div class="flex-grow-1 min-w-0">
+            <p class="text-muted small mb-1 text-truncate">{{ 'dashboard.kpi.todayCalls' | translate }}</p>
+            <h3 class="fw-700 mb-0">{{ kpis().callsToday }}</h3>
+          </div>
+          <span class="icon-tile lg tone-success"><i class="fa-solid fa-phone"></i></span>
         </div>
-        <span class="icon-tile"><i class="fa-solid fa-chart-line"></i></span>
-      </div></div>
+      </div>
     </div>
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
-        <div>
-          <p class="text-muted mb-1 small">{{ 'dashboard.kpi.pendingFollowUps' | translate }}</p>
-          <h3 class="fw-700 mb-0">6</h3>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card kpi-card h-100">
+        <div class="card-body d-flex justify-content-between align-items-start gap-3">
+          <div class="flex-grow-1 min-w-0">
+            <p class="text-muted small mb-1 text-truncate">{{ 'dashboard.kpi.upcomingFollowUps' | translate }}</p>
+            <h3 class="fw-700 mb-0">{{ kpis().upcomingFollowUps }}</h3>
+          </div>
+          <span class="icon-tile lg tone-warning"><i class="fa-solid fa-calendar-check"></i></span>
         </div>
-        <span class="icon-tile"><i class="fa-regular fa-clock"></i></span>
-      </div></div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card kpi-card h-100">
+        <div class="card-body d-flex justify-content-between align-items-start gap-3">
+          <div class="flex-grow-1 min-w-0">
+            <p class="text-muted small mb-1 text-truncate">{{ 'dashboard.kpi.overdueFollowUps' | translate }}</p>
+            <h3 class="fw-700 mb-0" [class.text-danger]="kpis().overdueFollowUps > 0">
+              {{ kpis().overdueFollowUps }}
+            </h3>
+          </div>
+          <span class="icon-tile lg tone-danger"><i class="fa-solid fa-triangle-exclamation"></i></span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="row g-3 mt-1">
-    <div class="col-lg-6">
-      <div class="card h-100">
-        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.sales.pipeline' | translate }}</h5></div>
-        <div class="card-body">
-          <apx-chart [series]="revenueChartOptions.series" [chart]="revenueChartOptions.chart"
-            [xaxis]="revenueChartOptions.xaxis" [stroke]="revenueChartOptions.stroke"
-            [tooltip]="revenueChartOptions.tooltip"></apx-chart>
+  <!-- ─── Secondary KPIs (2 thinner cards) ─── -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-6">
+      <div class="card kpi-card h-100">
+        <div class="card-body d-flex justify-content-between align-items-center gap-3">
+          <div>
+            <p class="text-muted small mb-1">{{ 'dashboard.kpi.transferredToSupport' | translate }}</p>
+            <h4 class="fw-700 mb-0">{{ kpis().transferredToSupport }}</h4>
+          </div>
+          <span class="icon-tile tone-orange"><i class="fa-solid fa-headset"></i></span>
         </div>
       </div>
     </div>
-    <div class="col-lg-6">
-      <div class="card h-100">
-        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.sales.weeklyPerformance' | translate }}</h5></div>
-        <div class="card-body">
-          <apx-chart [series]="conversionChartOptions.series" [chart]="conversionChartOptions.chart"
-            [xaxis]="conversionChartOptions.xaxis" [plotOptions]="conversionChartOptions.plotOptions"
-            [dataLabels]="conversionChartOptions.dataLabels" [tooltip]="conversionChartOptions.tooltip"
-            [colors]="conversionChartOptions.colors"></apx-chart>
+    <div class="col-12 col-md-6">
+      <div class="card kpi-card h-100">
+        <div class="card-body d-flex justify-content-between align-items-center gap-3">
+          <div>
+            <p class="text-muted small mb-1">{{ 'dashboard.kpi.receivedFromMarketing' | translate }}</p>
+            <h4 class="fw-700 mb-0">{{ kpis().receivedFromMarketing }}</h4>
+          </div>
+          <span class="icon-tile tone-purple"><i class="fa-solid fa-bullhorn"></i></span>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="row g-3 mt-1">
-    <div class="col-lg-6">
+  <!-- ─── Pipeline chart + My Leads preview ─── -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-7">
       <div class="card h-100">
-        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.sales.myLeads' | translate }}</h5></div>
-        <div class="card-body" style="max-height:420px; overflow-y:auto;">
-          <div class="recent-item p-3 mb-2">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-              <div>
-                <p class="fw-600 mb-0">أحمد صابر المالكي</p>
-                <small class="text-muted">شركة الحلول التقنية</small>
-              </div>
-              <div class="text-end">
-                <p class="fw-700 text-success mb-1">55,000 {{ 'dashboard.sar' | translate }}</p>
-                <span class="badge bg-danger-subtle">{{ 'dashboard.sales.priority.high' | translate }}</span>
-              </div>
-            </div>
-            <div class="d-flex justify-content-between small">
-              <span class="badge bg-primary-subtle">{{ 'dashboard.sales.stages.priceQuote' | translate }}</span>
-              <span class="text-muted">{{ 'dashboard.sales.lastContact' | translate }}: {{ 'dashboard.today' | translate }}</span>
-            </div>
-          </div>
-          <div class="recent-item p-3 mb-2">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-              <div>
-                <p class="fw-600 mb-0">هناء محمد الشمري</p>
-                <small class="text-muted">وكالة التسويق الرقمي</small>
-              </div>
-              <div class="text-end">
-                <p class="fw-700 text-success mb-1">32,000 {{ 'dashboard.sar' | translate }}</p>
-                <span class="badge bg-danger-subtle">{{ 'dashboard.sales.priority.high' | translate }}</span>
-              </div>
-            </div>
-            <div class="d-flex justify-content-between small">
-              <span class="badge bg-primary-subtle">{{ 'dashboard.sales.stages.negotiation' | translate }}</span>
-              <span class="text-muted">{{ 'dashboard.sales.lastContact' | translate }}: {{ 'dashboard.yesterday' | translate }}</span>
-            </div>
-          </div>
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-chart-column text-primary"></i>
+          <h5 class="mb-0 flex-grow-1">{{ 'dashboard.sales.pipeline' | translate }}</h5>
+          @if (hasPipeline()) {
+            <span class="badge bg-light text-muted">{{ pipeline().length }}</span>
+          }
         </div>
-        <div class="card-footer">
-          <button class="btn btn-outline-primary w-100">{{ 'dashboard.viewAllLeads' | translate }}</button>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-6">
-      <div class="card h-100">
-        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.sales.dailySchedule' | translate }}</h5></div>
-        <div class="card-body" style="max-height:420px; overflow-y:auto;">
-          <div class="recent-item p-3 mb-3 border-r-indicator">
-            <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
-              <p class="fw-600 text-primary mb-0">10:00</p>
-              <span class="badge bg-primary-subtle">{{ 'dashboard.sales.duration.thirtyMin' | translate }}</span>
+        <div class="card-body">
+          @if (loadingPipeline()) {
+            <div class="text-center py-5">
+              <span class="spinner-border text-primary" role="status"></span>
             </div>
-            <p class="fw-600 mb-1">أحمد صابر المالكي - الحلول التقنية</p>
-            <small class="text-muted">{{ 'dashboard.sales.meetingType.demo' | translate }}</small>
-          </div>
-          <div class="recent-item p-3 mb-3 border-r-indicator">
-            <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
-              <p class="fw-600 text-primary mb-0">14:00</p>
-              <span class="badge bg-primary-subtle">{{ 'dashboard.sales.duration.fortyFiveMin' | translate }}</span>
+          } @else if (!hasPipeline()) {
+            <div class="text-center py-5 text-muted">
+              <i class="fa-solid fa-chart-column fa-2x mb-2 opacity-50 d-block"></i>
+              <p class="mb-0 small">{{ 'dashboard.sales.pipelineEmpty' | translate }}</p>
             </div>
-            <p class="fw-600 mb-1">هناء محمد الشمري - التسويق الرقمي</p>
-            <small class="text-muted">{{ 'dashboard.sales.meetingType.review' | translate }}</small>
-          </div>
-        </div>
-        <div class="card-footer">
-          <button class="btn btn-outline-primary w-100">{{ 'dashboard.sales.viewAllSchedule' | translate }}</button>
+          } @else {
+            <apx-chart
+              [series]="pipelineChart().series"
+              [chart]="pipelineChart().chart"
+              [plotOptions]="pipelineChart().plotOptions"
+              [colors]="pipelineChart().colors"
+              [dataLabels]="pipelineChart().dataLabels"
+              [xaxis]="pipelineChart().xaxis"
+              [yaxis]="pipelineChart().yaxis"
+              [legend]="pipelineChart().legend"
+              [grid]="pipelineChart().grid"
+              [tooltip]="pipelineChart().tooltip">
+            </apx-chart>
+          }
         </div>
       </div>
     </div>
 
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.sales.monthlySummary' | translate }}</h5></div>
-        <div class="card-body">
-          <div class="row text-center g-3">
-            <div class="col-6 col-md-3">
-              <div class="fs-3 fw-700 text-primary">27</div>
-              <small class="text-muted">{{ 'dashboard.sales.summary.closedDeals' | translate }}</small>
+    <div class="col-lg-5">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-user-tie text-primary"></i>
+          <h5 class="mb-0 flex-grow-1">{{ 'dashboard.sales.myLeads' | translate }}</h5>
+          @if (myLeads().length > 0) {
+            <span class="badge bg-light text-muted">{{ myLeads().length }}</span>
+          }
+        </div>
+        <div class="card-body p-3">
+          @if (loadingLeads()) {
+            <div class="text-center py-5">
+              <span class="spinner-border text-primary" role="status"></span>
             </div>
-            <div class="col-6 col-md-3">
-              <div class="fs-3 fw-700 text-success">850K {{ 'dashboard.sar' | translate }}</div>
-              <small class="text-muted">{{ 'dashboard.sales.summary.totalSales' | translate }}</small>
+          } @else if (myLeads().length === 0) {
+            <div class="text-center py-5 text-muted">
+              <i class="fa-solid fa-inbox fa-2x mb-2 opacity-50 d-block"></i>
+              <p class="mb-0 small">{{ 'customers.sales.empty' | translate }}</p>
             </div>
-            <div class="col-6 col-md-3">
-              <div class="fs-3 fw-700 text-warning">31,500 {{ 'dashboard.sar' | translate }}</div>
-              <small class="text-muted">{{ 'dashboard.sales.summary.avgDealSize' | translate }}</small>
+          } @else {
+            <div class="d-flex flex-column gap-2">
+              @for (lead of myLeads(); track trackById($index, lead)) {
+                <div class="recent-item p-3">
+                  <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <div class="min-w-0">
+                      <p class="fw-600 mb-0 text-truncate" [title]="lead.fullName">{{ lead.fullName }}</p>
+                      <small class="text-muted font-monospace">{{ lead.phone || '—' }}</small>
+                    </div>
+                    <span class="badge {{ statusBadgeClass(lead.status) }}">
+                      {{ localizeStatus(lead.status) }}
+                    </span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center small text-muted">
+                    @if (lead.campaignName) {
+                      <span class="d-inline-flex align-items-center gap-1 text-truncate">
+                        <i class="fa-solid fa-bullhorn opacity-75"></i>
+                        <span class="text-truncate">{{ lead.campaignName }}</span>
+                      </span>
+                    } @else {
+                      <span></span>
+                    }
+                    <span class="text-nowrap">
+                      {{ formatRelativeDate(lead.lastFollowUpDate || lead.createdAt) }}
+                    </span>
+                  </div>
+                </div>
+              }
             </div>
-            <div class="col-6 col-md-3">
-              <div class="fs-3 fw-700 text-primary">68%</div>
-              <small class="text-muted">{{ 'dashboard.sales.summary.conversionRate' | translate }}</small>
-            </div>
-          </div>
+          }
+        </div>
+        <div class="card-footer">
+          <button type="button"
+                  class="btn btn-outline-primary w-100"
+                  (click)="goToUpdateStatus()">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>
+            {{ 'dashboard.viewAllLeads' | translate }}
+          </button>
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.sales.quickActions' | translate }}</h5></div>
-        <div class="card-body">
-          <div class="row g-3">
-            <div class="col-12 col-md-6 col-lg-4">
-              <button class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2">
-                <i class="fa-solid fa-phone"></i>{{ 'dashboard.sales.actions.callClient' | translate }}
-              </button>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4">
-              <button class="btn btn-light w-100 d-flex align-items-center justify-content-center gap-2">
-                <i class="fa-solid fa-users"></i>{{ 'dashboard.sales.actions.updateStatus' | translate }}
-              </button>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4">
-              <button class="btn btn-light w-100 d-flex align-items-center justify-content-center gap-2">
-                <i class="fa-regular fa-file-lines"></i>{{ 'dashboard.sales.actions.createOffer' | translate }}
-              </button>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4">
-              <button class="btn btn-light w-100 d-flex align-items-center justify-content-center gap-2">
-                <i class="fa-solid fa-calendar-check"></i>{{ 'dashboard.sales.actions.scheduleMeeting' | translate }}
-              </button>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4">
-              <button class="btn btn-light w-100 d-flex align-items-center justify-content-center gap-2">
-                <i class="fa-regular fa-file"></i>{{ 'dashboard.sales.actions.createContract' | translate }}
-              </button>
-            </div>
-          </div>
+  <!-- ─── Quick actions ─── -->
+  <div class="card mb-4">
+    <div class="card-header d-flex align-items-center gap-2">
+      <i class="fa-solid fa-bolt text-warning"></i>
+      <h5 class="mb-0">{{ 'dashboard.sales.quickActions' | translate }}</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-6 col-md-4 col-lg col-xl">
+          <button type="button"
+                  class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2 py-2"
+                  (click)="goToCallClient()">
+            <i class="fa-solid fa-phone"></i>
+            <span>{{ 'dashboard.sales.actions.callClient' | translate }}</span>
+          </button>
+        </div>
+        <div class="col-6 col-md-4 col-lg col-xl">
+          <button type="button"
+                  class="btn btn-light border w-100 d-flex align-items-center justify-content-center gap-2 py-2"
+                  (click)="goToUpdateStatus()">
+            <i class="fa-solid fa-arrows-spin text-warning"></i>
+            <span>{{ 'dashboard.sales.actions.updateStatus' | translate }}</span>
+          </button>
+        </div>
+        <div class="col-6 col-md-4 col-lg col-xl">
+          <button type="button"
+                  class="btn btn-light border w-100 d-flex align-items-center justify-content-center gap-2 py-2"
+                  (click)="goToCreateOffer()">
+            <i class="fa-regular fa-file-lines text-success"></i>
+            <span>{{ 'dashboard.sales.actions.createOffer' | translate }}</span>
+          </button>
+        </div>
+        <div class="col-6 col-md-4 col-lg col-xl">
+          <button type="button"
+                  class="btn btn-light border w-100 d-flex align-items-center justify-content-center gap-2 py-2"
+                  (click)="goToScheduleMeeting()">
+            <i class="fa-solid fa-calendar-check text-info"></i>
+            <span>{{ 'dashboard.sales.actions.scheduleMeeting' | translate }}</span>
+          </button>
+        </div>
+        <div class="col-6 col-md-4 col-lg col-xl">
+          <button type="button"
+                  class="btn btn-light border w-100 d-flex align-items-center justify-content-center gap-2 py-2"
+                  (click)="goToCreateContract()">
+            <i class="fa-regular fa-file text-primary"></i>
+            <span>{{ 'dashboard.sales.actions.createContract' | translate }}</span>
+          </button>
         </div>
       </div>
     </div>

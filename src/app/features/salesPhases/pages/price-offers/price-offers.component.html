@@ -2,122 +2,190 @@
 
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
-      <h2 class="h4 fw-bold mb-1">عروض الأسعار</h2>
-      <p class="text-secondary mb-0">إدارة جميع عروض الأسعار</p>
+      <h2 class="h4 fw-bold mb-1">{{ 'sales.priceOffers.title' | translate }}</h2>
+      <p class="text-secondary mb-0">{{ 'sales.priceOffers.subtitle' | translate }}</p>
     </div>
-    <button class="btn btn-view d-flex align-items-center gap-2 fw-500 active" routerLink="/add-price-offer">
-      <i class="fa-solid fa-plus"></i> إنشاء عرض سعر
+    <button type="button"
+            class="btn btn-primary d-flex align-items-center gap-2 fw-500"
+            (click)="openCreate()">
+      <i class="fa-solid fa-plus"></i> {{ 'sales.priceOffers.add' | translate }}
     </button>
   </div>
 
+  <!-- KPI cards -->
   <div class="row g-3">
-    <div class="col-6 col-md col-lg-3">
-      <div class="card text-center border shadow-sm">
-        <div class="card-body">
-          <p class="h3 fw-bold mb-1">1</p>
-          <p class="text-muted small">الإجمالي</p>
-        </div>
-      </div>
+    <div class="col-12 col-sm-6 col-lg-4">
+      <app-stat-card
+        [label]="'sales.priceOffers.stats.count' | translate"
+        [value]="formatMoney(kpis().count)"
+        icon="fa-regular fa-file-lines"
+        tone="info">
+      </app-stat-card>
     </div>
-    <div class="col-6 col-md col-lg-3">
-      <div class="card text-center border shadow-sm">
-        <div class="card-body">
-          <p class="h3 fw-bold text-primary mb-1">1</p>
-          <p class="text-muted small">مُرسلة</p>
-        </div>
-      </div>
+    <div class="col-12 col-sm-6 col-lg-4">
+      <app-stat-card
+        [label]="'sales.priceOffers.stats.totalValue' | translate"
+        [value]="formatMoney(kpis().totalValue)"
+        icon="fa-solid fa-sack-dollar"
+        tone="success">
+      </app-stat-card>
     </div>
-    <div class="col-6 col-md col-lg-3">
-      <div class="card text-center border shadow-sm">
-        <div class="card-body">
-          <p class="h3 fw-bold text-success mb-1">0</p>
-          <p class="text-muted small">موافق عليها</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md col-lg-3">
-      <div class="card text-center border shadow-sm">
-        <div class="card-body">
-          <p class="h3 fw-bold text-secondary mb-1">0</p>
-          <p class="text-muted small">مسودات</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md col-lg-3">
-      <div class="card text-center border shadow-sm">
-        <div class="card-body">
-          <p class="h3 fw-bold text-warning mb-1">1</p>
-          <p class="text-muted small">منتهية</p>
-        </div>
-      </div>
+    <div class="col-12 col-sm-6 col-lg-4">
+      <app-stat-card
+        [label]="'sales.priceOffers.stats.totalDiscount' | translate"
+        [value]="formatMoney(kpis().totalDiscount)"
+        icon="fa-solid fa-tags"
+        tone="orange">
+      </app-stat-card>
     </div>
   </div>
 
-  <div class="card mb-4">
+  <!-- Filter -->
+  <div class="card">
     <div class="card-body">
-      <div class="row g-3">
-        <div class="col-md-6 col-lg-8">
-          <div class="input-group">
-            <input type="text" class="form-control" placeholder="البحث باسم العميل أو رقم عرض السعر...">
-          </div>
-        </div>
-        <div class="col-md-6 col-lg-4">
-          <select class="form-select">
-            <option value="all" selected>جميع الحالات</option>
-            <option value="مسودة">مسودة</option>
-            <option value="مُرسلة">مُرسلة</option>
-            <option value="موافق عليها">موافق عليها</option>
-            <option value="منتهية">منتهية</option>
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-6 col-lg-4">
+          <label class="form-label small text-muted mb-1">
+            {{ 'sales.priceOffers.table.customer' | translate }}
+          </label>
+          <select class="form-select"
+                  [ngModel]="selectedCustomerId() ?? ''"
+                  (ngModelChange)="onCustomerFilterChange($event)">
+            <option value="">{{ 'sales.priceOffers.allCustomers' | translate }}</option>
+            @for (c of customers(); track c.id) {
+              <option [value]="c.id">
+                {{ c.fullName }}@if (c.campanyName) { — {{ c.campanyName }} }
+              </option>
+            }
           </select>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">جميع عروض الأسعار: 1</h5>
-      <button class="btn btn-outline-secondary d-flex align-items-center gap-2">
-        <i class="fa-solid fa-filter"></i> تصدير
-      </button>
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>رقم عرض السعر</th>
-              <th>اسم العميل</th>
-              <th>الخدمة</th>
-              <th>المبلغ</th>
-              <th>الحالة</th>
-              <th>تاريخ الإنشاء</th>
-              <th>صالح حتى</th>
-              <th class="text-end">الإجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>QUO-20260108001</td>
-              <td>
-                <div>
-                  <div class="fw-medium">سارة علي</div>
-                  <small class="text-muted">وكالة التسويق الرقمي</small>
-                </div>
-              </td>
-              <td>تطبيق جوال</td>
-              <td class="fw-bold text-success">$25,200</td>
-              <td><span class="badge bg-info-subtle text-info">تم الإرسال</span></td>
-              <td>1/2/٢٠٢٦</td>
-              <td><span class="text-danger fw-medium">30/2/٢٠٢٦ (منتهي)</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-outline-secondary"><i class="fa-regular fa-eye"></i></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+  <!-- List -->
+  @if (loading()) {
+    <div class="card">
+      <div class="card-body p-5 text-center text-muted">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        {{ 'common.loading' | translate }}
       </div>
     </div>
-  </div>
+  } @else if (loadError()) {
+    <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
+  } @else if (rows().length === 0) {
+    <div class="card">
+      <div class="card-body p-5 text-center text-muted">
+        <i class="fa-regular fa-file-lines fs-2 d-block mb-2 opacity-50"></i>
+        {{ 'sales.priceOffers.empty' | translate }}
+      </div>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="mb-0 d-flex align-items-center gap-2">
+          <i class="fa-regular fa-file-lines text-primary"></i>
+          {{ 'sales.priceOffers.title' | translate }}
+          <span class="badge bg-primary-subtle text-primary">{{ formatMoney(totalCount()) }}</span>
+        </h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 po-table">
+            <thead>
+              <tr>
+                <th class="ps-3">{{ 'sales.priceOffers.table.number' | translate }}</th>
+                <th>{{ 'sales.priceOffers.table.customer' | translate }}</th>
+                <th class="text-center">{{ 'sales.priceOffers.table.items' | translate }}</th>
+                <th>{{ 'sales.priceOffers.table.subTotal' | translate }}</th>
+                <th>{{ 'sales.priceOffers.table.discount' | translate }}</th>
+                <th>{{ 'sales.priceOffers.table.netTotal' | translate }}</th>
+                <th class="text-end pe-3" style="width:1%">
+                  {{ 'sales.priceOffers.table.actions' | translate }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track trackById($index, row)) {
+                <tr>
+                  <td class="ps-3">
+                    <span class="po-id">#{{ row.id }}</span>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="po-avatar">{{ row.customerName.charAt(0) }}</span>
+                      <div class="min-w-0">
+                        <div class="fw-600 text-truncate">{{ row.customerName }}</div>
+                        @if (row.campanyName) {
+                          <small class="text-muted text-truncate d-block">{{ row.campanyName }}</small>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-light text-secondary border">{{ row.itemsCount }}</span>
+                  </td>
+                  <td class="text-nowrap">{{ formatMoney(row.subTotal) }}</td>
+                  <td class="text-nowrap text-warning fw-500">
+                    @if (row.discount > 0) { − {{ formatMoney(row.discount) }} } @else { — }
+                  </td>
+                  <td class="text-nowrap fw-bold text-success">{{ formatMoney(row.netTotal) }}</td>
+                  <td class="text-end pe-3">
+                    <div class="d-inline-flex gap-2 flex-nowrap">
+                      <button type="button"
+                              class="btn btn-sm btn-primary d-inline-flex align-items-center gap-2 text-nowrap"
+                              [disabled]="busyId() === row.id"
+                              (click)="openContract(row)">
+                        <i class="fa-solid fa-file-contract"></i>
+                        <span class="d-none d-md-inline">{{ 'sales.priceOffers.table.contract' | translate }}</span>
+                      </button>
+                      <button type="button"
+                              class="btn btn-sm btn-light"
+                              [disabled]="busyId() === row.id"
+                              [attr.title]="'sales.priceOffers.table.edit' | translate"
+                              [attr.aria-label]="'sales.priceOffers.table.edit' | translate"
+                              (click)="openEdit(row)">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                      </button>
+                      <button type="button"
+                              class="btn btn-sm btn-danger-soft"
+                              [disabled]="busyId() === row.id"
+                              [attr.title]="'sales.priceOffers.table.delete' | translate"
+                              [attr.aria-label]="'sales.priceOffers.table.delete' | translate"
+                              (click)="confirmDelete(row)">
+                        @if (busyId() === row.id) {
+                          <span class="spinner-border spinner-border-sm"></span>
+                        } @else {
+                          <i class="fa-solid fa-trash"></i>
+                        }
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <app-pagination
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [count]="totalCount()"
+      [disabled]="loading()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)">
+    </app-pagination>
+  }
 
 </div>
+
+@if (formOpen()) {
+  <app-price-offer-form-dialog
+    [quotationId]="editId()"
+    (created)="onSaved()"
+    (updated)="onSaved()"
+    (cancel)="closeForm()">
+  </app-price-offer-form-dialog>
+}

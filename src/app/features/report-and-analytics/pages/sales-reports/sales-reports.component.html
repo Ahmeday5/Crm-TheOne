@@ -129,13 +129,20 @@
       <div class="card h-100">
         <div class="card-header d-flex align-items-center gap-2">
           <i class="fa-solid fa-chart-pie text-primary"></i>
-          <h5 class="mb-0">{{ 'reportAnalysis.sales.charts.nonPurchaseReasons' | translate }}</h5>
+          <h5 class="mb-0 flex-grow-1">{{ 'reportAnalysis.sales.charts.nonPurchaseReasons' | translate }}</h5>
+          @if (reasonSlices().length > 0) {
+            <span class="badge bg-light text-muted">{{ reasonSlices().length }}</span>
+          }
         </div>
         <div class="card-body">
-          @if (reasonSlices().length === 0) {
+          @if (loadingReasons()) {
+            <div class="text-center py-5">
+              <span class="spinner-border text-primary" role="status"></span>
+            </div>
+          } @else if (reasonSlices().length === 0) {
             <div class="text-center py-5 text-muted">
               <i class="fa-solid fa-chart-pie fa-2x mb-2 opacity-50 d-block"></i>
-              <p class="mb-0 small">{{ 'reportAnalysis.sales.customersList.empty' | translate }}</p>
+              <p class="mb-0 small">{{ 'reportAnalysis.sales.charts.noReasons' | translate }}</p>
             </div>
           } @else {
             <apx-chart
@@ -145,6 +152,8 @@
               [colors]="reasonsChart().colors"
               [legend]="reasonsChart().legend"
               [dataLabels]="reasonsChart().dataLabels"
+              [plotOptions]="reasonsChart().plotOptions"
+              [tooltip]="reasonsChart().tooltip"
               [stroke]="reasonsChart().stroke"></apx-chart>
           }
         </div>
@@ -224,12 +233,19 @@
     </div>
   </div>
 
-  <!-- Detailed customer list -->
+  <!-- Detailed customer list — only Buyer / NotBuyer rows -->
   <div class="card">
-    <div class="card-header d-flex align-items-center gap-2">
+    <div class="card-header d-flex align-items-center gap-2 flex-wrap">
       <i class="fa-solid fa-users text-primary"></i>
       <h5 class="mb-0 flex-grow-1">{{ 'reportAnalysis.sales.customersList.title' | translate }}</h5>
-      <span class="badge bg-light text-muted">{{ filteredCustomers().length }}</span>
+      <span class="badge bg-success-subtle text-success">
+        <i class="fa-solid fa-circle-check me-1"></i>
+        {{ outcomeTotals().buyers }}
+      </span>
+      <span class="badge bg-danger-subtle text-danger">
+        <i class="fa-solid fa-circle-xmark me-1"></i>
+        {{ outcomeTotals().nonBuyers }}
+      </span>
     </div>
     <div class="card-body">
       <!-- Filters -->
@@ -240,18 +256,23 @@
             <input type="text"
                    class="form-control ps-5"
                    [placeholder]="'reportAnalysis.sales.customersList.searchPlaceholder' | translate"
-                   [(ngModel)]="searchTerm" />
+                   [ngModel]="searchTerm()"
+                   (ngModelChange)="searchTerm.set($event)" />
           </div>
         </div>
         <div class="col-md-3 col-lg-3">
-          <select class="form-select" [(ngModel)]="statusFilter">
+          <select class="form-select"
+                  [ngModel]="statusFilter()"
+                  (ngModelChange)="statusFilter.set($event)">
             <option value="">{{ 'reportAnalysis.sales.customersList.allStatuses' | translate }}</option>
             <option value="buyer">{{ 'reportAnalysis.sales.customersList.buyer' | translate }}</option>
             <option value="nonBuyer">{{ 'reportAnalysis.sales.customersList.nonBuyer' | translate }}</option>
           </select>
         </div>
         <div class="col-md-3 col-lg-3">
-          <select class="form-select" [(ngModel)]="platformFilter">
+          <select class="form-select"
+                  [ngModel]="platformFilter()"
+                  (ngModelChange)="platformFilter.set($event)">
             <option value="">{{ 'reportAnalysis.sales.customersList.allPlatforms' | translate }}</option>
             @for (p of platforms(); track p) {
               <option [value]="p">{{ p }}</option>
@@ -261,7 +282,7 @@
         <div class="col-md-12 col-lg-2 d-flex">
           <button type="button"
                   class="btn btn-light w-100"
-                  [disabled]="!searchTerm && !statusFilter && !platformFilter"
+                  [disabled]="!searchTerm() && !statusFilter() && !platformFilter()"
                   (click)="resetFilters()">
             <i class="fa-solid fa-rotate-left me-1"></i>{{ 'common.reset' | translate }}
           </button>
@@ -269,65 +290,90 @@
       </div>
 
       <!-- Customer cards -->
-      @if (filteredCustomers().length === 0) {
+      @if (loadingCustomers()) {
+        <div class="text-center py-5">
+          <span class="spinner-border text-primary" role="status"></span>
+        </div>
+      } @else if (filteredCustomers().length === 0) {
         <div class="text-center py-5 text-muted">
           <i class="fa-solid fa-inbox fa-3x mb-3 opacity-50 d-block"></i>
           <p class="mb-0">{{ 'reportAnalysis.sales.customersList.empty' | translate }}</p>
         </div>
       } @else {
         <div class="d-flex flex-column gap-3">
-          @for (c of filteredCustomers(); track c.name) {
-            <div class="customer-card" [class.is-buyer]="c.status === 'buyer'" [class.is-non-buyer]="c.status === 'nonBuyer'">
+          @for (c of filteredCustomers(); track trackById($index, c)) {
+            <div class="customer-card" [class.is-buyer]="isBuyer(c)" [class.is-non-buyer]="!isBuyer(c)">
               <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                 <div class="flex-grow-1 min-w-0">
                   <!-- Header row -->
-                  <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                    <h6 class="fw-700 mb-0">{{ c.name }}</h6>
-                    @if (c.status === 'buyer') {
-                      <span class="badge bg-success-subtle text-success">
-                        <i class="fa-solid fa-circle-check me-1"></i>
-                        {{ 'reportAnalysis.sales.customersList.buyer' | translate }}
+                  <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+                    <span class="customer-avatar" [class.is-buyer]="isBuyer(c)" [class.is-non-buyer]="!isBuyer(c)">
+                      {{ initials(c.fullName) }}
+                    </span>
+                    <div class="min-w-0">
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <h6 class="fw-700 mb-0">{{ c.fullName }}</h6>
+                        @if (isBuyer(c)) {
+                          <span class="badge bg-success-subtle text-success">
+                            <i class="fa-solid fa-circle-check me-1"></i>
+                            {{ 'reportAnalysis.sales.customersList.buyer' | translate }}
+                          </span>
+                        } @else {
+                          <span class="badge bg-danger-subtle text-danger">
+                            <i class="fa-solid fa-circle-xmark me-1"></i>
+                            {{ 'reportAnalysis.sales.customersList.nonBuyer' | translate }}
+                          </span>
+                        }
+                      </div>
+                      @if (c.phone) {
+                        <small class="text-muted font-monospace d-block mt-1" dir="ltr">{{ c.phone }}</small>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Services chips -->
+                  @if (c.services.length) {
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                      @for (svc of c.services; track svc) {
+                        <span class="badge bg-primary-subtle text-primary">
+                          <i class="fa-solid fa-bullseye me-1 opacity-75"></i>{{ svc }}
+                        </span>
+                      }
+                    </div>
+                  }
+
+                  <!-- Meta row -->
+                  <div class="d-flex flex-wrap gap-3 small text-muted">
+                    @if (c.campaignName) {
+                      <span>
+                        <i class="fa-solid fa-bullhorn me-1 opacity-75"></i>
+                        <strong>{{ 'reportAnalysis.sales.customersList.campaign' | translate }}:</strong>
+                        {{ c.campaignName }}
                       </span>
-                    } @else {
-                      <span class="badge bg-danger-subtle text-danger">
-                        <i class="fa-solid fa-circle-xmark me-1"></i>
-                        {{ 'reportAnalysis.sales.customersList.nonBuyer' | translate }}
+                    }
+                    @if (c.source) {
+                      <span>
+                        <i class="fa-solid fa-tower-broadcast me-1 opacity-75"></i>
+                        <strong>{{ 'reportAnalysis.sales.customersList.platform' | translate }}:</strong>
+                        {{ c.source }}
+                      </span>
+                    }
+                    @if (c.salesPersonName) {
+                      <span>
+                        <i class="fa-solid fa-user-tie me-1 opacity-75"></i>
+                        <strong>{{ 'reportAnalysis.sales.customersList.assignee' | translate }}:</strong>
+                        {{ c.salesPersonName }}
                       </span>
                     }
                   </div>
 
-                  <p class="text-muted small mb-2">{{ c.company }}</p>
-
-                  <!-- Stats row -->
-                  <div class="row row-cols-1 row-cols-md-3 g-2 small mb-2">
-                    <div class="d-flex align-items-center gap-2 text-muted">
-                      <i class="fa-solid fa-bullseye"></i>
-                      <span>{{ c.service }}</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 text-muted">
-                      <i class="fa-solid fa-sack-dollar"></i>
-                      <span>{{ formatCurrency(c.value) }} {{ 'reportAnalysis.sales.customersList.currency' | translate }}</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 text-muted">
-                      <i class="fa-solid fa-calendar"></i>
-                      <span>{{ c.daysInPipeline }} {{ 'reportAnalysis.sales.customersList.daysInPipeline' | translate }}</span>
-                    </div>
-                  </div>
-
-                  <!-- Meta row -->
-                  <div class="d-flex flex-wrap gap-3 small text-muted">
-                    <span><strong>{{ 'reportAnalysis.sales.customersList.campaign' | translate }}:</strong> {{ c.campaign }}</span>
-                    <span><strong>{{ 'reportAnalysis.sales.customersList.platform' | translate }}:</strong> {{ c.platform }}</span>
-                    <span><strong>{{ 'reportAnalysis.sales.customersList.assignee' | translate }}:</strong> {{ c.assignee }}</span>
-                  </div>
-
-                  <!-- Loss reason (non-buyer only) -->
-                  @if (c.status === 'nonBuyer' && c.lossReason) {
+                  <!-- Loss reason — only for non-buyers. -->
+                  @if (!isBuyer(c) && c.notBuyerReason) {
                     <div class="loss-reason mt-3">
                       <i class="fa-solid fa-circle-exclamation mt-1"></i>
                       <div>
                         <p class="fw-700 mb-1">{{ 'reportAnalysis.sales.customersList.nonPurchaseReason' | translate }}:</p>
-                        <p class="mb-0">{{ c.lossReason }}</p>
+                        <p class="mb-0">{{ c.notBuyerReason }}</p>
                       </div>
                     </div>
                   }
@@ -335,14 +381,14 @@
 
                 <!-- Date column -->
                 <div class="text-end ms-auto">
-                  @if (c.status === 'buyer') {
+                  @if (isBuyer(c)) {
                     <i class="fa-solid fa-arrow-trend-up text-success fs-4"></i>
                   } @else {
                     <i class="fa-solid fa-arrow-trend-down text-danger fs-4"></i>
                   }
                   <p class="text-muted small mb-0 mt-1 text-nowrap">
-                    {{ (c.status === 'buyer' ? 'reportAnalysis.sales.customersList.wonOn' : 'reportAnalysis.sales.customersList.lostOn') | translate }}
-                    {{ formatDate(c.date) }}
+                    {{ (isBuyer(c) ? 'reportAnalysis.sales.customersList.wonOn' : 'reportAnalysis.sales.customersList.lostOn') | translate }}
+                    {{ formatDate(c.createdAt) }}
                   </p>
                 </div>
               </div>

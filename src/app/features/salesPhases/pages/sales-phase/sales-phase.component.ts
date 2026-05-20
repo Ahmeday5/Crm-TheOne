@@ -18,12 +18,6 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 export class SalesPhaseComponent {
   readonly tabs: TabbedNavItem[] = [
     {
-      routerLink: 'line',
-      labelKey: 'sales.tabs.line',
-      icon: 'fa-solid fa-table-cells',
-      color: 'primary',
-    },
-    {
       routerLink: 'price-offers',
       labelKey: 'sales.tabs.priceOffers',
       icon: 'fa-regular fa-file-lines',

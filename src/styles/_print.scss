@@ -1,0 +1,34 @@
+/*
+ * Print isolation.
+ *
+ * The price-quotation contract (`.contract-sheet`) must print on its own —
+ * no sidebar, header, toolbar, or app chrome. Scoped component styles can't
+ * reach `body`, so the reveal rule lives here, globally.
+ */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .contract-sheet,
+  .contract-sheet * {
+    visibility: visible !important;
+  }
+
+  .contract-sheet {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    margin: 0 !important;
+    width: 100%;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

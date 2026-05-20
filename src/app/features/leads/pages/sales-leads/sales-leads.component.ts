@@ -9,28 +9,37 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
-import { LanguageService } from '../../../../core/services/language.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { toTelHref, toWhatsAppHref } from '../../../../core/utils/phone.util';
+import { LanguageService } from '../../../../core/services/language.service';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
-import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import {
   CustomerFollowUpResponse,
   CustomerListItem,
+  CustomerNoteResponse,
   CustomerStatus,
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ChannelSourcesService } from '../../../marketing-campaigns/services/channel-sources.service';
 import { AssignSupportDialogComponent } from '../../components/assign-support-dialog/assign-support-dialog.component';
 import { ChangeStatusDialogComponent } from '../../components/change-status-dialog/change-status-dialog.component';
+import {
+  CustomerActionsConfig,
+  CustomerActionsMenuComponent,
+} from '../../components/customer-actions-menu/customer-actions-menu.component';
 import { CustomerDetailsDialogComponent } from '../../components/customer-details-dialog/customer-details-dialog.component';
+import { CustomerNoteDialogComponent } from '../../components/customer-note-dialog/customer-note-dialog.component';
+import { CustomerNotesCellComponent } from '../../components/customer-notes-cell/customer-notes-cell.component';
 import { FollowUpDialogComponent } from '../../components/follow-up-dialog/follow-up-dialog.component';
 import { CustomersService } from '../../services/customers.service';
-import { customerStatusBadgeClass, resolveCustomerStatus } from '../../utils/customer-status.util';
+import {
+  customerStatusBadgeClass,
+  resolveCustomerStatus,
+} from '../../utils/customer-status.util';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -39,18 +48,6 @@ interface SourceItem {
   name: string;
 }
 
-/**
- * Sales view of customers.
- *
- * Backed by `GET /Customers/getSalesCustomers` — the backend applies its
- * own role-based filter:
- *   - Sales: only customers assigned to the caller
- *   - Admin: every customer assigned to any sales rep
- *
- * The page itself is read-only; mutations (assignment, lead creation) stay
- * in the marketing flow. The details modal is reused from the marketing
- * page so the two surfaces share the same customer record view.
- */
 @Component({
   selector: 'app-sales-leads',
   standalone: true,
@@ -58,7 +55,6 @@ interface SourceItem {
     CommonModule,
     FormsModule,
     TranslatePipe,
-    PageHeaderComponent,
     PaginationComponent,
     StatCardComponent,
     LoadErrorComponent,
@@ -66,6 +62,9 @@ interface SourceItem {
     AssignSupportDialogComponent,
     ChangeStatusDialogComponent,
     FollowUpDialogComponent,
+    CustomerNoteDialogComponent,
+    CustomerNotesCellComponent,
+    CustomerActionsMenuComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-leads.component.html',
@@ -76,6 +75,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   private readonly channelSources = inject(ChannelSourcesService);
   private readonly language = inject(LanguageService);
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   // ─────────── search / filter ───────────
   searchTerm = '';
@@ -103,33 +103,17 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   readonly assignSupportDialog = signal<CustomerListItem | null>(null);
   readonly changeStatusDialog = signal<CustomerListItem | null>(null);
   readonly followUpDialog = signal<CustomerListItem | null>(null);
+  readonly noteDialog = signal<CustomerListItem | null>(null);
 
-  /** True when the current user is an Admin. Drives copy + headers. */
+  /** True when the current user is an Admin — drives subtitle/empty copy. */
   readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
 
-  /** KPI summary derived from the current page. */
-  readonly kpis = computed(() => {
-    const list = this.rows();
-    const matches = (target: string) =>
-      list.filter((row) => (row.status ?? '').trim().toLowerCase() === target).length;
-
-    return {
-      total: this.count(),
-      newCount: matches('new'),
-      interested: matches('interested'),
-      inSupport: matches('in support'),
-    };
-  });
-
-  /** Empty-state copy switches based on role. */
-  readonly emptyMessageKey = computed(() =>
-    this.isAdmin() ? 'customers.sales.emptyAdmin' : 'customers.sales.empty',
+  readonly subtitleKey = computed(() =>
+    this.isAdmin() ? 'customers.sales.subtitleAdmin' : 'customers.sales.subtitleSales',
   );
 
-  readonly subtitleKey = computed(() =>
-    this.isAdmin()
-      ? 'customers.sales.subtitleAdmin'
-      : 'customers.sales.subtitleSales',
+  readonly emptyMessageKey = computed(() =>
+    this.isAdmin() ? 'customers.sales.emptyAdmin' : 'customers.sales.empty',
   );
 
   readonly welcomeSubtitleKey = computed(() =>
@@ -137,6 +121,32 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
       ? 'customers.sales.welcomeSubtitleAdmin'
       : 'customers.sales.welcomeSubtitleSales',
   );
+
+  /**
+   * Action surface for the row toolbar. Sales-specific:
+   *   - inline: view + note (high-frequency)
+   *   - dropdown: assign-support, change-status, follow-up
+   * Marketing-only actions (edit/delete/assign-sales) are explicitly off.
+   */
+  readonly actionsConfig: CustomerActionsConfig = {
+    view: true,
+    note: true,
+    assignSupport: true,
+    changeStatus: true,
+    followUp: true,
+  };
+
+  /** Page-scope KPIs derived from the loaded rows. */
+  readonly kpis = computed(() => {
+    const list = this.rows();
+    const lower = (s: string | null | undefined) => (s ?? '').trim().toLowerCase();
+    return {
+      total: this.count(),
+      pendingFollowUp: list.filter((r) => !!r.nextFollowUpDate).length,
+      transferredToSupport: list.filter((r) => !!r.isSalesToSupport).length,
+      newLeads: list.filter((r) => lower(r.status) === 'new').length,
+    };
+  });
 
   ngOnInit(): void {
     this.searchInput$
@@ -221,7 +231,14 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     this.reload();
   }
 
-  // ─────────── details dialog ───────────
+  // ─────────── navigation ───────────
+
+  /** CTA in the page header — same form Marketing uses, role-aware on return. */
+  goToAddCustomer(): void {
+    this.router.navigate(['/leads/add-leadCustomer']);
+  }
+
+  // ─────────── dialogs ───────────
 
   openDetails(row: CustomerListItem): void {
     this.detailsDialog.set(row.id);
@@ -229,18 +246,6 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
   closeDetails(): void {
     this.detailsDialog.set(null);
-  }
-
-  // ─────────── row actions ───────────
-
-  /** Returns `tel:+<E.164>` href or `null` when the phone is unusable. */
-  telHref(phone: string | null | undefined): string | null {
-    return toTelHref(phone);
-  }
-
-  /** Returns `https://wa.me/<E.164>` href or `null` when the phone is unusable. */
-  whatsAppHref(phone: string | null | undefined): string | null {
-    return toWhatsAppHref(phone);
   }
 
   openAssignSupport(row: CustomerListItem): void {
@@ -278,9 +283,6 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   }
 
   onFollowUpUpdated(res: CustomerFollowUpResponse): void {
-    // Optimistic in-place patch so the row reflects the new dates without a
-    // full reload — the cache invalidation in the service will pick up any
-    // server-side changes on the next navigation.
     this.rows.update((list) =>
       list.map((row) =>
         row.id === res.id
@@ -295,7 +297,39 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     this.closeFollowUp();
   }
 
+  openNote(row: CustomerListItem): void {
+    this.noteDialog.set(row);
+  }
+
+  closeNote(): void {
+    this.noteDialog.set(null);
+  }
+
+  onNoteSaved(res: CustomerNoteResponse): void {
+    this.rows.update((list) =>
+      list.map((row) =>
+        row.id === res.customerId
+          ? {
+              ...row,
+              noteMarketing: res.noteMarketing,
+              noteSales: res.noteSales,
+              noteSupport: res.noteSupport,
+            }
+          : row,
+      ),
+    );
+    this.closeNote();
+  }
+
   // ─────────── helpers ───────────
+
+  /** Two-letter initials used in the identity avatar. */
+  initials(name: string): string {
+    const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
 
   resolveStatus(status: string | null): string {
     if (!status || status === 'none') return this.t('customers.table.unknownStatus');
@@ -307,12 +341,12 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     return customerStatusBadgeClass(status);
   }
 
-  /** Localized name for a status row coming from `Customers/statuses` (always Arabic). */
   localizeStatusName(name: string): string {
     return resolveCustomerStatus(name, this.language.lang(), name);
   }
 
-  formatDate(dateStr: string): string {
+  formatDate(dateStr: string | null | undefined): string {
+    if (!dateStr) return '—';
     try {
       return new Date(dateStr).toLocaleDateString(
         this.language.lang() === 'ar' ? 'ar-EG' : 'en-US',

@@ -1,20 +1,28 @@
-<section class="sales-customers-page">
+<section class="customers-page sales-customers-page">
   <!-- Welcome strip -->
   <div class="mb-4">
     <h2 class="fw-700 mb-1">{{ 'customers.sales.welcomeTitle' | translate }}</h2>
     <p class="text-muted mb-0">{{ welcomeSubtitleKey() | translate }}</p>
   </div>
 
-  <!-- Page header -->
-  <app-page-header
-    [title]="'customers.sales.title' | translate"
-    [subtitle]="subtitleKey() | translate"
-    icon="fa-solid fa-user-tie">
-  </app-page-header>
+  <!-- Page header + Add CTA -->
+  <header class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <span class="icon-tile xl tone-primary"><i class="fa-solid fa-user-tie"></i></span>
+      <div>
+        <h3 class="fw-700 mb-1">{{ 'customers.sales.title' | translate }}</h3>
+        <p class="text-muted mb-0">{{ subtitleKey() | translate }}</p>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="goToAddCustomer()">
+      <i class="fa-solid fa-plus me-1"></i>
+      {{ 'customers.addNew' | translate }}
+    </button>
+  </header>
 
   <!-- KPIs -->
   <div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-6 col-lg-3">
       <app-stat-card
         [label]="'customers.kpi.total' | translate"
         [value]="kpis().total"
@@ -22,28 +30,28 @@
         tone="primary">
       </app-stat-card>
     </div>
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-6 col-lg-3">
       <app-stat-card
-        [label]="'customers.kpi.visible' | translate"
-        [value]="kpis().newCount"
+        [label]="'customers.kpi.newLeads' | translate"
+        [value]="kpis().newLeads"
         icon="fa-solid fa-user-plus"
-        tone="warning">
-      </app-stat-card>
-    </div>
-    <div class="col-12 col-sm-6 col-lg-3">
-      <app-stat-card
-        [label]="'customers.kpi.page' | translate"
-        [value]="pageIndex()"
-        icon="fa-solid fa-layer-group"
         tone="info">
       </app-stat-card>
     </div>
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-6 col-lg-3">
       <app-stat-card
-        [label]="'customers.kpi.pageSize' | translate"
-        [value]="pageSize()"
-        icon="fa-solid fa-table-list"
-        tone="orange">
+        [label]="'customers.kpi.pendingFollowUp' | translate"
+        [value]="kpis().pendingFollowUp"
+        icon="fa-solid fa-calendar-check"
+        tone="warning">
+      </app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card
+        [label]="'customers.kpi.transferredToSupport' | translate"
+        [value]="kpis().transferredToSupport"
+        icon="fa-solid fa-headset"
+        tone="success">
       </app-stat-card>
     </div>
   </div>
@@ -86,7 +94,7 @@
   </div>
 
   <!-- Table -->
-  <div class="card">
+  <div class="card crm-table">
     <div class="card-header d-flex align-items-center gap-2">
       <i class="fa-solid fa-user-tie text-primary"></i>
       <h5 class="mb-0">
@@ -102,148 +110,181 @@
     }
 
     <div class="card-body p-0">
-      <div class="table-responsive">
-        @if (loading()) {
-          <div class="text-center py-5">
-            <span class="spinner-border text-primary" role="status"></span>
-          </div>
-        } @else if (rows().length === 0) {
-          <div class="text-center py-5 text-muted">
-            <i class="fa-solid fa-inbox fa-3x mb-3 d-block opacity-50"></i>
-            <p class="mb-0">
-              {{ searchSignal() || selectedStatusId() || selectedSourceId()
-                ? ('customers.table.emptyFiltered' | translate)
-                : (emptyMessageKey() | translate) }}
-            </p>
-          </div>
-        } @else {
-          <table class="table table-hover mb-0 align-middle">
+      @if (loading()) {
+        <div class="text-center py-5">
+          <span class="spinner-border text-primary" role="status"></span>
+        </div>
+      } @else if (rows().length === 0) {
+        <div class="text-center py-5 text-muted">
+          <i class="fa-solid fa-inbox fa-3x mb-3 d-block opacity-50"></i>
+          <p class="mb-0">
+            {{ searchSignal() || selectedStatusId() || selectedSourceId()
+              ? ('customers.table.emptyFiltered' | translate)
+              : (emptyMessageKey() | translate) }}
+          </p>
+        </div>
+      } @else {
+        <div class="crm-table-scroll">
+          <table class="table table-hover align-middle">
             <thead>
               <tr>
-                <th class="ps-3">{{ 'customers.table.fullName' | translate }}</th>
-                <th>{{ 'customers.table.phone' | translate }}</th>
-                <th>{{ 'customers.table.source' | translate }}</th>
-                <th>{{ 'customers.table.campaign' | translate }}</th>
+                <th>{{ 'customers.table.fullName' | translate }}</th>
+                <th>{{ 'customers.table.source' | translate }} / {{ 'customers.table.campaign' | translate }}</th>
                 <th>{{ 'customers.table.services' | translate }}</th>
                 <th>{{ 'customers.table.status' | translate }}</th>
-                @if (isAdmin()) {
-                  <th>{{ 'customers.table.salesPerson' | translate }}</th>
-                }
+                <th>{{ 'customers.table.assignment' | translate }}</th>
+                <th>{{ 'customers.table.notes' | translate }}</th>
+                <th>{{ 'customers.table.followUpHeader' | translate }}</th>
                 <th>{{ 'customers.table.createdAt' | translate }}</th>
-                <th class="text-center">{{ 'customers.table.actions' | translate }}</th>
+                <th class="crm-actions-col text-center">{{ 'customers.table.actions' | translate }}</th>
               </tr>
             </thead>
             <tbody>
               @for (row of rows(); track trackById($index, row)) {
                 <tr>
-                  <td class="ps-3 fw-600">{{ row.fullName }}</td>
-                  <td class="font-monospace small">{{ row.phone }}</td>
+                  <!-- Identity -->
+                  <td>
+                    <div class="crm-identity">
+                      <span class="crm-avatar" [attr.aria-hidden]="true">
+                        {{ initials(row.fullName) }}
+                      </span>
+                      <div class="crm-identity-text">
+                        <div class="crm-name" [title]="row.fullName">{{ row.fullName }}</div>
+                        <div class="crm-phone">{{ row.phone || '—' }}</div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Source / Campaign -->
                   <td>
                     @if (row.source) {
-                      <span class="badge bg-info-subtle text-info">{{ row.source }}</span>
+                      <span class="crm-chip tone-info">{{ row.source }}</span>
                     } @else {
                       <span class="text-muted">—</span>
                     }
+                    @if (row.campaignName) {
+                      <div class="small text-muted mt-1 text-truncate" style="max-width: 11rem;" [title]="row.campaignName">
+                        {{ row.campaignName }}
+                      </div>
+                    }
                   </td>
-                  <td>{{ row.campaignName || '—' }}</td>
+
+                  <!-- Services -->
                   <td>
-                    @if (row.services && row.services.length > 0) {
-                      @for (svc of row.services; track svc) {
-                        <span class="badge bg-primary-subtle text-primary me-1 mb-1">{{ svc }}</span>
-                      }
+                    @if (row.services && row.services.length) {
+                      <div class="crm-chip-row">
+                        @for (svc of row.services; track svc) {
+                          <span class="crm-chip tone-brand">{{ svc }}</span>
+                        }
+                      </div>
                     } @else {
                       <span class="text-muted">—</span>
                     }
                   </td>
+
+                  <!-- Status -->
                   <td>
                     <span class="badge {{ statusBadgeClass(row.status) }}">
                       {{ resolveStatus(row.status) }}
                     </span>
                   </td>
-                  @if (isAdmin()) {
-                    <td>
-                      @if (row.salesPersonName) {
-                        <span class="d-flex align-items-center gap-1">
-                          <i class="fa-solid fa-user-tie text-success small"></i>
-                          {{ row.salesPersonName }}
-                        </span>
-                      } @else {
-                        <span class="text-muted fst-italic">
-                          {{ 'customers.table.notAssigned' | translate }}
-                        </span>
-                      }
-                    </td>
-                  }
-                  <td class="small text-muted">{{ formatDate(row.createdAt) }}</td>
+
+                  <!-- Assignment (sales + support + transfer chips) -->
                   <td>
-                    <div class="d-inline-flex gap-1 justify-content-center flex-wrap">
-                      <button type="button"
-                              class="btn btn-sm btn-light"
-                              [title]="'customers.table.view' | translate"
-                              (click)="openDetails(row)">
-                        <i class="fa-solid fa-eye"></i>
-                      </button>
-
-                      @if (telHref(row.phone); as href) {
-                        <a [href]="href"
-                           class="btn btn-sm btn-outline-primary"
-                           [title]="'customers.table.call' | translate">
-                          <i class="fa-solid fa-phone"></i>
-                        </a>
-                      } @else {
-                        <button type="button"
-                                class="btn btn-sm btn-outline-primary"
-                                disabled
-                                [title]="'customers.table.noPhone' | translate">
-                          <i class="fa-solid fa-phone"></i>
-                        </button>
+                    <div class="crm-assignment">
+                      <div class="crm-role-line">
+                        <span class="crm-role-icon is-sales"><i class="fa-solid fa-user-tie"></i></span>
+                        @if (row.salesPersonName) {
+                          <span class="crm-person-name" [title]="row.salesPersonName">{{ row.salesPersonName }}</span>
+                        } @else {
+                          <span class="crm-person-empty">{{ 'customers.table.notAssigned' | translate }}</span>
+                        }
+                      </div>
+                      <div class="crm-role-line">
+                        <span class="crm-role-icon is-support"><i class="fa-solid fa-headset"></i></span>
+                        @if (row.supportPersonName) {
+                          <span class="crm-person-name" [title]="row.supportPersonName">{{ row.supportPersonName }}</span>
+                        } @else {
+                          <span class="crm-person-empty">{{ 'customers.table.notAssigned' | translate }}</span>
+                        }
+                      </div>
+                      @if (row.isMarketingToSales || row.isSalesToSupport || row.isSupportToSales) {
+                        <div class="crm-chip-row">
+                          @if (row.isMarketingToSales) {
+                            <span class="crm-chip tone-info">
+                              <i class="fa-solid fa-bullhorn"></i>
+                              {{ 'customers.transfer.fromMarketing' | translate }}
+                            </span>
+                          }
+                          @if (row.isSalesToSupport) {
+                            <span class="crm-chip tone-warning">
+                              <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                              {{ 'customers.transfer.toSupport' | translate }}
+                            </span>
+                          }
+                          @if (row.isSupportToSales) {
+                            <span class="crm-chip tone-success">
+                              <i class="fa-solid fa-rotate-left"></i>
+                              {{ 'customers.transfer.fromSupport' | translate }}
+                            </span>
+                          }
+                        </div>
                       }
-
-                      @if (whatsAppHref(row.phone); as href) {
-                        <a [href]="href"
-                           target="_blank"
-                           rel="noopener"
-                           class="btn btn-sm btn-outline-success"
-                           [title]="'customers.table.whatsapp' | translate">
-                          <i class="fa-brands fa-whatsapp"></i>
-                        </a>
-                      } @else {
-                        <button type="button"
-                                class="btn btn-sm btn-outline-success"
-                                disabled
-                                [title]="'customers.table.noPhone' | translate">
-                          <i class="fa-brands fa-whatsapp"></i>
-                        </button>
-                      }
-
-                      <button type="button"
-                              class="btn btn-sm btn-outline-info"
-                              [title]="'customers.table.assignSupport' | translate"
-                              (click)="openAssignSupport(row)">
-                        <i class="fa-solid fa-headset"></i>
-                      </button>
-
-                      <button type="button"
-                              class="btn btn-sm btn-outline-warning"
-                              [title]="'customers.table.changeStatus' | translate"
-                              (click)="openChangeStatus(row)">
-                        <i class="fa-solid fa-arrows-spin"></i>
-                      </button>
-
-                      <button type="button"
-                              class="btn btn-sm btn-outline-secondary"
-                              [title]="'customers.table.followUp' | translate"
-                              (click)="openFollowUp(row)">
-                        <i class="fa-solid fa-calendar-check"></i>
-                      </button>
                     </div>
+                  </td>
+
+                  <!-- Notes -->
+                  <td>
+                    <app-customer-notes-cell
+                      [noteMarketing]="row.noteMarketing"
+                      [noteSales]="row.noteSales"
+                      [noteSupport]="row.noteSupport">
+                    </app-customer-notes-cell>
+                  </td>
+
+                  <!-- Follow-up -->
+                  <td>
+                    <div class="crm-followup">
+                      <div class="crm-followup-row">
+                        <i class="fa-solid fa-clock-rotate-left text-muted"></i>
+                        @if (row.lastFollowUpDate) {
+                          {{ formatDate(row.lastFollowUpDate) }}
+                        } @else {
+                          <span class="crm-followup-empty">{{ 'customers.table.lastFollowUp' | translate }}</span>
+                        }
+                      </div>
+                      <div class="crm-followup-row">
+                        <i class="fa-solid fa-calendar-day text-muted"></i>
+                        @if (row.nextFollowUpDate) {
+                          {{ formatDate(row.nextFollowUpDate) }}
+                        } @else {
+                          <span class="crm-followup-empty">{{ 'customers.table.nextFollowUp' | translate }}</span>
+                        }
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Created at -->
+                  <td class="small text-muted text-nowrap">{{ formatDate(row.createdAt) }}</td>
+
+                  <!-- Actions (sticky) -->
+                  <td class="crm-actions-col">
+                    <app-customer-actions-menu
+                      [phone]="row.phone"
+                      [actions]="actionsConfig"
+                      (view)="openDetails(row)"
+                      (note)="openNote(row)"
+                      (assignSupport)="openAssignSupport(row)"
+                      (changeStatus)="openChangeStatus(row)"
+                      (followUp)="openFollowUp(row)">
+                    </app-customer-actions-menu>
                   </td>
                 </tr>
               }
             </tbody>
           </table>
-        }
-      </div>
+        </div>
+      }
     </div>
 
     @if (count() > 0) {
@@ -296,4 +337,16 @@
     (updated)="onFollowUpUpdated($event)"
     (cancel)="closeFollowUp()">
   </app-follow-up-dialog>
+}
+
+@if (noteDialog(); as row) {
+  <app-customer-note-dialog
+    [customerId]="row.id"
+    [customerName]="row.fullName"
+    [noteMarketing]="row.noteMarketing ?? null"
+    [noteSales]="row.noteSales ?? null"
+    [noteSupport]="row.noteSupport ?? null"
+    (saved)="onNoteSaved($event)"
+    (cancel)="closeNote()">
+  </app-customer-note-dialog>
 }

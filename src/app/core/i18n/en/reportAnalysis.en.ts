@@ -242,6 +242,10 @@ const reportAnalysis: TranslationFile<'reportAnalysis'> = {
         platformPerformance: 'Ad-platform performance',
         buyers: 'Buyers',
         nonBuyers: 'Non-buyers',
+        otherReasons: 'Other reasons',
+        totalReasons: 'Total',
+        case: 'case',
+        noReasons: 'No non-purchase reasons logged yet.',
       },
       campaignsTable: {
         title: 'Campaign performance',

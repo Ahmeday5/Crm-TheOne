@@ -25,8 +25,10 @@ export type CustomerStatusKey =
   | 'assignedToSalesTeam'
   | 'contacted'
   | 'noAnswer'
+  | 'noResponse'
   | 'quoteSent'
-  | 'assignedToSupport';
+  | 'assignedToSupport'
+  | 'transferredToSupport';
 
 interface StatusEntry {
   key: CustomerStatusKey;
@@ -47,8 +49,10 @@ const STATUSES: StatusEntry[] = [
   { key: 'assignedToSalesTeam', code: 'assignedtosalesteam', arabic: 'محول لفريق المبيعات',   english: 'Assigned to sales',  badge: 'badge-status-default' },
   { key: 'contacted',           code: 'contacted',           arabic: 'تم التواصل',            english: 'Contacted',          badge: 'badge-status-default' },
   { key: 'noAnswer',            code: 'noanswer',            arabic: 'لا يرد',                english: 'No answer',          badge: 'badge-status-lost' },
+  { key: 'noResponse',          code: 'noresponse',          arabic: 'لا يوجد رد',            english: 'No response',        badge: 'badge-status-lost' },
   { key: 'quoteSent',           code: 'quotesent',           arabic: 'تم إرسال عرض سعر',     english: 'Quote sent',         badge: 'badge-status-default' },
   { key: 'assignedToSupport',   code: 'assignedtosupport',   arabic: 'محول للدعم',            english: 'Assigned to support',badge: 'badge-status-default' },
+  { key: 'transferredToSupport',code: 'transferredtosupport',arabic: 'محول للدعم الفني',      english: 'Transferred to support', badge: 'badge-status-default' },
 ];
 
 const CODE_INDEX: Map<string, StatusEntry> = new Map(STATUSES.map((s) => [s.code, s]));

@@ -1,0 +1,270 @@
+<div class="d-flex flex-column gap-4">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row md:align-items-center justify-content-between gap-3">
+    <div>
+      <h1 class="schedule-title mb-1">{{ 'sales.appointments.title' | translate }}</h1>
+      <p class="text-secondary mb-0">{{ 'sales.appointments.subtitle' | translate }}</p>
+    </div>
+    <button type="button"
+            class="btn btn-primary d-flex align-items-center gap-2 fw-500 align-self-start"
+            (click)="openCreate()">
+      <i class="fa-solid fa-plus"></i> {{ 'sales.appointments.add' | translate }}
+    </button>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="row g-3">
+    <div class="col-6 col-lg-3">
+      <app-stat-card [label]="'sales.appointments.stats.today' | translate"
+        [value]="stats()?.today ?? 0" icon="fa-solid fa-calendar-day" tone="info">
+      </app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card [label]="'sales.appointments.stats.confirmed' | translate"
+        [value]="stats()?.confirmed ?? 0" icon="fa-solid fa-circle-check" tone="success">
+      </app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card [label]="'sales.appointments.stats.upcoming' | translate"
+        [value]="stats()?.upcoming ?? 0" icon="fa-solid fa-clock" tone="orange">
+      </app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card [label]="'sales.appointments.stats.total' | translate"
+        [value]="stats()?.total ?? 0" icon="fa-solid fa-users" tone="purple">
+      </app-stat-card>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card">
+    <div class="card-body d-flex flex-column gap-3">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="mineOnly"
+               [ngModel]="mineOnly()" (ngModelChange)="toggleMine($event)">
+        <label class="form-check-label fw-600" for="mineOnly">
+          {{ 'sales.appointments.filters.mineOnly' | translate }}
+          @if (currentUserName()) { ({{ currentUserName() }}) }
+        </label>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="position-relative">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input class="form-control ps-5"
+                   [placeholder]="'sales.appointments.filters.searchPlaceholder' | translate"
+                   [ngModel]="search()"
+                   (ngModelChange)="onSearch($event)">
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <select class="form-select" [ngModel]="customerId() ?? ''"
+                  (ngModelChange)="onCustomerChange($event)">
+            <option value="">{{ 'sales.appointments.filters.allCustomers' | translate }}</option>
+            @for (c of customers(); track c.id) {
+              <option [value]="c.id">{{ c.fullName }}@if (c.campanyName) { — {{ c.campanyName }} }</option>
+            }
+          </select>
+        </div>
+        <div class="col-6 col-md-6 col-lg-2">
+          <select class="form-select" [ngModel]="typeFilter()" (ngModelChange)="onTypeFilter($event)">
+            <option value="all">{{ 'sales.appointments.filters.allTypes' | translate }}</option>
+            @for (t of types; track t.code) {
+              <option [ngValue]="t.code">{{ optionLabel(t) }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-6 col-md-6 col-lg-3">
+          <select class="form-select" [ngModel]="statusFilter()" (ngModelChange)="onStatusFilter($event)">
+            <option value="all">{{ 'sales.appointments.filters.allStatuses' | translate }}</option>
+            @for (s of statuses; track s.code) {
+              <option [ngValue]="s.code">{{ optionLabel(s) }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label small text-muted mb-1">
+            {{ 'sales.appointments.filters.fromDate' | translate }}
+          </label>
+          <input type="date" class="form-control" [ngModel]="fromDate()"
+                 (ngModelChange)="onFromDate($event)">
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label small text-muted mb-1">
+            {{ 'sales.appointments.filters.toDate' | translate }}
+          </label>
+          <input type="date" class="form-control" [ngModel]="toDate()"
+                 (ngModelChange)="onToDate($event)" [min]="fromDate() || null">
+        </div>
+        <div class="col-12 col-lg-6 d-flex align-items-end">
+          <div class="btn-group w-100" role="group">
+            <button type="button" class="btn"
+                    [class.btn-primary]="view() === 'list'"
+                    [class.btn-light]="view() !== 'list'"
+                    (click)="setView('list')">
+              <i class="fa-solid fa-list me-1"></i>
+              {{ 'sales.appointments.view.list' | translate }}
+            </button>
+            <button type="button" class="btn"
+                    [class.btn-primary]="view() === 'calendar'"
+                    [class.btn-light]="view() !== 'calendar'"
+                    (click)="setView('calendar')">
+              <i class="fa-solid fa-calendar-days me-1"></i>
+              {{ 'sales.appointments.view.calendar' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (view() === 'calendar') {
+    <div class="card">
+      <div class="card-body text-center py-5">
+        <i class="fa-solid fa-calendar-days calendar-placeholder-icon mb-3"></i>
+        <h3 class="h5 fw-bold mb-1">{{ 'sales.appointments.calendar.title' | translate }}</h3>
+        <p class="text-muted mb-0">{{ 'sales.appointments.calendar.soon' | translate }}</p>
+      </div>
+    </div>
+  } @else if (loading()) {
+    <div class="card">
+      <div class="card-body p-5 text-center text-muted">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        {{ 'common.loading' | translate }}
+      </div>
+    </div>
+  } @else if (loadError()) {
+    <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
+  } @else if (visibleRows().length === 0) {
+    <div class="card">
+      <div class="card-body p-5 text-center text-muted">
+        <i class="fa-solid fa-calendar-xmark fs-2 d-block mb-2 opacity-50"></i>
+        {{ 'sales.appointments.empty' | translate }}
+      </div>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="mb-0 d-flex align-items-center gap-2">
+          <i class="fa-solid fa-calendar-days text-primary"></i>
+          {{ 'sales.appointments.tableTitle' | translate }}
+          <span class="badge bg-primary-subtle text-primary">{{ totalCount() }}</span>
+        </h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th class="ps-3">#</th>
+                <th>{{ 'sales.appointments.table.title' | translate }}</th>
+                <th>{{ 'sales.appointments.table.customer' | translate }}</th>
+                <th>{{ 'sales.appointments.table.assignedTo' | translate }}</th>
+                <th>{{ 'sales.appointments.table.type' | translate }}</th>
+                <th>{{ 'sales.appointments.table.priority' | translate }}</th>
+                <th>{{ 'sales.appointments.table.status' | translate }}</th>
+                <th class="text-nowrap">{{ 'sales.appointments.table.start' | translate }}</th>
+                <th class="text-nowrap">{{ 'sales.appointments.table.end' | translate }}</th>
+                <th>{{ 'sales.appointments.table.location' | translate }}</th>
+                <th>{{ 'sales.appointments.table.meetingLink' | translate }}</th>
+                <th class="text-end pe-3" style="width:1%">
+                  {{ 'sales.appointments.table.actions' | translate }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of visibleRows(); track trackById($index, row)) {
+                <tr>
+                  <td class="ps-3 fw-bold text-primary">#{{ row.id }}</td>
+                  <td class="min-w-0" style="max-width:240px">
+                    <div class="fw-600 text-truncate">{{ row.title || '—' }}</div>
+                    @if (row.description) {
+                      <small class="text-muted text-truncate d-block">{{ row.description }}</small>
+                    }
+                  </td>
+                  <td class="text-nowrap">{{ row.customerFullName || '—' }}</td>
+                  <td class="text-nowrap">{{ row.assignedToUserName || '—' }}</td>
+                  <td>
+                    <span class="badge {{ typeBadgeClass(row.type) }}">{{ row.typeNameAr || '—' }}</span>
+                  </td>
+                  <td>
+                    <span class="badge {{ priorityBadgeClass(row.priority) }}">
+                      {{ row.priorityNameAr || '—' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge {{ statusBadgeClass(row.status) }}">
+                      {{ row.statusNameAr || '—' }}
+                    </span>
+                  </td>
+                  <td class="text-nowrap">
+                    <i class="fa-regular fa-calendar text-muted me-1"></i>{{ formatDateTime(row.startDate) }}
+                  </td>
+                  <td class="text-nowrap">
+                    <i class="fa-regular fa-calendar text-muted me-1"></i>{{ formatDateTime(row.endDate) }}
+                  </td>
+                  <td class="text-nowrap">
+                    @if (row.location) {
+                      <i class="fa-solid fa-location-dot text-muted me-1"></i>{{ row.location }}
+                    } @else { — }
+                  </td>
+                  <td>
+                    @if (row.meetingLink) {
+                      <a [href]="row.meetingLink" target="_blank" rel="noopener"
+                         class="text-decoration-none text-truncate d-inline-block" style="max-width:160px">
+                        <i class="fa-solid fa-video me-1"></i>{{ row.meetingLink }}
+                      </a>
+                    } @else { — }
+                  </td>
+                  <td class="text-end pe-3">
+                    <div class="d-inline-flex gap-2 flex-nowrap">
+                      <button type="button" class="btn btn-sm btn-light"
+                              [disabled]="busyId() === row.id"
+                              [attr.title]="'sales.appointments.table.edit' | translate"
+                              [attr.aria-label]="'sales.appointments.table.edit' | translate"
+                              (click)="openEdit(row)">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                      </button>
+                      <button type="button" class="btn btn-sm btn-danger-soft"
+                              [disabled]="busyId() === row.id"
+                              [attr.title]="'sales.appointments.table.delete' | translate"
+                              [attr.aria-label]="'sales.appointments.table.delete' | translate"
+                              (click)="confirmDelete(row)">
+                        @if (busyId() === row.id) {
+                          <span class="spinner-border spinner-border-sm"></span>
+                        } @else {
+                          <i class="fa-solid fa-trash"></i>
+                        }
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <app-pagination
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [count]="totalCount()"
+      [disabled]="loading()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)">
+    </app-pagination>
+  }
+</div>
+
+@if (formOpen()) {
+  <app-appointment-form-dialog
+    [appointmentId]="editId()"
+    (created)="onSaved()"
+    (updated)="onSaved()"
+    (cancel)="closeForm()">
+  </app-appointment-form-dialog>
+}

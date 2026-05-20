@@ -242,6 +242,10 @@ const reportAnalysis: TranslationFile<'reportAnalysis'> = {
         platformPerformance: 'أداء المنصات الإعلانية',
         buyers: 'مشترين',
         nonBuyers: 'غير مشترين',
+        otherReasons: 'أسباب أخرى',
+        totalReasons: 'الإجمالي',
+        case: 'حالة',
+        noReasons: 'لا توجد أسباب عدم شراء مسجّلة بعد.',
       },
       campaignsTable: {
         title: 'أداء الحملات التسويقية',

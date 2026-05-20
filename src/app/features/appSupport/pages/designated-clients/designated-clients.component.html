@@ -1,154 +1,323 @@
-<div class="container-fluid">
+<section class="customers-page support-customers-page">
+  <!-- Welcome strip -->
+  <div class="mb-4">
+    <h2 class="fw-700 mb-1">{{ 'customers.support.welcomeTitle' | translate }}</h2>
+    <p class="text-muted mb-0">{{ welcomeSubtitleKey() | translate }}</p>
+  </div>
 
-  <!-- العنوان والوصف -->
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
-    <div>
-      <h2 class="fw-bold mb-1">العملاء المحتملون المعينون</h2>
-      <p class="text-muted mb-0">عملاء محولون من فريق المبيعات للاستشارة الفنية</p>
+  <!-- Page header -->
+  <app-page-header
+    [title]="'customers.support.title' | translate"
+    [subtitle]="subtitleKey() | translate"
+    icon="fa-solid fa-user-check">
+  </app-page-header>
+
+  <!-- KPIs — support-focused. -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <app-stat-card
+        [label]="'customers.kpi.total' | translate"
+        [value]="kpis().total"
+        icon="fa-solid fa-users"
+        tone="primary">
+      </app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card
+        [label]="'customers.kpi.assignedCustomers' | translate"
+        [value]="kpis().assigned"
+        icon="fa-solid fa-user-check"
+        tone="info">
+      </app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card
+        [label]="'customers.kpi.pendingFollowUp' | translate"
+        [value]="kpis().pendingFollowUp"
+        icon="fa-solid fa-calendar-check"
+        tone="warning">
+      </app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card
+        [label]="'customers.kpi.withNotes' | translate"
+        [value]="kpis().withNotes"
+        icon="fa-solid fa-comment-dots"
+        tone="success">
+      </app-stat-card>
     </div>
   </div>
 
-  <!-- الكروت الثلاثة الصغيرة -->
-  <div class="row g-4 mb-4">
-    <div class="col-12 col-md-4">
-      <div class="card shadow-sm border-0 text-center py-4">
-        <div class="card-body">
-          <h3 class="fw-bold text-primary mb-1">3</h3>
-          <p class="text-muted mb-0">إجمالي المعينين</p>
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-4">
+          <div class="position-relative">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input class="form-control ps-5"
+                   [placeholder]="'customers.filters.searchPlaceholder' | translate"
+                   [ngModel]="searchTerm"
+                   (ngModelChange)="onSearchInput($event)" />
+          </div>
         </div>
-      </div>
-    </div>
-    <div class="col-12 col-md-4">
-      <div class="card shadow-sm border-0 text-center py-4">
-        <div class="card-body">
-          <h3 class="fw-bold text-warning mb-1">2</h3>
-          <p class="text-muted mb-0">قيد الانتظار</p>
+        <div class="col-12 col-md-4">
+          <select class="form-select"
+                  [ngModel]="selectedStatusId() ?? ''"
+                  (ngModelChange)="onStatusChange($event)">
+            <option value="">{{ 'customers.filters.allStatuses' | translate }}</option>
+            @for (s of statuses(); track s.id) {
+              <option [value]="s.id">{{ localizeStatusName(s.name) }}</option>
+            }
+          </select>
         </div>
-      </div>
-    </div>
-    <div class="col-12 col-md-4">
-      <div class="card shadow-sm border-0 text-center py-4">
-        <div class="card-body">
-          <h3 class="fw-bold text-success mb-1">0</h3>
-          <p class="text-muted mb-0">مكتملة</p>
+        <div class="col-12 col-md-4">
+          <select class="form-select"
+                  [ngModel]="selectedSourceId() ?? ''"
+                  (ngModelChange)="onSourceChange($event)">
+            <option value="">{{ 'customers.filters.allSources' | translate }}</option>
+            @for (src of sources(); track src.id) {
+              <option [value]="src.id">{{ src.name }}</option>
+            }
+          </select>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- حقل البحث -->
-  <div class="card shadow-sm border-0 mb-4">
-    <div class="card-body py-3">
-      <div class="position-relative">
-        <input
-          type="text"
-          class="form-control ps-3 pe-5"
-          placeholder="ابحث عن العملاء المحتملين..."
-        />
-        <i class="fa-solid fa-magnifying-glass position-absolute top-50 end-0 translate-middle-y pe-3 text-muted"></i>
-      </div>
+  <!-- Table -->
+  <div class="card crm-table">
+    <div class="card-header d-flex align-items-center gap-2">
+      <i class="fa-solid fa-user-check text-primary"></i>
+      <h5 class="mb-0">
+        {{ 'customers.support.title' | translate }}
+        <span class="text-muted small">({{ count() }})</span>
+      </h5>
     </div>
-  </div>
 
-  <!-- الجدول الرئيسي -->
-  <div class="card shadow-sm border-0">
-    <div class="card-header bg-white border-0 py-3">
-      <h5 class="mb-0">قائمة العملاء المحتملين (3)</h5>
-    </div>
+    @if (loadError()) {
+      <div class="m-3 mb-0">
+        <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
+      </div>
+    }
+
     <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead>
-            <tr>
-              <th>اسم العميل</th>
-              <th>الشركة</th>
-              <th>نوع الخدمة</th>
-              <th>مندوب المبيعات</th>
-              <th>تاريخ التعيين</th>
-              <th>الحالة</th>
-              <th>الإجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- السطر الأول -->
-            <tr>
-              <td class="fw-medium">أحمد محمد العمري</td>
-              <td>شركة الحلول التقنية</td>
-              <td>
-                <span class="badge bg-secondary-subtle text-secondary">برنامج محاسبي</span>
-              </td>
-              <td>عمر حسن الشهري</td>
-              <td>٨/١/٢٠٢٦</td>
-              <td>
-                <span class="badge bg-warning-subtle text-warning">قيد الانتظار</span>
-              </td>
-              <td>
-                <div class="d-flex gap-2 flex-wrap">
-                  <button class="btn btn-view active btn-sm d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-play"></i>
-                    بدء الاستشارة
-                  </button>
-                  <button class="btn btn-view btn-sm d-flex align-items-center gap-2">
-                    <i class="fa-regular fa-file-lines"></i>
-                    ملاحظات
-                  </button>
-                </div>
-              </td>
-            </tr>
-            
-            <!-- السطر الثاني -->
-            <tr>
-              <td class="fw-medium">سارة علي القحطاني</td>
-              <td>وكالة التسويق الرقمي</td>
-              <td>
-                <span class="badge bg-secondary-subtle text-secondary">تطبيق جوال</span>
-              </td>
-              <td>فاطمة علي الدوسري</td>
-              <td>٧/١/٢٠٢٦</td>
-              <td>
-                <span class="badge bg-warning-subtle text-warning">قيد الانتظار</span>
-              </td>
-              <td>
-                <div class="d-flex gap-2 flex-wrap">
-                  <button class="btn btn-view active btn-sm d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-play"></i>
-                    بدء الاستشارة
-                  </button>
-                  <button class="btn btn-view btn-sm d-flex align-items-center gap-2">
-                    <i class="fa-regular fa-file-lines"></i>
-                    ملاحظات
-                  </button>
-                </div>
-              </td>
-            </tr>
+      @if (loading()) {
+        <div class="text-center py-5">
+          <span class="spinner-border text-primary" role="status"></span>
+        </div>
+      } @else if (rows().length === 0) {
+        <div class="text-center py-5 text-muted">
+          <i class="fa-solid fa-inbox fa-3x mb-3 d-block opacity-50"></i>
+          <p class="mb-0">
+            {{ searchSignal() || selectedStatusId() || selectedSourceId()
+              ? ('customers.table.emptyFiltered' | translate)
+              : (emptyMessageKey() | translate) }}
+          </p>
+        </div>
+      } @else {
+        <div class="crm-table-scroll">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>{{ 'customers.table.fullName' | translate }}</th>
+                <th>{{ 'customers.table.source' | translate }} / {{ 'customers.table.campaign' | translate }}</th>
+                <th>{{ 'customers.table.services' | translate }}</th>
+                <th>{{ 'customers.table.status' | translate }}</th>
+                <th>{{ 'customers.table.assignment' | translate }}</th>
+                <th>{{ 'customers.table.notes' | translate }}</th>
+                <th>{{ 'customers.table.followUpHeader' | translate }}</th>
+                <th>{{ 'customers.table.createdAt' | translate }}</th>
+                <th class="crm-actions-col text-center">{{ 'customers.table.actions' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track trackById($index, row)) {
+                <tr>
+                  <td>
+                    <div class="crm-identity">
+                      <span class="crm-avatar" [attr.aria-hidden]="true">{{ initials(row.fullName) }}</span>
+                      <div class="crm-identity-text">
+                        <div class="crm-name" [title]="row.fullName">{{ row.fullName }}</div>
+                        <div class="crm-phone">{{ row.phone || '—' }}</div>
+                      </div>
+                    </div>
+                  </td>
 
-            <!-- السطر الثالث -->
-            <tr>
-              <td class="fw-medium">خالد إبراهيم المطيري</td>
-              <td>مؤسسة التجارة الإلكترونية</td>
-              <td>
-                <span class="badge bg-secondary-subtle text-secondary">موقع إلكتروني</span>
-              </td>
-              <td>نورة سعد العتيبي</td>
-              <td>٦/١/٢٠٢٦</td>
-              <td>
-                <span class="badge bg-primary-subtle text-primary">جاري الاستشارة</span>
-              </td>
-              <td>
-                <div class="d-flex gap-2 flex-wrap">
-                  <!-- هنا لم يكن هناك زر "بدء" في الأصل لأنه جاري بالفعل -->
-                  <button class="btn btn-view btn-sm d-flex align-items-center gap-2">
-                    <i class="fa-regular fa-file-lines"></i>
-                    ملاحظات
-                  </button>
-                </div>
-              </td>
-            </tr>
+                  <td>
+                    @if (row.source) {
+                      <span class="crm-chip tone-info">{{ row.source }}</span>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                    @if (row.campaignName) {
+                      <div class="small text-muted mt-1 text-truncate" style="max-width: 11rem;" [title]="row.campaignName">
+                        {{ row.campaignName }}
+                      </div>
+                    }
+                  </td>
 
-          </tbody>
-        </table>
-      </div>
+                  <td>
+                    @if (row.services && row.services.length) {
+                      <div class="crm-chip-row">
+                        @for (svc of row.services; track svc) {
+                          <span class="crm-chip tone-brand">{{ svc }}</span>
+                        }
+                      </div>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+
+                  <td>
+                    <span class="badge {{ statusBadgeClass(row.status) }}">
+                      {{ resolveStatus(row.status) }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <div class="crm-assignment">
+                      <div class="crm-role-line">
+                        <span class="crm-role-icon is-sales"><i class="fa-solid fa-user-tie"></i></span>
+                        @if (row.salesPersonName) {
+                          <span class="crm-person-name" [title]="row.salesPersonName">{{ row.salesPersonName }}</span>
+                        } @else {
+                          <span class="crm-person-empty">{{ 'customers.table.notAssigned' | translate }}</span>
+                        }
+                      </div>
+                      <div class="crm-role-line">
+                        <span class="crm-role-icon is-support"><i class="fa-solid fa-headset"></i></span>
+                        @if (row.supportPersonName) {
+                          <span class="crm-person-name" [title]="row.supportPersonName">{{ row.supportPersonName }}</span>
+                        } @else {
+                          <span class="crm-person-empty">{{ 'customers.table.notAssigned' | translate }}</span>
+                        }
+                      </div>
+                      @if (row.isMarketingToSales || row.isSalesToSupport || row.isSupportToSales) {
+                        <div class="crm-chip-row">
+                          @if (row.isMarketingToSales) {
+                            <span class="crm-chip tone-info">
+                              <i class="fa-solid fa-bullhorn"></i>
+                              {{ 'customers.transfer.fromMarketing' | translate }}
+                            </span>
+                          }
+                          @if (row.isSalesToSupport) {
+                            <span class="crm-chip tone-warning">
+                              <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                              {{ 'customers.transfer.toSupport' | translate }}
+                            </span>
+                          }
+                          @if (row.isSupportToSales) {
+                            <span class="crm-chip tone-success">
+                              <i class="fa-solid fa-rotate-left"></i>
+                              {{ 'customers.transfer.fromSupport' | translate }}
+                            </span>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </td>
+
+                  <td>
+                    <app-customer-notes-cell
+                      [noteMarketing]="row.noteMarketing"
+                      [noteSales]="row.noteSales"
+                      [noteSupport]="row.noteSupport">
+                    </app-customer-notes-cell>
+                  </td>
+
+                  <td>
+                    <div class="crm-followup">
+                      <div class="crm-followup-row">
+                        <i class="fa-solid fa-clock-rotate-left text-muted"></i>
+                        @if (row.lastFollowUpDate) {
+                          {{ formatDate(row.lastFollowUpDate) }}
+                        } @else {
+                          <span class="crm-followup-empty">{{ 'customers.table.lastFollowUp' | translate }}</span>
+                        }
+                      </div>
+                      <div class="crm-followup-row">
+                        <i class="fa-solid fa-calendar-day text-muted"></i>
+                        @if (row.nextFollowUpDate) {
+                          {{ formatDate(row.nextFollowUpDate) }}
+                        } @else {
+                          <span class="crm-followup-empty">{{ 'customers.table.nextFollowUp' | translate }}</span>
+                        }
+                      </div>
+                    </div>
+                  </td>
+
+                  <td class="small text-muted text-nowrap">{{ formatDate(row.createdAt) }}</td>
+
+                  <td class="crm-actions-col">
+                    <app-customer-actions-menu
+                      [phone]="row.phone"
+                      [actions]="actionsConfig"
+                      (view)="openDetails(row)"
+                      (note)="openNote(row)"
+                      (changeStatus)="openChangeStatus(row)"
+                      (followUp)="openFollowUp(row)">
+                    </app-customer-actions-menu>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
-  </div>
 
-</div>
+    @if (count() > 0) {
+      <div class="card-footer">
+        <app-pagination
+          [pageIndex]="pageIndex()"
+          [pageSize]="pageSize()"
+          [count]="count()"
+          [disabled]="loading()"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)">
+        </app-pagination>
+      </div>
+    }
+  </div>
+</section>
+
+@if (detailsDialog(); as id) {
+  <app-customer-details-dialog
+    [customerId]="id"
+    (closed)="closeDetails()">
+  </app-customer-details-dialog>
+}
+
+@if (changeStatusDialog(); as row) {
+  <app-change-status-dialog
+    [customerId]="row.id"
+    [customerName]="row.fullName"
+    [currentStatus]="row.status"
+    (changed)="onStatusChanged($event)"
+    (cancel)="closeChangeStatus()">
+  </app-change-status-dialog>
+}
+
+@if (followUpDialog(); as row) {
+  <app-follow-up-dialog
+    [customerId]="row.id"
+    [customerName]="row.fullName"
+    [lastFollowUpDate]="row.lastFollowUpDate"
+    [nextFollowUpDate]="row.nextFollowUpDate"
+    (updated)="onFollowUpUpdated($event)"
+    (cancel)="closeFollowUp()">
+  </app-follow-up-dialog>
+}
+
+@if (noteDialog(); as row) {
+  <app-customer-note-dialog
+    [customerId]="row.id"
+    [customerName]="row.fullName"
+    [noteMarketing]="row.noteMarketing ?? null"
+    [noteSales]="row.noteSales ?? null"
+    [noteSupport]="row.noteSupport ?? null"
+    (saved)="onNoteSaved($event)"
+    (cancel)="closeNote()">
+  </app-customer-note-dialog>
+}

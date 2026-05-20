@@ -16,6 +16,7 @@ import {
 import { Router } from '@angular/router';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
+import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
@@ -59,6 +60,7 @@ export class AddLeadComponent {
   private readonly servicesApi = inject(ServicesService);
   private readonly toast = inject(ToastService);
   private readonly language = inject(LanguageService);
+  private readonly auth = inject(AuthService);
 
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -216,8 +218,17 @@ export class AddLeadComponent {
     });
   }
 
+  /**
+   * Returns to the role-appropriate leads list. Sales reps don't have
+   * access to the marketing list, so a hard-coded redirect would bounce
+   * them off `roleGuard` and back to login.
+   */
   goBack(): void {
-    this.router.navigate(['/leads/marketing-leadsCustomer']);
+    const target =
+      this.auth.currentRole() === 'Sales'
+        ? '/leads/sales-leadsCustomer'
+        : '/leads/marketing-leadsCustomer';
+    this.router.navigate([target]);
   }
 
   private t(key: string): string {

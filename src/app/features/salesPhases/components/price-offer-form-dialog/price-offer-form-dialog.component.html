@@ -1,0 +1,199 @@
+<app-modal
+  [open]="true"
+  [title]="(isEditMode ? 'sales.priceOffers.form.editTitle' : 'sales.priceOffers.form.createTitle') | translate"
+  [icon]="isEditMode ? 'fa-solid fa-pen-to-square' : 'fa-regular fa-file-lines'"
+  iconTone="primary"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  @if (loadError()) {
+    <div class="alert alert-danger d-flex align-items-center justify-content-between gap-2 mb-0">
+      <span><i class="fa-solid fa-circle-exclamation me-2"></i>{{ loadError() }}</span>
+      <button type="button" class="btn btn-sm btn-light" (click)="retryLoad()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else if (loadingQuote()) {
+    <div class="p-5 text-center text-muted">
+      <span class="spinner-border spinner-border-sm me-2"></span>
+      {{ 'common.loading' | translate }}
+    </div>
+  } @else {
+    <form [formGroup]="form" id="price-offer-form" novalidate (ngSubmit)="submit()">
+
+      <!-- Customer -->
+      <section class="form-section">
+        <h6 class="section-title">
+          <i class="fa-solid fa-user text-primary"></i>
+          {{ 'sales.priceOffers.form.customer' | translate }}
+        </h6>
+        <select class="form-select"
+                formControlName="customerId"
+                [class.is-invalid]="form.controls.customerId.invalid && form.controls.customerId.touched">
+          <option [ngValue]="null" disabled>
+            @if (loadingCustomers()) {
+              {{ 'sales.priceOffers.form.loadingCustomers' | translate }}
+            } @else {
+              {{ 'sales.priceOffers.form.customerPlaceholder' | translate }}
+            }
+          </option>
+          @for (c of customers(); track c.id) {
+            <option [ngValue]="c.id">
+              {{ c.fullName }}@if (c.campanyName) { — {{ c.campanyName }} }
+            </option>
+          }
+        </select>
+        @if (form.controls.customerId.invalid && form.controls.customerId.touched) {
+          <small class="text-danger">{{ 'sales.priceOffers.form.customerRequired' | translate }}</small>
+        }
+      </section>
+
+      <!-- Services / line items -->
+      <section class="form-section">
+        <h6 class="section-title">
+          <i class="fa-solid fa-list-check text-purple"></i>
+          {{ 'sales.priceOffers.form.services' | translate }}
+        </h6>
+
+        @if (form.controls.customerId.value == null) {
+          <div class="alert alert-light border text-muted mb-0">
+            <i class="fa-solid fa-circle-info me-2"></i>
+            {{ 'sales.priceOffers.form.selectCustomerFirst' | translate }}
+          </div>
+        } @else {
+          <p class="text-muted small mb-2">{{ 'sales.priceOffers.form.servicesHint' | translate }}</p>
+
+          @if (items.length === 0) {
+            <div class="alert alert-warning">
+              <i class="fa-solid fa-triangle-exclamation me-2"></i>
+              {{ 'sales.priceOffers.form.noServices' | translate }}
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table align-middle mb-2">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width:36px">#</th>
+                    <th>{{ 'sales.priceOffers.form.service' | translate }}</th>
+                    <th style="width:150px">{{ 'sales.priceOffers.form.unitPrice' | translate }}</th>
+                    <th style="width:130px">{{ 'sales.priceOffers.form.quantity' | translate }}</th>
+                    <th style="width:130px">{{ 'sales.priceOffers.form.lineTotal' | translate }}</th>
+                    <th style="width:48px"></th>
+                  </tr>
+                </thead>
+                <tbody formArrayName="items">
+                  @for (group of items.controls; track group; let i = $index) {
+                    <tr [formGroupName]="i">
+                      <td class="text-muted">{{ i + 1 }}</td>
+                      <td class="fw-medium">{{ group.get('serviceName')?.value }}</td>
+                      <td>
+                        <input type="number" min="0" step="any" class="form-control"
+                               formControlName="unitPrice" placeholder="0.00">
+                      </td>
+                      <td>
+                        <input type="number" min="1" step="1" class="form-control"
+                               formControlName="quantity" placeholder="1">
+                      </td>
+                      <td class="fw-bold">{{ formatMoney(lineTotal(group)) }}</td>
+                      <td>
+                        <button type="button" class="btn btn-sm btn-danger-soft"
+                                [attr.title]="'sales.priceOffers.form.removeItem' | translate"
+                                [attr.aria-label]="'sales.priceOffers.form.removeItem' | translate"
+                                (click)="removeItem(i)">
+                          <i class="fa-solid fa-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <!-- Add a catalogue service the customer isn't linked to -->
+          <div class="d-flex flex-wrap align-items-end gap-2 mt-2">
+            <div class="flex-grow-1" style="min-width:220px">
+              <label class="form-label small text-muted mb-1">
+                {{ 'sales.priceOffers.form.addService' | translate }}
+              </label>
+              <select class="form-select"
+                      [ngModel]="extraServiceId() ?? ''"
+                      [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="extraServiceId.set($event ? +$event : null)">
+                <option value="">{{ 'sales.priceOffers.form.addServicePlaceholder' | translate }}</option>
+                @for (s of availableExtras(); track s.id) {
+                  <option [value]="s.id">{{ serviceName(s) }}</option>
+                }
+              </select>
+            </div>
+            <button type="button" class="btn btn-primary-soft"
+                    [disabled]="extraServiceId() == null"
+                    (click)="addExtraService()">
+              <i class="fa-solid fa-plus me-1"></i>
+              {{ 'sales.priceOffers.form.addServiceBtn' | translate }}
+            </button>
+          </div>
+        }
+      </section>
+
+      <!-- Discount / notes -->
+      <section class="form-section">
+        <h6 class="section-title">
+          <i class="fa-solid fa-percent text-success"></i>
+          {{ 'sales.priceOffers.form.discount' | translate }}
+        </h6>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">{{ 'sales.priceOffers.form.discount' | translate }}</label>
+            <input type="number" min="0" step="any" class="form-control"
+                   formControlName="discount" placeholder="0">
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">{{ 'sales.priceOffers.form.notes' | translate }}</label>
+            <textarea class="form-control" rows="2" formControlName="notes"
+                      [placeholder]="'sales.priceOffers.form.notesPlaceholder' | translate"></textarea>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <div class="d-flex justify-content-between p-3 rounded bg-surface-1">
+              <span class="text-muted">{{ 'sales.priceOffers.form.subTotal' | translate }}</span>
+              <span class="fw-bold">{{ formatMoney(subTotal()) }}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="d-flex justify-content-between p-3 rounded bg-surface-1">
+              <span class="text-muted">{{ 'sales.priceOffers.form.netTotal' | translate }}</span>
+              <span class="fw-bold text-success fs-5">{{ formatMoney(netTotal()) }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      @if (errorMessage()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+    </form>
+  }
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="cancel.emit()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button type="submit" form="price-offer-form" class="btn btn-primary"
+            [disabled]="submitting() || loadingQuote() || !!loadError()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-regular fa-floppy-disk me-1"></i>
+      }
+      {{ (isEditMode ? 'sales.priceOffers.form.update' : 'sales.priceOffers.form.save') | translate }}
+    </button>
+  </ng-container>
+</app-modal>

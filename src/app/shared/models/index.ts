@@ -3,5 +3,8 @@ export * from './paged-result.model';
 export * from './campaigns';
 export * from './services';
 export * from './customers';
+export * from './price-quotations';
+export * from './contracts';
+export * from './appointments';
 export * from './marketing';
 export * from './reports';
