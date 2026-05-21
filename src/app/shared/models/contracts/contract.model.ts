@@ -65,6 +65,7 @@ export interface ContractDetail {
   customerName: string;
   companyName: string | null;
   phone: string | null;
+  address: string | null;
   createdById: string;
   createdByName: string;
   status: ContractStatusCode;
@@ -92,6 +93,7 @@ export interface ContractListItem {
   customerName: string;
   companyName: string | null;
   phone: string | null;
+  address: string | null;
   createdById: string;
   createdByName: string;
   status: ContractStatusCode;

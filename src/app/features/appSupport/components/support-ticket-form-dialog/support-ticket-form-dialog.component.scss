@@ -1,0 +1,13 @@
+:host {
+  display: contents;
+}
+
+.form-label {
+  font-size: var(--fs-sm);
+  color: var(--text-1);
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 96px;
+}

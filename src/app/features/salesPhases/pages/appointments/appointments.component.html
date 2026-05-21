@@ -153,6 +153,13 @@
           {{ 'sales.appointments.tableTitle' | translate }}
           <span class="badge bg-primary-subtle text-primary">{{ totalCount() }}</span>
         </h5>
+        <app-table-tools
+          [reportTitle]="'sales.appointments.tableTitle' | translate"
+          [columns]="exportColumns"
+          [rows]="visibleExportRows"
+          [fetchAll]="fetchAllRows"
+          [disabled]="loading() || visibleRows().length === 0">
+        </app-table-tools>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">

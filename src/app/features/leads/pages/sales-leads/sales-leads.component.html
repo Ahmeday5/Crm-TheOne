@@ -101,6 +101,14 @@
         {{ 'customers.sales.title' | translate }}
         <span class="text-muted small">({{ count() }})</span>
       </h5>
+      <app-table-tools
+        class="ms-auto"
+        [reportTitle]="'customers.sales.title' | translate"
+        [columns]="exportColumns"
+        [rows]="rows()"
+        [fetchAll]="fetchAllRows"
+        [disabled]="loading() || rows().length === 0">
+      </app-table-tools>
     </div>
 
     @if (loadError()) {
@@ -134,6 +142,7 @@
                 <th>{{ 'customers.table.status' | translate }}</th>
                 <th>{{ 'customers.table.assignment' | translate }}</th>
                 <th>{{ 'customers.table.notes' | translate }}</th>
+                <th>{{ 'customers.consultation.column' | translate }}</th>
                 <th>{{ 'customers.table.followUpHeader' | translate }}</th>
                 <th>{{ 'customers.table.createdAt' | translate }}</th>
                 <th class="crm-actions-col text-center">{{ 'customers.table.actions' | translate }}</th>
@@ -151,6 +160,11 @@
                       <div class="crm-identity-text">
                         <div class="crm-name" [title]="row.fullName">{{ row.fullName }}</div>
                         <div class="crm-phone">{{ row.phone || '—' }}</div>
+                        @if (row.address) {
+                          <div class="crm-phone text-truncate" style="max-width: 12rem;" [title]="row.address">
+                            <i class="fa-solid fa-location-dot me-1 opacity-75"></i>{{ row.address }}
+                          </div>
+                        }
                       </div>
                     </div>
                   </td>
@@ -173,8 +187,8 @@
                   <td>
                     @if (row.services && row.services.length) {
                       <div class="crm-chip-row">
-                        @for (svc of row.services; track svc) {
-                          <span class="crm-chip tone-brand">{{ svc }}</span>
+                        @for (svc of row.services; track svc.id) {
+                          <span class="crm-chip tone-brand">{{ svc.name }}</span>
                         }
                       </div>
                     } @else {
@@ -240,6 +254,19 @@
                       [noteSales]="row.noteSales"
                       [noteSupport]="row.noteSupport">
                     </app-customer-notes-cell>
+                  </td>
+
+                  <!-- Consultation status -->
+                  <td>
+                    @if (row.isConsulted) {
+                      <span class="badge cns-badge cns-badge--done">
+                        <i class="fa-solid fa-circle-check"></i>{{ 'customers.consultation.badgeDone' | translate }}
+                      </span>
+                    } @else {
+                      <span class="badge cns-badge cns-badge--pending">
+                        <i class="fa-solid fa-hourglass-half"></i>{{ 'customers.consultation.badgePending' | translate }}
+                      </span>
+                    }
                   </td>
 
                   <!-- Follow-up -->

@@ -78,7 +78,7 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
     phone: ['', [Validators.required, phoneValidator()]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(120)]],
     companyName: ['', [Validators.maxLength(120)]],
-    notes: ['', [Validators.maxLength(500)]],
+    address: ['', [Validators.maxLength(200)]],
     campaignId: [null as number | null, [Validators.required]],
     serviceIds: this.fb.nonNullable.control<number[]>([], [minSelected(1)]),
   });
@@ -118,14 +118,14 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
     this.customers.getById(this.customerId).subscribe({
       next: (c: CustomerDetails) => {
         this.form.patchValue({
-          name: c.name ?? '',
+          name: c.fullName ?? '',
           phone: c.phone ?? '',
           email: c.email ?? '',
-          companyName: c.companyName ?? '',
-          notes: c.notes ?? '',
+          companyName: c.campanyName ?? '',
+          address: c.address ?? '',
           campaignId: c.campaignId ?? null,
         });
-        this.servicesControl.setValue(c.serviceIds ?? []);
+        this.servicesControl.setValue((c.services ?? []).map((s) => s.id));
         this.loading.set(false);
       },
       error: () => {
@@ -174,7 +174,7 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
       phone: v.phone.trim(),
       email: v.email.trim(),
       companyName: v.companyName.trim(),
-      notes: v.notes.trim(),
+      address: v.address.trim(),
       campaignId: v.campaignId,
       serviceIds: v.serviceIds,
     };

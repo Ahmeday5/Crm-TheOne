@@ -1,0 +1,114 @@
+<app-modal
+  [open]="true"
+  [title]="'customers.consultation.title' | translate"
+  icon="fa-solid fa-comments"
+  iconTone="info"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <p class="text-muted small mb-3">{{ 'customers.consultation.subtitle' | translate }}</p>
+
+  @if (loadError()) {
+    <div class="alert alert-danger d-flex align-items-center justify-content-between gap-2">
+      <span><i class="fa-solid fa-circle-exclamation me-2"></i>{{ loadError() }}</span>
+      <button type="button" class="btn btn-sm btn-light" (click)="loadDetails()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  }
+
+  <!-- Customer info -->
+  <div class="cns-section">
+    <h6 class="cns-section__title">
+      <i class="fa-solid fa-user text-primary"></i>{{ 'customers.consultation.sectionInfo' | translate }}
+      @if (loadingDetails()) {
+        <span class="spinner-border spinner-border-sm ms-2"></span>
+      }
+    </h6>
+    <div class="cns-grid">
+      <div class="cns-item">
+        <span class="cns-label">{{ 'customers.consultation.customer' | translate }}</span>
+        <span class="cns-value">{{ name() }}</span>
+      </div>
+      <div class="cns-item">
+        <span class="cns-label">{{ 'customers.consultation.phone' | translate }}</span>
+        <span class="cns-value cns-phone">{{ phone() }}</span>
+      </div>
+      <div class="cns-item">
+        <span class="cns-label">{{ 'customers.consultation.company' | translate }}</span>
+        <span class="cns-value">{{ company() }}</span>
+      </div>
+      <div class="cns-item">
+        <span class="cns-label">{{ 'customers.consultation.service' | translate }}</span>
+        <span class="cns-value">{{ services() }}</span>
+      </div>
+      <div class="cns-item">
+        <span class="cns-label">{{ 'customers.consultation.source' | translate }}</span>
+        <span class="cns-value">{{ source() }}</span>
+      </div>
+      <div class="cns-item">
+        <span class="cns-label">{{ 'customers.consultation.status' | translate }}</span>
+        <span class="badge {{ statusBadge() }}">{{ statusLabel() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sales note — the headline of this dialog -->
+  <div class="cns-note">
+    <div class="cns-note__head">
+      <i class="fa-solid fa-user-tie"></i>
+      <span>{{ 'customers.consultation.salesNote' | translate }}</span>
+    </div>
+    @if (salesNote()) {
+      <p class="cns-note__body">{{ salesNote() }}</p>
+    } @else {
+      <p class="cns-note__empty">
+        <i class="fa-regular fa-circle-question me-1"></i>{{ 'customers.consultation.noSalesNote' | translate }}
+      </p>
+    }
+  </div>
+
+  <!-- Decision -->
+  <div class="cns-section">
+    <h6 class="cns-section__title">
+      <i class="fa-solid fa-rotate-left text-success"></i>{{ 'customers.consultation.sectionDecision' | translate }}
+    </h6>
+    <div class="cns-return">
+      <i class="fa-solid fa-user-tie cns-return__icon"></i>
+      <div>
+        @if (salesRepName()) {
+          <span class="cns-return__text">{{ 'customers.consultation.returnInfo' | translate }}</span>
+          <strong class="cns-return__rep">{{ salesRepName() }}</strong>
+        } @else {
+          <span class="cns-return__text">{{ 'customers.consultation.returnInfoNoRep' | translate }}</span>
+        }
+      </div>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mt-3 mb-0">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </div>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="saveWithout()"
+      [attr.title]="'customers.consultation.saveWithoutHint' | translate">
+      <i class="fa-regular fa-circle-check me-1"></i>
+      {{ 'customers.consultation.saveWithout' | translate }}
+    </button>
+    <button type="button" class="btn btn-primary" [disabled]="submitting()" (click)="returnToSales()"
+      [attr.title]="'customers.consultation.saveReturnHint' | translate">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-rotate-left me-1"></i>
+      }
+      {{ 'customers.consultation.saveReturn' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

@@ -1,0 +1,45 @@
+<div class="table-tools" appClickOutside (appClickOutside)="close()">
+  <button type="button"
+          class="btn btn-light table-tools-btn"
+          [disabled]="disabled() || busy()"
+          [class.is-open]="open()"
+          (click)="toggle()">
+    @if (busy()) {
+      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    } @else {
+      <i class="fa-solid fa-file-export"></i>
+    }
+    <span class="table-tools-label">{{ 'tableTools.label' | translate }}</span>
+    <i class="fa-solid fa-chevron-down table-tools-caret" [class.flip]="open()"></i>
+  </button>
+
+  @if (open()) {
+    <div class="table-tools-menu">
+      <div class="table-tools-group-label">
+        <i class="fa-solid fa-file-excel text-success me-2"></i>{{ 'tableTools.excel' | translate }}
+      </div>
+      <button type="button" class="table-tools-item" (click)="exportCurrent()">
+        {{ 'tableTools.exportCurrent' | translate }}
+      </button>
+      @if (hasFetchAll()) {
+        <button type="button" class="table-tools-item" (click)="exportAll()">
+          {{ 'tableTools.exportAll' | translate }}
+        </button>
+      }
+
+      <div class="table-tools-divider"></div>
+
+      <div class="table-tools-group-label">
+        <i class="fa-solid fa-print text-primary me-2"></i>{{ 'tableTools.print' | translate }}
+      </div>
+      <button type="button" class="table-tools-item" (click)="printCurrent()">
+        {{ 'tableTools.printCurrent' | translate }}
+      </button>
+      @if (hasFetchAll()) {
+        <button type="button" class="table-tools-item" (click)="printAll()">
+          {{ 'tableTools.printAll' | translate }}
+        </button>
+      }
+    </div>
+  }
+</div>

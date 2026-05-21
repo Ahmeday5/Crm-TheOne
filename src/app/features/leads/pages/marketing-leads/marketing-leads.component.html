@@ -101,6 +101,14 @@
         {{ 'customers.title' | translate }}
         <span class="text-muted small">({{ count() }})</span>
       </h5>
+      <app-table-tools
+        class="ms-auto"
+        [reportTitle]="'customers.title' | translate"
+        [columns]="exportColumns"
+        [rows]="rows()"
+        [fetchAll]="fetchAllRows"
+        [disabled]="loading() || rows().length === 0">
+      </app-table-tools>
     </div>
 
     @if (loadError()) {
@@ -147,6 +155,11 @@
                       <div class="crm-identity-text">
                         <div class="crm-name" [title]="row.fullName">{{ row.fullName }}</div>
                         <div class="crm-phone">{{ row.phone || '—' }}</div>
+                        @if (row.address) {
+                          <div class="crm-phone text-truncate" style="max-width: 12rem;" [title]="row.address">
+                            <i class="fa-solid fa-location-dot me-1 opacity-75"></i>{{ row.address }}
+                          </div>
+                        }
                       </div>
                     </div>
                   </td>
@@ -167,8 +180,8 @@
                   <td>
                     @if (row.services && row.services.length) {
                       <div class="crm-chip-row">
-                        @for (svc of row.services; track svc) {
-                          <span class="crm-chip tone-brand">{{ svc }}</span>
+                        @for (svc of row.services; track svc.id) {
+                          <span class="crm-chip tone-brand">{{ svc.name }}</span>
                         }
                       </div>
                     } @else {

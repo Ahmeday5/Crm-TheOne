@@ -334,9 +334,9 @@
                   <!-- Services chips -->
                   @if (c.services.length) {
                     <div class="d-flex flex-wrap gap-1 mb-2">
-                      @for (svc of c.services; track svc) {
+                      @for (svc of c.services; track svc.id) {
                         <span class="badge bg-primary-subtle text-primary">
-                          <i class="fa-solid fa-bullseye me-1 opacity-75"></i>{{ svc }}
+                          <i class="fa-solid fa-bullseye me-1 opacity-75"></i>{{ svc.name }}
                         </span>
                       }
                     </div>

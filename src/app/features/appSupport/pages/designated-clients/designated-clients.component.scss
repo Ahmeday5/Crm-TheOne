@@ -8,3 +8,6 @@
   color: var(--text-3);
   pointer-events: none;
 }
+
+/* Consultation badge + "Start consultation" CTA now live in the global
+ * `_customers-table.scss` so the sales customers table can reuse them. */

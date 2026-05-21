@@ -8,16 +8,20 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
+import { ExportColumn } from '../../../../core/services/table-export.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
+import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import {
+  APPOINTMENT_PRIORITIES,
   APPOINTMENT_STATUSES,
   APPOINTMENT_TYPES,
   Appointment,
@@ -43,6 +47,7 @@ const DEFAULT_PAGE_SIZE = 10;
     StatCardComponent,
     PaginationComponent,
     LoadErrorComponent,
+    TableToolsComponent,
     AppointmentFormDialogComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -330,6 +335,90 @@ export class AppointmentsComponent implements OnInit {
     const d = new Date(`${date}T00:00:00`);
     return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
   }
+
+  // ─────────── export / print ───────────
+
+  appointmentTypeLabel(r: Appointment): string {
+    const opt = APPOINTMENT_TYPES.find((o) => o.code === r.type);
+    return opt ? this.optionLabel(opt) : r.typeNameAr;
+  }
+
+  appointmentStatusLabel(r: Appointment): string {
+    const opt = APPOINTMENT_STATUSES.find((o) => o.code === r.status);
+    return opt ? this.optionLabel(opt) : r.statusNameAr;
+  }
+
+  appointmentPriorityLabel(r: Appointment): string {
+    const opt = APPOINTMENT_PRIORITIES.find((o) => o.code === r.priority);
+    return opt ? this.optionLabel(opt) : r.priorityNameAr;
+  }
+
+  get exportColumns(): ExportColumn<Appointment>[] {
+    return [
+      { header: '#', value: (r) => r.id },
+      {
+        header: this.t('sales.appointments.table.title'),
+        value: (r) => r.title,
+      },
+      {
+        header: this.t('sales.appointments.table.customer'),
+        value: (r) => r.customerFullName,
+      },
+      {
+        header: this.t('sales.appointments.table.assignedTo'),
+        value: (r) => r.assignedToUserName,
+      },
+      {
+        header: this.t('sales.appointments.table.type'),
+        value: (r) => this.appointmentTypeLabel(r),
+      },
+      {
+        header: this.t('sales.appointments.table.priority'),
+        value: (r) => this.appointmentPriorityLabel(r),
+      },
+      {
+        header: this.t('sales.appointments.table.status'),
+        value: (r) => this.appointmentStatusLabel(r),
+      },
+      {
+        header: this.t('sales.appointments.table.start'),
+        value: (r) => this.formatDateTime(r.startDate),
+      },
+      {
+        header: this.t('sales.appointments.table.end'),
+        value: (r) => this.formatDateTime(r.endDate),
+      },
+      {
+        header: this.t('sales.appointments.table.location'),
+        value: (r) => r.location,
+      },
+    ];
+  }
+
+  /** Current page = the rows visible after the client type/status filter. */
+  get visibleExportRows(): Appointment[] {
+    return this.visibleRows();
+  }
+
+  readonly fetchAllRows = async (): Promise<Appointment[]> => {
+    const uid = this.auth.currentUser()?.userId;
+    const page = await firstValueFrom(
+      this.service.list({
+        PageIndex: 1,
+        PageSize: this.totalCount() || this.pageSize(),
+        Search: this.search().trim() || undefined,
+        AssignedToUserId: this.mineOnly() && uid ? uid : undefined,
+        CustomerId: this.customerId() ?? undefined,
+        FromDate: this.toIso(this.fromDate()),
+        ToDate: this.toIso(this.toDate()),
+      }),
+    );
+    const t = this.typeFilter();
+    const s = this.statusFilter();
+    return (page.data ?? []).filter(
+      (r) => (t === 'all' || r.type === t) && (s === 'all' || r.status === s),
+    );
+  };
 
   trackById = (_: number, r: Appointment) => r.id;
 

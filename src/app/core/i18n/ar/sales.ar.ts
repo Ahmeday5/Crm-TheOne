@@ -173,6 +173,7 @@ const sales: TranslationFile<'sales'> = {
         endDate: 'تاريخ الانتهاء',
         description: 'الوصف',
         descriptionPlaceholder: 'تفاصيل أو بنود إضافية عن العقد…',
+        address: 'عنوان العميل',
         save: 'حفظ العقد',
         update: 'حفظ التعديلات',
         loadFailed: 'تعذر تحميل بيانات العقد.',

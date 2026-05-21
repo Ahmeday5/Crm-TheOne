@@ -5,13 +5,20 @@
  * (`email`, `companyName`, `notes`, …) are only loaded on demand via
  * `GET /Customers/{id}/getCustomerById`.
  */
+/** Service reference `{ id, name }` as returned across the customer endpoints. */
+export interface CustomerServiceRef {
+  id: number;
+  name: string;
+}
+
 export interface CustomerListItem {
   id: number;
   fullName: string;
   phone: string;
+  address: string | null;
   source: string | null;
   campaignName: string | null;
-  services: string[];
+  services: CustomerServiceRef[];
   status: string;
   salesPersonId?: string | null;
   salesPersonName: string | null;
@@ -23,6 +30,13 @@ export interface CustomerListItem {
   isMarketingToSales?: boolean;
   isSalesToSupport?: boolean;
   isSupportToSales?: boolean;
+  /**
+   * Whether the support team has completed its consultation and handed the
+   * customer back to a sales rep. Flipped to `true` by
+   * `POST /Support/{id}/AssignToSales`. Present on the sales + support list
+   * endpoints; omitted by older endpoint versions.
+   */
+  isConsulted?: boolean;
   /** Latest note left by the marketing team (read-only here). */
   noteMarketing?: string | null;
   /** Latest note left by the sales team (read-only here). */
@@ -70,34 +84,49 @@ export interface CustomerNoteResponse {
   createdAt: string;
 }
 
+/**
+ * Full customer returned by `GET /Customers/{id}/getCustomerById`.
+ *
+ * Note the backend serializes the company as `campanyName` (sic) here — the
+ * same typo the price-quotation dropdown uses. The role notes
+ * (`noteMarketing` / `noteSales` / `noteSupport`) are read-only in this view;
+ * each role edits its own slot through `PUT /CustomerNotes/customer/{id}/myNote`.
+ */
 export interface CustomerDetails {
   id: number;
-  name: string | null;
+  fullName: string | null;
   phone: string;
   email: string | null;
-  companyName: string | null;
-  notes: string | null;
-  source: number;
-  sourceName: string | null;
+  address: string | null;
+  campanyName: string | null;
   campaignId: number | null;
+  source: string | null;
   campaignName: string | null;
-  serviceIds: number[];
-  services: { id: number; name: string }[];
+  services: CustomerServiceRef[];
   status: number;
   statusName: string;
   salesPersonId: string | null;
   salesPersonName: string | null;
+  supportPersonId: string | null;
+  supportPersonName: string | null;
   assignedAt: string | null;
   createdAt: string;
   updatedAt: string | null;
+  isMarketingToSales?: boolean;
+  isSalesToSupport?: boolean;
+  isSupportToSales?: boolean;
+  noteMarketing?: string | null;
+  noteSales?: string | null;
+  noteSupport?: string | null;
 }
 
-/** Body for `POST /Customers`. */
+/** Body for `POST /Customers/CreateCustomer`. */
 export interface CreateCustomerRequest {
   fullName: string;
   email: string;
   phone: string;
   companyName: string;
+  address: string;
   notes: string;
   campaignId: number | null;
   serviceIds: number[];
@@ -105,13 +134,18 @@ export interface CreateCustomerRequest {
   salesPersonId: string | null;
 }
 
-/** Body for `PUT /Customers/updateCustomer/{id}`. */
+/**
+ * Body for `PUT /Customers/updateCustomer/{id}`.
+ *
+ * Notes are intentionally absent — each role edits its own note slot through
+ * the dedicated `…/myNote` endpoint, so the profile update never touches them.
+ */
 export interface UpdateCustomerRequest {
   name: string;
   phone: string;
   email: string;
   companyName: string;
-  notes: string;
+  address: string;
   campaignId: number | null;
   serviceIds: number[];
 }

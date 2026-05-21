@@ -141,6 +141,21 @@ export class CustomersService {
     );
   }
 
+  /**
+   * Support finishes the consultation and returns the customer to their
+   * original sales rep — `POST /Support/{id}/ReturnToSalesPerson`. The rep is
+   * resolved server-side from the customer record, so there's no body. The
+   * backend flips `isConsulted` to `true` and echoes the updated customer, so
+   * we invalidate the cached `Customers` lists to surface it on the next read.
+   */
+  returnToSalesPerson(customerId: number): Observable<CustomerListItem> {
+    return this.api.post<CustomerListItem>(
+      API_ENDPOINTS.support.returnToSalesPerson(customerId),
+      {},
+      { context: withInlineHandling(withCacheInvalidate(['Customers'])) },
+    );
+  }
+
   assignSupport(
     customerId: number,
     payload: AssignSupportRequest,

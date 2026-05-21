@@ -10,13 +10,21 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import {
+  Subject,
+  debounceTime,
+  distinctUntilChanged,
+  firstValueFrom,
+  takeUntil,
+} from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
+import { ExportColumn } from '../../../../core/services/table-export.service';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
+import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import {
   CustomerFollowUpResponse,
   CustomerListItem,
@@ -58,6 +66,7 @@ interface SourceItem {
     PaginationComponent,
     StatCardComponent,
     LoadErrorComponent,
+    TableToolsComponent,
     CustomerDetailsDialogComponent,
     AssignSupportDialogComponent,
     ChangeStatusDialogComponent,
@@ -358,6 +367,80 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   }
 
   trackById = (_: number, r: CustomerListItem) => r.id;
+
+  // ─────────── export / print ───────────
+
+  get exportColumns(): ExportColumn<CustomerListItem>[] {
+    return [
+      { header: this.t('customers.table.fullName'), value: (r) => r.fullName },
+      { header: this.t('customers.table.phone'), value: (r) => r.phone },
+      { header: this.t('customers.table.address'), value: (r) => r.address },
+      { header: this.t('customers.table.source'), value: (r) => r.source },
+      { header: this.t('customers.table.campaign'), value: (r) => r.campaignName },
+      {
+        header: this.t('customers.table.services'),
+        value: (r) => (r.services ?? []).map((s) => s.name).join(', '),
+      },
+      {
+        header: this.t('customers.table.status'),
+        value: (r) => this.resolveStatus(r.status),
+      },
+      {
+        header: this.t('customers.table.salesPerson'),
+        value: (r) => r.salesPersonName,
+      },
+      {
+        header: this.t('customers.table.supportPerson'),
+        value: (r) => r.supportPersonName,
+      },
+      {
+        header: this.t('customers.consultation.column'),
+        value: (r) =>
+          this.t(
+            r.isConsulted
+              ? 'customers.consultation.badgeDone'
+              : 'customers.consultation.badgePending',
+          ),
+      },
+      {
+        header: this.t('customers.details.noteMarketing'),
+        value: (r) => r.noteMarketing || this.t('customers.details.notAvailable'),
+      },
+      {
+        header: this.t('customers.details.noteSales'),
+        value: (r) => r.noteSales || this.t('customers.details.notAvailable'),
+      },
+      {
+        header: this.t('customers.details.noteSupport'),
+        value: (r) => r.noteSupport || this.t('customers.details.notAvailable'),
+      },
+      {
+        header: this.t('customers.table.lastFollowUp'),
+        value: (r) => this.formatDate(r.lastFollowUpDate),
+      },
+      {
+        header: this.t('customers.table.nextFollowUp'),
+        value: (r) => this.formatDate(r.nextFollowUpDate),
+      },
+      {
+        header: this.t('customers.table.createdAt'),
+        value: (r) => this.formatDate(r.createdAt),
+      },
+    ];
+  }
+
+  readonly fetchAllRows = async (): Promise<CustomerListItem[]> => {
+    const page = await firstValueFrom(
+      this.customers.listForSales({
+        PageIndex: 1,
+        PageSize: this.count() || this.pageSize(),
+        Search: this.searchSignal().trim() || undefined,
+        CustomerStatusId: this.selectedStatusId() ?? undefined,
+        SourceId: this.selectedSourceId() ?? undefined,
+      }),
+    );
+    return page.data ?? [];
+  };
 
   private t(key: string): string {
     return resolveKey(TRANSLATIONS[this.language.lang()], key);

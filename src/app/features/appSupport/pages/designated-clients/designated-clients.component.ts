@@ -9,22 +9,28 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import {
+  Subject,
+  debounceTime,
+  distinctUntilChanged,
+  firstValueFrom,
+  takeUntil,
+} from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
+import { ExportColumn } from '../../../../core/services/table-export.service';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
+import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import {
-  CustomerFollowUpResponse,
   CustomerListItem,
   CustomerNoteResponse,
   CustomerStatus,
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { ChangeStatusDialogComponent } from '../../../leads/components/change-status-dialog/change-status-dialog.component';
 import {
   CustomerActionsConfig,
   CustomerActionsMenuComponent,
@@ -32,13 +38,13 @@ import {
 import { CustomerDetailsDialogComponent } from '../../../leads/components/customer-details-dialog/customer-details-dialog.component';
 import { CustomerNoteDialogComponent } from '../../../leads/components/customer-note-dialog/customer-note-dialog.component';
 import { CustomerNotesCellComponent } from '../../../leads/components/customer-notes-cell/customer-notes-cell.component';
-import { FollowUpDialogComponent } from '../../../leads/components/follow-up-dialog/follow-up-dialog.component';
 import { CustomersService } from '../../../leads/services/customers.service';
 import {
   customerStatusBadgeClass,
   resolveCustomerStatus,
 } from '../../../leads/utils/customer-status.util';
 import { ChannelSourcesService } from '../../../marketing-campaigns/services/channel-sources.service';
+import { ConsultationDialogComponent } from '../../components/consultation-dialog/consultation-dialog.component';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -50,11 +56,12 @@ interface SourceItem {
 /**
  * Support-team customer queue.
  *
- * Visual language is shared with `SalesLeadsComponent` and
- * `MarketingLeadsComponent` via `<app-customer-notes-cell>`,
- * `<app-customer-actions-menu>`, and `_customers-table.scss`. This page
- * sticks to a support-flavoured action surface — no `assignSupport` / no
- * `delete`.
+ * The support agent's only action here is the **consultation** flow: review the
+ * customer + the sales note, then either keep following up or hand the customer
+ * back to a sales rep (`<app-consultation-dialog>`). Status changes, follow-ups
+ * and note editing are owned by the sales/marketing surfaces — this page is
+ * intentionally read-only beyond the consultation. Shares the customer-table
+ * visual language via `<app-customer-notes-cell>` + `_customers-table.scss`.
  */
 @Component({
   selector: 'app-designated-clients',
@@ -67,12 +74,12 @@ interface SourceItem {
     PaginationComponent,
     StatCardComponent,
     LoadErrorComponent,
-    CustomerDetailsDialogComponent,
-    ChangeStatusDialogComponent,
-    FollowUpDialogComponent,
-    CustomerNoteDialogComponent,
+    TableToolsComponent,
     CustomerNotesCellComponent,
     CustomerActionsMenuComponent,
+    CustomerDetailsDialogComponent,
+    CustomerNoteDialogComponent,
+    ConsultationDialogComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './designated-clients.component.html',
@@ -106,10 +113,19 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
   readonly sources = signal<SourceItem[]>([]);
 
   // ─────────── dialogs ───────────
+  readonly consultDialog = signal<CustomerListItem | null>(null);
   readonly detailsDialog = signal<number | null>(null);
-  readonly changeStatusDialog = signal<CustomerListItem | null>(null);
-  readonly followUpDialog = signal<CustomerListItem | null>(null);
   readonly noteDialog = signal<CustomerListItem | null>(null);
+
+  /**
+   * Row toolbar for the support queue: view details + edit-my-note inline, plus
+   * the tel/WhatsApp anchors the menu derives from the phone. The dedicated
+   * "Start consultation" CTA stays separate so it never gets buried.
+   */
+  readonly actionsConfig: CustomerActionsConfig = {
+    view: true,
+    note: true,
+  };
 
   readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
 
@@ -127,30 +143,17 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
       : 'customers.support.welcomeSubtitle',
   );
 
-  /**
-   * Support row toolbar:
-   *   - inline: view + note + tel/wa
-   *   - dropdown: change-status, follow-up
-   * No assignSupport / assignSales / delete — those are owned by sales/marketing.
-   */
-  readonly actionsConfig: CustomerActionsConfig = {
-    view: true,
-    note: true,
-    changeStatus: true,
-    followUp: true,
-  };
-
   readonly kpis = computed(() => {
     const list = this.rows();
     return {
       total: this.count(),
-      assigned: list.length,
-      pendingFollowUp: list.filter((r) => !!r.nextFollowUpDate).length,
+      consulted: list.filter((r) => r.isConsulted === true).length,
+      pending: list.filter((r) => r.isConsulted !== true).length,
       withNotes: list.filter(
         (r) =>
-          !!(r.noteMarketing?.trim()) ||
-          !!(r.noteSales?.trim()) ||
-          !!(r.noteSupport?.trim()),
+          !!r.noteMarketing?.trim() ||
+          !!r.noteSales?.trim() ||
+          !!r.noteSupport?.trim(),
       ).length,
     };
   });
@@ -238,7 +241,22 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
     this.reload();
   }
 
-  // ─────────── dialogs ───────────
+  // ─────────── consultation ───────────
+
+  openConsult(row: CustomerListItem): void {
+    this.consultDialog.set(row);
+  }
+
+  closeConsult(): void {
+    this.consultDialog.set(null);
+  }
+
+  onConsulted(): void {
+    this.closeConsult();
+    this.reload();
+  }
+
+  // ─────────── details / note dialogs ───────────
 
   openDetails(row: CustomerListItem): void {
     this.detailsDialog.set(row.id);
@@ -246,42 +264,6 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
 
   closeDetails(): void {
     this.detailsDialog.set(null);
-  }
-
-  openChangeStatus(row: CustomerListItem): void {
-    this.changeStatusDialog.set(row);
-  }
-
-  closeChangeStatus(): void {
-    this.changeStatusDialog.set(null);
-  }
-
-  onStatusChanged(_res: CustomerFollowUpResponse): void {
-    this.closeChangeStatus();
-    this.reload();
-  }
-
-  openFollowUp(row: CustomerListItem): void {
-    this.followUpDialog.set(row);
-  }
-
-  closeFollowUp(): void {
-    this.followUpDialog.set(null);
-  }
-
-  onFollowUpUpdated(res: CustomerFollowUpResponse): void {
-    this.rows.update((list) =>
-      list.map((row) =>
-        row.id === res.id
-          ? {
-              ...row,
-              lastFollowUpDate: res.lastFollowUpDate,
-              nextFollowUpDate: res.nextFollowUpDate,
-            }
-          : row,
-      ),
-    );
-    this.closeFollowUp();
   }
 
   openNote(row: CustomerListItem): void {
@@ -343,7 +325,68 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
     }
   }
 
+  consultationLabel(row: CustomerListItem): string {
+    return this.t(
+      row.isConsulted
+        ? 'customers.consultation.badgeDone'
+        : 'customers.consultation.badgePending',
+    );
+  }
+
   trackById = (_: number, r: CustomerListItem) => r.id;
+
+  // ─────────── export / print ───────────
+
+  get exportColumns(): ExportColumn<CustomerListItem>[] {
+    return [
+      { header: this.t('customers.table.fullName'), value: (r) => r.fullName },
+      { header: this.t('customers.table.phone'), value: (r) => r.phone },
+      { header: this.t('customers.table.address'), value: (r) => r.address },
+      { header: this.t('customers.table.source'), value: (r) => r.source },
+      { header: this.t('customers.table.campaign'), value: (r) => r.campaignName },
+      {
+        header: this.t('customers.table.services'),
+        value: (r) => (r.services ?? []).map((s) => s.name).join(', '),
+      },
+      {
+        header: this.t('customers.table.status'),
+        value: (r) => this.resolveStatus(r.status),
+      },
+      {
+        header: this.t('customers.consultation.column'),
+        value: (r) => this.consultationLabel(r),
+      },
+      {
+        header: this.t('customers.table.salesPerson'),
+        value: (r) => r.salesPersonName,
+      },
+      {
+        header: this.t('customers.details.noteSales'),
+        value: (r) => r.noteSales || this.t('customers.details.notAvailable'),
+      },
+      {
+        header: this.t('customers.details.noteSupport'),
+        value: (r) => r.noteSupport || this.t('customers.details.notAvailable'),
+      },
+      {
+        header: this.t('customers.table.createdAt'),
+        value: (r) => this.formatDate(r.createdAt),
+      },
+    ];
+  }
+
+  readonly fetchAllRows = async (): Promise<CustomerListItem[]> => {
+    const page = await firstValueFrom(
+      this.customers.listForSupport({
+        PageIndex: 1,
+        PageSize: this.count() || this.pageSize(),
+        Search: this.searchSignal().trim() || undefined,
+        CustomerStatusId: this.selectedStatusId() ?? undefined,
+        SourceId: this.selectedSourceId() ?? undefined,
+      }),
+    );
+    return page.data ?? [];
+  };
 
   private t(key: string): string {
     return resolveKey(TRANSLATIONS[this.language.lang()], key);

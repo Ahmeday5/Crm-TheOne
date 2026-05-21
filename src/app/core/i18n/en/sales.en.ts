@@ -171,6 +171,7 @@ const sales: TranslationFile<'sales'> = {
         endDate: 'End date',
         description: 'Description',
         descriptionPlaceholder: 'Extra details or contract clauses…',
+        address: 'Customer address',
         save: 'Save contract',
         update: 'Save changes',
         loadFailed: 'Could not load the contract.',

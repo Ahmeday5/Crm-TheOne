@@ -110,7 +110,7 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       {
         labelKey: 'sidebar.items.support',
-        path: '/dashboardSupport',
+        path: '/Designated-clients',
         icon: 'fa-solid fa-headset',
         roles: ['Admin', 'Support'],
       },

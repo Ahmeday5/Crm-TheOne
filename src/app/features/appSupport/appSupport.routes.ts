@@ -8,7 +8,7 @@ export const APP_SUPPORT_ROUTES: Routes = [
         (m) => m.AppSupportMainComponent,
       ),
     children: [
-      { path: '', redirectTo: 'dashboardSupport', pathMatch: 'full' },
+      { path: '', redirectTo: 'Designated-clients', pathMatch: 'full' },
       {
         path: 'dashboardSupport',
         title: 'لوحة التحكم',

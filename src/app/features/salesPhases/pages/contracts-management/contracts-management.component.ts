@@ -9,15 +9,18 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
+import { ExportColumn } from '../../../../core/services/table-export.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
+import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import {
   ContractListItem,
   ContractStatistics,
@@ -44,6 +47,7 @@ const EXPIRING_WINDOW_DAYS = 90;
     StatCardComponent,
     PaginationComponent,
     LoadErrorComponent,
+    TableToolsComponent,
     ContractFormDialogComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -313,6 +317,89 @@ export class ContractsManagementComponent implements OnInit {
   }
 
   trackById = (_: number, r: ContractListItem) => r.id;
+
+  // ─────────── export / print ───────────
+
+  /** Days-left label mirroring the table cell (expired ⇒ localized word). */
+  daysLeftLabel(r: ContractListItem): string {
+    const days = this.daysRemaining(r);
+    if (days < 0) return this.t('sales.contractsMgmt.expired');
+    return `${days} ${this.t('sales.contractsMgmt.day')}`;
+  }
+
+  get exportColumns(): ExportColumn<ContractListItem>[] {
+    return [
+      { header: this.t('sales.contractsMgmt.table.number'), value: (r) => r.id },
+      {
+        header: this.t('sales.contractsMgmt.table.customer'),
+        value: (r) => r.customerName,
+      },
+      { header: this.t('customers.details.company'), value: (r) => r.companyName },
+      { header: this.t('customers.table.phone'), value: (r) => r.phone },
+      { header: this.t('sales.contractsMgmt.form.address'), value: (r) => r.address },
+      {
+        header: this.t('sales.contractsMgmt.table.contractTitle'),
+        value: (r) => r.title,
+      },
+      {
+        header: this.t('sales.contractsMgmt.table.status'),
+        value: (r) => this.t(this.statusKey(r)),
+      },
+      {
+        header: this.t('sales.contractsMgmt.table.startDate'),
+        value: (r) => this.formatDate(r.startDate),
+      },
+      {
+        header: this.t('sales.contractsMgmt.table.endDate'),
+        value: (r) => this.formatDate(r.endDate),
+      },
+      {
+        header: this.t('sales.contractsMgmt.table.createdAt'),
+        value: (r) => this.formatDate(r.createdAt),
+      },
+      {
+        header: this.t('sales.contractsMgmt.table.createdByName'),
+        value: (r) =>
+          r.createdByName || this.t('sales.contractsMgmt.table.noCreator'),
+      },
+      {
+        header: this.t('sales.contractsMgmt.table.daysLeft'),
+        value: (r) => this.daysLeftLabel(r),
+        align: 'center',
+      },
+      {
+        header: this.t('sales.contractsMgmt.table.value'),
+        value: (r) => this.formatMoney(r.price),
+        align: 'end',
+      },
+    ];
+  }
+
+  /** Current page = the rows visible after search + active tab. */
+  get visibleExportRows(): ContractListItem[] {
+    return this.visibleRows();
+  }
+
+  /** All pages, then re-apply the active search + tab filter. */
+  readonly fetchAllRows = async (): Promise<ContractListItem[]> => {
+    const page = await firstValueFrom(
+      this.service.list({
+        PageIndex: 1,
+        PageSize: this.totalCount() || this.pageSize(),
+      }),
+    );
+    const all = page.data ?? [];
+    const term = this.search().trim().toLowerCase();
+    const tab = this.activeTab();
+    return all.filter(
+      (r) =>
+        (!term ||
+          [r.customerName, r.companyName, r.phone]
+            .filter(Boolean)
+            .some((v) => String(v).toLowerCase().includes(term))) &&
+        this.matchesTab(r, tab),
+    );
+  };
 
   private t(key: string): string {
     return resolveKey(TRANSLATIONS[this.language.lang()], key);

@@ -88,6 +88,13 @@
           {{ 'sales.priceOffers.title' | translate }}
           <span class="badge bg-primary-subtle text-primary">{{ formatMoney(totalCount()) }}</span>
         </h5>
+        <app-table-tools
+          [reportTitle]="'sales.priceOffers.title' | translate"
+          [columns]="exportColumns"
+          [rows]="rows()"
+          [fetchAll]="fetchAllRows"
+          [disabled]="loading() || rows().length === 0">
+        </app-table-tools>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">

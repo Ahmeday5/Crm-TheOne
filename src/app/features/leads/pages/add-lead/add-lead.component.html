@@ -84,6 +84,22 @@
                 [label]="'customers.form.companyName' | translate" />
             </div>
 
+            <!-- Address -->
+            <div class="col-md-6">
+              <label for="add-address" class="form-label fw-600">
+                {{ 'customers.form.address' | translate }}
+              </label>
+              <input id="add-address"
+                     class="form-control"
+                     formControlName="address"
+                     maxlength="200"
+                     [class.is-invalid]="form.controls.address.invalid && (form.controls.address.dirty || form.controls.address.touched)"
+                     [placeholder]="'customers.form.addressPh' | translate" />
+              <app-form-error
+                [control]="form.controls.address"
+                [label]="'customers.form.address' | translate" />
+            </div>
+
             <!-- Campaign -->
             <div class="col-md-6">
               <label for="add-campaign" class="form-label fw-600">

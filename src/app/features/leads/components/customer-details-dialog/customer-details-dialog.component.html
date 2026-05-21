@@ -20,11 +20,11 @@
       </h6>
       <div class="details-row">
         <span class="details-label">{{ 'customers.details.name' | translate }}</span>
-        <span class="details-value">{{ c.name || ('customers.details.notAvailable' | translate) }}</span>
+        <span class="details-value">{{ c.fullName || ('customers.details.notAvailable' | translate) }}</span>
       </div>
       <div class="details-row">
         <span class="details-label">{{ 'customers.details.company' | translate }}</span>
-        <span class="details-value">{{ c.companyName || ('customers.details.notAvailable' | translate) }}</span>
+        <span class="details-value">{{ c.campanyName || ('customers.details.notAvailable' | translate) }}</span>
       </div>
     </div>
 
@@ -43,6 +43,10 @@
         <span class="details-label">{{ 'customers.details.email' | translate }}</span>
         <span class="details-value">{{ c.email || ('customers.details.notAvailable' | translate) }}</span>
       </div>
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.details.address' | translate }}</span>
+        <span class="details-value">{{ c.address || ('customers.details.notAvailable' | translate) }}</span>
+      </div>
     </div>
 
     <!-- Marketing Information -->
@@ -53,7 +57,7 @@
       </h6>
       <div class="details-row">
         <span class="details-label">{{ 'customers.details.source' | translate }}</span>
-        <span class="details-value">{{ c.sourceName || ('customers.details.notAvailable' | translate) }}</span>
+        <span class="details-value">{{ c.source || ('customers.details.notAvailable' | translate) }}</span>
       </div>
       <div class="details-row">
         <span class="details-label">{{ 'customers.details.campaign' | translate }}</span>
@@ -94,21 +98,44 @@
         <span class="details-value">{{ c.salesPersonName || ('customers.table.notAssigned' | translate) }}</span>
       </div>
       <div class="details-row">
+        <span class="details-label">{{ 'customers.details.supportPerson' | translate }}</span>
+        <span class="details-value">{{ c.supportPersonName || ('customers.table.notAssigned' | translate) }}</span>
+      </div>
+      <div class="details-row">
         <span class="details-label">{{ 'customers.details.assignedAt' | translate }}</span>
         <span class="details-value">{{ formatDate(c.assignedAt) }}</span>
       </div>
     </div>
 
-    <!-- Notes -->
-    @if (c.notes) {
+    <!-- Team notes (read-only — each role edits its own slot elsewhere) -->
     <div class="details-section">
       <h6 class="details-section-title">
         <i class="fa-solid fa-sticky-note me-2"></i>
         {{ 'customers.details.notes' | translate }}
       </h6>
-      <p class="mb-0 text-muted">{{ c.notes }}</p>
+      @if (c.noteMarketing || c.noteSales || c.noteSupport) {
+        @if (c.noteMarketing) {
+          <div class="details-row">
+            <span class="details-label">{{ 'customers.details.noteMarketing' | translate }}</span>
+            <span class="details-value">{{ c.noteMarketing }}</span>
+          </div>
+        }
+        @if (c.noteSales) {
+          <div class="details-row">
+            <span class="details-label">{{ 'customers.details.noteSales' | translate }}</span>
+            <span class="details-value">{{ c.noteSales }}</span>
+          </div>
+        }
+        @if (c.noteSupport) {
+          <div class="details-row">
+            <span class="details-label">{{ 'customers.details.noteSupport' | translate }}</span>
+            <span class="details-value">{{ c.noteSupport }}</span>
+          </div>
+        }
+      } @else {
+        <p class="mb-0 text-muted">{{ 'customers.details.noNotes' | translate }}</p>
+      }
     </div>
-    }
 
     <!-- Timestamps -->
     <div class="details-section">

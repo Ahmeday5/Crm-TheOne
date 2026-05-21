@@ -9,17 +9,26 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Observable, Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import {
+  Observable,
+  Subject,
+  debounceTime,
+  distinctUntilChanged,
+  firstValueFrom,
+  takeUntil,
+} from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { ExportColumn } from '../../../../core/services/table-export.service';
 import { formatCalendarDate } from '../../../../core/utils/calendar-date.util';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
+import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import {
   DailyReport,
   DailyReportListItem,
@@ -69,6 +78,7 @@ interface MonthOption {
     LoadErrorComponent,
     StatCardComponent,
     PaginationComponent,
+    TableToolsComponent,
     DailyReportFormDialogComponent,
     DailyReportDetailsDialogComponent,
   ],
@@ -349,6 +359,54 @@ export class DailyReportsComponent implements OnInit, OnDestroy {
     if (trimmed.length <= max) return trimmed;
     return trimmed.slice(0, max).trimEnd() + '…';
   }
+
+  // ─────────── export / print ───────────
+
+  get exportColumns(): ExportColumn<DailyReportListItem>[] {
+    return [
+      { header: this.t('dailyReports.export.id'), value: (r) => r.id },
+      {
+        header: this.t('dailyReports.export.employee'),
+        value: (r) => r.userName,
+      },
+      {
+        header: this.t('dailyReports.export.reportDate'),
+        value: (r) => this.formatDate(r.reportDate),
+      },
+      {
+        header: this.t('dailyReports.export.workHours'),
+        value: (r) => r.workHours,
+        align: 'center',
+      },
+      {
+        header: this.t('dailyReports.export.summary'),
+        value: (r) => r.completedTasksPreview,
+      },
+      {
+        header: this.t('dailyReports.export.createdAt'),
+        value: (r) => this.formatDate(r.createdAt),
+      },
+    ];
+  }
+
+  readonly fetchAllRows = async (): Promise<DailyReportListItem[]> => {
+    const { fromDate, toDate } = this.monthRange(
+      this.selectedYear(),
+      this.selectedMonth(),
+    );
+    const query: DailyReportListQuery = {
+      pageIndex: 1,
+      pageSize: this.totalCount() || this.pageSize(),
+      search: this.searchSignal().trim() || undefined,
+      fromDate,
+      toDate,
+    };
+    const useMine = !this.isAdmin() || this.scope() === 'mine';
+    const res = await firstValueFrom(
+      useMine ? this.reports.myReports(query) : this.reports.list(query),
+    );
+    return res.data ?? [];
+  };
 
   trackById = (_: number, r: DailyReportListItem) => r.id;
 

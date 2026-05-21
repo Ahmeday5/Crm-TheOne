@@ -37,6 +37,15 @@ const dailyReports: TranslationFile<'dailyReports'> = {
       delete: 'Delete',
     },
 
+    export: {
+      id: 'ID',
+      employee: 'Employee',
+      reportDate: 'Report date',
+      workHours: 'Work hours',
+      summary: 'Completed tasks',
+      createdAt: 'Created at',
+    },
+
     create: {
       title: 'Add daily report',
       editTitle: 'Edit daily report',

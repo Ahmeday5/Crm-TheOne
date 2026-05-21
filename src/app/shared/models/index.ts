@@ -6,5 +6,6 @@ export * from './customers';
 export * from './price-quotations';
 export * from './contracts';
 export * from './appointments';
+export * from './support-tickets';
 export * from './marketing';
 export * from './reports';

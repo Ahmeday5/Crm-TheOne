@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(npx ng *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(Get-ChildItem -Path \"src\\\\app\\\\features\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"f:\\\\Dashboards\\\\crm\\\\crmTheOne\" -Directory)",
+      "Bash(cd \"f:\\\\\\\\Dashboards\\\\\\\\crm\\\\\\\\crmTheOne\")"
     ]
   }
 }

@@ -14,10 +14,12 @@ import { UserRole } from '../../../../core/models/auth.model';
 import { AppUser } from '../../../../core/models/user.model';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
+import { ExportColumn } from '../../../../core/services/table-export.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { UsersService } from '../../../../core/services/users.service';
 import { ClickOutsideDirective } from '../../../../shared/directives/click-outside.directive';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
+import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { UserFormDialogComponent } from './user-form-dialog/user-form-dialog.component';
 
@@ -33,6 +35,7 @@ type RoleFilter = 'all' | UserRole;
     LoadErrorComponent,
     UserFormDialogComponent,
     ClickOutsideDirective,
+    TableToolsComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-management.component.html',
@@ -206,6 +209,25 @@ export class UserManagementComponent {
 
   roleLabelFor(role: UserRole): string {
     return roleLabel(role, this.language.lang());
+  }
+
+  // ─────────── export / print ───────────
+
+  get exportColumns(): ExportColumn<AppUser>[] {
+    return [
+      {
+        header: this.t('settings.users.list.col.name'),
+        value: (u) => this.displayName(u),
+      },
+      {
+        header: this.t('settings.users.list.col.email'),
+        value: (u) => u.email,
+      },
+      {
+        header: this.t('settings.users.list.col.phone'),
+        value: (u) => u.phone,
+      },
+    ];
   }
 
   trackById = (_: number, u: AppUser) => u.userId;

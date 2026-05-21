@@ -24,17 +24,17 @@
     </div>
     <div class="col-6 col-lg-3">
       <app-stat-card
-        [label]="'customers.kpi.assignedCustomers' | translate"
-        [value]="kpis().assigned"
+        [label]="'customers.kpi.consulted' | translate"
+        [value]="kpis().consulted"
         icon="fa-solid fa-user-check"
-        tone="info">
+        tone="success">
       </app-stat-card>
     </div>
     <div class="col-6 col-lg-3">
       <app-stat-card
-        [label]="'customers.kpi.pendingFollowUp' | translate"
-        [value]="kpis().pendingFollowUp"
-        icon="fa-solid fa-calendar-check"
+        [label]="'customers.kpi.pendingConsultation' | translate"
+        [value]="kpis().pending"
+        icon="fa-solid fa-comments"
         tone="warning">
       </app-stat-card>
     </div>
@@ -43,7 +43,7 @@
         [label]="'customers.kpi.withNotes' | translate"
         [value]="kpis().withNotes"
         icon="fa-solid fa-comment-dots"
-        tone="success">
+        tone="info">
       </app-stat-card>
     </div>
   </div>
@@ -93,6 +93,14 @@
         {{ 'customers.support.title' | translate }}
         <span class="text-muted small">({{ count() }})</span>
       </h5>
+      <app-table-tools
+        class="ms-auto"
+        [reportTitle]="'customers.support.title' | translate"
+        [columns]="exportColumns"
+        [rows]="rows()"
+        [fetchAll]="fetchAllRows"
+        [disabled]="loading() || rows().length === 0">
+      </app-table-tools>
     </div>
 
     @if (loadError()) {
@@ -126,7 +134,7 @@
                 <th>{{ 'customers.table.status' | translate }}</th>
                 <th>{{ 'customers.table.assignment' | translate }}</th>
                 <th>{{ 'customers.table.notes' | translate }}</th>
-                <th>{{ 'customers.table.followUpHeader' | translate }}</th>
+                <th>{{ 'customers.consultation.column' | translate }}</th>
                 <th>{{ 'customers.table.createdAt' | translate }}</th>
                 <th class="crm-actions-col text-center">{{ 'customers.table.actions' | translate }}</th>
               </tr>
@@ -140,6 +148,11 @@
                       <div class="crm-identity-text">
                         <div class="crm-name" [title]="row.fullName">{{ row.fullName }}</div>
                         <div class="crm-phone">{{ row.phone || '—' }}</div>
+                        @if (row.address) {
+                          <div class="crm-phone text-truncate" style="max-width: 12rem;" [title]="row.address">
+                            <i class="fa-solid fa-location-dot me-1 opacity-75"></i>{{ row.address }}
+                          </div>
+                        }
                       </div>
                     </div>
                   </td>
@@ -160,8 +173,8 @@
                   <td>
                     @if (row.services && row.services.length) {
                       <div class="crm-chip-row">
-                        @for (svc of row.services; track svc) {
-                          <span class="crm-chip tone-brand">{{ svc }}</span>
+                        @for (svc of row.services; track svc.id) {
+                          <span class="crm-chip tone-brand">{{ svc.name }}</span>
                         }
                       </div>
                     } @else {
@@ -227,37 +240,36 @@
                   </td>
 
                   <td>
-                    <div class="crm-followup">
-                      <div class="crm-followup-row">
-                        <i class="fa-solid fa-clock-rotate-left text-muted"></i>
-                        @if (row.lastFollowUpDate) {
-                          {{ formatDate(row.lastFollowUpDate) }}
-                        } @else {
-                          <span class="crm-followup-empty">{{ 'customers.table.lastFollowUp' | translate }}</span>
-                        }
-                      </div>
-                      <div class="crm-followup-row">
-                        <i class="fa-solid fa-calendar-day text-muted"></i>
-                        @if (row.nextFollowUpDate) {
-                          {{ formatDate(row.nextFollowUpDate) }}
-                        } @else {
-                          <span class="crm-followup-empty">{{ 'customers.table.nextFollowUp' | translate }}</span>
-                        }
-                      </div>
-                    </div>
+                    @if (row.isConsulted) {
+                      <span class="badge cns-badge cns-badge--done">
+                        <i class="fa-solid fa-circle-check"></i>{{ 'customers.consultation.badgeDone' | translate }}
+                      </span>
+                    } @else {
+                      <span class="badge cns-badge cns-badge--pending">
+                        <i class="fa-solid fa-hourglass-half"></i>{{ 'customers.consultation.badgePending' | translate }}
+                      </span>
+                    }
                   </td>
 
                   <td class="small text-muted text-nowrap">{{ formatDate(row.createdAt) }}</td>
 
                   <td class="crm-actions-col">
-                    <app-customer-actions-menu
-                      [phone]="row.phone"
-                      [actions]="actionsConfig"
-                      (view)="openDetails(row)"
-                      (note)="openNote(row)"
-                      (changeStatus)="openChangeStatus(row)"
-                      (followUp)="openFollowUp(row)">
-                    </app-customer-actions-menu>
+                    <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
+                      @if (!row.isConsulted) {
+                        <button type="button"
+                          class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2 text-nowrap cns-start-btn"
+                          (click)="openConsult(row)">
+                          <i class="fa-solid fa-comments"></i>
+                          <span>{{ 'customers.consultation.start' | translate }}</span>
+                        </button>
+                      }
+                      <app-customer-actions-menu
+                        [phone]="row.phone"
+                        [actions]="actionsConfig"
+                        (view)="openDetails(row)"
+                        (note)="openNote(row)">
+                      </app-customer-actions-menu>
+                    </div>
                   </td>
                 </tr>
               }
@@ -282,32 +294,20 @@
   </div>
 </section>
 
+@if (consultDialog(); as row) {
+  <app-consultation-dialog
+    [customerId]="row.id"
+    [customer]="row"
+    (assigned)="onConsulted()"
+    (cancel)="closeConsult()">
+  </app-consultation-dialog>
+}
+
 @if (detailsDialog(); as id) {
   <app-customer-details-dialog
     [customerId]="id"
     (closed)="closeDetails()">
   </app-customer-details-dialog>
-}
-
-@if (changeStatusDialog(); as row) {
-  <app-change-status-dialog
-    [customerId]="row.id"
-    [customerName]="row.fullName"
-    [currentStatus]="row.status"
-    (changed)="onStatusChanged($event)"
-    (cancel)="closeChangeStatus()">
-  </app-change-status-dialog>
-}
-
-@if (followUpDialog(); as row) {
-  <app-follow-up-dialog
-    [customerId]="row.id"
-    [customerName]="row.fullName"
-    [lastFollowUpDate]="row.lastFollowUpDate"
-    [nextFollowUpDate]="row.nextFollowUpDate"
-    (updated)="onFollowUpUpdated($event)"
-    (cancel)="closeFollowUp()">
-  </app-follow-up-dialog>
 }
 
 @if (noteDialog(); as row) {

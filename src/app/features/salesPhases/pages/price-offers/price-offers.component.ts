@@ -9,14 +9,17 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
+import { ExportColumn } from '../../../../core/services/table-export.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
+import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import {
   CustomerDropdownItem,
   PriceQuotationListItem,
@@ -46,6 +49,7 @@ const DEFAULT_PAGE_SIZE = 10;
     LoadErrorComponent,
     StatCardComponent,
     PaginationComponent,
+    TableToolsComponent,
     PriceOfferFormDialogComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -202,6 +206,50 @@ export class PriceOffersComponent implements OnInit {
       { maximumFractionDigits: 2 },
     );
   }
+
+  // ─────────── export / print ───────────
+
+  get exportColumns(): ExportColumn<PriceQuotationListItem>[] {
+    return [
+      { header: this.t('sales.priceOffers.table.number'), value: (r) => r.id },
+      {
+        header: this.t('sales.priceOffers.table.customer'),
+        value: (r) => r.customerName,
+      },
+      { header: this.t('customers.details.company'), value: (r) => r.campanyName },
+      {
+        header: this.t('sales.priceOffers.table.items'),
+        value: (r) => r.itemsCount,
+        align: 'center',
+      },
+      {
+        header: this.t('sales.priceOffers.table.subTotal'),
+        value: (r) => this.formatMoney(r.subTotal),
+        align: 'end',
+      },
+      {
+        header: this.t('sales.priceOffers.table.discount'),
+        value: (r) => this.formatMoney(r.discount),
+        align: 'end',
+      },
+      {
+        header: this.t('sales.priceOffers.table.netTotal'),
+        value: (r) => this.formatMoney(r.netTotal),
+        align: 'end',
+      },
+    ];
+  }
+
+  readonly fetchAllRows = async (): Promise<PriceQuotationListItem[]> => {
+    const page = await firstValueFrom(
+      this.service.list({
+        PageIndex: 1,
+        PageSize: this.totalCount() || this.pageSize(),
+        CustomerId: this.selectedCustomerId() ?? undefined,
+      }),
+    );
+    return page.data ?? [];
+  };
 
   trackById = (_: number, r: PriceQuotationListItem) => r.id;
 

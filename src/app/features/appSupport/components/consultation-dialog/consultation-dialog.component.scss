@@ -1,0 +1,132 @@
+:host {
+  display: contents;
+}
+
+.cns-section {
+  margin-bottom: 1.25rem;
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: var(--fw-700);
+    font-size: var(--fs-sm);
+    color: var(--text-1);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+.cns-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1.5rem;
+
+  @media (max-width: 575.98px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cns-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.cns-label {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.cns-value {
+  font-size: var(--fs-md);
+  color: var(--text-1);
+  font-weight: var(--fw-500);
+  word-break: break-word;
+}
+
+.cns-phone {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  direction: ltr;
+  unicode-bidi: embed;
+  text-align: start;
+}
+
+/* Sales note — visually dominant */
+.cns-note {
+  position: relative;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-lg);
+  background: var(--success-soft);
+  border: 1px solid transparent;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: 4px;
+    background: var(--success);
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: var(--fw-700);
+    font-size: var(--fs-sm);
+    color: var(--success);
+    margin-bottom: 0.5rem;
+  }
+
+  &__body {
+    margin: 0;
+    color: var(--text-1);
+    font-size: var(--fs-md);
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  &__empty {
+    margin: 0;
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+    font-style: italic;
+  }
+}
+
+/* Return-to-sales confirmation strip */
+.cns-return {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+
+  &__icon {
+    flex-shrink: 0;
+    color: var(--brand);
+    font-size: 1.1rem;
+  }
+
+  &__text {
+    display: block;
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+  }
+
+  &__rep {
+    color: var(--text-1);
+    font-size: var(--fs-md);
+  }
+}

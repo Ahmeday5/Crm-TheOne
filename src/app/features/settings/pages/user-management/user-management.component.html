@@ -107,6 +107,13 @@
       <h5 class="mb-0">
         {{ 'settings.users.list.title' | translate }} ({{ visible().length }})
       </h5>
+      <app-table-tools
+        class="ms-auto"
+        [reportTitle]="'settings.users.list.title' | translate"
+        [columns]="exportColumns"
+        [rows]="visible()"
+        [disabled]="loading() || visible().length === 0">
+      </app-table-tools>
     </div>
     <div class="card-body p-0">
       @if (loading()) {

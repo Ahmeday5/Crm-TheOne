@@ -1,0 +1,175 @@
+<app-modal
+  [open]="true"
+  [title]="titleKey() | translate"
+  icon="fa-solid fa-ticket"
+  iconTone="orange"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  @if (loadingTicket()) {
+    <div class="p-5 text-center text-muted">
+      <span class="spinner-border spinner-border-sm me-2"></span>
+      {{ 'common.loading' | translate }}
+    </div>
+  } @else if (loadError()) {
+    <div class="alert alert-danger d-flex align-items-center justify-content-between gap-2 mb-0">
+      <span><i class="fa-solid fa-circle-exclamation me-2"></i>{{ loadError() }}</span>
+      <button type="button" class="btn btn-sm btn-light" (click)="retryLoad()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else {
+  <form [formGroup]="form" id="support-ticket-form" novalidate (ngSubmit)="submit()">
+    <div class="row g-3">
+
+      <!-- Title -->
+      <div class="col-12">
+        <label class="form-label fw-600">
+          {{ 'support.tickets.form.ticketTitle' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <input class="form-control" formControlName="title"
+               [class.is-invalid]="isInvalid('title')"
+               [placeholder]="'support.tickets.form.titlePlaceholder' | translate">
+        <app-form-error [control]="form.controls.title"
+          [label]="'support.tickets.form.ticketTitle' | translate" />
+      </div>
+
+      <!-- Customer -->
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'support.tickets.form.customer' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <select class="form-select" formControlName="customerId"
+                [class.is-invalid]="isInvalid('customerId')">
+          <option [ngValue]="null" disabled>
+            @if (loadingCustomers()) {
+              {{ 'support.tickets.form.loadingCustomers' | translate }}
+            } @else {
+              {{ 'support.tickets.form.customerPlaceholder' | translate }}
+            }
+          </option>
+          @for (c of customers(); track c.id) {
+            <option [ngValue]="c.id">
+              {{ c.fullName }}@if (c.campanyName) { — {{ c.campanyName }} }
+            </option>
+          }
+        </select>
+        @if (isEditMode) {
+          <small class="text-muted d-block mt-1">
+            <i class="fa-solid fa-lock me-1"></i>
+            {{ 'support.tickets.form.customerLocked' | translate }}
+          </small>
+        } @else {
+          <app-form-error [control]="form.controls.customerId"
+            [label]="'support.tickets.form.customer' | translate" />
+        }
+      </div>
+
+      <!-- Service -->
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'support.tickets.form.service' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <select class="form-select" formControlName="serviceId"
+                [class.is-invalid]="isInvalid('serviceId')">
+          <option [ngValue]="null" disabled>
+            @if (loadingServices()) {
+              {{ 'support.tickets.form.loadingServices' | translate }}
+            } @else {
+              {{ 'support.tickets.form.servicePlaceholder' | translate }}
+            }
+          </option>
+          @for (s of services(); track s.id) {
+            <option [ngValue]="s.id">{{ serviceLabel(s) }}</option>
+          }
+        </select>
+        <app-form-error [control]="form.controls.serviceId"
+          [label]="'support.tickets.form.service' | translate" />
+      </div>
+
+      <!-- Priority -->
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'support.tickets.form.priority' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <select class="form-select" formControlName="priority">
+          @for (p of priorities; track p.value) {
+            <option [ngValue]="p.value">{{ p.i18nKey | translate }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Status -->
+      <div class="col-md-6">
+        <label class="form-label fw-600">
+          {{ 'support.tickets.form.status' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <select class="form-select" formControlName="status">
+          @for (st of statuses; track st.value) {
+            <option [ngValue]="st.value">{{ st.i18nKey | translate }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Next follow-up — required only while the ticket is Open -->
+      @if (requiresFollowUp()) {
+        <div class="col-md-6">
+          <label class="form-label fw-600">
+            {{ 'support.tickets.form.nextFollowUp' | translate }}
+            <span class="text-danger">*</span>
+          </label>
+          <input type="datetime-local" class="form-control" formControlName="nextFollowUpDate"
+                 [class.is-invalid]="isInvalid('nextFollowUpDate')">
+          <small class="text-muted d-block mt-1">
+            <i class="fa-regular fa-clock me-1"></i>{{ 'support.tickets.form.nextFollowUpHint' | translate }}
+          </small>
+          <app-form-error [control]="form.controls.nextFollowUpDate"
+            [label]="'support.tickets.form.nextFollowUp' | translate" />
+        </div>
+      }
+
+      <!-- Description -->
+      <div class="col-12">
+        <label class="form-label fw-600">
+          {{ 'support.tickets.form.description' | translate }}
+          <span class="text-danger">*</span>
+        </label>
+        <textarea class="form-control" rows="4" formControlName="description"
+                  [class.is-invalid]="isInvalid('description')"
+                  [placeholder]="'support.tickets.form.descriptionPlaceholder' | translate"></textarea>
+        <app-form-error [control]="form.controls.description"
+          [label]="'support.tickets.form.description' | translate" />
+      </div>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mt-3 mb-0">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </form>
+  }
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="cancel.emit()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button type="submit" form="support-ticket-form" class="btn btn-primary"
+            [disabled]="submitting() || form.invalid || loadingTicket() || !!loadError()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-regular fa-floppy-disk me-1"></i>
+      }
+      {{ (isEditMode ? 'support.tickets.form.update' : 'support.tickets.form.save') | translate }}
+    </button>
+  </ng-container>
+</app-modal>

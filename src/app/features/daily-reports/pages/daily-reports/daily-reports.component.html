@@ -14,10 +14,19 @@
         <p class="text-muted mb-0">{{ 'dailyReports.subtitle' | translate }}</p>
       </div>
     </div>
-    <button type="button" class="btn btn-primary" (click)="openCreate()">
-      <i class="fa-solid fa-plus me-1"></i>
-      {{ 'dailyReports.new' | translate }}
-    </button>
+    <div class="d-flex align-items-center gap-2">
+      <app-table-tools
+        [reportTitle]="'dailyReports.title' | translate"
+        [columns]="exportColumns"
+        [rows]="rows()"
+        [fetchAll]="fetchAllRows"
+        [disabled]="loading() || rows().length === 0">
+      </app-table-tools>
+      <button type="button" class="btn btn-primary" (click)="openCreate()">
+        <i class="fa-solid fa-plus me-1"></i>
+        {{ 'dailyReports.new' | translate }}
+      </button>
+    </div>
   </header>
 
   <!-- KPIs -->

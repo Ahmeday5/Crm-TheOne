@@ -1,0 +1,130 @@
+/*
+ * Shared visual language for support-ticket priority + status badges.
+ *
+ * Lives in the global stylesheet so the same classes render identically in the
+ * tickets table (page-scoped SCSS) and inside the details dialog (a separate
+ * component) — Angular's view encapsulation would otherwise stop a parent's
+ * scoped class from reaching a child component's DOM.
+ *
+ * Everything is theme-aware via design tokens (no hard-coded colors except the
+ * purple "waiting" accent, which has no token and gets a dark-mode override).
+ * Animations are subtle and respect `prefers-reduced-motion`.
+ *
+ * Owns:
+ *   .tkt-badge          pill base (icon + label)
+ *   .tkt-prio--*        priority variants (high / medium / low)
+ *   .tkt-st--*          status variants (open / progress / waiting / resolved / closed)
+ */
+
+.tkt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.7rem;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+
+  i {
+    font-size: 0.72rem;
+  }
+}
+
+/* ── priority ──────────────────────────────────────────────── */
+.tkt-prio--high {
+  background: var(--danger-soft);
+  color: var(--danger);
+  animation: tkt-prio-pulse 2.2s ease-in-out infinite;
+
+  i {
+    animation: tkt-flame 1.3s ease-in-out infinite;
+  }
+}
+.tkt-prio--medium {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.tkt-prio--low {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+/* ── status ────────────────────────────────────────────────── */
+.tkt-st--open {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.tkt-st--progress {
+  background: var(--warning-soft);
+  color: var(--warning);
+
+  i {
+    animation: tkt-spin 1s linear infinite;
+  }
+}
+.tkt-st--waiting {
+  background: rgba(124, 58, 237, 0.12);
+  color: #7c3aed;
+
+  i {
+    animation: tkt-sway 1.8s ease-in-out infinite;
+  }
+}
+.tkt-st--resolved {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.tkt-st--closed {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+:root[data-theme='dark'] .tkt-st--waiting {
+  background: rgba(167, 139, 250, 0.2);
+  color: #c4b5fd;
+}
+
+/* ── keyframes ─────────────────────────────────────────────── */
+@keyframes tkt-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes tkt-prio-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.14);
+  }
+}
+@keyframes tkt-flame {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-1px) scale(1.12);
+  }
+}
+@keyframes tkt-sway {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tkt-badge,
+  .tkt-badge i {
+    animation: none !important;
+  }
+}

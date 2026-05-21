@@ -17,12 +17,12 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 })
 export class AppSupportMainComponent {
   readonly tabs: TabbedNavItem[] = [
-    {
+    /*{
       routerLink: 'dashboardSupport',
       labelKey: 'support.tabs.dashboard',
       icon: 'fa-solid fa-table-cells',
       color: 'primary',
-    },
+    },*/
     {
       routerLink: 'Designated-clients',
       labelKey: 'support.tabs.designatedClients',
@@ -35,11 +35,11 @@ export class AppSupportMainComponent {
       icon: 'fa-solid fa-ticket',
       color: 'orange',
     },
-    {
+    /*{
       routerLink: 'SupportLog',
       labelKey: 'support.tabs.log',
       icon: 'fa-solid fa-book-open',
       color: 'purple',
-    },
+    },*/
   ];
 }

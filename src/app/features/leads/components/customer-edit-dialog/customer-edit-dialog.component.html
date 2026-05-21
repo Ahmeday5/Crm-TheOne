@@ -153,21 +153,20 @@
             [label]="'customers.form.service' | translate" />
         </div>
 
-        <!-- Notes -->
+        <!-- Address -->
         <div class="col-12">
-          <label for="edit-notes" class="form-label fw-600">
-            {{ 'customers.form.notes' | translate }}
+          <label for="edit-address" class="form-label fw-600">
+            {{ 'customers.form.address' | translate }}
           </label>
-          <textarea id="edit-notes"
-                    class="form-control"
-                    formControlName="notes"
-                    rows="3"
-                    maxlength="500"
-                    [class.is-invalid]="form.controls.notes.invalid && (form.controls.notes.dirty || form.controls.notes.touched)"
-                    [placeholder]="'customers.form.notesPh' | translate"></textarea>
+          <input id="edit-address"
+                 class="form-control"
+                 formControlName="address"
+                 maxlength="200"
+                 [class.is-invalid]="form.controls.address.invalid && (form.controls.address.dirty || form.controls.address.touched)"
+                 [placeholder]="'customers.form.addressPh' | translate" />
           <app-form-error
-            [control]="form.controls.notes"
-            [label]="'customers.form.notes' | translate" />
+            [control]="form.controls.address"
+            [label]="'customers.form.address' | translate" />
         </div>
       </div>
 

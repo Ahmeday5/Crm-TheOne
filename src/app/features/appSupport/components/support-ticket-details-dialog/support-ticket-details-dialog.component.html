@@ -1,0 +1,119 @@
+<app-modal
+  [open]="true"
+  [title]="'support.tickets.details.title' | translate"
+  icon="fa-solid fa-ticket"
+  iconTone="orange"
+  size="lg"
+  (closed)="cancel.emit()">
+
+  @if (loading()) {
+    <div class="p-5 text-center text-muted">
+      <span class="spinner-border spinner-border-sm me-2"></span>
+      {{ 'common.loading' | translate }}
+    </div>
+  } @else if (loadError()) {
+    <div class="alert alert-danger d-flex align-items-center justify-content-between gap-2 mb-0">
+      <span><i class="fa-solid fa-circle-exclamation me-2"></i>{{ loadError() }}</span>
+      <button type="button" class="btn btn-sm btn-light" (click)="load()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else {
+  @if (ticket(); as tk) {
+    <div class="tkt-details">
+
+      <!-- Hero: number + title + badges -->
+      <div class="tkt-details__hero">
+        <div class="tkt-details__hero-main">
+          <span class="tkt-details__num">#{{ tk.ticketNumber }}</span>
+          <h4 class="tkt-details__title">{{ tk.title }}</h4>
+        </div>
+        <div class="tkt-details__hero-badges">
+          @if (priorityMeta(tk); as p) {
+            <span class="tkt-badge {{ p.badgeClass }}">
+              <i [class]="p.icon"></i>{{ p.i18nKey | translate }}
+            </span>
+          }
+          @if (statusMeta(tk); as s) {
+            <span class="tkt-badge {{ s.badgeClass }}">
+              <i [class]="s.icon"></i>{{ s.i18nKey | translate }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <!-- Meta grid -->
+      <div class="tkt-details__grid">
+        <div class="tkt-details__item">
+          <span class="tkt-details__label">
+            <i class="fa-solid fa-user"></i>{{ 'support.tickets.details.customer' | translate }}
+          </span>
+          <span class="tkt-details__value">{{ tk.customerName }}</span>
+        </div>
+        <div class="tkt-details__item">
+          <span class="tkt-details__label">
+            <i class="fa-solid fa-building"></i>{{ 'support.tickets.details.company' | translate }}
+          </span>
+          <span class="tkt-details__value">{{ tk.companyName || '—' }}</span>
+        </div>
+        <div class="tkt-details__item">
+          <span class="tkt-details__label">
+            <i class="fa-solid fa-screwdriver-wrench"></i>{{ 'support.tickets.details.service' | translate }}
+          </span>
+          <span class="tkt-details__value">{{ tk.serviceName || '—' }}</span>
+        </div>
+        <div class="tkt-details__item">
+          <span class="tkt-details__label">
+            <i class="fa-solid fa-user-pen"></i>{{ 'support.tickets.details.createdBy' | translate }}
+          </span>
+          <span class="tkt-details__value">{{ tk.createdByName || '—' }}</span>
+        </div>
+        <div class="tkt-details__item">
+          <span class="tkt-details__label">
+            <i class="fa-regular fa-calendar-plus"></i>{{ 'support.tickets.details.createdAt' | translate }}
+          </span>
+          <span class="tkt-details__value">{{ formatDate(tk.createdAt) }}</span>
+        </div>
+        <div class="tkt-details__item">
+          <span class="tkt-details__label">
+            <i class="fa-regular fa-clock"></i>{{ 'support.tickets.details.updatedAt' | translate }}
+          </span>
+          <span class="tkt-details__value">
+            {{ tk.updatedAt ? formatDate(tk.updatedAt) : ('support.tickets.details.notUpdated' | translate) }}
+          </span>
+        </div>
+        @if (tk.nextFollowUpDate) {
+          <div class="tkt-details__item">
+            <span class="tkt-details__label">
+              <i class="fa-regular fa-calendar-check"></i>{{ 'support.tickets.details.nextFollowUp' | translate }}
+            </span>
+            <span class="tkt-details__value">{{ formatDate(tk.nextFollowUpDate) }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Description -->
+      <div class="tkt-details__desc">
+        <span class="tkt-details__label">
+          <i class="fa-solid fa-align-left"></i>{{ 'support.tickets.details.description' | translate }}
+        </span>
+        <p class="tkt-details__desc-text" [class.is-empty]="!tk.description">
+          {{ tk.description || ('support.tickets.details.noDescription' | translate) }}
+        </p>
+      </div>
+    </div>
+  }
+  }
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" (click)="cancel.emit()">
+      {{ 'common.close' | translate }}
+    </button>
+    @if (ticket(); as tk) {
+      <button type="button" class="btn btn-primary" (click)="edit.emit(tk.id)">
+        <i class="fa-solid fa-pen-to-square me-1"></i>
+        {{ 'support.tickets.details.edit' | translate }}
+      </button>
+    }
+  </ng-container>
+</app-modal>

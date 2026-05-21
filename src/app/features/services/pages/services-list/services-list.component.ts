@@ -7,11 +7,18 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import {
+  Subject,
+  debounceTime,
+  distinctUntilChanged,
+  firstValueFrom,
+  takeUntil,
+} from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
+import { ExportColumn } from '../../../../core/services/table-export.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import {
   DataTableComponent,
@@ -20,6 +27,7 @@ import {
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
+import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import { AppService, FormMode } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ServiceFormDialogComponent } from '../../components/service-form-dialog/service-form-dialog.component';
@@ -38,6 +46,7 @@ const DEFAULT_PAGE_SIZE = 10;
     LoadErrorComponent,
     PaginationComponent,
     StatCardComponent,
+    TableToolsComponent,
     ServiceFormDialogComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -76,6 +85,27 @@ export class ServicesListComponent {
     { key: 'nameAr', label: 'services.table.nameAr', i18nLabel: true },
     { key: 'nameEn', label: 'services.table.nameEn', i18nLabel: true },
   ];
+
+  // ─────────── export / print ───────────
+
+  get exportColumns(): ExportColumn<AppService>[] {
+    return [
+      { header: this.t('services.table.id'), value: (r) => r.id },
+      { header: this.t('services.table.nameAr'), value: (r) => r.nameAr },
+      { header: this.t('services.table.nameEn'), value: (r) => r.nameEn },
+    ];
+  }
+
+  readonly fetchAllRows = async (): Promise<AppService[]> => {
+    const page = await firstValueFrom(
+      this.services.list({
+        pageIndex: 1,
+        pageSize: this.count() || this.pageSize(),
+        search: this.searchSignal().trim() || undefined,
+      }),
+    );
+    return page.data ?? [];
+  };
 
   /** Lightweight KPIs derived from the current page. */
   readonly kpis = computed(() => ({

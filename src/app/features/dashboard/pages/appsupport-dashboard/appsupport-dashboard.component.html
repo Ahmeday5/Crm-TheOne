@@ -1,178 +1,296 @@
-<div class="flex-grow-1">
-  <app-page-header [title]="'dashboard.support.title' | translate"
-                   [subtitle]="'dashboard.support.subtitle' | translate"
-                   icon="fa-solid fa-headset"></app-page-header>
+<div class="appsupport-dashboard flex-grow-1">
+  <app-page-header
+    [title]="'dashboard.support.title' | translate"
+    [subtitle]="'dashboard.support.subtitle' | translate"
+    icon="fa-solid fa-headset">
+  </app-page-header>
 
-  <div class="row g-3">
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
-        <div>
-          <p class="text-muted mb-1 small">{{ 'dashboard.kpi.designatedClients' | translate }}</p>
-          <h3 class="fw-700 mb-0">24</h3>
-        </div>
-        <span class="icon-tile"><i class="fa-solid fa-users"></i></span>
-      </div></div>
+  @if (loadError()) {
+    <div class="mb-3">
+      <app-load-error
+        [message]="loadError()"
+        [loading]="loading()"
+        (retry)="reload()">
+      </app-load-error>
     </div>
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
-        <div>
-          <p class="text-muted mb-1 small">{{ 'dashboard.kpi.activeSessions' | translate }}</p>
-          <h3 class="fw-700 mb-0">14</h3>
+  }
+
+  <!-- ─── KPI strip (6 stats) ─── -->
+  <div class="row g-3 mb-4">
+    @for (kpi of kpiCards(); track kpi.labelKey) {
+      <div class="col-6 col-md-4 col-xl-2">
+        <app-stat-card
+          [label]="kpi.labelKey | translate"
+          [value]="kpi.value"
+          [icon]="kpi.icon"
+          [tone]="kpi.tone"
+          [sub]="kpi.sub"
+          [valueClass]="kpi.valueClass">
+        </app-stat-card>
+      </div>
+    }
+  </div>
+
+  <!-- ─── Charts: status donut + weekly trend ─── -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-lg-5">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-primary"></i>
+          <h5 class="mb-0 flex-grow-1">{{ 'dashboard.support.ticketsByStatus' | translate }}</h5>
         </div>
-        <span class="icon-tile"><i class="fa-solid fa-phone"></i></span>
-      </div></div>
+        <div class="card-body">
+          @if (loading()) {
+            <div class="text-center py-5"><span class="spinner-border text-primary" role="status"></span></div>
+          } @else if (statusTotal() === 0) {
+            <div class="text-center py-5 text-muted">
+              <i class="fa-solid fa-chart-pie fa-2x mb-2 opacity-50 d-block"></i>
+              <p class="mb-0 small">{{ 'dashboard.support.statusEmpty' | translate }}</p>
+            </div>
+          } @else {
+            <apx-chart
+              [series]="statusChart().series"
+              [chart]="statusChart().chart"
+              [labels]="statusChart().labels"
+              [colors]="statusChart().colors"
+              [legend]="statusChart().legend"
+              [stroke]="statusChart().stroke"
+              [dataLabels]="statusChart().dataLabels"
+              [plotOptions]="statusChart().plotOptions"
+              [tooltip]="statusChart().tooltip"
+              [responsive]="statusChart().responsive">
+            </apx-chart>
+          }
+        </div>
+      </div>
     </div>
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
-        <div>
-          <p class="text-muted mb-1 small">{{ 'dashboard.kpi.resolvedCases' | translate }}</p>
-          <h3 class="fw-700 mb-0">150</h3>
+
+    <div class="col-12 col-lg-7">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-chart-area text-success"></i>
+          <h5 class="mb-0 flex-grow-1">{{ 'dashboard.support.weeklyResolved' | translate }}</h5>
         </div>
-        <span class="icon-tile"><i class="fa-solid fa-circle-check"></i></span>
-      </div></div>
-    </div>
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
-        <div>
-          <p class="text-muted mb-1 small">{{ 'dashboard.kpi.pendingIssues' | translate }}</p>
-          <h3 class="fw-700 mb-0">6</h3>
+        <div class="card-body">
+          @if (loading()) {
+            <div class="text-center py-5"><span class="spinner-border text-primary" role="status"></span></div>
+          } @else if (!hasWeekly()) {
+            <div class="text-center py-5 text-muted">
+              <i class="fa-solid fa-chart-area fa-2x mb-2 opacity-50 d-block"></i>
+              <p class="mb-0 small">{{ 'dashboard.support.weeklyEmpty' | translate }}</p>
+            </div>
+          } @else {
+            <apx-chart
+              [series]="weeklyChart().series"
+              [chart]="weeklyChart().chart"
+              [xaxis]="weeklyChart().xaxis"
+              [yaxis]="weeklyChart().yaxis"
+              [stroke]="weeklyChart().stroke"
+              [colors]="weeklyChart().colors"
+              [fill]="weeklyChart().fill"
+              [dataLabels]="weeklyChart().dataLabels"
+              [markers]="weeklyChart().markers"
+              [grid]="weeklyChart().grid"
+              [tooltip]="weeklyChart().tooltip">
+            </apx-chart>
+          }
         </div>
-        <span class="icon-tile"><i class="fa-regular fa-clock"></i></span>
-      </div></div>
+      </div>
     </div>
   </div>
 
-  <div class="row g-3 mt-1">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.support.assignedClients' | translate }}</h5></div>
-        <div class="card-body" style="max-height:480px; overflow-y:auto;">
-          <div class="recent-item p-4 mb-3">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
-              <div>
-                <div class="d-flex align-items-center gap-2 mb-1">
-                  <p class="fw-600 mb-0">أحمد كمال الشهري</p>
-                  <span class="badge bg-danger-subtle">{{ 'dashboard.sales.priority.high' | translate }}</span>
-                </div>
-                <small class="text-muted d-block">شركة الحلول التقنية</small>
-                <small class="text-muted">{{ 'dashboard.support.assignedBy' | translate }}: سارة • 2026-01-08</small>
-              </div>
-              <span class="badge bg-warning-subtle">{{ 'dashboard.support.statuses.awaitingSetup' | translate }}</span>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-              <button class="btn btn-primary btn-sm">{{ 'dashboard.support.buttons.startSession' | translate }}</button>
-              <button class="btn btn-light btn-sm">{{ 'dashboard.support.buttons.callClient' | translate }}</button>
-              <button class="btn btn-light btn-sm">{{ 'dashboard.support.buttons.viewDetails' | translate }}</button>
-            </div>
-          </div>
-          <div class="recent-item p-4 mb-3">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
-              <div>
-                <div class="d-flex align-items-center gap-2 mb-1">
-                  <p class="fw-600 mb-0">نورة حسن القحطاني</p>
-                  <span class="badge bg-danger-subtle">{{ 'dashboard.sales.priority.high' | translate }}</span>
-                </div>
-                <small class="text-muted d-block">وكالة التسويق الرقمي</small>
-                <small class="text-muted">{{ 'dashboard.support.assignedBy' | translate }}: عمر • 2026-01-08</small>
-              </div>
-              <span class="badge bg-primary-subtle">{{ 'dashboard.support.statuses.inProgress' | translate }}</span>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-              <button class="btn btn-primary btn-sm">{{ 'dashboard.support.buttons.startSession' | translate }}</button>
-              <button class="btn btn-light btn-sm">{{ 'dashboard.support.buttons.callClient' | translate }}</button>
-              <button class="btn btn-light btn-sm">{{ 'dashboard.support.buttons.viewDetails' | translate }}</button>
-            </div>
-          </div>
+  <!-- ─── Assigned clients + open tickets ─── -->
+  <div class="row g-3 mb-4">
+    <!-- Assigned clients (last 5) -->
+    <div class="col-12 col-xl-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-users text-primary"></i>
+          <h5 class="mb-0 flex-grow-1">{{ 'dashboard.support.assignedClients' | translate }}</h5>
+          @if (assignedClients().length > 0) {
+            <span class="badge bg-light text-muted">{{ assignedClients().length }}</span>
+          }
         </div>
-      </div>
-    </div>
-
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.support.openTickets' | translate }}</h5></div>
-        <div class="card-body" style="max-height:480px; overflow-y:auto;">
-          <div class="recent-item p-4 mb-3 border-r-indicator">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
-              <div>
-                <div class="d-flex align-items-center gap-2 mb-1">
-                  <p class="fw-600 mb-0">#101 - أحمد كمال الشهري - الحلول التقنية</p>
-                  <span class="badge bg-danger-subtle">{{ 'dashboard.sales.priority.high' | translate }}</span>
-                </div>
-                <small class="text-muted d-block mb-2">مشكلة تكامل مع API</small>
-                <div class="d-flex gap-3 small text-muted">
-                  <span>{{ 'dashboard.support.created' | translate }}: 2h</span>
-                  <span>{{ 'dashboard.support.lastUpdate' | translate }}: 15m</span>
-                </div>
-              </div>
-              <span class="badge bg-primary-subtle">{{ 'dashboard.support.statuses.inProgress' | translate }}</span>
-            </div>
-            <div class="mb-3">
-              <div class="d-flex justify-content-between small mb-1">
-                <span class="text-muted">{{ 'dashboard.support.progress' | translate }}</span>
-                <span class="fw-600">65%</span>
-              </div>
-              <div class="progress"><div class="progress-bar" role="progressbar" style="width: 65%"></div></div>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-              <button class="btn btn-primary btn-sm">{{ 'dashboard.support.buttons.updateStatus' | translate }}</button>
-              <button class="btn btn-light btn-sm">{{ 'dashboard.support.buttons.addNote' | translate }}</button>
-              <button class="btn btn-light btn-sm">{{ 'dashboard.support.buttons.escalate' | translate }}</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.support.recentActivity' | translate }}</h5></div>
         <div class="card-body">
-          <div class="recent-item d-flex align-items-center gap-3 p-3 mb-2">
-            <span class="dot success"></span>
-            <div class="flex-grow-1">
-              <p class="fw-600 mb-1">{{ 'dashboard.support.activity.ticketResolved' | translate }} #98</p>
-              <small class="text-muted">شركة ABC</small>
+          @if (loading()) {
+            <div class="text-center py-5"><span class="spinner-border text-primary" role="status"></span></div>
+          } @else if (assignedClients().length === 0) {
+            <div class="text-center py-5 text-muted">
+              <i class="fa-solid fa-user-slash fa-2x mb-2 opacity-50 d-block"></i>
+              <p class="mb-0 small">{{ 'dashboard.support.noClients' | translate }}</p>
             </div>
-            <small class="text-muted">10m</small>
-          </div>
-          <div class="recent-item d-flex align-items-center gap-3 p-3 mb-2">
-            <span class="dot blue"></span>
-            <div class="flex-grow-1">
-              <p class="fw-600 mb-1">{{ 'dashboard.support.activity.sessionStarted' | translate }}</p>
-              <small class="text-muted">أحمد كمال الشهري</small>
+          } @else {
+            <div class="d-flex flex-column gap-3">
+              @for (c of assignedClients(); track trackByCustomerId($index, c)) {
+                <div class="dash-entity-card">
+                  <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div class="d-flex gap-3 min-w-0">
+                      <span class="dash-avatar">{{ initials(c.fullName) }}</span>
+                      <div class="min-w-0">
+                        <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                          <p class="fw-600 mb-0 text-truncate" [title]="c.fullName">{{ c.fullName }}</p>
+                          <span class="badge cns-badge"
+                                [class.cns-badge--done]="c.isConsulted"
+                                [class.cns-badge--pending]="!c.isConsulted">
+                            <i class="fa-solid" [class.fa-circle-check]="c.isConsulted" [class.fa-hourglass-half]="!c.isConsulted"></i>
+                            {{ consultationLabel(c) }}
+                          </span>
+                        </div>
+                        @if (c.services.length) {
+                          <small class="text-muted d-block text-truncate" [title]="c.services[0].name">{{ c.services[0].name }}</small>
+                        } @else if (c.source) {
+                          <small class="text-muted d-block text-truncate">{{ c.source }}</small>
+                        }
+                        <small class="text-muted d-block dash-meta">
+                          @if (c.salesPersonName) {
+                            <i class="fa-solid fa-user-tie opacity-75 me-1"></i>{{ 'dashboard.support.assignedBy' | translate }}: {{ c.salesPersonName }}
+                          }
+                          <span class="dash-dot">•</span>{{ formatDate(c.createdAt) }}
+                        </small>
+                      </div>
+                    </div>
+                    <span class="badge {{ statusBadgeClass(c.status) }} flex-shrink-0">{{ localizeStatus(c.status) }}</span>
+                  </div>
+                  <div class="d-flex gap-2 flex-wrap mt-3">
+                    @if (!c.isConsulted) {
+                      <button type="button" class="btn btn-primary btn-sm" (click)="goToDesignatedClients()">
+                        <i class="fa-solid fa-comments me-1"></i>{{ 'customers.consultation.start' | translate }}
+                      </button>
+                    }
+                    @if (c.phone) {
+                      <a class="btn btn-light border btn-sm" [href]="'tel:' + c.phone">
+                        <i class="fa-solid fa-phone me-1"></i>{{ 'dashboard.support.buttons.callClient' | translate }}
+                      </a>
+                    }
+                    <button type="button" class="btn btn-light border btn-sm" (click)="goToDesignatedClients()">
+                      <i class="fa-solid fa-eye me-1"></i>{{ 'dashboard.support.buttons.viewDetails' | translate }}
+                    </button>
+                  </div>
+                </div>
+              }
             </div>
-            <small class="text-muted">15m</small>
-          </div>
+          }
+        </div>
+        <div class="card-footer">
+          <button type="button" class="btn btn-outline-primary w-100" (click)="goToDesignatedClients()">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>{{ 'dashboard.support.viewAllClients' | translate }}
+          </button>
         </div>
       </div>
     </div>
 
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.support.quickActions' | translate }}</h5></div>
+    <!-- Open tickets (last 5) -->
+    <div class="col-12 col-xl-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-ticket text-warning"></i>
+          <h5 class="mb-0 flex-grow-1">{{ 'dashboard.support.openTickets' | translate }}</h5>
+          @if (tickets().length > 0) {
+            <span class="badge bg-light text-muted">{{ tickets().length }}</span>
+          }
+        </div>
         <div class="card-body">
-          <div class="row g-3">
-            <div class="col-xl-3 col-lg-4 col-md-6">
-              <button class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2">
-                <i class="fa-solid fa-headset"></i>{{ 'dashboard.support.actions.startSupport' | translate }}
-              </button>
+          @if (loading()) {
+            <div class="text-center py-5"><span class="spinner-border text-primary" role="status"></span></div>
+          } @else if (tickets().length === 0) {
+            <div class="text-center py-5 text-muted">
+              <i class="fa-solid fa-inbox fa-2x mb-2 opacity-50 d-block"></i>
+              <p class="mb-0 small">{{ 'dashboard.support.noTickets' | translate }}</p>
             </div>
-            <div class="col-xl-3 col-lg-4 col-md-6">
-              <button class="btn btn-light w-100 d-flex align-items-center justify-content-center gap-2">
-                <i class="fa-solid fa-ticket"></i>{{ 'dashboard.support.actions.createTicket' | translate }}
-              </button>
+          } @else {
+            <div class="d-flex flex-column gap-3">
+              @for (t of tickets(); track trackByTicketId($index, t)) {
+                <div class="dash-entity-card dash-ticket {{ ticketAccentClass(t.priority) }}">
+                  <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                    <div class="min-w-0">
+                      <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                        <p class="fw-600 mb-0 text-truncate dash-ticket-title">
+                          #{{ t.ticketNumber }} — {{ t.customerName }}@if (t.companyName) { <span class="text-muted"> — {{ t.companyName }}</span> }
+                        </p>
+                        <span class="tkt-badge {{ ticketPriorityBadgeClass(t.priority) }}">
+                          <i class="{{ ticketPriorityIcon(t.priority) }}"></i>{{ ticketPriorityLabel(t.priority, t.priorityName) }}
+                        </span>
+                      </div>
+                      <p class="text-muted small mb-2 dash-clamp-2" [title]="t.title">{{ t.title }}</p>
+                      <div class="d-flex gap-3 small text-muted flex-wrap">
+                        <span><i class="fa-regular fa-clock opacity-75 me-1"></i>{{ 'dashboard.support.created' | translate }}: {{ formatRelative(t.createdAt) }}</span>
+                        @if (t.updatedAt) {
+                          <span><i class="fa-solid fa-rotate opacity-75 me-1"></i>{{ 'dashboard.support.lastUpdate' | translate }}: {{ formatRelative(t.updatedAt) }}</span>
+                        }
+                      </div>
+                    </div>
+                    <span class="tkt-badge {{ ticketStatusBadgeClass(t.status) }} flex-shrink-0">
+                      <i class="{{ ticketStatusIcon(t.status) }}"></i>{{ ticketStatusLabel(t.status, t.statusName) }}
+                    </span>
+                  </div>
+                  <div class="mb-1">
+                    <div class="d-flex justify-content-between small mb-1">
+                      <span class="text-muted">{{ 'dashboard.support.progress' | translate }}</span>
+                      <span class="fw-600">{{ ticketProgress(t.status) }}%</span>
+                    </div>
+                    <div class="progress dash-progress">
+                      <div class="progress-bar" role="progressbar"
+                           [style.width.%]="ticketProgress(t.status)"
+                           [attr.aria-valuenow]="ticketProgress(t.status)"
+                           aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </div>
+                  <div class="d-flex gap-2 flex-wrap mt-3">
+                    <button type="button" class="btn btn-primary btn-sm" (click)="goToTickets()">
+                      <i class="fa-solid fa-pen-to-square me-1"></i>{{ 'dashboard.support.buttons.updateStatus' | translate }}
+                    </button>
+                    <button type="button" class="btn btn-light border btn-sm" (click)="goToTickets()">
+                      <i class="fa-solid fa-comment-dots me-1"></i>{{ 'dashboard.support.buttons.addNote' | translate }}
+                    </button>
+                    <button type="button" class="btn btn-light border btn-sm" (click)="goToTickets()">
+                      <i class="fa-solid fa-arrow-up-right-dots me-1"></i>{{ 'dashboard.support.buttons.escalate' | translate }}
+                    </button>
+                  </div>
+                </div>
+              }
             </div>
-            <div class="col-xl-3 col-lg-4 col-md-6">
-              <button class="btn btn-light w-100 d-flex align-items-center justify-content-center gap-2">
-                <i class="fa-solid fa-book"></i>{{ 'dashboard.support.actions.knowledgeBase' | translate }}
-              </button>
-            </div>
-            <div class="col-xl-3 col-lg-4 col-md-6">
-              <button class="btn btn-light w-100 d-flex align-items-center justify-content-center gap-2">
-                <i class="fa-solid fa-handshake"></i>{{ 'dashboard.support.actions.contactSales' | translate }}
-              </button>
-            </div>
-          </div>
+          }
+        </div>
+        <div class="card-footer">
+          <button type="button" class="btn btn-outline-primary w-100" (click)="goToTickets()">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>{{ 'dashboard.support.viewAllTickets' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Quick actions ─── -->
+  <div class="card mb-4">
+    <div class="card-header d-flex align-items-center gap-2">
+      <i class="fa-solid fa-bolt text-warning"></i>
+      <h5 class="mb-0">{{ 'dashboard.support.quickActions' | translate }}</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-6 col-md-4 col-lg col-xl">
+          <button type="button" class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2 py-2" (click)="goToDesignatedClients()">
+            <i class="fa-solid fa-headset"></i>
+            <span>{{ 'dashboard.support.actions.startSupport' | translate }}</span>
+          </button>
+        </div>
+        <div class="col-6 col-md-4 col-lg col-xl">
+          <button type="button" class="btn btn-light border w-100 d-flex align-items-center justify-content-center gap-2 py-2" (click)="goToTickets()">
+            <i class="fa-solid fa-ticket text-warning"></i>
+            <span>{{ 'dashboard.support.actions.createTicket' | translate }}</span>
+          </button>
+        </div>
+        <div class="col-6 col-md-4 col-lg col-xl">
+          <button type="button" class="btn btn-light border w-100 d-flex align-items-center justify-content-center gap-2 py-2" (click)="goToKnowledgeBase()">
+            <i class="fa-solid fa-book text-info"></i>
+            <span>{{ 'dashboard.support.actions.knowledgeBase' | translate }}</span>
+          </button>
+        </div>
+        <div class="col-6 col-md-4 col-lg col-xl">
+          <button type="button" class="btn btn-light border w-100 d-flex align-items-center justify-content-center gap-2 py-2" (click)="goToDesignatedClients()">
+            <i class="fa-solid fa-handshake text-success"></i>
+            <span>{{ 'dashboard.support.actions.contactSales' | translate }}</span>
+          </button>
         </div>
       </div>
     </div>

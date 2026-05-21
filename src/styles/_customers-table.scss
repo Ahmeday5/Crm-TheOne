@@ -443,3 +443,49 @@
   border-radius: var(--radius-pill);
   letter-spacing: 0.02em;
 }
+
+/* ── consultation status badge (sales + support customer tables) ──── */
+.cns-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: var(--fw-600);
+  font-size: var(--fs-xs);
+  padding: 0.32rem 0.6rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+
+  i { font-size: 0.72rem; }
+
+  &--done {
+    background: var(--success-soft);
+    color: var(--success);
+  }
+  &--pending {
+    background: var(--warning-soft);
+    color: var(--warning);
+
+    i { animation: cns-wait 1.8s ease-in-out infinite; }
+  }
+}
+
+/* "Start consultation" CTA — make it unmissable */
+.cns-start-btn {
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.18);
+  }
+  &:active:not(:disabled) { transform: translateY(0); }
+}
+
+@keyframes cns-wait {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cns-badge i { animation: none !important; }
+}

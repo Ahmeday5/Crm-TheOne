@@ -29,11 +29,11 @@ export class SalesPhaseComponent {
       icon: 'fa-regular fa-file',
       color: 'green',
     },
-    {
+    /*{
       routerLink: 'follow-ups',
       labelKey: 'sales.tabs.followUps',
       icon: 'fa-solid fa-calendar-day',
       color: 'orange',
-    },
+    },*/
   ];
 }

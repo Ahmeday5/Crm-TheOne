@@ -1,251 +1,224 @@
-<div class="container-fluid py-4">
+<app-page-header
+  [title]="'support.tickets.title' | translate"
+  [subtitle]="'support.tickets.subtitle' | translate"
+  icon="fa-solid fa-ticket">
+  <button type="button" class="btn btn-primary d-flex align-items-center gap-2" (click)="openCreate()">
+    <i class="fa-solid fa-plus"></i>
+    {{ 'support.tickets.add' | translate }}
+  </button>
+</app-page-header>
 
-  <!-- العنوان + زر إنشاء تذكرة -->
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
-    <div>
-      <h2 class="fw-bold mb-1">تذاكر الدعم الفني</h2>
-      <p class="text-muted mb-0">إدارة وتتبع جميع تذاكر الدعم</p>
-    </div>
-    <button class="btn btn-view active d-flex align-items-center gap-2">
-      <i class="fa-solid fa-plus"></i>
-      إنشاء تذكرة جديدة
-    </button>
+<!-- KPI cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg">
+    <app-stat-card [label]="'support.tickets.stats.total' | translate" [value]="stats().total"
+      icon="fa-solid fa-ticket" tone="info"></app-stat-card>
+  </div>
+  <div class="col-6 col-lg">
+    <app-stat-card [label]="'support.tickets.stats.open' | translate" [value]="stats().open"
+      icon="fa-solid fa-folder-open" tone="primary"></app-stat-card>
+  </div>
+  <div class="col-6 col-lg">
+    <app-stat-card [label]="'support.tickets.stats.inProgress' | translate" [value]="stats().inProgress"
+      icon="fa-solid fa-spinner" tone="warning"></app-stat-card>
+  </div>
+  <div class="col-6 col-lg">
+    <app-stat-card [label]="'support.tickets.stats.resolved' | translate" [value]="stats().resolved"
+      icon="fa-solid fa-circle-check" tone="success"></app-stat-card>
+  </div>
+  <div class="col-6 col-lg">
+    <app-stat-card [label]="'support.tickets.stats.highPriority' | translate" [value]="stats().highPriority"
+      icon="fa-solid fa-fire-flame-curved" tone="danger"></app-stat-card>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex align-items-center gap-2">
+    <i class="fa-solid fa-ticket text-primary"></i>
+    <h5 class="mb-0">{{ 'support.tickets.tableTitle' | translate }}</h5>
+    <span class="badge rounded-pill bg-primary-subtle text-primary ms-1">{{ totalCount() }}</span>
+    <app-table-tools
+      class="ms-auto"
+      [reportTitle]="'support.tickets.tableTitle' | translate"
+      [columns]="exportColumns"
+      [rows]="visibleExportRows"
+      [fetchAll]="fetchAllRows"
+      [disabled]="loading() || rows().length === 0">
+    </app-table-tools>
   </div>
 
-  <!-- الكروت الأربعة الصغيرة -->
-  <div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-      <div class="card shadow-sm border-0 text-center py-4">
-        <div class="card-body">
-          <h3 class="fw-bold text-primary mb-1">1</h3>
-          <p class="text-muted mb-0 small">مفتوحة</p>
+  <div class="card-body">
+    <!-- Filters -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-6 col-lg-6">
+        <div class="position-relative">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input class="form-control ps-5"
+            [placeholder]="'support.tickets.searchPlaceholder' | translate"
+            [ngModel]="searchTerm" (ngModelChange)="onSearchInput($event)">
         </div>
       </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card shadow-sm border-0 text-center py-4">
-        <div class="card-body">
-          <h3 class="fw-bold text-warning mb-1">0</h3>
-          <p class="text-muted mb-0 small">قيد التنفيذ</p>
-        </div>
+      <div class="col-6 col-md-3">
+        <select class="form-select" [ngModel]="statusFilter()"
+          (ngModelChange)="onStatusChange($event)">
+          <option value="">{{ 'support.tickets.allStatuses' | translate }}</option>
+          @for (st of statuses; track st.value) {
+            <option [value]="st.enumName">{{ st.i18nKey | translate }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <select class="form-select" [ngModel]="priorityFilter()"
+          (ngModelChange)="onPriorityChange($event)">
+          <option value="">{{ 'support.tickets.allPriorities' | translate }}</option>
+          @for (p of priorities; track p.value) {
+            <option [value]="p.enumName">{{ p.i18nKey | translate }}</option>
+          }
+        </select>
       </div>
     </div>
-    <div class="col-6 col-md-3">
-      <div class="card shadow-sm border-0 text-center py-4">
-        <div class="card-body">
-          <h3 class="fw-bold text-danger mb-1">1</h3>
-          <p class="text-muted mb-0 small">حرجة</p>
-        </div>
+
+    @if (loading()) {
+      <div class="p-5 text-center text-muted">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        {{ 'common.loading' | translate }}
       </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card shadow-sm border-0 text-center py-4">
-        <div class="card-body">
-          <h3 class="fw-bold text-success mb-1">0</h3>
-          <p class="text-muted mb-0 small">تم الحل</p>
-        </div>
+    } @else if (loadError()) {
+      <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
+    } @else if (rows().length === 0) {
+      <div class="p-5 text-center text-muted">
+        <i class="fa-solid fa-ticket-simple fs-2 d-block mb-2 opacity-50"></i>
+        <p class="mb-1 fw-600">{{ 'support.tickets.empty' | translate }}</p>
+        <p class="small mb-3">{{ 'support.tickets.emptyHint' | translate }}</p>
+        <button type="button" class="btn btn-primary btn-sm" (click)="openCreate()">
+          <i class="fa-solid fa-plus me-1"></i>{{ 'support.tickets.add' | translate }}
+        </button>
       </div>
-    </div>
-  </div>
-
-  <!-- فلاتر البحث والـ selects -->
-  <div class="card shadow-sm border-0 mb-4">
-    <div class="card-body py-3">
-      <div class="row g-3">
-        <div class="col-md-4 col-lg-3">
-          <div class="position-relative">
-            <input
-              type="text"
-              class="form-control ps-3 pe-5"
-              placeholder="بحث في التذاكر..."
-            />
-            <i class="fa-solid fa-magnifying-glass position-absolute top-50 end-0 translate-middle-y pe-3 text-muted"></i>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-3">
-          <select class="form-select">
-            <option selected>جميع الأولويات</option>
-            <option>عالية</option>
-            <option>متوسطة</option>
-            <option>منخفضة</option>
-          </select>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-3">
-          <select class="form-select">
-            <option selected>جميع الحالات</option>
-            <option>مفتوحة</option>
-            <option>قيد المعالجة</option>
-            <option>بانتظار العميل</option>
-            <option>مغلقة</option>
-          </select>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-3">
-          <select class="form-select">
-            <option selected>جميع الفئات</option>
-            <option>تقني</option>
-            <option>خطأ برمجي</option>
-            <option>استفسار</option>
-            <option>طلب ميزة</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- الجدول الرئيسي -->
-  <div class="card shadow-sm border-0">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-      <h5 class="mb-0">جميع التذاكر: 3</h5>
-      <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
-        <i class="fa-solid fa-filter"></i>
-        تصدير
-      </button>
-    </div>
-
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
+    } @else {
+      <div class="tkt-table table-responsive border rounded">
+        <table class="table table-hover align-middle mb-0">
           <thead>
             <tr>
-              <th>رقم التذكرة</th>
-              <th>العميل</th>
-              <th>الخدمة</th>
-              <th>الفئة</th>
-              <th>الأولوية</th>
-              <th>الحالة</th>
-              <th>مسند إلى</th>
-              <th>تاريخ الإنشاء</th>
-              <th>الإجراءات</th>
+              <th class="ps-3">{{ 'support.tickets.table.number' | translate }}</th>
+              <th>{{ 'support.tickets.table.customer' | translate }}</th>
+              <th>{{ 'support.tickets.table.ticketTitle' | translate }}</th>
+              <th>{{ 'support.tickets.table.service' | translate }}</th>
+              <th>{{ 'support.tickets.table.priority' | translate }}</th>
+              <th>{{ 'support.tickets.table.status' | translate }}</th>
+              <th>{{ 'support.tickets.table.nextFollowUp' | translate }}</th>
+              <th>{{ 'support.tickets.table.createdBy' | translate }}</th>
+              <th>{{ 'support.tickets.table.createdAt' | translate }}</th>
+              <th class="text-end pe-3" style="width:1%">{{ 'support.tickets.table.actions' | translate }}</th>
             </tr>
           </thead>
           <tbody>
-
-            <!-- تذكرة 1 -->
-            <tr>
-              <td class="fw-medium">TKT-101</td>
-              <td>
-                <div>
-                  <div class="fw-medium">أحمد محمد العمري</div>
-                  <small class="text-muted">شركة الحلول التقنية</small>
-                </div>
-              </td>
-              <td>برنامج محاسبي</td>
-              <td><span class="badge bg-secondary-subtle text-secondary">تقني</span></td>
-              <td>
-                <span class="badge bg-warning-subtle text-warning d-flex align-items-center gap-1">
-                  <i class="fa-solid fa-triangle-exclamation"></i>
-                  عالية
-                </span>
-              </td>
-              <td><span class="badge bg-secondary">قيد المعالجة</span></td>
-              <td>المستخدم الحالي</td>
-              <td>
-                <div>
-                  <div>٦/١/٢٠٢٦</div>
-                  <small class="text-muted">آخر تحديث: ٨/١/٢٠٢٦</small>
-                </div>
-              </td>
-              <td>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-view btn-sm" (click)="goToDetailsOfSupportCases();">
-                    <i class="fa-regular fa-eye"></i>
-                  </button>
-                  <select class="form-select form-select-sm" style="width: 140px;">
-                    <option selected></option>
-                    <option>مفتوحة</option>
-                    <option>قيد المعالجة</option>
-                    <option>بانتظار العميل</option>
-                    <option>مغلقة</option>
-                  </select>
-                </div>
-              </td>
-            </tr>
-
-            <!-- تذكرة 2 -->
-            <tr>
-              <td class="fw-medium">TKT-102</td>
-              <td>
-                <div>
-                  <div class="fw-medium">سارة علي القحطاني</div>
-                  <small class="text-muted">وكالة التسويق الرقمي</small>
-                </div>
-              </td>
-              <td>تطبيق جوال</td>
-              <td><span class="badge bg-secondary-subtle text-secondary">خطأ برمجي</span></td>
-              <td>
-                <span class="badge bg-danger-subtle text-danger d-flex align-items-center gap-1">
-                  <i class="fa-solid fa-triangle-exclamation"></i>
-                  حرجة
-                </span>
-              </td>
-              <td><span class="badge bg-primary-subtle text-primary">مفتوحة</span></td>
-              <td>المستخدم الحالي</td>
-              <td>
-                <div>
-                  <div>٨/١/٢٠٢٦</div>
-                  <small class="text-muted">آخر تحديث: ٨/١/٢٠٢٦</small>
-                </div>
-              </td>
-              <td>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-view btn-sm" (click)="goToDetailsOfSupportCases();">
-                    <i class="fa-regular fa-eye"></i>
-                  </button>
-                  <select class="form-select form-select-sm" style="width: 140px;">
-                    <option selected>مفتوحة</option>
-                    <option>قيد المعالجة</option>
-                    <option>بانتظار العميل</option>
-                    <option>مغلقة</option>
-                  </select>
-                </div>
-              </td>
-            </tr>
-
-            <!-- تذكرة 3 -->
-            <tr>
-              <td class="fw-medium">TKT-103</td>
-              <td>
-                <div>
-                  <div class="fw-medium">فهد سعد الغامدي</div>
-                  <small class="text-muted">مركز التدريب</small>
-                </div>
-              </td>
-              <td>نظام إدارة التعلم</td>
-              <td><span class="badge bg-secondary-subtle text-secondary">استفسار</span></td>
-              <td>
-                <span class="badge bg-info-subtle text-info">متوسطة</span>
-              </td>
-              <td><span class="badge bg-secondary">بانتظار العميل</span></td>
-              <td>خالد أحمد</td>
-              <td>
-                <div>
-                  <div>٥/١/٢٠٢٦</div>
-                  <small class="text-muted">آخر تحديث: ٧/١/٢٠٢٦</small>
-                </div>
-              </td>
-              <td>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-view btn-sm" (click)="goToDetailsOfSupportCases();">
-                    <i class="fa-regular fa-eye"></i>
-                  </button>
-                  <select class="form-select form-select-sm" style="width: 140px;">
-                    <option selected></option>
-                    <option>مفتوحة</option>
-                    <option>قيد المعالجة</option>
-                    <option>بانتظار العميل</option>
-                    <option>مغلقة</option>
-                  </select>
-                </div>
-              </td>
-            </tr>
-
+            @for (row of rows(); track trackById($index, row)) {
+              <tr>
+                <td class="ps-3 fw-bold tkt-num">#{{ row.ticketNumber }}</td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="tkt-avatar">{{ (row.customerName || '?').charAt(0) }}</span>
+                    <div class="min-w-0">
+                      <div class="fw-600 text-truncate">{{ row.customerName }}</div>
+                      @if (row.companyName) {
+                        <small class="text-muted text-truncate d-block">{{ row.companyName }}</small>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td class="tkt-title-cell">
+                  <span class="text-truncate d-block">{{ row.title }}</span>
+                </td>
+                <td class="text-nowrap">
+                  <i class="fa-solid fa-screwdriver-wrench text-muted me-1 opacity-75"></i>{{ serviceLabel(row) }}
+                </td>
+                <td>
+                  @if (priorityMeta(row); as p) {
+                    <span class="tkt-badge {{ p.badgeClass }}">
+                      <i [class]="p.icon"></i>{{ p.i18nKey | translate }}
+                    </span>
+                  } @else {
+                    <span class="tkt-badge tkt-prio--medium">{{ row.priorityName }}</span>
+                  }
+                </td>
+                <td>
+                  @if (statusMeta(row); as s) {
+                    <span class="tkt-badge {{ s.badgeClass }}">
+                      <i [class]="s.icon"></i>{{ s.i18nKey | translate }}
+                    </span>
+                  } @else {
+                    <span class="tkt-badge tkt-st--open">{{ row.statusName }}</span>
+                  }
+                </td>
+                <td class="tkt-followup-cell" [class.is-open]="isOpen(row)">
+                  @if (row.nextFollowUpDate) {
+                    <span class="tkt-followup">
+                      <i class="fa-regular fa-clock"></i>{{ formatFollowUp(row.nextFollowUpDate) }}
+                    </span>
+                  } @else if (isOpen(row)) {
+                    <span class="tkt-followup tkt-followup--missing">
+                      <i class="fa-solid fa-triangle-exclamation"></i>{{ 'support.tickets.table.followUpNeeded' | translate }}
+                    </span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td class="text-nowrap">{{ row.createdByName || ('support.tickets.table.noCreator' | translate) }}</td>
+                <td class="text-nowrap">
+                  <i class="fa-regular fa-calendar text-muted me-1"></i>{{ formatDate(row.createdAt) }}
+                </td>
+                <td class="text-end pe-3">
+                  <div class="d-inline-flex gap-2 flex-nowrap">
+                    <button type="button" class="btn btn-sm btn-light"
+                      [disabled]="busyId() === row.id"
+                      [attr.title]="'support.tickets.actions.view' | translate"
+                      [attr.aria-label]="'support.tickets.actions.view' | translate"
+                      (click)="openDetails(row)">
+                      <i class="fa-regular fa-eye"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light"
+                      [disabled]="busyId() === row.id"
+                      [attr.title]="'support.tickets.actions.edit' | translate"
+                      [attr.aria-label]="'support.tickets.actions.edit' | translate"
+                      (click)="openEdit(row)">
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger-soft"
+                      [disabled]="busyId() === row.id"
+                      [attr.title]="'support.tickets.actions.delete' | translate"
+                      [attr.aria-label]="'support.tickets.actions.delete' | translate"
+                      (click)="confirmDelete(row)">
+                      @if (busyId() === row.id) {
+                        <span class="spinner-border spinner-border-sm"></span>
+                      } @else {
+                        <i class="fa-solid fa-trash"></i>
+                      }
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>
-    </div>
-  </div>
 
+      <div class="mt-3">
+        <app-pagination [pageIndex]="pageIndex()" [pageSize]="pageSize()" [count]="totalCount()"
+          [disabled]="loading()" (pageChange)="onPageChange($event)" (pageSizeChange)="onPageSizeChange($event)">
+        </app-pagination>
+      </div>
+    }
+  </div>
 </div>
+
+@if (formOpen()) {
+  <app-support-ticket-form-dialog [ticketId]="editId()"
+    (created)="onSaved()" (updated)="onSaved()" (cancel)="closeForm()">
+  </app-support-ticket-form-dialog>
+}
+
+@if (detailsId() !== null) {
+  <app-support-ticket-details-dialog [ticketId]="detailsId()!"
+    (edit)="onDetailsEdit($event)" (cancel)="closeDetails()">
+  </app-support-ticket-details-dialog>
+}

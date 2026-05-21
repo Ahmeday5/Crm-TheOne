@@ -81,6 +81,14 @@
         {{ 'services.title' | translate }}
         <span class="text-muted small">({{ count() }})</span>
       </h5>
+      <app-table-tools
+        class="ms-auto"
+        [reportTitle]="'services.title' | translate"
+        [columns]="exportColumns"
+        [rows]="rows()"
+        [fetchAll]="fetchAllRows"
+        [disabled]="loading() || rows().length === 0">
+      </app-table-tools>
     </div>
 
     @if (loadError()) {

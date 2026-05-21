@@ -141,7 +141,7 @@ export class SalesReportsComponent implements OnInit {
         c.campaignName,
         c.notBuyerReason,
         c.salesPersonName,
-        ...(c.services ?? []),
+        ...(c.services ?? []).map((s) => s.name),
       ]
         .filter((v): v is string => !!v)
         .join(' ')

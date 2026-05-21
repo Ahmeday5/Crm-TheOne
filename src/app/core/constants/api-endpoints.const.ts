@@ -97,6 +97,28 @@ export const API_ENDPOINTS = {
     delete: (id: number | string) => `Appointments/DeleteAppointment/${id}`,
     stats: 'Appointments/GetStats',
   },
+  support: {
+    /**
+     * Support finishes its consultation and hands the customer back to the
+     * sales rep they originally came from — the backend resolves that rep from
+     * the customer record, so the URL carries only the customer id (no body).
+     * Also flips the customer's `isConsulted` flag to `true`.
+     */
+    returnToSalesPerson: (customerId: number | string) =>
+      `Support/${customerId}/ReturnToSalesPerson`,
+    /** KPI strip + status breakdown + weekly-resolved trend for the dashboard. */
+    dashboard: 'Support/Dashboard',
+  },
+  supportTickets: {
+    list: 'SupportTickets/GetTickets',
+    byId: (id: number | string) => `SupportTickets/GetTicketById/${id}`,
+    create: 'SupportTickets/CreateTicket',
+    update: (id: number | string) => `SupportTickets/UpdateTicket/${id}`,
+    delete: (id: number | string) => `SupportTickets/DeleteTicket/${id}`,
+    statistics: 'SupportTickets/TicketStatistics',
+    statuses: 'SupportTickets/TicketStatuses',
+    priorities: 'SupportTickets/TicketPriorities',
+  },
   marketing: {
     statistics: 'Marketing/DashboardsStatistics',
     sourcePerformance: 'Marketing/SourcePerformance',

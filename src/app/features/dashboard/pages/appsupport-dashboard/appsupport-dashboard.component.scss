@@ -1,1 +1,92 @@
-/* Styling driven entirely by global theme — see src/styles/_tokens.scss */
+:host { display: block; }
+
+.appsupport-dashboard {
+  /* ── progress bars (ticket cards) ──────────────────────────── */
+  .dash-progress {
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-2);
+
+    .progress-bar {
+      border-radius: var(--radius-pill);
+      transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  }
+
+  /* ── client / ticket entity cards ──────────────────────────── */
+  .dash-entity-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.1rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    animation: dash-fade-in 0.35s ease both;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: color-mix(in srgb, var(--brand) 30%, var(--border));
+    }
+  }
+
+  /* priority accent rail on the inline-end of ticket cards */
+  .dash-ticket {
+    border-inline-start: 4px solid var(--border);
+
+    &.is-high { border-inline-start-color: var(--danger); }
+    &.is-medium { border-inline-start-color: var(--warning); }
+    &.is-low { border-inline-start-color: var(--info); }
+  }
+
+  .dash-ticket-title { max-width: 100%; }
+
+  /* identity avatar */
+  .dash-avatar {
+    flex-shrink: 0;
+    width: 2.6rem;
+    height: 2.6rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: var(--fw-700);
+    font-size: var(--fs-xs);
+    color: var(--brand);
+    background: var(--brand-soft);
+    letter-spacing: 0.02em;
+  }
+
+  .dash-meta {
+    font-size: var(--fs-xs);
+    margin-top: 0.15rem;
+  }
+  .dash-dot { margin: 0 0.35rem; opacity: 0.6; }
+
+  /* two-line clamp for ticket titles */
+  .dash-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* stagger the entity-card entrance for a polished feel */
+  .dash-entity-card:nth-child(1) { animation-delay: 0.02s; }
+  .dash-entity-card:nth-child(2) { animation-delay: 0.07s; }
+  .dash-entity-card:nth-child(3) { animation-delay: 0.12s; }
+  .dash-entity-card:nth-child(4) { animation-delay: 0.17s; }
+  .dash-entity-card:nth-child(5) { animation-delay: 0.22s; }
+}
+
+@keyframes dash-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appsupport-dashboard {
+    .dash-entity-card,
+    .dash-progress .progress-bar { animation: none !important; transition: none !important; }
+  }
+}

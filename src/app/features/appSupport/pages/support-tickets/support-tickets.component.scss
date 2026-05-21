@@ -1,1 +1,112 @@
-/* Styling driven entirely by global theme — see src/styles/_tokens.scss */
+:host {
+  display: block;
+}
+
+/* search field affix */
+.search-icon {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 0.9rem;
+  transform: translateY(-50%);
+  color: var(--text-3);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.tkt-table {
+  .table > thead th {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-600);
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: var(--surface-1);
+    white-space: nowrap;
+  }
+
+  .table > tbody > tr > td {
+    vertical-align: middle;
+  }
+}
+
+.tkt-num {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--brand);
+}
+
+.tkt-avatar {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--fw-700);
+  font-size: var(--fs-sm);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.tkt-title-cell {
+  max-width: 16rem;
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+/* ── next-follow-up cell ──────────────────────────────────────── */
+.tkt-followup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  font-size: var(--fs-sm);
+  color: var(--text-1);
+
+  i { font-size: 0.78rem; color: var(--text-3); }
+
+  &--missing {
+    color: var(--danger);
+    font-weight: var(--fw-600);
+
+    i {
+      color: var(--danger);
+      animation: tkt-followup-pulse 1.6s ease-in-out infinite;
+    }
+  }
+}
+
+/* Open tickets need a follow-up — make the whole cell stand out. */
+.tkt-followup-cell.is-open {
+  background: var(--warning-soft);
+  box-shadow: inset 4px 0 0 0 var(--warning);
+
+  .tkt-followup {
+    color: var(--warning);
+    font-weight: var(--fw-600);
+
+    i { color: var(--warning); }
+  }
+
+  .tkt-followup--missing {
+    color: var(--danger);
+    i { color: var(--danger); }
+  }
+}
+
+:root[data-theme='dark'] .tkt-followup-cell.is-open {
+  background: rgba(245, 158, 11, 0.14);
+}
+
+@keyframes tkt-followup-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.18); opacity: 0.75; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tkt-followup i { animation: none !important; }
+}

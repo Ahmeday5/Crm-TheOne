@@ -15,6 +15,7 @@ import campaigns from './campaigns.en';
 import services from './services.en';
 import customers from './customers.en';
 import dailyReports from './dailyReports.en';
+import tableTools from './tableTools.en';
 
 const en: Translations = {
   ...common,
@@ -33,6 +34,7 @@ const en: Translations = {
   ...services,
   ...customers,
   ...dailyReports,
+  ...tableTools,
 };
 
 export default en;

@@ -35,6 +35,14 @@
   <div class="card-header d-flex align-items-center gap-2">
     <i class="fa-solid fa-file-contract text-primary"></i>
     <h5 class="mb-0">{{ 'sales.contractsMgmt.tableTitle' | translate }}</h5>
+    <app-table-tools
+      class="ms-auto"
+      [reportTitle]="'sales.contractsMgmt.tableTitle' | translate"
+      [columns]="exportColumns"
+      [rows]="visibleExportRows"
+      [fetchAll]="fetchAllRows"
+      [disabled]="loading() || visibleRows().length === 0">
+    </app-table-tools>
   </div>
 
   <div class="card-body">
@@ -107,6 +115,11 @@
                     @if (row.companyName) { {{ row.companyName }} }
                     @if (row.phone) { · {{ row.phone }} }
                   </small>
+                  @if (row.address) {
+                    <small class="text-muted text-truncate d-block">
+                      <i class="fa-solid fa-location-dot me-1 opacity-75"></i>{{ row.address }}
+                    </small>
+                  }
                 </div>
               </div>
             </td>
