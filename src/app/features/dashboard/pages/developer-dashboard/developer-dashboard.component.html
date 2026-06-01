@@ -3,12 +3,13 @@
                    [subtitle]="'dashboard.developer.subtitle' | translate"
                    icon="fa-solid fa-code"></app-page-header>
 
+  <!-- KPIs -->
   <div class="row g-3">
     <div class="col-md-6 col-lg-3">
       <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
         <div>
           <p class="text-muted mb-1 small">{{ 'dashboard.kpi.activeProjects' | translate }}</p>
-          <h3 class="fw-700 mb-0">8</h3>
+          <h3 class="fw-700 mb-0">{{ panel()?.activeProjects ?? 0 }}</h3>
         </div>
         <span class="icon-tile"><i class="fa-solid fa-folder-tree"></i></span>
       </div></div>
@@ -17,7 +18,7 @@
       <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
         <div>
           <p class="text-muted mb-1 small">{{ 'dashboard.kpi.assignedTasks' | translate }}</p>
-          <h3 class="fw-700 mb-0">14</h3>
+          <h3 class="fw-700 mb-0">{{ panel()?.assignedTasks ?? 0 }}</h3>
         </div>
         <span class="icon-tile"><i class="fa-solid fa-list-check"></i></span>
       </div></div>
@@ -26,7 +27,7 @@
       <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
         <div>
           <p class="text-muted mb-1 small">{{ 'dashboard.kpi.completedTasks' | translate }}</p>
-          <h3 class="fw-700 mb-0">150</h3>
+          <h3 class="fw-700 mb-0">{{ panel()?.completedTasks ?? 0 }}</h3>
         </div>
         <span class="icon-tile"><i class="fa-solid fa-circle-check"></i></span>
       </div></div>
@@ -35,223 +36,152 @@
       <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
         <div>
           <p class="text-muted mb-1 small">{{ 'dashboard.kpi.todayDeadlines' | translate }}</p>
-          <h3 class="fw-700 mb-0">6</h3>
+          <h3 class="fw-700 mb-0">{{ panel()?.deadlinesToday ?? 0 }}</h3>
         </div>
         <span class="icon-tile"><i class="fa-regular fa-clock"></i></span>
       </div></div>
     </div>
   </div>
 
+  <!-- Charts: today deadlines (by priority) + sprint performance -->
   <div class="row g-3 mt-1">
-    <div class="col-lg-8">
+    <div class="col-lg-6">
       <div class="card h-100">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">{{ 'dashboard.developer.myTasks' | translate }}</h5>
-          <div>
-            <span class="badge bg-primary-subtle">4 {{ 'dashboard.developer.taskStatuses.inProgress' | translate }}</span>
-            <span class="badge bg-warning-subtle">2 {{ 'dashboard.developer.taskStatuses.todo' | translate }}</span>
-          </div>
-        </div>
-        <div class="card-body" style="max-height:680px; overflow-y:auto;">
-          <div class="recent-item p-3 mb-3 border-r-indicator">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-              <div>
-                <div class="d-flex align-items-center gap-2 mb-1">
-                  <p class="fw-600 mb-0">تطوير نظام المصادقة والتفويض</p>
-                  <span class="badge bg-warning-subtle">{{ 'dashboard.developer.taskStatuses.high' | translate }}</span>
-                </div>
-                <small class="text-muted d-block mb-1">نظام TheOne CRM</small>
-                <span class="badge bg-primary-subtle me-1">{{ 'dashboard.developer.tags.backend' | translate }}</span>
-                <span class="badge bg-primary-subtle">{{ 'dashboard.developer.tags.security' | translate }}</span>
-              </div>
-              <span class="badge bg-primary-subtle">{{ 'dashboard.developer.taskStatuses.inProgress' | translate }}</span>
-            </div>
-            <div class="mb-2">
-              <div class="d-flex justify-content-between small mb-1">
-                <span class="text-muted">{{ 'dashboard.support.progress' | translate }}</span>
-                <span class="fw-600">75%</span>
-              </div>
-              <div class="progress"><div class="progress-bar" style="width: 75%"></div></div>
-            </div>
-            <div class="d-flex justify-content-between small text-muted mb-2">
-              <span><i class="fa-regular fa-clock me-1"></i>12 / 16 h</span>
-              <span class="text-danger"><i class="fa-regular fa-calendar me-1"></i>{{ 'dashboard.developer.deadline' | translate }}: {{ 'dashboard.today' | translate }}</span>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-              <button class="btn btn-primary btn-sm">{{ 'dashboard.support.buttons.updateStatus' | translate }}</button>
-              <button class="btn btn-light btn-sm">{{ 'dashboard.developer.actions.logTime' | translate }}</button>
-              <button class="btn btn-light btn-sm">{{ 'dashboard.support.buttons.viewDetails' | translate }}</button>
-            </div>
-          </div>
-
-          <div class="recent-item p-3 mb-3 border-r-indicator">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-              <div>
-                <div class="d-flex align-items-center gap-2 mb-1">
-                  <p class="fw-600 mb-0">إصلاح خطأ: مشكلة تحميل لوحة التحكم</p>
-                  <span class="badge bg-danger-subtle">{{ 'dashboard.developer.taskStatuses.critical' | translate }}</span>
-                </div>
-                <small class="text-muted d-block">نظام TheOne CRM</small>
-              </div>
-              <span class="badge bg-warning-subtle">{{ 'dashboard.developer.taskStatuses.todo' | translate }}</span>
-            </div>
-            <div class="mb-2">
-              <div class="d-flex justify-content-between small mb-1">
-                <span class="text-muted">{{ 'dashboard.support.progress' | translate }}</span>
-                <span class="fw-600">50%</span>
-              </div>
-              <div class="progress"><div class="progress-bar" style="width: 50%"></div></div>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-              <button class="btn btn-primary btn-sm">{{ 'dashboard.support.buttons.updateStatus' | translate }}</button>
-              <button class="btn btn-light btn-sm">{{ 'dashboard.developer.actions.logTime' | translate }}</button>
-              <button class="btn btn-light btn-sm">{{ 'dashboard.support.buttons.viewDetails' | translate }}</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-lg-4">
-      <div class="card mb-3">
         <div class="card-header"><h5 class="mb-0">{{ 'dashboard.developer.todayDeadlines' | translate }}</h5></div>
         <div class="card-body">
-          <div class="recent-item p-3 mb-2 border-r-indicator">
-            <small class="text-danger d-block mb-1">18:00</small>
-            <small class="d-block fw-600">تطوير نظام المصادقة والتفويض</small>
-            <small class="text-muted">نظام TheOne CRM</small>
-          </div>
-          <div class="recent-item p-3 mb-2 border-r-indicator">
-            <small class="text-danger d-block mb-1">18:00</small>
-            <small class="d-block fw-600">إصلاح خطأ: مشكلة تحميل لوحة التحكم</small>
-            <small class="text-muted">نظام TheOne CRM</small>
-          </div>
+          <apx-chart
+            [series]="$any(deadlinesChart()['series'])"
+            [chart]="$any(deadlinesChart()['chart'])"
+            [labels]="$any(deadlinesChart()['labels'])"
+            [colors]="$any(deadlinesChart()['colors'])"
+            [legend]="$any(deadlinesChart()['legend'])"
+            [dataLabels]="$any(deadlinesChart()['dataLabels'])">
+          </apx-chart>
         </div>
       </div>
-
-      <div class="card">
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100">
         <div class="card-header"><h5 class="mb-0">{{ 'dashboard.developer.sprintPerformance' | translate }}</h5></div>
-        <div class="card-body p-0">
-          <apx-chart [series]="conversionChartOptions.series" [chart]="conversionChartOptions.chart"
-            [xaxis]="conversionChartOptions.xaxis" [plotOptions]="conversionChartOptions.plotOptions"
-            [dataLabels]="conversionChartOptions.dataLabels" [tooltip]="conversionChartOptions.tooltip"
-            [colors]="conversionChartOptions.colors"></apx-chart>
+        <div class="card-body">
+          <apx-chart
+            [series]="$any(sprintChart()['series'])"
+            [chart]="$any(sprintChart()['chart'])"
+            [xaxis]="$any(sprintChart()['xaxis'])"
+            [plotOptions]="$any(sprintChart()['plotOptions'])"
+            [dataLabels]="$any(sprintChart()['dataLabels'])"
+            [colors]="$any(sprintChart()['colors'])"
+            [legend]="$any(sprintChart()['legend'])"
+            [grid]="$any(sprintChart()['grid'])">
+          </apx-chart>
         </div>
       </div>
     </div>
+  </div>
 
+  <div class="row g-3 mt-1">
+    <!-- Latest tasks (admin) / my latest tasks (developer) -->
     <div class="col-12">
-      <div class="card">
-        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.developer.activeProjects' | translate }}</h5></div>
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">{{ recentTasksTitleKey() | translate }}</h5>
+          <a routerLink="/TasksManage" class="btn btn-sm btn-light">{{ 'dashboard.developer.viewAllTasks' | translate }}</a>
+        </div>
         <div class="card-body">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <div class="recent-item p-3">
+          @if (recentTasks().length === 0) {
+            <app-empty-state
+              [compact]="true"
+              icon="fa-solid fa-list-check"
+              [message]="'dashboard.developer.emptyTasks' | translate"
+              [loading]="loading()" />
+          } @else {
+            @for (task of recentTasks(); track task.id) {
+              <div class="recent-item p-3 mb-2 border-r-indicator">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-1">
                   <div>
-                    <p class="fw-600 mb-0">نظام TheOne CRM</p>
-                    <small class="text-muted">منتج داخلي</small>
+                    <p class="fw-600 mb-1">{{ task.title }}</p>
+                    <small class="text-muted">{{ task.projectName }}</small>
                   </div>
-                  <span class="badge bg-success-subtle">{{ 'dashboard.developer.taskStatuses.onTrack' | translate }}</span>
-                </div>
-                <div class="my-2">
-                  <div class="d-flex justify-content-between small mb-1">
-                    <span class="text-muted">32 / 45 {{ 'dashboard.developer.tasks' | translate }}</span>
-                    <span class="fw-600">71%</span>
+                  <div class="d-flex gap-1">
+                    <span class="badge {{ priorityBadge(task.priority) }}">{{ 'projects.manage.priorities.' + task.priority | translate }}</span>
+                    <span class="badge {{ statusBadge(task.status) }}">{{ 'projects.tasksManage.statuses.' + task.status | translate }}</span>
                   </div>
-                  <div class="progress"><div class="progress-bar" style="width: 71%"></div></div>
                 </div>
                 <div class="d-flex justify-content-between small text-muted">
-                  <span><i class="fa-solid fa-users me-1"></i>5 {{ 'dashboard.developer.teamMembers' | translate }}</span>
-                  <span><i class="fa-regular fa-calendar me-1"></i>31 Jan 2026</span>
+                  <span><i class="fa-regular fa-clock me-1"></i>{{ task.actualHours ?? 0 }} / {{ task.estimatedHours }} h</span>
+                  <a routerLink="/TasksManage" class="text-decoration-none">
+                    <i class="fa-solid fa-arrows-rotate me-1"></i>{{ 'dashboard.developer.actions.updateTask' | translate }}
+                  </a>
                 </div>
               </div>
-            </div>
-            <div class="col-md-6">
-              <div class="recent-item p-3">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-1">
-                  <div>
-                    <p class="fw-600 mb-0">نظام إدارة المخزون</p>
-                    <small class="text-muted">منتج داخلي</small>
-                  </div>
-                  <span class="badge bg-danger-subtle">{{ 'dashboard.developer.taskStatuses.atRisk' | translate }}</span>
-                </div>
-                <div class="my-2">
-                  <div class="d-flex justify-content-between small mb-1">
-                    <span class="text-muted">18 / 45 {{ 'dashboard.developer.tasks' | translate }}</span>
-                    <span class="fw-600">40%</span>
-                  </div>
-                  <div class="progress"><div class="progress-bar" style="width: 40%"></div></div>
-                </div>
-                <div class="d-flex justify-content-between small text-muted">
-                  <span><i class="fa-solid fa-users me-1"></i>3 {{ 'dashboard.developer.teamMembers' | translate }}</span>
-                  <span><i class="fa-regular fa-calendar me-1"></i>15 Feb 2026</span>
-                </div>
-              </div>
-            </div>
-            <div class="col-12">
-              <button class="btn btn-outline-primary w-100">{{ 'dashboard.developer.viewAllProjects' | translate }}</button>
-            </div>
-          </div>
+            }
+          }
         </div>
       </div>
     </div>
 
+    <!-- Active projects (admin: all active / developer: mine) -->
     <div class="col-12">
       <div class="card">
-        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.developer.monthlySummary' | translate }}</h5></div>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">{{ 'dashboard.developer.activeProjects' | translate }}</h5>
+          <a routerLink="/ProjectManage" class="btn btn-sm btn-light">{{ 'dashboard.developer.viewAllProjects' | translate }}</a>
+        </div>
         <div class="card-body">
-          <div class="row text-center g-3">
-            <div class="col-6 col-md-3">
-              <div class="fs-3 fw-700 text-primary">40</div>
-              <small class="text-muted">{{ 'dashboard.developer.summary.workHours' | translate }}</small>
+          @if (activeProjects().length === 0) {
+            <app-empty-state
+              [compact]="true"
+              icon="fa-solid fa-folder-tree"
+              [message]="'dashboard.developer.emptyProjects' | translate"
+              [loading]="loading()" />
+          } @else {
+            <div class="row g-3">
+              @for (p of activeProjects(); track p.id) {
+                <div class="col-md-6">
+                  <div class="recent-item p-3">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-1">
+                      <div>
+                        <p class="fw-600 mb-0">{{ p.title }}</p>
+                        <small class="text-muted">{{ p.customerName }}</small>
+                      </div>
+                      <span class="badge {{ projectStatusBadge(p.status) }}">{{ 'projects.manage.statuses.' + p.status | translate }}</span>
+                    </div>
+                    <div class="my-2">
+                      <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">{{ p.teamMembersCount }} {{ 'dashboard.developer.teamMembers' | translate }}</span>
+                        <span class="fw-600">{{ p.progress }}%</span>
+                      </div>
+                      <div class="progress"><div class="progress-bar" [style.width.%]="p.progress"></div></div>
+                    </div>
+                  </div>
+                </div>
+              }
             </div>
-            <div class="col-6 col-md-3">
-              <div class="fs-3 fw-700 text-success">18</div>
-              <small class="text-muted">{{ 'dashboard.developer.summary.completedTasks' | translate }}</small>
-            </div>
-            <div class="col-6 col-md-3">
-              <div class="fs-3 fw-700 text-warning">94%</div>
-              <small class="text-muted">{{ 'dashboard.developer.summary.completionRate' | translate }}</small>
-            </div>
-            <div class="col-6 col-md-3">
-              <div class="fs-3 fw-700 text-danger">0</div>
-              <small class="text-muted">{{ 'dashboard.developer.summary.openBugs' | translate }}</small>
-            </div>
-          </div>
+          }
         </div>
       </div>
     </div>
 
+    <!-- Quick actions (wired to real routes) -->
     <div class="col-12">
       <div class="card">
         <div class="card-header"><h5 class="mb-0">{{ 'dashboard.developer.quickActions' | translate }}</h5></div>
         <div class="card-body">
           <div class="row g-3">
             <div class="col-lg-4 col-md-6">
-              <button class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2">
+              <a routerLink="/TasksManage" class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2">
                 <i class="fa-solid fa-list-check"></i>{{ 'dashboard.developer.actions.updateTask' | translate }}
-              </button>
+              </a>
             </div>
             <div class="col-lg-4 col-md-6">
-              <button class="btn btn-light w-100 d-flex align-items-center justify-content-center gap-2">
-                <i class="fa-regular fa-clock"></i>{{ 'dashboard.developer.actions.logTime' | translate }}
-              </button>
-            </div>
-            <div class="col-lg-4 col-md-6">
-              <button class="btn btn-light w-100 d-flex align-items-center justify-content-center gap-2">
-                <i class="fa-solid fa-plus"></i>{{ 'dashboard.developer.actions.createTask' | translate }}
-              </button>
-            </div>
-            <div class="col-lg-4 col-md-6">
-              <button class="btn btn-light w-100 d-flex align-items-center justify-content-center gap-2">
+              <a routerLink="/ProjectManage" class="btn btn-light w-100 d-flex align-items-center justify-content-center gap-2">
                 <i class="fa-solid fa-table-columns"></i>{{ 'dashboard.developer.actions.sprintBoard' | translate }}
-              </button>
+              </a>
             </div>
             <div class="col-lg-4 col-md-6">
-              <button class="btn btn-light w-100 d-flex align-items-center justify-content-center gap-2">
-                <i class="fa-solid fa-chart-bar"></i>{{ 'dashboard.developer.actions.timeReports' | translate }}
-              </button>
+              <a routerLink="/ProjectManage" class="btn btn-light w-100 d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-folder-tree"></i>{{ 'dashboard.developer.viewAllProjects' | translate }}
+              </a>
             </div>
           </div>
         </div>

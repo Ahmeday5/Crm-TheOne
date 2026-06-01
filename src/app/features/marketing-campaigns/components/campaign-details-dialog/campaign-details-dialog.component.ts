@@ -14,6 +14,7 @@ import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { CampaignDetails } from '../../../../shared/models';
 import { CampaignsService } from '../../services/campaigns.service';
@@ -21,7 +22,7 @@ import { CampaignsService } from '../../services/campaigns.service';
 @Component({
   selector: 'app-campaign-details-dialog',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, ModalComponent, LoadErrorComponent],
+  imports: [CommonModule, TranslatePipe, MoneyPipe, ModalComponent, LoadErrorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './campaign-details-dialog.component.html',
   styleUrl: './campaign-details-dialog.component.scss',

@@ -1,0 +1,99 @@
+.resource-management {
+  .search-icon {
+    position: absolute;
+    top: 50%;
+    inset-inline-start: 0.85rem;
+    transform: translateY(-50%);
+    color: var(--text-3, #9ca3af);
+    pointer-events: none;
+  }
+
+  // ── team overview rows ──
+  .rm-row {
+    background: var(--surface-1, #fff);
+
+    &__head {
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      transition: background 0.15s ease;
+
+      &:hover {
+        background: var(--surface-2, #f8f9fa);
+      }
+    }
+  }
+
+  .rm-avatar {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand, #2563eb);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+  }
+
+  .rm-dot {
+    opacity: 0.5;
+  }
+
+  .rm-bar {
+    min-width: 200px;
+  }
+
+  .rm-chevron {
+    transition: transform 0.2s ease;
+
+    &--open {
+      transform: rotate(180deg);
+    }
+  }
+
+  // ── distribution bars ──
+  .rm-dist-name {
+    width: 12rem;
+    flex-shrink: 0;
+    font-size: 0.875rem;
+  }
+
+  .rm-dist-track {
+    height: 2rem;
+    border-radius: 999px;
+    background: var(--surface-2, #e9ecef);
+    overflow: hidden;
+  }
+
+  .rm-dist-fill {
+    height: 100%;
+    min-width: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: width 0.5s ease;
+
+    span {
+      font-size: 0.75rem;
+    }
+  }
+
+  .rm-dist-tasks {
+    width: 5rem;
+    text-align: end;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 575.98px) {
+    .rm-bar {
+      min-width: 140px;
+    }
+    .rm-dist-name {
+      width: 7rem;
+    }
+  }
+}

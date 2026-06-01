@@ -1,0 +1,166 @@
+<app-modal
+  [open]="true"
+  [title]="titleKey() | translate"
+  icon="fa-solid fa-diagram-project"
+  iconTone="primary"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <form [formGroup]="form" id="project-form" novalidate (ngSubmit)="submit()">
+    <div class="row g-3">
+      <!-- Title -->
+      <div class="col-12">
+        <label for="project-title" class="form-label fw-600">
+          {{ 'projects.manage.form.title' | translate }} <span class="text-danger">*</span>
+        </label>
+        <input id="project-title"
+               class="form-control"
+               formControlName="title"
+               [class.is-invalid]="isInvalid('title')"
+               [placeholder]="'projects.manage.form.titlePlaceholder' | translate" />
+        <app-form-error [control]="form.controls.title" [label]="'projects.manage.form.title' | translate" />
+      </div>
+
+      <!-- Customer -->
+      <div class="col-md-6">
+        <label for="project-customer" class="form-label fw-600">
+          {{ 'projects.manage.form.customer' | translate }} <span class="text-danger">*</span>
+        </label>
+        <select id="project-customer"
+                class="form-select"
+                formControlName="customerId"
+                [class.is-invalid]="isInvalid('customerId')">
+          <option [ngValue]="null" disabled>
+            {{ (loadingCustomers() ? 'projects.manage.form.loadingCustomers' : 'projects.manage.form.customerPlaceholder') | translate }}
+          </option>
+          @for (c of customers(); track c.id) {
+            <option [ngValue]="c.id">
+              {{ c.fullName }}{{ c.campanyName ? ' — ' + c.campanyName : '' }}
+            </option>
+          }
+        </select>
+        <app-form-error [control]="form.controls.customerId" [label]="'projects.manage.form.customer' | translate" />
+      </div>
+
+      <!-- Price -->
+      <div class="col-md-6">
+        <label for="project-price" class="form-label fw-600">
+          {{ 'projects.manage.form.price' | translate }} <span class="text-danger">*</span>
+        </label>
+        <input id="project-price"
+               type="number"
+               min="0"
+               class="form-control"
+               formControlName="price"
+               [class.is-invalid]="isInvalid('price')"
+               [placeholder]="'projects.manage.form.pricePlaceholder' | translate" />
+        <app-form-error [control]="form.controls.price" [label]="'projects.manage.form.price' | translate" />
+      </div>
+
+      <!-- Status -->
+      <div class="col-md-6">
+        <label for="project-status" class="form-label fw-600">
+          {{ 'projects.manage.form.status' | translate }} <span class="text-danger">*</span>
+        </label>
+        <select id="project-status" class="form-select" formControlName="status">
+          @for (s of statuses; track s) {
+            <option [ngValue]="s">{{ 'projects.manage.statuses.' + s | translate }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Priority -->
+      <div class="col-md-6">
+        <label for="project-priority" class="form-label fw-600">
+          {{ 'projects.manage.form.priority' | translate }} <span class="text-danger">*</span>
+        </label>
+        <select id="project-priority" class="form-select" formControlName="priority">
+          @for (p of priorities; track p) {
+            <option [ngValue]="p">{{ 'projects.manage.priorities.' + p | translate }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Start date -->
+      <div class="col-md-6">
+        <label for="project-start" class="form-label fw-600">
+          {{ 'projects.manage.form.start' | translate }} <span class="text-danger">*</span>
+        </label>
+        <input id="project-start"
+               type="date"
+               class="form-control"
+               formControlName="start"
+               [class.is-invalid]="isInvalid('start')" />
+        <app-form-error [control]="form.controls.start" [label]="'projects.manage.form.start' | translate" />
+      </div>
+
+      <!-- End date -->
+      <div class="col-md-6">
+        <label for="project-end" class="form-label fw-600">
+          {{ 'projects.manage.form.end' | translate }} <span class="text-danger">*</span>
+        </label>
+        <input id="project-end"
+               type="date"
+               class="form-control"
+               formControlName="end"
+               [class.is-invalid]="isInvalid('end')" />
+        <app-form-error [control]="form.controls.end" [label]="'projects.manage.form.end' | translate" />
+      </div>
+
+      <!-- Engineers -->
+      <div class="col-12">
+        <label class="form-label fw-600 d-flex align-items-center gap-2">
+          <i class="fa-solid fa-users text-primary"></i>
+          {{ 'projects.manage.form.engineers' | translate }} <span class="text-danger">*</span>
+        </label>
+        <app-multi-select
+          formControlName="engineerIds"
+          [options]="engineerOptions()"
+          [loading]="loadingEngineers()"
+          [placeholder]="'projects.manage.form.engineersPlaceholder' | translate"
+          [searchPlaceholder]="'projects.manage.form.engineersSearch' | translate"
+          [emptyText]="'projects.manage.form.engineersEmpty' | translate">
+        </app-multi-select>
+        <app-form-error [control]="form.controls.engineerIds" [label]="'projects.manage.form.engineers' | translate" />
+      </div>
+
+      <!-- Description -->
+      <div class="col-12">
+        <label for="project-description" class="form-label fw-600">
+          {{ 'projects.manage.form.description' | translate }}
+        </label>
+        <textarea id="project-description"
+                  class="form-control"
+                  rows="3"
+                  formControlName="description"
+                  [placeholder]="'projects.manage.form.descriptionPlaceholder' | translate"></textarea>
+      </div>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="cancel.emit()">
+      {{ 'projects.manage.form.cancel' | translate }}
+    </button>
+    <button type="submit"
+            form="project-form"
+            class="btn btn-primary"
+            [disabled]="submitting() || form.invalid">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid me-1" [class.fa-plus]="mode === 'create'" [class.fa-floppy-disk]="mode === 'edit'"></i>
+      }
+      {{ (mode === 'edit' ? 'projects.manage.form.submitEdit' : 'projects.manage.form.submitAdd') | translate }}
+    </button>
+  </ng-container>
+</app-modal>

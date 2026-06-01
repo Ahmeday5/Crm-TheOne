@@ -1,0 +1,96 @@
+<app-modal
+  [open]="true"
+  [title]="'projects.tasksManage.details.title' | translate"
+  icon="fa-solid fa-circle-info"
+  iconTone="purple"
+  size="lg"
+  (closed)="cancel.emit()">
+
+  @if (loadError()) {
+    <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
+  }
+
+  @if (loading()) {
+    <div class="d-flex flex-column align-items-center justify-content-center py-5 text-muted">
+      <div class="spinner-border text-primary mb-2" role="status">
+        <span class="visually-hidden">{{ 'common.loading' | translate }}</span>
+      </div>
+      <span>{{ 'common.loading' | translate }}</span>
+    </div>
+  } @else if (!details() && !loadError()) {
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-0">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ 'projects.tasksManage.details.notFound' | translate }}</span>
+    </div>
+  } @else if (details()) {
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
+      <div>
+        <h4 class="fw-700 mb-1">{{ details()!.title }}</h4>
+        <p class="text-muted mb-0">{{ details()!.description || '—' }}</p>
+      </div>
+      <div class="d-flex flex-wrap align-items-end gap-2">
+        <span class="badge {{ statusBadge(details()!.status) }} px-3 py-2">
+          {{ 'projects.tasksManage.statuses.' + details()!.status | translate }}
+        </span>
+        <span class="badge {{ priorityBadge(details()!.priority) }} px-3 py-2">
+          {{ 'projects.manage.priorities.' + details()!.priority | translate }}
+        </span>
+        <span class="badge {{ categoryBadge(details()!.category) }} px-3 py-2">
+          {{ 'projects.tasksManage.categories.' + details()!.category | translate }}
+        </span>
+      </div>
+    </div>
+
+    <!-- General info -->
+    <h6 class="fw-700 text-muted text-uppercase small mb-3">
+      <i class="fa-solid fa-circle-info me-1"></i>{{ 'projects.tasksManage.details.info' | translate }}
+    </h6>
+    <div class="row g-3 mb-2">
+      <div class="col-6 col-md-4">
+        <p class="text-muted small mb-1">{{ 'projects.tasksManage.details.project' | translate }}</p>
+        <p class="fw-600 mb-0">{{ details()!.projectName || '—' }}</p>
+      </div>
+      <div class="col-6 col-md-4">
+        <p class="text-muted small mb-1">{{ 'projects.tasksManage.details.assignee' | translate }}</p>
+        <p class="fw-600 mb-0">{{ details()!.assignedToName || '—' }}</p>
+      </div>
+      <div class="col-6 col-md-4">
+        <p class="text-muted small mb-1">{{ 'projects.tasksManage.details.createdBy' | translate }}</p>
+        <p class="fw-600 mb-0">{{ details()!.createdByName || '—' }}</p>
+      </div>
+      <div class="col-6 col-md-4">
+        <p class="text-muted small mb-1">{{ 'projects.tasksManage.details.dueDate' | translate }}</p>
+        <p class="fw-600 mb-0">{{ formatDate(details()!.dueDate) }}</p>
+      </div>
+      <div class="col-6 col-md-4">
+        <p class="text-muted small mb-1">{{ 'projects.tasksManage.details.estimatedHours' | translate }}</p>
+        <p class="fw-600 mb-0">{{ details()!.estimatedHours }} {{ 'projects.tasksManage.details.hours' | translate }}</p>
+      </div>
+      <div class="col-6 col-md-4">
+        <p class="text-muted small mb-1">{{ 'projects.tasksManage.details.actualHours' | translate }}</p>
+        <p class="fw-600 mb-0">
+          {{ details()!.actualHours !== null ? details()!.actualHours + ' ' + ('projects.tasksManage.details.hours' | translate) : '—' }}
+        </p>
+      </div>
+      <div class="col-6 col-md-4">
+        <p class="text-muted small mb-1">{{ 'projects.tasksManage.details.completedAt' | translate }}</p>
+        <p class="fw-600 mb-0">{{ formatDate(details()!.completedAt) }}</p>
+      </div>
+      <div class="col-6 col-md-4">
+        <p class="text-muted small mb-1">{{ 'projects.tasksManage.details.createdAt' | translate }}</p>
+        <p class="fw-600 mb-0">{{ formatDate(details()!.createdAt) }}</p>
+      </div>
+      <div class="col-6 col-md-4">
+        <p class="text-muted small mb-1">{{ 'projects.tasksManage.details.tags' | translate }}</p>
+        <p class="fw-600 mb-0">{{ details()!.tags || '—' }}</p>
+      </div>
+    </div>
+  }
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-primary" (click)="cancel.emit()">
+      {{ 'common.close' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

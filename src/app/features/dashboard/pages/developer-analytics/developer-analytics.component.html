@@ -1,0 +1,273 @@
+<div class="flex-grow-1">
+  <!-- Header + export -->
+  <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+    <app-page-header [title]="'dashboard.devAnalytics.title' | translate"
+                     [subtitle]="'dashboard.devAnalytics.subtitle' | translate"
+                     icon="fa-solid fa-chart-line"
+                     class="flex-grow-1"></app-page-header>
+    <button type="button" class="btn btn-primary" (click)="exportReport()">
+      <i class="fa-solid fa-download me-1"></i>{{ 'dashboard.devAnalytics.export' | translate }}
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-3">
+          <label class="form-label small text-muted">{{ 'dashboard.devAnalytics.filters.period' | translate }}</label>
+          <select class="form-select" [ngModel]="period()" (ngModelChange)="onPeriod($event)">
+            <option value="all">{{ 'dashboard.devAnalytics.filters.allTime' | translate }}</option>
+            <option value="month">{{ 'dashboard.devAnalytics.filters.thisMonth' | translate }}</option>
+            <option value="quarter">{{ 'dashboard.devAnalytics.filters.thisQuarter' | translate }}</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label small text-muted">{{ 'dashboard.devAnalytics.filters.developer' | translate }}</label>
+          <select class="form-select" [ngModel]="developerFilter()" (ngModelChange)="onDeveloper($event)">
+            <option value="">{{ 'dashboard.devAnalytics.filters.all' | translate }}</option>
+            @for (d of developerOptions(); track d.id) {
+              <option [value]="d.id">{{ d.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label small text-muted">{{ 'dashboard.devAnalytics.filters.project' | translate }}</label>
+          <select class="form-select" [ngModel]="projectFilter()" (ngModelChange)="onProject($event)">
+            <option [ngValue]="null">{{ 'dashboard.devAnalytics.filters.all' | translate }}</option>
+            @for (p of projectOptions(); track p.id) {
+              <option [ngValue]="p.id">{{ p.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-12 col-md-auto">
+          <button type="button" class="btn btn-light w-100" (click)="reset()">
+            <i class="fa-solid fa-filter-circle-xmark me-1"></i>{{ 'dashboard.devAnalytics.filters.reset' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPIs (Summary) -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
+        <div>
+          <p class="text-muted mb-1 small">{{ 'dashboard.devAnalytics.kpi.completedTasks' | translate }}</p>
+          <h3 class="fw-700 mb-0">{{ summary()?.completedTasks ?? 0 }}</h3>
+          <small [class.text-success]="(summary()?.completedTasksChangePercent ?? 0) >= 0"
+                 [class.text-danger]="(summary()?.completedTasksChangePercent ?? 0) < 0">
+            <i class="fa-solid" [class.fa-arrow-trend-up]="(summary()?.completedTasksChangePercent ?? 0) >= 0"
+               [class.fa-arrow-trend-down]="(summary()?.completedTasksChangePercent ?? 0) < 0"></i>
+            {{ summary()?.completedTasksChangePercent ?? 0 }}% {{ 'dashboard.devAnalytics.kpi.completedChange' | translate }}
+          </small>
+        </div>
+        <span class="icon-tile tone-success"><i class="fa-solid fa-circle-check"></i></span>
+      </div></div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
+        <div>
+          <p class="text-muted mb-1 small">{{ 'dashboard.devAnalytics.kpi.avgTime' | translate }}</p>
+          <h3 class="fw-700 mb-0">{{ summary()?.avgCompletionTimeHours ?? 0 }}</h3>
+          <small class="text-muted">{{ 'dashboard.devAnalytics.kpi.avgTimeSub' | translate }}</small>
+        </div>
+        <span class="icon-tile tone-info"><i class="fa-regular fa-clock"></i></span>
+      </div></div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
+        <div>
+          <p class="text-muted mb-1 small">{{ 'dashboard.devAnalytics.kpi.resolvedBugs' | translate }}</p>
+          <h3 class="fw-700 mb-0">{{ summary()?.resolvedBugs ?? 0 }}</h3>
+          <small class="text-danger">{{ openBugs() }} {{ 'dashboard.devAnalytics.kpi.openBugs' | translate }}</small>
+        </div>
+        <span class="icon-tile tone-danger"><i class="fa-solid fa-bug"></i></span>
+      </div></div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100"><div class="card-body d-flex justify-content-between align-items-start">
+        <div>
+          <p class="text-muted mb-1 small">{{ 'dashboard.devAnalytics.kpi.productivity' | translate }}</p>
+          <h3 class="fw-700 mb-0">{{ summary()?.productivityRate ?? 0 }}%</h3>
+          <small [class.text-success]="(summary()?.productivityChangePercent ?? 0) >= 0"
+                 [class.text-danger]="(summary()?.productivityChangePercent ?? 0) < 0">
+            <i class="fa-solid" [class.fa-arrow-trend-up]="(summary()?.productivityChangePercent ?? 0) >= 0"
+               [class.fa-arrow-trend-down]="(summary()?.productivityChangePercent ?? 0) < 0"></i>
+            {{ summary()?.productivityChangePercent ?? 0 }}% {{ 'dashboard.devAnalytics.kpi.productivityChange' | translate }}
+          </small>
+        </div>
+        <span class="icon-tile tone-purple"><i class="fa-solid fa-bullseye"></i></span>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- Highlights (Summary) -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card h-100"><div class="card-body d-flex align-items-center gap-3">
+        <span class="icon-tile tone-warning"><i class="fa-solid fa-star"></i></span>
+        <div>
+          <p class="text-muted mb-1 small">{{ 'dashboard.devAnalytics.highlights.mostProductive' | translate }}</p>
+          <p class="fw-700 mb-0">{{ summary()?.mostProductive?.fullName ?? ('dashboard.devAnalytics.highlights.none' | translate) }}</p>
+          @if (summary()?.mostProductive; as h) {
+            <small class="text-muted">{{ h.value }} · {{ h.label }}</small>
+          }
+        </div>
+      </div></div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100"><div class="card-body d-flex align-items-center gap-3">
+        <span class="icon-tile tone-info"><i class="fa-solid fa-bolt"></i></span>
+        <div>
+          <p class="text-muted mb-1 small">{{ 'dashboard.devAnalytics.highlights.fastest' | translate }}</p>
+          <p class="fw-700 mb-0">{{ summary()?.fastest?.fullName ?? ('dashboard.devAnalytics.highlights.none' | translate) }}</p>
+          @if (summary()?.fastest; as h) {
+            <small class="text-muted">{{ h.value }} · {{ h.label }}</small>
+          }
+        </div>
+      </div></div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100"><div class="card-body d-flex align-items-center gap-3">
+        <span class="icon-tile tone-success"><i class="fa-solid fa-trophy"></i></span>
+        <div>
+          <p class="text-muted mb-1 small">{{ 'dashboard.devAnalytics.highlights.topPerformer' | translate }}</p>
+          <p class="fw-700 mb-0">{{ summary()?.topPerformer?.fullName ?? ('dashboard.devAnalytics.highlights.none' | translate) }}</p>
+          @if (summary()?.topPerformer; as h) {
+            <small class="text-muted">{{ h.value }} · {{ h.label }}</small>
+          }
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- Task completion over time (Charts) -->
+  <div class="card mb-4">
+    <div class="card-header"><h5 class="mb-0">{{ 'dashboard.devAnalytics.charts.completionOverTime' | translate }}</h5></div>
+    <div class="card-body">
+      <apx-chart
+        [series]="$any(completionChart()['series'])"
+        [chart]="$any(completionChart()['chart'])"
+        [xaxis]="$any(completionChart()['xaxis'])"
+        [stroke]="$any(completionChart()['stroke'])"
+        [markers]="$any(completionChart()['markers'])"
+        [dataLabels]="$any(completionChart()['dataLabels'])"
+        [colors]="$any(completionChart()['colors'])"
+        [legend]="$any(completionChart()['legend'])"
+        [grid]="$any(completionChart()['grid'])">
+      </apx-chart>
+    </div>
+  </div>
+
+  <!-- Projects progress (Charts) + Bug distribution (BugAnalytics) -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.devAnalytics.charts.projectsProgress' | translate }}</h5></div>
+        <div class="card-body">
+          <apx-chart
+            [series]="$any(progressChart()['series'])"
+            [chart]="$any(progressChart()['chart'])"
+            [xaxis]="$any(progressChart()['xaxis'])"
+            [yaxis]="$any(progressChart()['yaxis'])"
+            [plotOptions]="$any(progressChart()['plotOptions'])"
+            [dataLabels]="$any(progressChart()['dataLabels'])"
+            [colors]="$any(progressChart()['colors'])"
+            [legend]="$any(progressChart()['legend'])"
+            [grid]="$any(progressChart()['grid'])">
+          </apx-chart>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header"><h5 class="mb-0">{{ 'dashboard.devAnalytics.charts.bugDistribution' | translate }}</h5></div>
+        <div class="card-body">
+          <apx-chart
+            [series]="$any(bugDistributionChart()['series'])"
+            [chart]="$any(bugDistributionChart()['chart'])"
+            [labels]="$any(bugDistributionChart()['labels'])"
+            [colors]="$any(bugDistributionChart()['colors'])"
+            [legend]="$any(bugDistributionChart()['legend'])"
+            [dataLabels]="$any(bugDistributionChart()['dataLabels'])">
+          </apx-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly open vs resolved bugs (BugAnalytics) -->
+  <div class="card mb-4">
+    <div class="card-header"><h5 class="mb-0">{{ 'dashboard.devAnalytics.charts.monthlyBugs' | translate }}</h5></div>
+    <div class="card-body">
+      <apx-chart
+        [series]="$any(monthlyBugsChart()['series'])"
+        [chart]="$any(monthlyBugsChart()['chart'])"
+        [xaxis]="$any(monthlyBugsChart()['xaxis'])"
+        [plotOptions]="$any(monthlyBugsChart()['plotOptions'])"
+        [dataLabels]="$any(monthlyBugsChart()['dataLabels'])"
+        [colors]="$any(monthlyBugsChart()['colors'])"
+        [legend]="$any(monthlyBugsChart()['legend'])"
+        [grid]="$any(monthlyBugsChart()['grid'])">
+      </apx-chart>
+    </div>
+  </div>
+
+  <!-- Developer stats (DeveloperStats) -->
+  <div class="card">
+    <div class="card-header"><h5 class="mb-0">{{ 'dashboard.devAnalytics.table.title' | translate }}</h5></div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>{{ 'dashboard.devAnalytics.table.developer' | translate }}</th>
+              <th class="text-center">{{ 'dashboard.devAnalytics.table.completedTasks' | translate }}</th>
+              <th class="text-center">{{ 'dashboard.devAnalytics.table.avgTime' | translate }}</th>
+              <th class="text-center">{{ 'dashboard.devAnalytics.table.resolvedBugs' | translate }}</th>
+              <th style="min-width: 160px;">{{ 'dashboard.devAnalytics.table.workload' | translate }}</th>
+              <th class="text-center">{{ 'dashboard.devAnalytics.table.productivity' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (stats().length === 0) {
+              <tr>
+                <td colspan="6" class="p-0">
+                  <app-empty-state
+                    [compact]="true"
+                    icon="fa-solid fa-inbox"
+                    [message]="'dashboard.devAnalytics.table.empty' | translate"
+                    [loading]="loading()"
+                    (retry)="reload()" />
+                </td>
+              </tr>
+            } @else {
+              @for (row of stats(); track row.developerId) {
+                <tr>
+                  <td class="fw-600">{{ row.fullName }}</td>
+                  <td class="text-center">{{ row.completedTasks }}</td>
+                  <td class="text-center">{{ row.avgCompletionTimeHours }}</td>
+                  <td class="text-center">{{ row.resolvedBugs }}</td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="progress flex-grow-1" style="height: 8px;">
+                        <div class="progress-bar bg-warning" role="progressbar"
+                             [style.width.%]="row.currentWorkloadPercent"></div>
+                      </div>
+                      <span class="small text-muted">{{ row.currentWorkloadPercent }}%</span>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-primary-subtle text-primary">{{ row.productivityPercent }}%</span>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

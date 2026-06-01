@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { UserRole } from '../../../../core/models/auth.model';
 import { AuthService } from '../../../../core/services/auth.service';
+import { CompanySettingsService } from '../../../../core/services/company-settings.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { LanguageToggleComponent } from '../../../../shared/components/language-toggle/language-toggle.component';
 import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle/theme-toggle.component';
@@ -39,6 +40,21 @@ export class LoginComponent {
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly company = inject(CompanySettingsService);
+
+  /**
+   * White-label branding for the login screen. Display-only: the settings GET
+   * is behind auth, so we don't trigger a load here — we read whatever is
+   * already cached and fall back to the bundled brand otherwise.
+   */
+  readonly brandLogo = this.company.logoUrl;
+  readonly brandName = this.company.tradeName;
+  readonly fallbackLogo = '/assets/img/logo.avif';
+
+  onLogoError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img.src !== this.fallbackLogo) img.src = this.fallbackLogo;
+  }
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;

@@ -68,25 +68,25 @@
           <div class="col-6 col-md-3">
             <p class="text-muted small mb-1">{{ 'campaigns.card.totalBudget' | translate }}</p>
             <p class="fw-700 mb-0">
-              {{ formatNumber(details()!.budget) }} {{ 'campaigns.sar' | translate }}
+              {{ details()!.budget | money }}
             </p>
           </div>
           <div class="col-6 col-md-3">
             <p class="text-muted small mb-1">{{ 'campaigns.card.dailyBudget' | translate }}</p>
             <p class="fw-700 mb-0">
-              {{ formatNumber(details()!.dailyBudget) }} {{ 'campaigns.sar' | translate }}
+              {{ details()!.dailyBudget | money }}
             </p>
           </div>
           <div class="col-6 col-md-3">
             <p class="text-muted small mb-1">{{ 'campaigns.kpi.spent' | translate }}</p>
             <p class="fw-700 mb-0 text-success">
-              {{ formatNumber(details()!.spent) }} {{ 'campaigns.sar' | translate }}
+              {{ details()!.spent | money }}
             </p>
           </div>
           <div class="col-6 col-md-3">
             <p class="text-muted small mb-1">{{ 'campaigns.details.remaining' | translate }}</p>
             <p class="fw-700 mb-0">
-              {{ formatNumber(details()!.remaining) }} {{ 'campaigns.sar' | translate }}
+              {{ details()!.remaining | money }}
             </p>
           </div>
 

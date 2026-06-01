@@ -10,20 +10,6 @@ export type StatCardTone =
   | 'purple'
   | 'orange';
 
-/**
- * KPI tile used across dashboards and list pages.
- *
- *   <app-stat-card
- *     label="إجمالي الحملات"
- *     value="24"
- *     icon="fa-solid fa-bullhorn"
- *     tone="primary"
- *     [sub]="'+3 هذا الأسبوع'" />
- *
- * Visual contract: KPI label on top, big value below, optional sub-line and
- * tinted icon tile to the inline-end. Hover lift handled by `.kpi-card` from
- * `_utilities.scss` so it stays consistent with the rest of the app.
- */
 @Component({
   selector: 'app-stat-card',
   standalone: true,
@@ -32,6 +18,7 @@ export type StatCardTone =
   templateUrl: './stat-card.component.html',
   styleUrl: './stat-card.component.scss',
 })
+
 export class StatCardComponent {
   readonly label = input.required<string>();
   readonly value = input.required<string | number>();

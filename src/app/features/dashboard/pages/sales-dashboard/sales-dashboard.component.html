@@ -107,11 +107,6 @@
             <div class="text-center py-5">
               <span class="spinner-border text-primary" role="status"></span>
             </div>
-          } @else if (!hasPipeline()) {
-            <div class="text-center py-5 text-muted">
-              <i class="fa-solid fa-chart-column fa-2x mb-2 opacity-50 d-block"></i>
-              <p class="mb-0 small">{{ 'dashboard.sales.pipelineEmpty' | translate }}</p>
-            </div>
           } @else {
             <apx-chart
               [series]="pipelineChart().series"
@@ -145,10 +140,12 @@
               <span class="spinner-border text-primary" role="status"></span>
             </div>
           } @else if (myLeads().length === 0) {
-            <div class="text-center py-5 text-muted">
-              <i class="fa-solid fa-inbox fa-2x mb-2 opacity-50 d-block"></i>
-              <p class="mb-0 small">{{ 'customers.sales.empty' | translate }}</p>
-            </div>
+            <app-empty-state
+              [compact]="true"
+              icon="fa-solid fa-inbox"
+              [message]="'customers.sales.empty' | translate"
+              [loading]="loadingLeads()"
+              (retry)="reload()" />
           } @else {
             <div class="d-flex flex-column gap-2">
               @for (lead of myLeads(); track trackById($index, lead)) {

@@ -6,7 +6,12 @@
       "Bash(Get-ChildItem -Path \"src\\\\app\\\\features\" -Directory)",
       "Bash(Select-Object Name)",
       "Bash(Get-ChildItem -Path \"f:\\\\Dashboards\\\\crm\\\\crmTheOne\" -Directory)",
-      "Bash(cd \"f:\\\\\\\\Dashboards\\\\\\\\crm\\\\\\\\crmTheOne\")"
+      "Bash(cd \"f:\\\\\\\\Dashboards\\\\\\\\crm\\\\\\\\crmTheOne\")",
+      "WebFetch(domain:crmproject.runasp.net)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(node -e \"console.log\\('noop'\\)\")",
+      "Bash(node -e \"const apiUrl='https://crmproject.runasp.net/api'; const origin=apiUrl.replace\\(/\\\\/api\\\\/?$/i,''\\); const path='/Images/CompanySettings/5510f6a4-1bb0-4435-9ad7-86f683520dec-dddddddddddddddddddd.PNG'; console.log\\(origin + '/' + path.replace\\(/^\\\\//,''\\)\\);\")"
     ]
   }
 }

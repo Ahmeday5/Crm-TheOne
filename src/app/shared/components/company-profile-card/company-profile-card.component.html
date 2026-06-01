@@ -1,0 +1,80 @@
+<div class="card company-profile h-100">
+  <div class="card-body">
+    <!-- Identity header -->
+    <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
+      <img [src]="company.logoUrl() || fallbackLogo" class="cp-logo" alt="logo"
+           (error)="onLogoError($event)" />
+      <div class="min-w-0">
+        <h5 class="fw-700 mb-0 text-truncate">
+          {{ company.companyName() || ('header.app' | translate) }}
+        </h5>
+        @if (company.tradeName() && company.tradeName() !== company.companyName()) {
+          <p class="text-muted small mb-1 text-truncate">{{ company.tradeName() }}</p>
+        }
+        @if (company.currency()) {
+          <span class="badge bg-primary-subtle text-primary">
+            <i class="fa-solid fa-coins me-1"></i>{{ company.currency() }}
+          </span>
+        }
+      </div>
+    </div>
+
+    <!-- Contact + web -->
+    <div class="d-flex flex-column gap-2">
+      @if (company.websiteHref()) {
+        <a class="cp-row" [href]="company.websiteHref()" target="_blank" rel="noopener">
+          <i class="fa-solid fa-globe"></i>
+          <span class="text-truncate">{{ company.website() }}</span>
+        </a>
+      }
+      @if (company.mailtoHref()) {
+        <a class="cp-row" [href]="company.mailtoHref()">
+          <i class="fa-solid fa-envelope"></i>
+          <span class="text-truncate">{{ company.email() }}</span>
+        </a>
+      }
+      @if (company.phoneHref()) {
+        <a class="cp-row" [href]="company.phoneHref()" dir="ltr">
+          <i class="fa-solid fa-phone"></i>
+          <span class="text-truncate">{{ company.phone() }}</span>
+        </a>
+      }
+      @if (company.mobile()) {
+        <div class="cp-row">
+          <i class="fa-solid fa-mobile-screen"></i>
+          <span class="text-truncate" dir="ltr">{{ company.mobile() }}</span>
+          @if (company.whatsappHref()) {
+            <a class="ms-auto text-success" [href]="company.whatsappHref()" target="_blank" rel="noopener"
+               [title]="'settings.company.whatsapp' | translate" [attr.aria-label]="'settings.company.whatsapp' | translate">
+              <i class="fa-brands fa-whatsapp"></i>
+            </a>
+          }
+        </div>
+      }
+      @if (company.address()) {
+        <div class="cp-row">
+          <i class="fa-solid fa-location-dot"></i>
+          <span>{{ company.address() }}</span>
+        </div>
+      }
+    </div>
+
+    <!-- Legal -->
+    @if (company.commercialRegistration() || company.taxNumber()) {
+      <div class="row g-2 mt-3 pt-3 border-top">
+        @if (company.commercialRegistration()) {
+          <div class="col-6">
+            <p class="text-muted small mb-0">{{ 'settings.company.commercialRegistration' | translate }}</p>
+            <p class="fw-600 mb-0">{{ company.commercialRegistration() }}</p>
+          </div>
+        }
+        @if (company.taxNumber()) {
+          <div class="col-6">
+            <p class="text-muted small mb-0">{{ 'settings.company.taxNumber' | translate }}</p>
+            <p class="fw-600 mb-0">{{ company.taxNumber() }}</p>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

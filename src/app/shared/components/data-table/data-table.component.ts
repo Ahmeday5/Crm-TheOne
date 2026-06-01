@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  EventEmitter,
+  Output,
   TemplateRef,
   inject,
   input,
@@ -9,28 +11,21 @@ import {
 } from '@angular/core';
 import { LanguageService } from '../../../core/services/language.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
+import { EmptyStateComponent } from '../empty-state/empty-state.component';
 
 export interface TableColumn<T = unknown> {
-  /** Dotted path into the row (`'name'` or `'address.city'`). */
   key: string;
-  /** Header label. Pass an i18n key plus `i18nLabel: true` to translate. */
   label: string;
-  /** When true, treat `label` as a translation key. */
   i18nLabel?: boolean;
   width?: string;
   align?: 'right' | 'left' | 'center' | 'start' | 'end';
-  /**
-   * Optional cell template. The row is the implicit context:
-   *   <ng-template #nameCell let-row>...</ng-template>
-   *   { key: 'name', label: '...', cellTemplate: nameCell }
-   */
   cellTemplate?: TemplateRef<{ $implicit: T }>;
 }
 
 @Component({
   selector: 'app-data-table',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, TranslatePipe, EmptyStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './data-table.component.html',
   styleUrl: './data-table.component.scss',
@@ -43,12 +38,13 @@ export class DataTableComponent<T extends object = object> {
   readonly hasActions = input<boolean>(false);
   readonly rowClickable = input<boolean>(false);
   readonly loading = input<boolean>(false);
-  /** TemplateRef for the per-row actions cell. Receives the row as `$implicit`. */
+  
   readonly actionsTemplate = input<TemplateRef<{ $implicit: T }> | null>(null);
-  /** Empty-state message; falls back to a translated "no results" otherwise. */
   readonly emptyMessage = input<string>('');
-
+  readonly emptyIcon = input<string>('fa-solid fa-inbox');
   readonly rowClick = output<T>();
+
+  @Output() retry = new EventEmitter<void>();
 
   protected readonly language = inject(LanguageService);
 

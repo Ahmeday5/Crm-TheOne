@@ -16,6 +16,7 @@ import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ExportColumn } from '../../../../core/services/table-export.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
@@ -26,6 +27,7 @@ import {
   ContractStatistics,
   ContractStatusCode,
 } from '../../../../shared/models';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ContractFormDialogComponent } from '../../components/contract-form-dialog/contract-form-dialog.component';
 import { ContractsService } from '../../services/contracts.service';
@@ -43,6 +45,8 @@ const EXPIRING_WINDOW_DAYS = 90;
     CommonModule,
     FormsModule,
     TranslatePipe,
+    MoneyPipe,
+    EmptyStateComponent,
     PageHeaderComponent,
     StatCardComponent,
     PaginationComponent,

@@ -46,10 +46,11 @@
         <span class="text-danger">*</span>
       </label>
       @if (salesTeam().length === 0) {
-        <div class="alert alert-warning py-2 mb-0">
-          <i class="fa-solid fa-circle-info me-1"></i>
-          {{ 'customers.assignModal.noSalesTeam' | translate }}
-        </div>
+        <app-empty-state
+          [compact]="true"
+          icon="fa-solid fa-circle-info"
+          [message]="'customers.assignModal.noSalesTeam' | translate"
+          [loading]="loading()" />
       } @else {
         <div class="list-group">
           @for (person of salesTeam(); track person.userId) {

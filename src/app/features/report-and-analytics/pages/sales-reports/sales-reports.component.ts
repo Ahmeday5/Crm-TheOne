@@ -17,6 +17,7 @@ import {
   CustomerListItem,
   SalesAnalysisStats,
 } from '../../../../shared/models';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { MarketingService } from '../../../dashboard/services/marketing.service';
@@ -36,7 +37,7 @@ interface ReasonSlice {
 @Component({
   selector: 'app-sales-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgApexchartsModule, TranslatePipe, LoadErrorComponent],
+  imports: [CommonModule, FormsModule, NgApexchartsModule, TranslatePipe, LoadErrorComponent, EmptyStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-reports.component.html',
   styleUrl: './sales-reports.component.scss',

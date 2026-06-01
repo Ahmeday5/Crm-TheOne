@@ -25,7 +25,7 @@
     <div class="col-12 col-sm-6 col-lg-4">
       <app-stat-card
         [label]="'sales.priceOffers.stats.totalValue' | translate"
-        [value]="formatMoney(kpis().totalValue)"
+        [value]="kpis().totalValue | money"
         icon="fa-solid fa-sack-dollar"
         tone="success">
       </app-stat-card>
@@ -33,7 +33,7 @@
     <div class="col-12 col-sm-6 col-lg-4">
       <app-stat-card
         [label]="'sales.priceOffers.stats.totalDiscount' | translate"
-        [value]="formatMoney(kpis().totalDiscount)"
+        [value]="kpis().totalDiscount | money"
         icon="fa-solid fa-tags"
         tone="orange">
       </app-stat-card>
@@ -75,9 +75,13 @@
     <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
   } @else if (rows().length === 0) {
     <div class="card">
-      <div class="card-body p-5 text-center text-muted">
-        <i class="fa-regular fa-file-lines fs-2 d-block mb-2 opacity-50"></i>
-        {{ 'sales.priceOffers.empty' | translate }}
+      <div class="card-body">
+        <app-empty-state
+          [compact]="true"
+          icon="fa-regular fa-file-lines"
+          [message]="'sales.priceOffers.empty' | translate"
+          [loading]="loading()"
+          (retry)="reload()" />
       </div>
     </div>
   } @else {
@@ -132,11 +136,11 @@
                   <td class="text-center">
                     <span class="badge bg-light text-secondary border">{{ row.itemsCount }}</span>
                   </td>
-                  <td class="text-nowrap">{{ formatMoney(row.subTotal) }}</td>
+                  <td class="text-nowrap">{{ row.subTotal | money }}</td>
                   <td class="text-nowrap text-warning fw-500">
-                    @if (row.discount > 0) { − {{ formatMoney(row.discount) }} } @else { — }
+                    @if (row.discount > 0) { − {{ row.discount | money }} } @else { — }
                   </td>
-                  <td class="text-nowrap fw-bold text-success">{{ formatMoney(row.netTotal) }}</td>
+                  <td class="text-nowrap fw-bold text-success">{{ row.netTotal | money }}</td>
                   <td class="text-end pe-3">
                     <div class="d-inline-flex gap-2 flex-nowrap">
                       <button type="button"

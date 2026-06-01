@@ -125,9 +125,12 @@
           <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
         </div>
       } @else if (visible().length === 0) {
-        <div class="p-5 text-center text-muted">
-          {{ 'settings.users.list.empty' | translate }}
-        </div>
+        <app-empty-state
+          [compact]="true"
+          icon="fa-solid fa-users"
+          [message]="'settings.users.list.empty' | translate"
+          [loading]="loading()"
+          (retry)="reload()" />
       } @else {
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">

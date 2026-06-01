@@ -14,6 +14,7 @@ import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { SalesPerson } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -22,7 +23,7 @@ import { CustomersService } from '../../services/customers.service';
 @Component({
   selector: 'app-assign-sales-dialog',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, ModalComponent],
+  imports: [CommonModule, TranslatePipe, ModalComponent, EmptyStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './assign-sales-dialog.component.html',
 })

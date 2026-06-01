@@ -139,11 +139,6 @@
             <div class="text-center py-5">
               <span class="spinner-border text-primary" role="status"></span>
             </div>
-          } @else if (reasonSlices().length === 0) {
-            <div class="text-center py-5 text-muted">
-              <i class="fa-solid fa-chart-pie fa-2x mb-2 opacity-50 d-block"></i>
-              <p class="mb-0 small">{{ 'reportAnalysis.sales.charts.noReasons' | translate }}</p>
-            </div>
           } @else {
             <apx-chart
               [series]="reasonsChart().series"
@@ -194,10 +189,12 @@
           <span class="spinner-border text-primary" role="status"></span>
         </div>
       } @else if (campaigns().length === 0) {
-        <div class="text-center py-5 text-muted">
-          <i class="fa-solid fa-bullhorn fa-2x mb-2 opacity-50 d-block"></i>
-          <p class="mb-0 small">{{ 'reportAnalysis.sales.customersList.empty' | translate }}</p>
-        </div>
+        <app-empty-state
+          [compact]="true"
+          icon="fa-solid fa-bullhorn"
+          [message]="'reportAnalysis.sales.customersList.empty' | translate"
+          [loading]="loadingCampaigns()"
+          (retry)="reload()" />
       } @else {
         <div class="table-responsive">
           <table class="table table-hover mb-0 align-middle">
@@ -295,10 +292,12 @@
           <span class="spinner-border text-primary" role="status"></span>
         </div>
       } @else if (filteredCustomers().length === 0) {
-        <div class="text-center py-5 text-muted">
-          <i class="fa-solid fa-inbox fa-3x mb-3 opacity-50 d-block"></i>
-          <p class="mb-0">{{ 'reportAnalysis.sales.customersList.empty' | translate }}</p>
-        </div>
+        <app-empty-state
+          [compact]="true"
+          icon="fa-solid fa-inbox"
+          [message]="'reportAnalysis.sales.customersList.empty' | translate"
+          [loading]="loadingCustomers()"
+          (retry)="reload()" />
       } @else {
         <div class="d-flex flex-column gap-3">
           @for (c of filteredCustomers(); track trackById($index, c)) {

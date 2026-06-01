@@ -1,0 +1,30 @@
+.company-profile {
+  .cp-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    object-fit: contain;
+    background: var(--surface-2);
+    flex-shrink: 0;
+  }
+
+  .cp-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--text-2);
+    text-decoration: none;
+    font-size: var(--fs-sm);
+
+    > i {
+      width: 1rem;
+      text-align: center;
+      color: var(--brand);
+      flex-shrink: 0;
+    }
+  }
+
+  a.cp-row:hover {
+    color: var(--brand);
+  }
+}

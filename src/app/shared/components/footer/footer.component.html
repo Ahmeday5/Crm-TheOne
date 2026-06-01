@@ -1,0 +1,33 @@
+<footer class="app-footer">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <!-- Copyright (legal company name) -->
+    <span class="text-muted small">
+      © {{ year }} {{ company.companyName() || ('header.app' | translate) }}
+      <span class="d-none d-sm-inline">— {{ 'common.footer.rights' | translate }}</span>
+    </span>
+
+    <!-- Quick links -->
+    <div class="d-flex flex-wrap align-items-center gap-3 small">
+      @if (company.websiteHref()) {
+        <a class="app-footer__link" [href]="company.websiteHref()" target="_blank" rel="noopener">
+          <i class="fa-solid fa-globe me-1"></i>{{ company.website() }}
+        </a>
+      }
+      @if (company.mailtoHref()) {
+        <a class="app-footer__link" [href]="company.mailtoHref()">
+          <i class="fa-solid fa-envelope me-1"></i>{{ company.email() }}
+        </a>
+      }
+      @if (company.phoneHref()) {
+        <a class="app-footer__link" [href]="company.phoneHref()" dir="ltr">
+          <i class="fa-solid fa-phone me-1"></i>{{ company.phone() }}
+        </a>
+      }
+      @if (company.taxNumber()) {
+        <span class="text-muted">
+          {{ 'settings.company.taxNumber' | translate }}: {{ company.taxNumber() }}
+        </span>
+      }
+    </div>
+  </div>
+</footer>

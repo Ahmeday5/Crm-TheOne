@@ -96,7 +96,7 @@
                         <input type="number" min="1" step="1" class="form-control"
                                formControlName="quantity" placeholder="1">
                       </td>
-                      <td class="fw-bold">{{ formatMoney(lineTotal(group)) }}</td>
+                      <td class="fw-bold">{{ lineTotal(group) | money }}</td>
                       <td>
                         <button type="button" class="btn btn-sm btn-danger-soft"
                                 [attr.title]="'sales.priceOffers.form.removeItem' | translate"
@@ -161,13 +161,13 @@
           <div class="col-md-6">
             <div class="d-flex justify-content-between p-3 rounded bg-surface-1">
               <span class="text-muted">{{ 'sales.priceOffers.form.subTotal' | translate }}</span>
-              <span class="fw-bold">{{ formatMoney(subTotal()) }}</span>
+              <span class="fw-bold">{{ subTotal() | money }}</span>
             </div>
           </div>
           <div class="col-md-6">
             <div class="d-flex justify-content-between p-3 rounded bg-surface-1">
               <span class="text-muted">{{ 'sales.priceOffers.form.netTotal' | translate }}</span>
-              <span class="fw-bold text-success fs-5">{{ formatMoney(netTotal()) }}</span>
+              <span class="fw-bold text-success fs-5">{{ netTotal() | money }}</span>
             </div>
           </div>
         </div>

@@ -1,0 +1,42 @@
+<header class="doc-header">
+  <img [src]="company.logoUrl() || fallbackLogo" class="doc-logo" alt="logo"
+       (error)="onLogoError($event)" />
+  <div class="doc-company">
+    <h1>{{ company.companyName() || ('header.app' | translate) }}</h1>
+
+    @if (company.address(); as addr) {
+      <p><i class="fa-solid fa-location-dot"></i> {{ addr }}</p>
+    }
+
+    @if (company.phone() || company.mobile()) {
+      <p dir="ltr">
+        <i class="fa-solid fa-phone"></i>
+        {{ company.phone() }}@if (company.phone() && company.mobile()) {<span> / </span>}{{ company.mobile() }}
+      </p>
+    }
+
+    @if (company.email() || company.website()) {
+      <p>
+        @if (company.email()) {
+          <span><i class="fa-solid fa-envelope"></i> {{ company.email() }}</span>
+        }
+        @if (company.email() && company.website()) { <span>&nbsp;-&nbsp;</span> }
+        @if (company.websiteHref(); as href) {
+          <a [href]="href" target="_blank" rel="noopener">{{ company.website() }}</a>
+        }
+      </p>
+    }
+
+    @if (showLegal && (company.commercialRegistration() || company.taxNumber())) {
+      <p class="doc-legal">
+        @if (company.commercialRegistration()) {
+          <span>{{ 'settings.company.commercialRegistration' | translate }}: {{ company.commercialRegistration() }}</span>
+        }
+        @if (company.commercialRegistration() && company.taxNumber()) { <span>&nbsp;|&nbsp;</span> }
+        @if (company.taxNumber()) {
+          <span>{{ 'settings.company.taxNumber' | translate }}: {{ company.taxNumber() }}</span>
+        }
+      </p>
+    }
+  </div>
+</header>

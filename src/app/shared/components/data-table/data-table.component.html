@@ -31,9 +31,13 @@
       } @else if (data().length === 0) {
         <tr>
           <td [attr.colspan]="hasActions() ? columns().length + 1 : columns().length"
-              class="text-center py-5 text-muted">
-            <i class="fa-solid fa-inbox fs-3 d-block mb-2 opacity-50"></i>
-            {{ emptyMessage() || ('common.no_results' | translate) }}
+              class="p-0">
+            <app-empty-state
+              [compact]="true"
+              [icon]="emptyIcon()"
+              [message]="emptyMessage() || ('common.no_results' | translate)"
+              [loading]="loading()"
+              (retry)="retry.emit()" />
           </td>
         </tr>
       } @else {

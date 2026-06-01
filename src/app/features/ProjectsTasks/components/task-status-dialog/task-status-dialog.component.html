@@ -1,0 +1,62 @@
+<app-modal
+  [open]="true"
+  [title]="'projects.tasksManage.statusDialog.title' | translate"
+  icon="fa-solid fa-arrows-rotate"
+  iconTone="primary"
+  size="sm"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <p class="fw-600 mb-3">{{ task.title }}</p>
+
+  <form [formGroup]="form" id="task-status-form" novalidate (ngSubmit)="submit()">
+    <div class="mb-3">
+      <label for="status-select" class="form-label fw-600">
+        {{ 'projects.tasksManage.statusDialog.status' | translate }}
+      </label>
+      <select id="status-select" class="form-select" formControlName="status">
+        @for (s of statuses; track s) {
+          <option [ngValue]="s">{{ 'projects.tasksManage.statuses.' + s | translate }}</option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <label for="actual-hours" class="form-label fw-600">
+        {{ 'projects.tasksManage.statusDialog.actualHours' | translate }} <span class="text-danger">*</span>
+      </label>
+      <input id="actual-hours"
+             type="number"
+             min="0"
+             step="0.5"
+             class="form-control"
+             formControlName="actualHours"
+             [placeholder]="'projects.tasksManage.statusDialog.actualHoursPlaceholder' | translate" />
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="cancel.emit()">
+      {{ 'projects.tasksManage.statusDialog.cancel' | translate }}
+    </button>
+    <button type="submit"
+            form="task-status-form"
+            class="btn btn-primary"
+            [disabled]="submitting() || form.invalid">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-floppy-disk me-1"></i>
+      }
+      {{ 'projects.tasksManage.statusDialog.submit' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

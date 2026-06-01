@@ -25,6 +25,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ExportColumn } from '../../../../core/services/table-export.service';
 import { formatCalendarDate } from '../../../../core/utils/calendar-date.util';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
@@ -75,6 +76,7 @@ interface MonthOption {
     CommonModule,
     FormsModule,
     TranslatePipe,
+    EmptyStateComponent,
     LoadErrorComponent,
     StatCardComponent,
     PaginationComponent,

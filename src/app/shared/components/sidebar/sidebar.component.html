@@ -2,6 +2,15 @@
        [class.is-open]="isSidebarOpen && isMobile"
        [class.is-mini]="isCollapsed && !isMobile">
 
+  <!-- Brand: dynamic tenant logo + trade name -->
+  <a class="sidebar-brand" routerLink="/" (click)="onLinkClicked()">
+    <img [src]="brandLogo() || fallbackLogo" class="sidebar-brand-logo" alt="logo"
+         (error)="onLogoError($event)" />
+    @if (!(isCollapsed && !isMobile)) {
+      <span class="sidebar-brand-name text-truncate">{{ brandName() || ('header.app' | translate) }}</span>
+    }
+  </a>
+
   <!-- Header: search + collapse / close button -->
   <div class="sidebar-head d-flex align-items-center gap-2">
     <div class="search-wrap flex-grow-1">

@@ -10,8 +10,10 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { TRANSLATIONS, resolveKey } from '../../../../../core/i18n';
 import { LanguageService } from '../../../../../core/services/language.service';
+import { CompanyDocHeaderComponent } from '../../../../../shared/components/company-doc-header/company-doc-header.component';
 import { LoadErrorComponent } from '../../../../../shared/components/load-error/load-error.component';
 import { PriceQuotationDetail } from '../../../../../shared/models';
+import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { PriceQuotationsService } from '../../../services/price-quotations.service';
 
@@ -33,7 +35,13 @@ import { PriceQuotationsService } from '../../../services/price-quotations.servi
 @Component({
   selector: 'app-price-offer-contract',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, LoadErrorComponent],
+  imports: [
+    CommonModule,
+    TranslatePipe,
+    MoneyPipe,
+    LoadErrorComponent,
+    CompanyDocHeaderComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './price-offer-contract.component.html',
   styleUrl: './price-offer-contract.component.scss',

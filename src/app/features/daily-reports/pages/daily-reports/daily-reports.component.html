@@ -139,15 +139,18 @@
     <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
   } @else if (rows().length === 0) {
     <div class="card empty-state">
-      <div class="card-body p-5 text-center text-muted">
-        <i class="fa-regular fa-file-lines fs-1 d-block mb-3 opacity-50"></i>
-        <p class="mb-1 fw-600">{{ 'dailyReports.empty.title' | translate }}</p>
-        <p class="small mb-3">{{ 'dailyReports.empty.hint' | translate }}</p>
+      <app-empty-state
+        [hasActions]="true"
+        icon="fa-regular fa-file-lines"
+        [title]="'dailyReports.empty.title' | translate"
+        [message]="'dailyReports.empty.hint' | translate"
+        [loading]="loading()"
+        (retry)="reload()">
         <button type="button" class="btn btn-primary" (click)="openCreate()">
           <i class="fa-solid fa-plus me-1"></i>
           {{ 'dailyReports.new' | translate }}
         </button>
-      </div>
+      </app-empty-state>
     </div>
   } @else {
     <div class="row g-3">

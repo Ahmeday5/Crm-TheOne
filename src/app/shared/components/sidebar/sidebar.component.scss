@@ -11,6 +11,33 @@
   flex-shrink: 0;
 }
 
+/* Brand block (tenant logo + trade name) */
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--text-1);
+}
+.sidebar-brand-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.sidebar-brand-name {
+  font-weight: var(--fw-700);
+  font-size: var(--fs-md);
+}
+.sidebar.is-mini .sidebar-brand {
+  justify-content: center;
+  padding-inline: 0;
+}
+
 /* Mini (desktop-only) */
 .sidebar.is-mini {
   width: var(--sidebar-mini-w);

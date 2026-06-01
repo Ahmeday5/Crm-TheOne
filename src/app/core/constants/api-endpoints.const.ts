@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
     me: 'Auth/me',
     sales: 'Auth/sales',
     support: 'Auth/support',
+    developers: 'Auth/developers',
   },
   users: {
     list: 'Auth/GetAllUsers',
@@ -98,12 +99,6 @@ export const API_ENDPOINTS = {
     stats: 'Appointments/GetStats',
   },
   support: {
-    /**
-     * Support finishes its consultation and hands the customer back to the
-     * sales rep they originally came from — the backend resolves that rep from
-     * the customer record, so the URL carries only the customer id (no body).
-     * Also flips the customer's `isConsulted` flag to `true`.
-     */
     returnToSalesPerson: (customerId: number | string) =>
       `Support/${customerId}/ReturnToSalesPerson`,
     /** KPI strip + status breakdown + weekly-resolved trend for the dashboard. */
@@ -125,12 +120,70 @@ export const API_ENDPOINTS = {
     last7Days: 'Marketing/potentialCustomersLastdays',
     salesStatistics: 'Marketing/statistics',
   },
+  /** Admin-facing project management — full CRUD across every project. */
+  managerProjects: {
+    list: 'ManagerProjects/GetProjects',
+    active: 'ManagerProjects/GetActiveProjects',
+    byId: (id: number | string) => `ManagerProjects/GetProjectById/${id}`,
+    create: 'ManagerProjects/CreateProject',
+    update: (id: number | string) => `ManagerProjects/UpdateProject/${id}`,
+    delete: (id: number | string) => `ManagerProjects/DeleteProject/${id}`,
+  },
+  /** Developer-facing, read-only view scoped to the signed-in developer. */
+  developerProjects: {
+    myProjects: 'DeveloperProjects/GetMyProjects',
+    myActive: 'DeveloperProjects/GetMyActiveProjects',
+    myById: (id: number | string) => `DeveloperProjects/GetMyProjectById/${id}`,
+  },
+  /** Admin-facing task management — full CRUD + board statistics + control panel. */
+  managerTasks: {
+    list: 'ManagerTasks/GetTasks',
+    byId: (id: number | string) => `ManagerTasks/GetTaskById/${id}`,
+    create: 'ManagerTasks/CreateTask',
+    update: (id: number | string) => `ManagerTasks/UpdateTask/${id}`,
+    delete: (id: number | string) => `ManagerTasks/DeleteTask/${id}`,
+    statistics: 'ManagerTasks/GetStatistics',
+    controlPanel: 'ManagerTasks/GetControlPanel',
+  },
+  /** Developer-team analytics page — summary, per-dev stats, and chart feeds. */
+  developerAnalytics: {
+    summary: 'DeveloperAnalytics/Summary',
+    developerStats: 'DeveloperAnalytics/DeveloperStats',
+    charts: 'DeveloperAnalytics/Charts',
+    bugAnalytics: 'DeveloperAnalytics/BugAnalytics',
+  },
+  /** Developer-facing tasks — read-only scope + status/hours updates only. */
+  developerTasks: {
+    myTasks: 'DeveloperTasks/GetMyTasks',
+    myById: (id: number | string) => `DeveloperTasks/GetMyTaskById/${id}`,
+    updateMyStatus: (id: number | string) =>
+      `DeveloperTasks/UpdateMyTaskStatus/${id}`,
+    statistics: 'DeveloperTasks/GetMyStatistics',
+    controlPanel: 'DeveloperTasks/GetMyControlPanel',
+  },
   sales: {
-    /** KPI strip for the sales dashboard. */
     dashboardStatistics: 'Sales/SalesDashboardStatistics',
-    /** Per-status customer counts for the pipeline chart. */
     customerStatusCount: 'Sales/SalesCustomerStatusCount',
-    /** Free-text reasons given when a sales rep marks a customer as NotBuyer. */
     notBuyingReasons: 'Sales/NotBuyingReasons',
+  },
+  /** Resource-management board — team workload + per-developer distribution. */
+  resourceManagement: {
+    teamWorkload: 'ResourceManagement/TeamWorkload',
+    workloadDistribution: 'ResourceManagement/WorkloadDistribution',
+  },
+  /** White-label company settings — branding, contact info, default currency. */
+  companySettings: {
+    get: 'CompanySettings',
+    update: 'CompanySettings/Update',
+  },
+  /** Knowledge-base articles — CRUD + category option pickers. */
+  articles: {
+    list: 'Articles/GetArticles',
+    byId: (id: number | string) => `Articles/GetArticleById/${id}`,
+    create: 'Articles/CreateArticle',
+    update: (id: number | string) => `Articles/UpdateArticle/${id}`,
+    delete: (id: number | string) => `Articles/DeleteArticle/${id}`,
+    projectOptions: 'Articles/ProjectOptions',
+    customerOptions: 'Articles/CustomerOptions',
   },
 } as const;

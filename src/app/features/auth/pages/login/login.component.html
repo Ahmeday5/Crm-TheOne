@@ -16,10 +16,11 @@
         <!-- Brand side (visible from lg up) -->
         <div class="col-xl-6 col-lg-6 d-none d-lg-block">
           <div class="brand-side">
-            <img src="/assets/img/logo.avif" class="brand-logo mb-4" alt="logo" />
+            <img [src]="brandLogo() || fallbackLogo" class="brand-logo mb-4" alt="logo"
+                 (error)="onLogoError($event)" />
             <h1 class="brand-headline">
               {{ 'auth.welcome' | translate }} <br />
-              <span class="brand-highlight">{{ 'header.app' | translate }}</span>
+              <span class="brand-highlight">{{ brandName() || ('header.app' | translate) }}</span>
             </h1>
             <p class="brand-lead mb-4">{{ 'auth.subtitle' | translate }}</p>
 

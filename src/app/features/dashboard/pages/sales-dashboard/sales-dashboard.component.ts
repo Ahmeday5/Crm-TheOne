@@ -12,6 +12,7 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { forkJoin } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -52,6 +53,7 @@ import { SalesService } from '../../services/sales.service';
     TranslatePipe,
     PageHeaderComponent,
     LoadErrorComponent,
+    EmptyStateComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-dashboard.component.html',

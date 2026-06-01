@@ -34,8 +34,8 @@ export const SETTINGS_ROUTES: Routes = [
         path: 'system',
         title: 'إعدادات النظام',
         loadComponent: () =>
-          import('./pages/placeholder/settings-placeholder.component').then(
-            (m) => m.SettingsPlaceholderComponent,
+          import('./pages/company-settings/company-settings.component').then(
+            (m) => m.CompanySettingsComponent,
           ),
         data: { titleKey: 'settings.tabs.system', icon: 'fa-solid fa-gear' },
       },

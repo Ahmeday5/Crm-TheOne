@@ -1,0 +1,169 @@
+<app-modal
+  [open]="true"
+  [title]="titleKey() | translate"
+  icon="fa-solid fa-book"
+  iconTone="primary"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <form [formGroup]="form" id="article-form" novalidate (ngSubmit)="submit()">
+    <div class="row g-3">
+      <!-- Title -->
+      <div class="col-12">
+        <label for="art-title" class="form-label fw-600">
+          {{ 'kb.form.title' | translate }} <span class="text-danger">*</span>
+        </label>
+        <input id="art-title" class="form-control" formControlName="title"
+               [class.is-invalid]="isInvalid('title')"
+               [placeholder]="'kb.form.titlePlaceholder' | translate" />
+        <app-form-error [control]="form.controls.title" [label]="'kb.form.title' | translate" />
+      </div>
+
+      <!-- Type -->
+      <div class="col-md-4">
+        <label for="art-type" class="form-label fw-600">
+          {{ 'kb.form.type' | translate }} <span class="text-danger">*</span>
+        </label>
+        <select id="art-type" class="form-select" formControlName="type">
+          @for (t of types; track t.name) {
+            <option [ngValue]="t.name">{{ t.labelKey | translate }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Access level -->
+      <div class="col-md-4">
+        <label for="art-access" class="form-label fw-600">
+          {{ 'kb.form.accessLevel' | translate }} <span class="text-danger">*</span>
+        </label>
+        <select id="art-access" class="form-select" formControlName="accessLevel">
+          @for (a of accessLevels; track a.name) {
+            <option [ngValue]="a.name">{{ a.labelKey | translate }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Status -->
+      <div class="col-md-4">
+        <label for="art-status" class="form-label fw-600">
+          {{ 'kb.form.status' | translate }} <span class="text-danger">*</span>
+        </label>
+        <select id="art-status" class="form-select" formControlName="status">
+          @for (s of statuses; track s.name) {
+            <option [ngValue]="s.name">{{ s.labelKey | translate }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Category source + item -->
+      <div class="col-md-4">
+        <label for="art-cat-source" class="form-label fw-600">{{ 'kb.form.categoryType' | translate }}</label>
+        <select id="art-cat-source" class="form-select" formControlName="categorySource">
+          <option value="Project">{{ 'kb.form.project' | translate }}</option>
+          <option value="Customer">{{ 'kb.form.customer' | translate }}</option>
+        </select>
+      </div>
+      <div class="col-md-8">
+        <label for="art-cat" class="form-label fw-600">{{ 'kb.form.category' | translate }}</label>
+        <select id="art-cat" class="form-select" formControlName="categoryId">
+          <option [ngValue]="null">
+            {{ (loadingCategories() ? 'kb.form.loadingCategories' : 'kb.form.categoryPlaceholder') | translate }}
+          </option>
+          @for (c of categoryOptions(); track c.id) {
+            <option [ngValue]="c.id">{{ c.name }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Summary -->
+      <div class="col-12">
+        <label for="art-summary" class="form-label fw-600">{{ 'kb.form.summary' | translate }}</label>
+        <textarea id="art-summary" rows="2" class="form-control" formControlName="summary"
+                  [placeholder]="'kb.form.summaryPlaceholder' | translate"></textarea>
+      </div>
+
+      <!-- Content -->
+      <div class="col-12">
+        <label for="art-content" class="form-label fw-600">{{ 'kb.form.content' | translate }}</label>
+        <textarea id="art-content" rows="4" class="form-control" formControlName="content"
+                  [placeholder]="'kb.form.contentPlaceholder' | translate"></textarea>
+      </div>
+
+      <!-- Steps -->
+      <div class="col-12">
+        <label for="art-steps" class="form-label fw-600">{{ 'kb.form.steps' | translate }}</label>
+        <textarea id="art-steps" rows="3" class="form-control" formControlName="steps"
+                  [placeholder]="'kb.form.stepsPlaceholder' | translate"></textarea>
+      </div>
+
+      <!-- Keywords -->
+      <div class="col-12">
+        <label for="art-keywords" class="form-label fw-600">{{ 'kb.form.keywords' | translate }}</label>
+        <input id="art-keywords" class="form-control" formControlName="keywords"
+               [placeholder]="'kb.form.keywordsPlaceholder' | translate" />
+      </div>
+
+      <!-- Attachments (create only) -->
+      @if (mode === 'create') {
+        <div class="col-12">
+          <label class="form-label fw-600 d-flex align-items-center gap-2">
+            <i class="fa-solid fa-paperclip text-primary"></i>
+            {{ 'kb.form.attachments' | translate }}
+            <span class="text-muted small">({{ attachments().length }}/{{ maxAttachments }})</span>
+          </label>
+          <input type="file" class="form-control" accept="image/*" multiple
+                 [disabled]="attachments().length >= maxAttachments"
+                 (change)="onFilesSelected($event)" />
+          @if (attachments().length > 0) {
+            <div class="d-flex flex-wrap gap-2 mt-2">
+              @for (f of attachments(); track f.name + $index) {
+                <span class="badge bg-secondary-subtle text-secondary d-inline-flex align-items-center gap-2 px-2 py-2">
+                  <i class="fa-solid fa-image"></i>
+                  <span class="text-truncate" style="max-width: 160px;">{{ f.name }}</span>
+                  <button type="button" class="btn-close btn-close-sm" aria-label="remove"
+                          (click)="removeAttachment($index)"></button>
+                </span>
+              }
+            </div>
+          }
+        </div>
+      } @else if (article?.attachments?.length) {
+        <div class="col-12">
+          <label class="form-label fw-600">{{ 'kb.form.currentAttachments' | translate }}</label>
+          <div class="d-flex flex-wrap gap-2">
+            @for (att of article!.attachments; track att.fileUrl) {
+              <span class="badge bg-secondary-subtle text-secondary px-2 py-2">
+                <i class="fa-solid fa-paperclip me-1"></i>{{ att.fileName }}
+              </span>
+            }
+          </div>
+          <small class="text-muted">{{ 'kb.form.attachmentsEditHint' | translate }}</small>
+        </div>
+      }
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="cancel.emit()">
+      {{ 'kb.form.cancel' | translate }}
+    </button>
+    <button type="submit" form="article-form" class="btn btn-primary"
+            [disabled]="submitting() || form.invalid">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid me-1" [class.fa-plus]="mode === 'create'" [class.fa-floppy-disk]="mode === 'edit'"></i>
+      }
+      {{ (mode === 'edit' ? 'kb.form.submitEdit' : 'kb.form.submitAdd') | translate }}
+    </button>
+  </ng-container>
+</app-modal>

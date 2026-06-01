@@ -29,6 +29,13 @@ const common: TranslationFile<'common'> = {
     saving: 'Saving…',
     empty: 'No data',
     noResults: 'No results',
+    emptyState: {
+      title: 'Nothing here yet',
+      hint: 'There’s no data to show right now. Try refreshing.',
+    },
+    footer: {
+      rights: 'All rights reserved.',
+    },
     yes: 'Yes',
     no: 'No',
     all: 'All',

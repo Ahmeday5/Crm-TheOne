@@ -18,6 +18,7 @@ import { ExportColumn } from '../../../../core/services/table-export.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { UsersService } from '../../../../core/services/users.service';
 import { ClickOutsideDirective } from '../../../../shared/directives/click-outside.directive';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -36,6 +37,7 @@ type RoleFilter = 'all' | UserRole;
     UserFormDialogComponent,
     ClickOutsideDirective,
     TableToolsComponent,
+    EmptyStateComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-management.component.html',

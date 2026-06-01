@@ -115,9 +115,11 @@
       <h5 class="mb-0">{{ 'reportAnalysis.custom.saved.title' | translate }}</h5>
     </div>
     <div class="card-body p-0">
-      <div *ngIf="saved.length === 0" class="p-4 text-center text-muted">
-        {{ 'reportAnalysis.custom.saved.empty' | translate }}
-      </div>
+      <app-empty-state
+        *ngIf="saved.length === 0"
+        [compact]="true"
+        icon="fa-solid fa-bookmark"
+        [message]="'reportAnalysis.custom.saved.empty' | translate" />
 
       <div class="table-responsive" *ngIf="saved.length > 0">
         <table class="table table-hover align-middle mb-0">

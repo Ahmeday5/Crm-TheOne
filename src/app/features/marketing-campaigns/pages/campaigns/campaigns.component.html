@@ -42,7 +42,7 @@
     <div class="col-12 col-sm-6 col-lg">
       <app-stat-card
         [label]="'campaigns.kpi.totalBudget' | translate"
-        [value]="formatNumber(kpis().totalBudget) + ' ' + ('campaigns.sar' | translate)"
+        [value]="kpis().totalBudget | money"
         icon="fa-solid fa-money-bill-wave"
         tone="primary">
       </app-stat-card>
@@ -50,7 +50,7 @@
     <div class="col-12 col-sm-6 col-lg">
       <app-stat-card
         [label]="'campaigns.kpi.spent' | translate"
-        [value]="formatNumber(kpis().totalSpent) + ' ' + ('campaigns.sar' | translate)"
+        [value]="kpis().totalSpent | money"
         icon="fa-solid fa-coins"
         tone="orange">
       </app-stat-card>
@@ -116,10 +116,12 @@
     <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
   } @else if (all().length === 0) {
     <div class="card">
-      <div class="card-body p-5 text-center text-muted">
-        <i class="fa-solid fa-bullhorn fs-2 d-block mb-2 opacity-50"></i>
-        {{ 'campaigns.card.empty' | translate }}
-      </div>
+      <app-empty-state
+        [compact]="true"
+        icon="fa-solid fa-bullhorn"
+        [message]="'campaigns.card.empty' | translate"
+        [loading]="loading()"
+        (retry)="reload()" />
     </div>
   } @else {
     <div class="row g-3">

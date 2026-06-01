@@ -1,0 +1,58 @@
+.doc-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--brand, #2563eb);
+}
+
+.doc-logo {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.doc-company {
+  flex: 1;
+  min-width: 0;
+
+  h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 0.35rem;
+    color: var(--text-1, #111827);
+  }
+
+  p {
+    margin: 0 0 0.15rem;
+    font-size: 0.8rem;
+    color: var(--text-2, #4b5563);
+
+    i {
+      color: var(--brand, #2563eb);
+      margin-inline-end: 0.25rem;
+    }
+
+    a {
+      color: var(--brand, #2563eb);
+      text-decoration: none;
+    }
+  }
+
+  .doc-legal {
+    font-size: 0.72rem;
+    color: var(--text-3, #6b7280);
+    margin-top: 0.25rem;
+  }
+}
+
+@media print {
+  .doc-header {
+    border-bottom-color: #1d4ed8;
+  }
+  .doc-company h1 {
+    color: #000;
+  }
+}

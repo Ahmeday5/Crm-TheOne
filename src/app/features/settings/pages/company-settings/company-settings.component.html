@@ -1,0 +1,169 @@
+<section class="company-settings">
+  @if (loadError()) {
+    <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
+  }
+
+  @if (loading()) {
+    <div class="d-flex flex-column align-items-center justify-content-center py-5 text-muted">
+      <div class="spinner-border text-primary mb-2" role="status">
+        <span class="visually-hidden">{{ 'common.loading' | translate }}</span>
+      </div>
+      <span>{{ 'common.loading' | translate }}</span>
+    </div>
+  } @else {
+    <!-- Live identity preview (reflects saved settings) -->
+    <div class="row g-4 mb-4">
+      <div class="col-12 col-xl-5">
+        <app-company-profile-card></app-company-profile-card>
+      </div>
+      <div class="col-12 col-xl-7 d-flex align-items-center">
+        <p class="text-muted mb-0">
+          <i class="fa-solid fa-circle-info text-primary me-1"></i>
+          {{ 'settings.company.identityHint' | translate }}
+        </p>
+      </div>
+    </div>
+
+    <form [formGroup]="form" novalidate (ngSubmit)="submit()">
+      <!-- Branding -->
+      <div class="card mb-4">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-palette text-primary"></i>
+          <h5 class="mb-0">{{ 'settings.company.branding' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-4">
+            <!-- Logo -->
+            <div class="col-md-6">
+              <label class="form-label fw-600">{{ 'settings.company.logo' | translate }}</label>
+              <div class="d-flex align-items-center gap-3">
+                <div class="cs-preview cs-preview--logo">
+                  @if (logoPreview()) {
+                    <img [src]="logoPreview()" alt="logo">
+                  } @else {
+                    <i class="fa-solid fa-image text-muted"></i>
+                  }
+                </div>
+                <div class="flex-grow-1">
+                  <input type="file" class="form-control" accept="image/*" (change)="onLogoSelected($event)">
+                  <small class="text-muted">{{ 'settings.company.imageHint' | translate }}</small>
+                </div>
+              </div>
+            </div>
+            <!-- Favicon -->
+            <div class="col-md-6">
+              <label class="form-label fw-600">{{ 'settings.company.favicon' | translate }}</label>
+              <div class="d-flex align-items-center gap-3">
+                <div class="cs-preview cs-preview--favicon">
+                  @if (faviconPreview()) {
+                    <img [src]="faviconPreview()" alt="favicon">
+                  } @else {
+                    <i class="fa-solid fa-star text-muted"></i>
+                  }
+                </div>
+                <div class="flex-grow-1">
+                  <input type="file" class="form-control" accept="image/*" (change)="onFaviconSelected($event)">
+                  <small class="text-muted">{{ 'settings.company.imageHint' | translate }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Company info -->
+      <div class="card mb-4">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-building text-primary"></i>
+          <h5 class="mb-0">{{ 'settings.company.info' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="cs-name" class="form-label fw-600">
+                {{ 'settings.company.companyName' | translate }} <span class="text-danger">*</span>
+              </label>
+              <input id="cs-name" class="form-control" formControlName="companyName"
+                     [class.is-invalid]="isInvalid('companyName')">
+              <app-form-error [control]="form.controls.companyName" [label]="'settings.company.companyName' | translate" />
+            </div>
+            <div class="col-md-6">
+              <label for="cs-trade" class="form-label fw-600">{{ 'settings.company.tradeName' | translate }}</label>
+              <input id="cs-trade" class="form-control" formControlName="tradeName">
+            </div>
+            <div class="col-md-6">
+              <label for="cs-currency" class="form-label fw-600">{{ 'settings.company.defaultCurrency' | translate }}</label>
+              <input id="cs-currency" class="form-control" formControlName="defaultCurrency"
+                     [placeholder]="'settings.company.currencyPlaceholder' | translate">
+            </div>
+            <div class="col-md-6">
+              <label for="cs-website" class="form-label fw-600">{{ 'settings.company.website' | translate }}</label>
+              <input id="cs-website" class="form-control" formControlName="website" placeholder="example.com">
+            </div>
+            <div class="col-12">
+              <label for="cs-address" class="form-label fw-600">{{ 'settings.company.address' | translate }}</label>
+              <textarea id="cs-address" rows="2" class="form-control" formControlName="address"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div class="card mb-4">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-address-book text-primary"></i>
+          <h5 class="mb-0">{{ 'settings.company.contact' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="cs-email" class="form-label fw-600">{{ 'settings.company.email' | translate }}</label>
+              <input id="cs-email" type="email" class="form-control" formControlName="email"
+                     [class.is-invalid]="isInvalid('email')" placeholder="name@domain.com">
+              <app-form-error [control]="form.controls.email" [label]="'settings.company.email' | translate" />
+            </div>
+            <div class="col-md-3">
+              <label for="cs-phone" class="form-label fw-600">{{ 'settings.company.phone' | translate }}</label>
+              <input id="cs-phone" class="form-control" formControlName="phone">
+            </div>
+            <div class="col-md-3">
+              <label for="cs-mobile" class="form-label fw-600">{{ 'settings.company.mobile' | translate }}</label>
+              <input id="cs-mobile" class="form-control" formControlName="mobile">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legal -->
+      <div class="card mb-4">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-file-contract text-primary"></i>
+          <h5 class="mb-0">{{ 'settings.company.legal' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="cs-cr" class="form-label fw-600">{{ 'settings.company.commercialRegistration' | translate }}</label>
+              <input id="cs-cr" class="form-control" formControlName="commercialRegistration">
+            </div>
+            <div class="col-md-6">
+              <label for="cs-tax" class="form-label fw-600">{{ 'settings.company.taxNumber' | translate }}</label>
+              <input id="cs-tax" class="form-control" formControlName="taxNumber">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary px-4" [disabled]="submitting() || form.invalid">
+          @if (submitting()) {
+            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          } @else {
+            <i class="fa-solid fa-floppy-disk me-1"></i>
+          }
+          {{ 'settings.company.save' | translate }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

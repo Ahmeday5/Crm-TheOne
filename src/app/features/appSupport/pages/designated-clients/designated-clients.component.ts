@@ -20,6 +20,7 @@ import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ExportColumn } from '../../../../core/services/table-export.service';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
@@ -74,6 +75,7 @@ interface SourceItem {
     PaginationComponent,
     StatCardComponent,
     LoadErrorComponent,
+    EmptyStateComponent,
     TableToolsComponent,
     CustomerNotesCellComponent,
     CustomerActionsMenuComponent,

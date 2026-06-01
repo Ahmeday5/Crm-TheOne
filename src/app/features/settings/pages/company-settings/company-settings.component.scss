@@ -1,0 +1,32 @@
+.company-settings {
+  .cs-preview {
+    flex-shrink: 0;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-md, 0.5rem);
+    background: var(--surface-2, #f8f9fa);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    i {
+      font-size: 1.5rem;
+    }
+
+    &--logo {
+      width: 96px;
+      height: 64px;
+    }
+
+    &--favicon {
+      width: 64px;
+      height: 64px;
+    }
+  }
+}

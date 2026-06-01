@@ -31,10 +31,11 @@
         <span class="text-danger">*</span>
       </label>
       @if (supportTeam().length === 0) {
-        <div class="alert alert-warning py-2 mb-0">
-          <i class="fa-solid fa-circle-info me-1"></i>
-          {{ 'customers.supportModal.noTeam' | translate }}
-        </div>
+        <app-empty-state
+          [compact]="true"
+          icon="fa-solid fa-circle-info"
+          [message]="'customers.supportModal.noTeam' | translate"
+          [loading]="loading()" />
       } @else {
         <div class="list-group">
           @for (person of supportTeam(); track person.userId) {

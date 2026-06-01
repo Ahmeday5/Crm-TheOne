@@ -26,23 +26,9 @@
 
 @if (!loading() && !loadError() && contract(); as c) {
 
-  <!-- Shared branded header — one definition, reused on every page. -->
+  <!-- Shared branded header — dynamic tenant identity, reused on every page. -->
   <ng-template #docHeader>
-    <header class="c-header">
-      <img src="/assets/img/logo.png" class="c-logo" alt="The One System">
-      <div class="c-company">
-        <h1>شركة ذا وان سيستم لتصميم و انتاج و تطوير البرامج</h1>
-        <p><i class="fa-solid fa-location-dot"></i> Kuwait – Hawally - Tunis Street</p>
-        <p><i class="fa-solid fa-phone"></i> +965 22281190 / +965 97272542 – 96560069662</p>
-        <p><i class="fa-solid fa-location-dot"></i> Egypt - Giza - Sahl Hamza - 139</p>
-        <p><i class="fa-solid fa-phone"></i> +201125727702 / 0237719600</p>
-        <p>
-          <i class="fa-solid fa-envelope"></i> info&#64;Theonesoftco.com
-          &nbsp;-&nbsp;
-          <a href="https://www.Theonesoftco.com" target="_blank" rel="noopener">www.Theonesoftco.com</a>
-        </p>
-      </div>
-    </header>
+    <app-company-doc-header></app-company-doc-header>
   </ng-template>
 
   <ng-template #docFooter>
@@ -177,7 +163,7 @@
       <h4 class="c-article">مـــادة ( 6 )</h4>
       <p class="c-clause">
         القيمة الإجمالية للبرنامج والتي تم الاتفاق والتراضي عليها من الطرفين هي
-        مبلغ <span class="c-price">( {{ formatMoney(c.price) }} )</span>
+        مبلغ <span class="c-price">( {{ c.price | money }} )</span>
       </p>
 
       <h4 class="c-article">مـــادة ( 7 )</h4>

@@ -16,6 +16,8 @@ import services from './services.en';
 import customers from './customers.en';
 import dailyReports from './dailyReports.en';
 import tableTools from './tableTools.en';
+import resources from './resources.en';
+import knowledgeBase from './knowledgeBase.en';
 
 const en: Translations = {
   ...common,
@@ -35,6 +37,8 @@ const en: Translations = {
   ...customers,
   ...dailyReports,
   ...tableTools,
+  ...resources,
+  ...knowledgeBase,
 };
 
 export default en;

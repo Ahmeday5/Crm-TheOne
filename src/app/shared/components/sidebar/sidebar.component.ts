@@ -27,6 +27,7 @@ import {
 import { TRANSLATIONS, resolveKey } from '../../../core/i18n';
 import { UserRole } from '../../../core/models/auth.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { CompanySettingsService } from '../../../core/services/company-settings.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
@@ -59,7 +60,18 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
   private host = inject(ElementRef<HTMLElement>);
   private sidebarService = inject(SidebarService);
   private auth = inject(AuthService);
+  private readonly company = inject(CompanySettingsService);
   private readonly currentRole = this.auth.currentRole;
+
+  /** White-label brand — dynamic logo + trade name, with a safe fallback. */
+  readonly brandLogo = this.company.logoUrl;
+  readonly brandName = this.company.tradeName;
+  readonly fallbackLogo = '/assets/img/logo.png';
+
+  onLogoError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img.src !== this.fallbackLogo) img.src = this.fallbackLogo;
+  }
 
   /** Filtered nav, recomputes on (role, lang, query) change. */
   readonly visibleSections = computed<NavSection[]>(() =>

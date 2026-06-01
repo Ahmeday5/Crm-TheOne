@@ -86,14 +86,18 @@
     } @else if (loadError()) {
       <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
     } @else if (rows().length === 0) {
-      <div class="p-5 text-center text-muted">
-        <i class="fa-solid fa-ticket-simple fs-2 d-block mb-2 opacity-50"></i>
-        <p class="mb-1 fw-600">{{ 'support.tickets.empty' | translate }}</p>
-        <p class="small mb-3">{{ 'support.tickets.emptyHint' | translate }}</p>
+      <app-empty-state
+        [compact]="true"
+        icon="fa-solid fa-ticket-simple"
+        [title]="'support.tickets.empty' | translate"
+        [message]="'support.tickets.emptyHint' | translate"
+        [loading]="loading()"
+        [hasActions]="true"
+        (retry)="reload()">
         <button type="button" class="btn btn-primary btn-sm" (click)="openCreate()">
           <i class="fa-solid fa-plus me-1"></i>{{ 'support.tickets.add' | translate }}
         </button>
-      </div>
+      </app-empty-state>
     } @else {
       <div class="tkt-table table-responsive border rounded">
         <table class="table table-hover align-middle mb-0">

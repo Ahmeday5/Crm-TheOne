@@ -14,25 +14,9 @@ import { MARKETING_CAMPAIGNS_ROUTES } from './features/marketing-campaigns/marke
 import { SERVICES_ROUTES } from './features/services/services.routes';
 import { DAILY_REPORTS_ROUTES } from './features/daily-reports/dailyReports.routes';
 
-/**
- * Top-level route table.
- *  - Each feature owns a `*.routes.ts` next to its module.
- *  - Route configs are imported statically (cheap), but every page component
- *    inside them uses `loadComponent` so the heavy work is still lazy.
- *  - Wildcard handling is split: anonymous traffic goes to `/auth/login`
- *    (via the shell's `authGuard`), authenticated traffic falls into the
- *    in-shell 404 page so the sidebar / topbar stay available.
- */
-export const routes: Routes = [
-  // Public area (login, future password-reset, …)
-  // The auth routes themselves run `loggedInRedirectGuard` so a signed-in
-  // user typing `/auth/login` is bounced back to their role's home.
-  ...AUTH_ROUTES,
 
-  // Authenticated app shell — everything below renders inside MainLayout.
-  // `authGuard` blocks anonymous traffic at the door; `roleGuard` then runs
-  // per-leaf to enforce role-based access using each route's `data.roles`
-  // (or, when missing, the static `ROUTE_ROLE_MAP`).
+export const routes: Routes = [
+  ...AUTH_ROUTES,
   {
     path: '',
     canActivate: [authGuard],
@@ -58,6 +42,24 @@ export const routes: Routes = [
           import(
             './features/report-and-analytics/pages/sales-reports/sales-reports.component'
           ).then((m) => m.SalesReportsComponent),
+      },
+      {
+        path: 'resources',
+        title: 'إدارة الموارد',
+        data: { roles: ['Admin'] },
+        loadComponent: () =>
+          import(
+            './features/resource-management/pages/resource-management/resource-management.component'
+          ).then((m) => m.ResourceManagementComponent),
+      },
+      {
+        path: 'knowledge-base',
+        title: 'قاعدة المعرفة',
+        data: { roles: ['Admin', 'Support', 'Developer'] },
+        loadComponent: () =>
+          import(
+            './features/knowledge-base/pages/knowledge-base/knowledge-base.component'
+          ).then((m) => m.KnowledgeBaseComponent),
       },
       {
         path: 'ReportAndAnalytics',

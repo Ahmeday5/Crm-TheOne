@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 
 interface SavedReport {
@@ -22,7 +23,7 @@ interface ReportTemplate {
 @Component({
   selector: 'app-custom-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, EmptyStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './custom-reports.component.html',
   styleUrl: './custom-reports.component.scss',

@@ -12,6 +12,7 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { catchError, forkJoin, of } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import {
@@ -64,6 +65,7 @@ interface KpiCard {
     TranslatePipe,
     PageHeaderComponent,
     LoadErrorComponent,
+    EmptyStateComponent,
     StatCardComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

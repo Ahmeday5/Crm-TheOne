@@ -29,21 +29,7 @@
     <!-- ═══════════════ PAGE 1 ═══════════════ -->
     <section class="contract-page">
 
-      <header class="c-header">
-        <img src="/assets/img/logo.png" class="c-logo" alt="The One System">
-        <div class="c-company">
-          <h1>شركة ذا وان سيستم لتصميم و انتاج و تطوير البرامج</h1>
-          <p><i class="fa-solid fa-location-dot"></i> Kuwait – Hawally - Tunis Street</p>
-          <p><i class="fa-solid fa-phone"></i> +965 22281190 / +965 97272542 – 96560069662</p>
-          <p><i class="fa-solid fa-location-dot"></i> Egypt - Giza - Sahl Hamza - 139</p>
-          <p><i class="fa-solid fa-phone"></i> +201125727702 / 0237719600</p>
-          <p>
-            <i class="fa-solid fa-envelope"></i> info&#64;Theonesoftco.com
-            &nbsp;-&nbsp;
-            <a href="https://www.Theonesoftco.com" target="_blank" rel="noopener">www.Theonesoftco.com</a>
-          </p>
-        </div>
-      </header>
+      <app-company-doc-header></app-company-doc-header>
 
       <div class="c-meta">
         <div class="c-meta-row">
@@ -88,21 +74,21 @@
               <td class="col-num">{{ i + 1 }}</td>
               <td class="col-desc">{{ item.serviceName }}</td>
               <td class="col-qty">{{ item.quantity }}</td>
-              <td class="col-price">{{ formatMoney(item.unitPrice) }}</td>
-              <td class="col-total">{{ formatMoney(item.totalPrice) }}</td>
+              <td class="col-price">{{ item.unitPrice | money }}</td>
+              <td class="col-total">{{ item.totalPrice | money }}</td>
             </tr>
           }
           <tr class="c-sum">
             <td colspan="4">القيمة الإجمالية</td>
-            <td class="col-total">{{ formatMoney(quote()!.subTotal) }}</td>
+            <td class="col-total">{{ quote()!.subTotal | money }}</td>
           </tr>
           <tr class="c-sum">
             <td colspan="4">الخصم</td>
-            <td class="col-total">{{ formatMoney(quote()!.discount) }}</td>
+            <td class="col-total">{{ quote()!.discount | money }}</td>
           </tr>
           <tr class="c-sum c-net">
             <td colspan="4">الصافي بعد الخصم</td>
-            <td class="col-total">{{ formatMoney(quote()!.netTotal) }}</td>
+            <td class="col-total">{{ quote()!.netTotal | money }}</td>
           </tr>
         </tbody>
       </table>
@@ -128,21 +114,7 @@
     <!-- ═══════════════ PAGE 2 ═══════════════ -->
     <section class="contract-page">
 
-      <header class="c-header">
-        <img src="/assets/img/logo.png" class="c-logo" alt="The One System">
-        <div class="c-company">
-          <h1>شركة ذا وان سيستم لتصميم و انتاج و تطوير البرامج</h1>
-          <p><i class="fa-solid fa-location-dot"></i> Kuwait – Hawally - Tunis Street</p>
-          <p><i class="fa-solid fa-phone"></i> +965 22281190 / +965 97272542 – 96560069662</p>
-          <p><i class="fa-solid fa-location-dot"></i> Egypt - Giza - Sahl Hamza - 139</p>
-          <p><i class="fa-solid fa-phone"></i> +201125727702 / 0237719600</p>
-          <p>
-            <i class="fa-solid fa-envelope"></i> info&#64;Theonesoftco.com
-            &nbsp;-&nbsp;
-            <a href="https://www.Theonesoftco.com" target="_blank" rel="noopener">www.Theonesoftco.com</a>
-          </p>
-        </div>
-      </header>
+      <app-company-doc-header></app-company-doc-header>
 
       <ul class="c-terms c-terms-spaced">
         <li>

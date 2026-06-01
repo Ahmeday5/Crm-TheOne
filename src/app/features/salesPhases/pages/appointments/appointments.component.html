@@ -140,9 +140,13 @@
     <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
   } @else if (visibleRows().length === 0) {
     <div class="card">
-      <div class="card-body p-5 text-center text-muted">
-        <i class="fa-solid fa-calendar-xmark fs-2 d-block mb-2 opacity-50"></i>
-        {{ 'sales.appointments.empty' | translate }}
+      <div class="card-body">
+        <app-empty-state
+          [compact]="true"
+          icon="fa-solid fa-calendar-xmark"
+          [message]="'sales.appointments.empty' | translate"
+          [loading]="loading()"
+          (retry)="reload()" />
       </div>
     </div>
   } @else {

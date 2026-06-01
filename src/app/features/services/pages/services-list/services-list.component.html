@@ -105,7 +105,9 @@
         [hasActions]="true"
         [actionsTemplate]="actionsCell"
         trackByKey="id"
-        [emptyMessage]="searchSignal() ? ('services.table.emptyFiltered' | translate) : ('services.table.empty' | translate)">
+        emptyIcon="fa-solid fa-screwdriver-wrench"
+        [emptyMessage]="searchSignal() ? ('services.table.emptyFiltered' | translate) : ('services.table.empty' | translate)"
+        (retry)="reload()">
       </app-data-table>
     </div>
 

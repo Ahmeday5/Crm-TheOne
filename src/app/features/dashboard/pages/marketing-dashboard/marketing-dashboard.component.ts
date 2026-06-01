@@ -13,6 +13,7 @@ import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
 import { CustomersService } from '../../../leads/services/customers.service';
 import { CampaignsService } from '../../../marketing-campaigns/services/campaigns.service';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import {
@@ -23,6 +24,7 @@ import {
   MarketingDashboardStats,
   SourcePerformanceItem,
 } from '../../../../shared/models';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { MarketingService } from '../../services/marketing.service';
 
@@ -33,8 +35,10 @@ import { MarketingService } from '../../services/marketing.service';
     CommonModule,
     NgApexchartsModule,
     TranslatePipe,
+    MoneyPipe,
     PageHeaderComponent,
     LoadErrorComponent,
+    EmptyStateComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './marketing-dashboard.component.html',

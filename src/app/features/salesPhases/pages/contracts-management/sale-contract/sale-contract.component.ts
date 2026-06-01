@@ -10,8 +10,10 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { TRANSLATIONS, resolveKey } from '../../../../../core/i18n';
 import { LanguageService } from '../../../../../core/services/language.service';
+import { CompanyDocHeaderComponent } from '../../../../../shared/components/company-doc-header/company-doc-header.component';
 import { LoadErrorComponent } from '../../../../../shared/components/load-error/load-error.component';
 import { ContractDetail } from '../../../../../shared/models';
+import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { ContractsService } from '../../../services/contracts.service';
 
@@ -44,7 +46,13 @@ const AR_WEEKDAYS = [
 @Component({
   selector: 'app-sale-contract',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, LoadErrorComponent],
+  imports: [
+    CommonModule,
+    TranslatePipe,
+    MoneyPipe,
+    LoadErrorComponent,
+    CompanyDocHeaderComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sale-contract.component.html',
   styleUrl: './sale-contract.component.scss',

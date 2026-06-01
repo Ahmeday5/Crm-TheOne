@@ -13,6 +13,7 @@ import { ApiError } from '../../../../core/models/api-response.model';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
@@ -24,6 +25,7 @@ import {
   CampaignsStatistics,
   ChannelSource,
 } from '../../../../shared/models';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { CampaignCardComponent } from '../../components/campaign-card/campaign-card.component';
 import { CampaignDetailsDialogComponent } from '../../components/campaign-details-dialog/campaign-details-dialog.component';
@@ -43,6 +45,8 @@ const DEFAULT_PAGE_SIZE = 10;
     CommonModule,
     FormsModule,
     TranslatePipe,
+    MoneyPipe,
+    EmptyStateComponent,
     LoadErrorComponent,
     StatCardComponent,
     CampaignCardComponent,

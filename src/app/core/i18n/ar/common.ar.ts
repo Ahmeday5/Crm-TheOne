@@ -29,6 +29,13 @@ const common: TranslationFile<'common'> = {
     saving: 'جارٍ الحفظ…',
     empty: 'لا توجد بيانات',
     noResults: 'لا توجد نتائج',
+    emptyState: {
+      title: 'لا توجد بيانات بعد',
+      hint: 'لا يوجد ما نعرضه هنا حاليًا. جرّب التحديث.',
+    },
+    footer: {
+      rights: 'جميع الحقوق محفوظة.',
+    },
     yes: 'نعم',
     no: 'لا',
     all: 'الكل',

@@ -39,4 +39,13 @@ export const DASHBOARD_ROUTES: Routes = [
         (m) => m.DeveloperDashboardComponent,
       ),
   },
+  {
+    path: 'developer-analytics',
+    title: 'تحليلات فريق التطوير',
+    data: { roles: ['Admin', 'Developer'] },
+    loadComponent: () =>
+      import('./pages/developer-analytics/developer-analytics.component').then(
+        (m) => m.DeveloperAnalyticsComponent,
+      ),
+  },
 ];

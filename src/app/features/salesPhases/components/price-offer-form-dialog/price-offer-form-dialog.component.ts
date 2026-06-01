@@ -30,6 +30,7 @@ import {
   CustomerDropdownItem,
   PriceQuotationRequest,
 } from '../../../../shared/models';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ServicesService } from '../../../services/services/services.service';
 import { PriceQuotationsService } from '../../services/price-quotations.service';
@@ -58,6 +59,7 @@ interface ItemSeed {
     FormsModule,
     ReactiveFormsModule,
     TranslatePipe,
+    MoneyPipe,
     ModalComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
