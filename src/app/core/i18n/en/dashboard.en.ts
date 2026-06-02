@@ -65,6 +65,19 @@ const dashboard: TranslationFile<'dashboard'> = {
     supportTickets: 'Support tickets',
     viewAllTickets: 'View all tickets',
 
+    admin: {
+      subtitle: 'A complete overview of company performance',
+      noData: 'No data to display',
+      loadFailed: 'Failed to load the dashboard — please try again.',
+      buyers: 'Buyer customers',
+      nonBuyers: 'Non-buyer customers',
+      recentDeals: 'Latest deals',
+      viewAllDeals: 'View all contracts',
+      unnamedCustomer: 'Unnamed customer',
+      revenueSeries: 'Revenue',
+      buyersSeries: 'Buyers',
+    },
+
     leadStatuses: {
       new: 'New',
       contacted: 'Contacted',

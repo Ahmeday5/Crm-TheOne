@@ -137,8 +137,12 @@ export interface CreateCustomerRequest {
 /**
  * Body for `PUT /Customers/updateCustomer/{id}`.
  *
- * Notes are intentionally absent — each role edits its own note slot through
- * the dedicated `…/myNote` endpoint, so the profile update never touches them.
+ * Mirrors the full backend DTO. `notes` must be sent on every update — the
+ * endpoint replaces the record from the body, so omitting it (the previous
+ * behaviour) made the backend treat the payload as incomplete and skip the
+ * write entirely (e.g. an edited `companyName` silently never persisted). The
+ * dialog round-trips the existing note value so a plain profile edit doesn't
+ * wipe it; the role-specific note slots still flow through `…/myNote`.
  */
 export interface UpdateCustomerRequest {
   name: string;
@@ -146,6 +150,7 @@ export interface UpdateCustomerRequest {
   email: string;
   companyName: string;
   address: string;
+  notes: string;
   campaignId: number | null;
   serviceIds: number[];
 }

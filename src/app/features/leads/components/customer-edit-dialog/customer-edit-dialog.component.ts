@@ -79,6 +79,7 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
     email: ['', [Validators.required, Validators.email, Validators.maxLength(120)]],
     companyName: ['', [Validators.maxLength(120)]],
     address: ['', [Validators.maxLength(200)]],
+    notes: ['', [Validators.maxLength(500)]],
     campaignId: [null as number | null, [Validators.required]],
     serviceIds: this.fb.nonNullable.control<number[]>([], [minSelected(1)]),
   });
@@ -123,6 +124,7 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
           email: c.email ?? '',
           companyName: c.campanyName ?? '',
           address: c.address ?? '',
+          notes: c.noteMarketing ?? '',
           campaignId: c.campaignId ?? null,
         });
         this.servicesControl.setValue((c.services ?? []).map((s) => s.id));
@@ -175,6 +177,7 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
       email: v.email.trim(),
       companyName: v.companyName.trim(),
       address: v.address.trim(),
+      notes: v.notes.trim(),
       campaignId: v.campaignId,
       serviceIds: v.serviceIds,
     };

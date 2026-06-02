@@ -168,6 +168,23 @@
             [control]="form.controls.address"
             [label]="'customers.form.address' | translate" />
         </div>
+
+        <!-- Notes -->
+        <div class="col-12">
+          <label for="edit-notes" class="form-label fw-600">
+            {{ 'customers.form.notes' | translate }}
+          </label>
+          <textarea id="edit-notes"
+                    class="form-control"
+                    formControlName="notes"
+                    rows="3"
+                    maxlength="500"
+                    [class.is-invalid]="form.controls.notes.invalid && (form.controls.notes.dirty || form.controls.notes.touched)"
+                    [placeholder]="'customers.form.notesPh' | translate"></textarea>
+          <app-form-error
+            [control]="form.controls.notes"
+            [label]="'customers.form.notes' | translate" />
+        </div>
       </div>
 
       @if (errorMessage()) {

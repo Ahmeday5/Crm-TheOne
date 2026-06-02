@@ -282,9 +282,17 @@ export class CampaignFormDialogComponent implements OnInit {
     return ctrl.invalid && (ctrl.dirty || ctrl.touched);
   }
 
+  /**
+   * `yyyy-MM-dd` → ISO at **UTC** midnight.
+   *
+   * Appending `Z` is deliberate: `new Date('2026-06-02T00:00:00')` (no zone)
+   * is parsed as *local* time, so in a UTC+2/+3 region `.toISOString()` rolls
+   * it back to the previous day before sending. Pinning to UTC midnight keeps
+   * the day the user actually picked.
+   */
   private toIsoDateTime(date: string): string {
     if (!date) return new Date().toISOString();
-    return new Date(`${date}T00:00:00`).toISOString();
+    return new Date(`${date}T00:00:00Z`).toISOString();
   }
 
   private t(key: string): string {

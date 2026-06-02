@@ -39,6 +39,15 @@ import {
  *   - `getById()` skips the global loader (the dialog has its own spinner)
  *     and reuses the cache, so reopening the same details modal is instant.
  */
+/**
+ * URL patterns dropped after any campaign mutation. Besides the `Campaigns`
+ * lists/details, a status/budget change shifts the figures the marketing &
+ * admin dashboards aggregate (active-campaigns count, source performance,
+ * KPI tiles) — so those are invalidated too, otherwise they'd serve stale
+ * counts until their own TTL expires.
+ */
+const CAMPAIGN_CACHE_KEYS = ['Campaigns', 'Marketing', 'AdminDashboard'] as const;
+
 @Injectable({ providedIn: 'root' })
 export class CampaignsService {
   private readonly api = inject(ApiService);
@@ -88,7 +97,7 @@ export class CampaignsService {
 
   add(payload: CreateCampaignRequest): Observable<unknown> {
     return this.api.post<unknown>(API_ENDPOINTS.campaigns.add, payload, {
-      context: withInlineHandling(withCacheInvalidate(['Campaigns'])),
+      context: withInlineHandling(withCacheInvalidate(CAMPAIGN_CACHE_KEYS)),
     });
   }
 
@@ -98,7 +107,7 @@ export class CampaignsService {
    */
   update(id: number, payload: CreateCampaignRequest): Observable<unknown> {
     return this.api.put<unknown>(API_ENDPOINTS.campaigns.update(id), payload, {
-      context: withInlineHandling(withCacheInvalidate(['Campaigns'])),
+      context: withInlineHandling(withCacheInvalidate(CAMPAIGN_CACHE_KEYS)),
     });
   }
 
@@ -109,7 +118,7 @@ export class CampaignsService {
    */
   delete(id: number): Observable<unknown> {
     return this.api.delete<unknown>(API_ENDPOINTS.campaigns.delete(id), {
-      context: withSkipLoader(withCacheInvalidate(['Campaigns'])),
+      context: withSkipLoader(withCacheInvalidate(CAMPAIGN_CACHE_KEYS)),
     });
   }
 
@@ -117,7 +126,7 @@ export class CampaignsService {
     return this.api.patch<unknown>(
       API_ENDPOINTS.campaigns.toggleStatus(id),
       null,
-      { context: withSkipLoader(withCacheInvalidate(['Campaigns'])) },
+      { context: withSkipLoader(withCacheInvalidate(CAMPAIGN_CACHE_KEYS)) },
     );
   }
 }

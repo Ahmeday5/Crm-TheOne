@@ -23,14 +23,6 @@ export interface NavSection {
   items: NavItem[];
 }
 
-/**
- * Per-role sidebar map. Sidebar filters this at render time:
- *   - drops items whose `roles` doesn't include the current role
- *   - drops sections that end up with zero visible items
- *
- * IMPORTANT: paths are kept exactly as they were before (so deep links keep
- * working). New items get sensible kebab-case placeholders.
- */
 export const NAV_SECTIONS: NavSection[] = [
   {
     titleKey: 'sidebar.sections.role',
@@ -94,7 +86,6 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: 'fa-solid fa-address-card',
         roles: ['Admin', 'Marketing'],
       },
-      // Sales-side customers — backend returns the caller's assigned
       // customers for Sales, and every customer for Admin.
       {
         labelKey: 'sidebar.items.salesCustomers',
@@ -120,12 +111,12 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: 'fa-solid fa-table-columns',
         roles: ['Admin', 'Developer'],
       },
-      {
+      /*{
         labelKey: 'sidebar.items.reports',
         path: '/ReportAndAnalytics',
         icon: 'fa-solid fa-chart-bar',
         roles: ['Admin'],
-      },
+      },*/
       // Chat is for everyone (no `roles`).
       {
         labelKey: 'sidebar.items.chat',
@@ -161,12 +152,12 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: 'fa-solid fa-book',
         roles: ['Admin', 'Support', 'Developer'],
       },
-      {
+      /*{
         labelKey: 'sidebar.items.improvements',
         path: '/system-improvements',
         icon: 'fa-solid fa-bolt',
         roles: ['Admin'],
-      },
+      },*/
       {
         labelKey: 'sidebar.items.resources',
         path: '/resources',
@@ -185,12 +176,12 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: 'fa-solid fa-chart-line',
         roles: ['Admin', 'Developer'],
       },
-      {
+      /*{
         labelKey: 'sidebar.items.webhooks',
         path: '/webhooks',
         icon: 'fa-solid fa-plug',
         roles: ['Admin', 'Developer'],
-      },
+      },*/
     ],
   },
   {
@@ -221,7 +212,7 @@ export const NAV_SECTIONS: NavSection[] = [
       },
     ],
   },
-  {
+ /* {
     titleKey: 'sidebar.sections.security',
     items: [
       {
@@ -231,7 +222,7 @@ export const NAV_SECTIONS: NavSection[] = [
         roles: ['Admin'],
       },
     ],
-  },
+  },*/
 ];
 
 /**
@@ -253,9 +244,9 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   'sales-analysis': ['Admin', 'Marketing'],
 
   // Sales-only modules
-  'line': ['Admin', 'Sales'],
+  line: ['Admin', 'Sales'],
   'price-offers': ['Admin', 'Sales'],
-  'contracts': ['Admin', 'Sales'],
+  contracts: ['Admin', 'Sales'],
   'follow-ups': ['Admin', 'Sales'],
   'view-details-deal': ['Admin', 'Sales'],
   'price-offer-contract': ['Admin', 'Sales'],
@@ -263,30 +254,30 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   'sale-contract': ['Admin', 'Sales'],
 
   // Support modules
-  'dashboardSupport': ['Admin', 'Support'],
+  dashboardSupport: ['Admin', 'Support'],
   'Designated-clients': ['Admin', 'Support'],
-  'SupportTickets': ['Admin', 'Support'],
-  'SupportLog': ['Admin', 'Support'],
+  SupportTickets: ['Admin', 'Support'],
+  SupportLog: ['Admin', 'Support'],
   'technical-consultation': ['Admin', 'Support'],
   'details-of-support-cases': ['Admin', 'Support'],
 
   // Developer modules
-  'ProjectManage': ['Admin', 'Developer'],
-  'TasksManage': ['Admin', 'Developer'],
+  ProjectManage: ['Admin', 'Developer'],
+  TasksManage: ['Admin', 'Developer'],
   'developer-analytics': ['Admin', 'Developer'],
-  'webhooks': ['Admin', 'Developer'],
+  webhooks: ['Admin', 'Developer'],
 
   // Cross-role
-  'schedule': ['Admin', 'Sales', 'Support'],
+  schedule: ['Admin', 'Sales', 'Support'],
   'knowledge-base': ['Admin', 'Support', 'Developer'],
 
   // Admin-only
-  'ReportAndAnalytics': ['Admin'],
-  'settings': ['Admin'],
-  'services': ['Admin'],
+  ReportAndAnalytics: ['Admin'],
+  settings: ['Admin'],
+  services: ['Admin'],
   'system-improvements': ['Admin'],
-  'resources': ['Admin'],
-  'notifications': ['Admin'],
-  'goals': ['Admin'],
-  'security': ['Admin'],
+  resources: ['Admin'],
+  notifications: ['Admin'],
+  goals: ['Admin'],
+  security: ['Admin'],
 };

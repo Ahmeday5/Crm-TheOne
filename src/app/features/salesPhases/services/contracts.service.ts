@@ -61,7 +61,7 @@ export class ContractsService {
     return this.api.post<unknown>(
       API_ENDPOINTS.contracts.create,
       payload,
-      { context: withInlineHandling(withCacheInvalidate(['Contracts'])) },
+      { context: withInlineHandling(withCacheInvalidate(['Contracts', 'AdminDashboard'])) },
     );
   }
 
@@ -69,13 +69,13 @@ export class ContractsService {
     return this.api.put<unknown>(
       API_ENDPOINTS.contracts.update(id),
       payload,
-      { context: withInlineHandling(withCacheInvalidate(['Contracts'])) },
+      { context: withInlineHandling(withCacheInvalidate(['Contracts', 'AdminDashboard'])) },
     );
   }
 
   delete(id: number): Observable<unknown> {
     return this.api.delete<unknown>(API_ENDPOINTS.contracts.delete(id), {
-      context: withSkipLoader(withCacheInvalidate(['Contracts'])),
+      context: withSkipLoader(withCacheInvalidate(['Contracts', 'AdminDashboard'])),
     });
   }
 

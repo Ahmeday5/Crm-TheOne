@@ -35,7 +35,7 @@ export class SettingsComponent {
       icon: 'fa-solid fa-gear',
       color: 'purple',
     },
-    {
+    /*{
       routerLink: 'activity',
       labelKey: 'settings.tabs.activity',
       icon: 'fa-solid fa-bolt',
@@ -58,6 +58,6 @@ export class SettingsComponent {
       labelKey: 'settings.tabs.backup',
       icon: 'fa-solid fa-database',
       color: 'pink',
-    },
+    },*/
   ];
 }

@@ -57,19 +57,19 @@ export class TasksService {
     return this.api.post<{ id: number }>(
       API_ENDPOINTS.managerTasks.create,
       payload,
-      { context: withInlineHandling(withCacheInvalidate(['Tasks'])) },
+      { context: withInlineHandling(withCacheInvalidate(['Tasks', 'AdminDashboard'])) },
     );
   }
 
   update(id: number, payload: UpdateTaskRequest): Observable<unknown> {
     return this.api.put<unknown>(API_ENDPOINTS.managerTasks.update(id), payload, {
-      context: withInlineHandling(withCacheInvalidate(['Tasks'])),
+      context: withInlineHandling(withCacheInvalidate(['Tasks', 'AdminDashboard'])),
     });
   }
 
   delete(id: number): Observable<unknown> {
     return this.api.delete<unknown>(API_ENDPOINTS.managerTasks.delete(id), {
-      context: withSkipLoader(withCacheInvalidate(['Tasks'])),
+      context: withSkipLoader(withCacheInvalidate(['Tasks', 'AdminDashboard'])),
     });
   }
 
@@ -111,7 +111,7 @@ export class TasksService {
     return this.api.put<unknown>(
       API_ENDPOINTS.developerTasks.updateMyStatus(id),
       payload,
-      { context: withInlineHandling(withCacheInvalidate(['Tasks'])) },
+      { context: withInlineHandling(withCacheInvalidate(['Tasks', 'AdminDashboard'])) },
     );
   }
 

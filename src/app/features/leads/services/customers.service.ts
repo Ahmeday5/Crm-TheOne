@@ -29,6 +29,20 @@ import {
 } from '../../../shared/models';
 import { CampaignDropdownItem } from '../../../shared/models';
 
+/**
+ * URL patterns dropped after any customer mutation. A new/assigned/converted
+ * customer moves the figures the marketing, sales, and admin dashboards
+ * aggregate (lead counts, conversion, buyers/non-buyers) — so those caches
+ * are invalidated alongside the `Customers` lists, otherwise the dashboards
+ * keep serving stale counts until their own TTL lapses.
+ */
+const CUSTOMER_CACHE_KEYS = [
+  'Customers',
+  'Marketing',
+  'Sales',
+  'AdminDashboard',
+] as const;
+
 @Injectable({ providedIn: 'root' })
 export class CustomersService {
   private readonly api = inject(ApiService);
@@ -112,19 +126,19 @@ export class CustomersService {
     return this.api.post<{ id: number; fullName: string }>(
       API_ENDPOINTS.customers.create,
       payload,
-      { context: withInlineHandling(withCacheInvalidate(['Customers'])) },
+      { context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)) },
     );
   }
 
   update(id: number, payload: UpdateCustomerRequest): Observable<unknown> {
     return this.api.put<unknown>(API_ENDPOINTS.customers.update(id), payload, {
-      context: withInlineHandling(withCacheInvalidate(['Customers'])),
+      context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)),
     });
   }
 
   delete(id: number): Observable<unknown> {
     return this.api.delete<unknown>(API_ENDPOINTS.customers.delete(id), {
-      context: withSkipLoader(withCacheInvalidate(['Customers'])),
+      context: withSkipLoader(withCacheInvalidate(CUSTOMER_CACHE_KEYS)),
     });
   }
 
@@ -136,7 +150,7 @@ export class CustomersService {
       API_ENDPOINTS.customers.assign(customerId),
       payload,
       {
-        context: withInlineHandling(withCacheInvalidate(['Customers'])),
+        context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)),
       },
     );
   }
@@ -152,7 +166,7 @@ export class CustomersService {
     return this.api.post<CustomerListItem>(
       API_ENDPOINTS.support.returnToSalesPerson(customerId),
       {},
-      { context: withInlineHandling(withCacheInvalidate(['Customers'])) },
+      { context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)) },
     );
   }
 
@@ -163,7 +177,7 @@ export class CustomersService {
     return this.api.post<unknown>(
       API_ENDPOINTS.customers.assignSupport(customerId),
       payload,
-      { context: withInlineHandling(withCacheInvalidate(['Customers'])) },
+      { context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)) },
     );
   }
 
@@ -174,7 +188,7 @@ export class CustomersService {
     return this.api.put<CustomerFollowUpResponse>(
       API_ENDPOINTS.customers.changeStatus(customerId),
       payload,
-      { context: withInlineHandling(withCacheInvalidate(['Customers'])) },
+      { context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)) },
     );
   }
 
@@ -185,7 +199,7 @@ export class CustomersService {
     return this.api.put<CustomerFollowUpResponse>(
       API_ENDPOINTS.customers.followUp(customerId),
       payload,
-      { context: withInlineHandling(withCacheInvalidate(['Customers'])) },
+      { context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)) },
     );
   }
 
@@ -207,7 +221,7 @@ export class CustomersService {
     return this.api.put<CustomerNoteResponse>(
       API_ENDPOINTS.customerNotes.myNote(customerId),
       payload,
-      { context: withInlineHandling(withCacheInvalidate(['Customers'])) },
+      { context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)) },
     );
   }
 }

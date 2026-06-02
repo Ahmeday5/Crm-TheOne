@@ -65,6 +65,19 @@ const dashboard: TranslationFile<'dashboard'> = {
     supportTickets: 'تذاكر الدعم الفني',
     viewAllTickets: 'عرض جميع التذاكر',
 
+    admin: {
+      subtitle: 'نظرة شاملة على أداء الشركة',
+      noData: 'لا توجد بيانات لعرضها',
+      loadFailed: 'تعذر تحميل بيانات اللوحة — يرجى المحاولة مرة أخرى.',
+      buyers: 'العملاء المشترون',
+      nonBuyers: 'العملاء غير المشترين',
+      recentDeals: 'أحدث الصفقات',
+      viewAllDeals: 'عرض جميع العقود',
+      unnamedCustomer: 'عميل غير محدد',
+      revenueSeries: 'الإيرادات',
+      buyersSeries: 'المشترون',
+    },
+
     leadStatuses: {
       new: 'جديد',
       contacted: 'تم الاتصال',

@@ -11,7 +11,10 @@
       "Bash(npx tsc *)",
       "Bash(echo \"EXIT: $?\")",
       "Bash(node -e \"console.log\\('noop'\\)\")",
-      "Bash(node -e \"const apiUrl='https://crmproject.runasp.net/api'; const origin=apiUrl.replace\\(/\\\\/api\\\\/?$/i,''\\); const path='/Images/CompanySettings/5510f6a4-1bb0-4435-9ad7-86f683520dec-dddddddddddddddddddd.PNG'; console.log\\(origin + '/' + path.replace\\(/^\\\\//,''\\)\\);\")"
+      "Bash(node -e \"const apiUrl='https://crmproject.runasp.net/api'; const origin=apiUrl.replace\\(/\\\\/api\\\\/?$/i,''\\); const path='/Images/CompanySettings/5510f6a4-1bb0-4435-9ad7-86f683520dec-dddddddddddddddddddd.PNG'; console.log\\(origin + '/' + path.replace\\(/^\\\\//,''\\)\\);\")",
+      "Bash(sed -n '1,40p' src/app/shared/components/load-error/load-error.component.ts)",
+      "Bash(sed -n '1,40p' src/app/shared/components/empty-state/empty-state.component.ts)",
+      "Bash(grep -nA8 \"status:\\\\|priority:\")"
     ]
   }
 }

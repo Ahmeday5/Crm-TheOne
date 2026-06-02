@@ -79,7 +79,7 @@ export class SupportTicketsService {
     return this.api.post<SupportTicket>(
       API_ENDPOINTS.supportTickets.create,
       payload,
-      { context: withInlineHandling(withCacheInvalidate(['SupportTickets'])) },
+      { context: withInlineHandling(withCacheInvalidate(['SupportTickets', 'AdminDashboard'])) },
     );
   }
 
@@ -90,13 +90,13 @@ export class SupportTicketsService {
     return this.api.put<SupportTicket>(
       API_ENDPOINTS.supportTickets.update(id),
       payload,
-      { context: withInlineHandling(withCacheInvalidate(['SupportTickets'])) },
+      { context: withInlineHandling(withCacheInvalidate(['SupportTickets', 'AdminDashboard'])) },
     );
   }
 
   delete(id: number): Observable<unknown> {
     return this.api.delete<unknown>(API_ENDPOINTS.supportTickets.delete(id), {
-      context: withSkipLoader(withCacheInvalidate(['SupportTickets'])),
+      context: withSkipLoader(withCacheInvalidate(['SupportTickets', 'AdminDashboard'])),
     });
   }
 

@@ -71,7 +71,7 @@ export class ProjectsService {
     return this.api.post<{ id: number }>(
       API_ENDPOINTS.managerProjects.create,
       payload,
-      { context: withInlineHandling(withCacheInvalidate(['Projects'])) },
+      { context: withInlineHandling(withCacheInvalidate(['Projects', 'AdminDashboard'])) },
     );
   }
 
@@ -79,13 +79,13 @@ export class ProjectsService {
     return this.api.put<unknown>(
       API_ENDPOINTS.managerProjects.update(id),
       payload,
-      { context: withInlineHandling(withCacheInvalidate(['Projects'])) },
+      { context: withInlineHandling(withCacheInvalidate(['Projects', 'AdminDashboard'])) },
     );
   }
 
   delete(id: number): Observable<unknown> {
     return this.api.delete<unknown>(API_ENDPOINTS.managerProjects.delete(id), {
-      context: withSkipLoader(withCacheInvalidate(['Projects'])),
+      context: withSkipLoader(withCacheInvalidate(['Projects', 'AdminDashboard'])),
     });
   }
 

@@ -176,6 +176,10 @@ export const API_ENDPOINTS = {
     get: 'CompanySettings',
     update: 'CompanySettings/Update',
   },
+  /** Admin/manager landing dashboard — aggregate KPIs, revenue + buyers trends. */
+  adminDashboard: {
+    get: 'AdminDashboard',
+  },
   /** Knowledge-base articles — CRUD + category option pickers. */
   articles: {
     list: 'Articles/GetArticles',
