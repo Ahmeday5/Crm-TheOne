@@ -40,6 +40,8 @@ const CUSTOMER_CACHE_KEYS = [
   'Customers',
   'Marketing',
   'Sales',
+  'Support',
+  'Campaigns',
   'AdminDashboard',
 ] as const;
 

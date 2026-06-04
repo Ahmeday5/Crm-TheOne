@@ -19,6 +19,8 @@ export const API_ENDPOINTS = {
     add: 'Auth/AddApplicationUser',
     update: (id: string) => `Auth/update-user/${encodeURIComponent(id)}`,
     delete: (id: string) => `Auth/delete-user/${encodeURIComponent(id)}`,
+    /** Available role names for the role pickers (`["Marketing","Sales",…]`). */
+    roles: 'Auth/roles',
   },
   campaigns: {
     list: 'Campaigns/GetAllCampaigns',
@@ -179,6 +181,19 @@ export const API_ENDPOINTS = {
   /** Admin/manager landing dashboard — aggregate KPIs, revenue + buyers trends. */
   adminDashboard: {
     get: 'AdminDashboard',
+  },
+  /** Per-user notification center + bell badge + FCM push registration. */
+  notifications: {
+    list: 'Notifications',
+    unreadCount: 'Notifications/unread-count',
+    markRead: (id: number | string) => `Notifications/${id}/read`,
+    markAllRead: 'Notifications/read-all',
+    generateFollowupReminders: 'Notifications/generate-followup-reminders',
+    send: 'Notifications/send',
+    /** Register this device's Firebase Cloud Messaging token for push. */
+    registerFcmToken: 'Notifications/register-fcm-token',
+    /** Remove this device's FCM token (on logout). */
+    removeFcmToken: 'Notifications/fcm-token',
   },
   /** Knowledge-base articles — CRUD + category option pickers. */
   articles: {

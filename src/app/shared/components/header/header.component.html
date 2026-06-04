@@ -22,10 +22,7 @@
       <app-language-toggle></app-language-toggle>
       <app-theme-toggle></app-theme-toggle>
 
-      <button class="btn-icon position-relative" type="button" [attr.aria-label]="'header.notifications' | translate">
-        <i class="fa-solid fa-bell fs-5"></i>
-        <span class="notif-dot"></span>
-      </button>
+      <app-notifications-bell></app-notifications-bell>
 
       <div class="dropdown">
         <button class="btn btn-light d-flex align-items-center gap-2 user-pill" type="button" data-bs-toggle="dropdown">

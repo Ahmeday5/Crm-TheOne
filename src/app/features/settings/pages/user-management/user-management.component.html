@@ -78,7 +78,7 @@
                   [ngModel]="roleFilter()"
                   (ngModelChange)="onRoleFilterChange($event)">
             <option value="all">{{ 'settings.users.filters.allRoles' | translate }}</option>
-            @for (r of roles; track r) {
+            @for (r of roles(); track r) {
               <option [value]="r">{{ roleLabelFor(r) }}</option>
             }
           </select>
@@ -149,7 +149,17 @@
                   <td>
                     <div class="d-flex align-items-center gap-3">
                       <span class="user-avatar">{{ initialOf(u) }}</span>
-                      <span class="fw-600 text-truncate">{{ displayName(u) }}</span>
+                      <div class="min-w-0">
+                        <span class="fw-600 text-truncate d-block">{{ displayName(u) }}</span>
+                        <small class="d-flex align-items-center gap-1 mt-1">
+                          @if (u.role) {
+                            <span class="badge bg-primary-subtle text-primary">{{ roleLabelFor(u.role) }}</span>
+                          }
+                          @if (u.specialty) {
+                            <span class="text-muted text-truncate">{{ u.specialty }}</span>
+                          }
+                        </small>
+                      </div>
                     </div>
                   </td>
                   <td>

@@ -1,0 +1,50 @@
+<div class="pair-backdrop" (click)="close()">
+  <div class="pair-card" (click)="$event.stopPropagation()">
+    <!-- header -->
+    <header class="pair-head">
+      <button type="button" class="pair-x" (click)="close()" aria-label="close"><i class="fa-solid fa-xmark"></i></button>
+      <h5 class="mb-0 fw-700">{{ 'whatsapp.pair.linkTitle' | translate }}</h5>
+    </header>
+
+    <div class="pair-body">
+      @if (connected()) {
+        <!-- connected -->
+        <div class="pair-connected">
+          <span class="pair-check"><i class="fa-solid fa-check"></i></span>
+          <h6 class="fw-700 mt-3 mb-1">{{ 'whatsapp.qr.connectedTitle' | translate }}</h6>
+          <p class="text-muted mb-0">{{ 'whatsapp.qr.connectedHint' | translate }}</p>
+        </div>
+      } @else if (store.pairing()) {
+        <!-- requesting -->
+        <div class="pair-loading">
+          <span class="spinner-border text-success" role="status"></span>
+          <p class="text-muted mt-3 mb-0">{{ 'whatsapp.pair.requesting' | translate }}</p>
+        </div>
+      } @else if (store.error()) {
+        <!-- error -->
+        <div class="pair-loading">
+          <i class="fa-solid fa-circle-exclamation text-danger fs-2"></i>
+          <p class="text-danger mt-2 mb-3">{{ store.error() }}</p>
+          <button type="button" class="btn btn-success btn-sm" (click)="requestCode()">
+            <i class="fa-solid fa-rotate me-1"></i>{{ 'whatsapp.pair.retry' | translate }}
+          </button>
+        </div>
+      } @else if (codeChars().length) {
+        <!-- code -->
+        <p class="pair-instruction">{{ 'whatsapp.pair.linkSteps' | translate }}</p>
+        <div class="pair-code">
+          @for (ch of codeChars(); track $index) {
+            <span class="pair-tile">{{ ch }}</span>
+          }
+        </div>
+        <p class="pair-sub">{{ 'whatsapp.pair.linkSub' | translate }}</p>
+      }
+    </div>
+
+    <footer class="pair-foot">
+      <button type="button" class="pair-close-link" (click)="close()">
+        {{ 'whatsapp.pair.closeWhenDone' | translate }}
+      </button>
+    </footer>
+  </div>
+</div>

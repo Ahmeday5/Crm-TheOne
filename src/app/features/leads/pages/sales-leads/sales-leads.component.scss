@@ -8,3 +8,19 @@
   color: var(--text-3);
   pointer-events: none;
 }
+
+/* ─── follow-up urgency row highlight ─── */
+tr.fu-overdue > td {
+  background: var(--danger-soft, rgba(239, 68, 68, 0.10)) !important;
+  box-shadow: inset 4px 0 0 var(--danger, #ef4444);
+}
+tr.fu-overdue:hover > td {
+  background: var(--danger-soft, rgba(239, 68, 68, 0.16)) !important;
+}
+tr.fu-soon > td {
+  background: rgba(245, 158, 11, 0.12) !important;
+  box-shadow: inset 4px 0 0 #f59e0b;
+}
+tr.fu-soon:hover > td {
+  background: rgba(245, 158, 11, 0.20) !important;
+}

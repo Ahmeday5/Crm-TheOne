@@ -1,0 +1,57 @@
+<app-modal
+  [open]="true"
+  [title]="(isGroup() ? 'chat.dialog.newGroupTitle' : 'chat.dialog.newChatTitle') | translate"
+  [icon]="isGroup() ? 'fa-solid fa-users' : 'fa-solid fa-comment-dots'"
+  iconTone="primary"
+  size="md"
+  (closed)="closed.emit()">
+
+  @if (isGroup()) {
+    <div class="mb-3">
+      <label class="form-label fw-600">{{ 'chat.dialog.groupNameLabel' | translate }}</label>
+      <input type="text" class="form-control"
+             [placeholder]="'chat.dialog.groupNamePlaceholder' | translate"
+             [ngModel]="groupName()" (ngModelChange)="groupName.set($event)" maxlength="60" />
+    </div>
+  }
+
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <label class="form-label fw-600 mb-0">{{ 'chat.dialog.pickContacts' | translate }}</label>
+    @if (selectedCount() > 0) {
+      <span class="badge bg-primary-subtle text-primary">{{ selectedLabel() }}</span>
+    }
+  </div>
+
+  @if (contacts().length === 0) {
+    <p class="text-muted small mb-0">{{ 'chat.dialog.noContacts' | translate }}</p>
+  } @else {
+    <div class="contact-picker">
+      @for (c of contacts(); track c.id) {
+        <button type="button" class="contact-row" [class.selected]="isSelected(c.id)" (click)="toggle(c.id)">
+          <span class="contact-avatar" [style.background]="c.avatarColor">{{ initials(c.name) }}</span>
+          <span class="contact-name flex-grow-1 text-truncate">{{ c.name }}</span>
+          <span class="contact-check">
+            @if (isSelected(c.id)) { <i class="fa-solid fa-circle-check"></i> }
+            @else { <i class="fa-regular fa-circle"></i> }
+          </span>
+        </button>
+      }
+    </div>
+  }
+
+  @if (isGroup() && selectedCount() === 1) {
+    <small class="text-warning d-block mt-2">
+      <i class="fa-solid fa-circle-info me-1"></i>{{ 'chat.dialog.minTwoGroup' | translate }}
+    </small>
+  }
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" (click)="closed.emit()">
+      {{ 'chat.cancel' | translate }}
+    </button>
+    <button type="button" class="btn btn-primary" [disabled]="!canSubmit()" (click)="submit()">
+      <i class="fa-solid fa-paper-plane me-1"></i>
+      {{ (isGroup() ? 'chat.dialog.create' : 'chat.dialog.start') | translate }}
+    </button>
+  </ng-container>
+</app-modal>

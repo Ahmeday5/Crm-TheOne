@@ -43,20 +43,23 @@ import { DailyReportsService } from '../../services/daily-reports.service';
 
 type ScopeFilter = 'all' | 'mine';
 
-const DEFAULT_PAGE_SIZE = 10;
-const ARABIC_MONTHS = [
-  'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-  'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
-];
-const ENGLISH_MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+/** Quick date-range presets surfaced as a segmented control. */
+type RangePreset =
+  | 'thisMonth'
+  | 'lastMonth'
+  | 'last3Months'
+  | 'thisYear'
+  | 'custom';
 
-interface MonthOption {
-  value: number; // 1..12
-  label: string;
-}
+const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PRESET: RangePreset = 'thisMonth';
+const PRESET_ORDER: readonly RangePreset[] = [
+  'thisMonth',
+  'lastMonth',
+  'last3Months',
+  'thisYear',
+  'custom',
+];
 
 /**
  * Daily reports landing page.
@@ -66,8 +69,10 @@ interface MonthOption {
  *     to view just their own (`GET /Reports/myreports`).
  *   - Non-admins only ever hit `/myreports`; the scope toggle is hidden.
  *
- * Month/year selectors translate to `FromDate`/`ToDate` query params so the
- * server handles filtering — the page never paginates client-side.
+ * The period filter exposes quick presets (this/last month, last 3 months,
+ * this year) plus a custom `From`/`To` range; whichever is active resolves to
+ * `FromDate`/`ToDate` query params so the server handles filtering — the page
+ * never paginates client-side.
  */
 @Component({
   selector: 'app-daily-reports',
@@ -105,8 +110,10 @@ export class DailyReportsComponent implements OnInit, OnDestroy {
   // ─── filters ───
   searchTerm = '';
   readonly searchSignal = signal('');
-  readonly selectedMonth = signal<number>(new Date().getMonth() + 1);
-  readonly selectedYear = signal<number>(new Date().getFullYear());
+  readonly preset = signal<RangePreset>(DEFAULT_PRESET);
+  readonly customFrom = signal<string>('');
+  readonly customTo = signal<string>('');
+  readonly presets = PRESET_ORDER;
   /** Admin-only — flips between every-user and current-user reports. */
   readonly scope = signal<ScopeFilter>('all');
 
@@ -141,15 +148,78 @@ export class DailyReportsComponent implements OnInit, OnDestroy {
     };
   });
 
-  readonly months = computed<MonthOption[]>(() => {
-    const labels = this.language.lang() === 'ar' ? ARABIC_MONTHS : ENGLISH_MONTHS;
-    return labels.map((label, i) => ({ value: i + 1, label }));
+  /**
+   * The `{ fromDate, toDate }` the active preset (or custom range) resolves to.
+   * A custom range with an inverted from/to yields an empty range so we never
+   * send a nonsensical query — the template surfaces an inline hint instead.
+   */
+  readonly dateRange = computed<{ fromDate?: string; toDate?: string }>(() => {
+    const preset = this.preset();
+
+    if (preset === 'custom') {
+      const from = this.customFrom();
+      const to = this.customTo();
+      if (from && to && from > to) return {};
+      return { fromDate: from || undefined, toDate: to || undefined };
+    }
+
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth(); // 0-based
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const ymd = (yr: number, mo0: number, day: number) =>
+      `${yr}-${pad(mo0 + 1)}-${pad(day)}`;
+    const lastDay = (yr: number, mo0: number) =>
+      new Date(yr, mo0 + 1, 0).getDate();
+
+    switch (preset) {
+      case 'lastMonth': {
+        const d = new Date(y, m - 1, 1);
+        const ly = d.getFullYear();
+        const lm = d.getMonth();
+        return { fromDate: ymd(ly, lm, 1), toDate: ymd(ly, lm, lastDay(ly, lm)) };
+      }
+      case 'last3Months': {
+        const d = new Date(y, m - 2, 1);
+        return {
+          fromDate: ymd(d.getFullYear(), d.getMonth(), 1),
+          toDate: ymd(y, m, lastDay(y, m)),
+        };
+      }
+      case 'thisYear':
+        return { fromDate: `${y}-01-01`, toDate: `${y}-12-31` };
+      case 'thisMonth':
+      default:
+        return { fromDate: ymd(y, m, 1), toDate: ymd(y, m, lastDay(y, m)) };
+    }
   });
 
-  readonly years = computed<number[]>(() => {
-    const current = new Date().getFullYear();
-    return Array.from({ length: 6 }, (_, i) => current - i);
+  /** True while a custom range has both ends set but inverted. */
+  readonly invalidRange = computed(() => {
+    if (this.preset() !== 'custom') return false;
+    const from = this.customFrom();
+    const to = this.customTo();
+    return !!from && !!to && from > to;
   });
+
+  /** Human-readable label of the range currently driving the list. */
+  readonly activeRangeLabel = computed(() => {
+    const { fromDate, toDate } = this.dateRange();
+    if (!fromDate && !toDate) return '—';
+    return `${this.formatDate(fromDate)} ← ${this.formatDate(toDate)}`;
+  });
+
+  /** Whether any filter deviates from its default — drives the clear button. */
+  readonly hasActiveFilters = computed(
+    () =>
+      this.searchSignal().trim().length > 0 ||
+      this.preset() !== DEFAULT_PRESET ||
+      (this.isAdmin() && this.scope() !== 'all'),
+  );
+
+  presetLabelKey(preset: RangePreset): string {
+    return `dailyReports.filters.presets.${preset}`;
+  }
 
   private readonly searchInput$ = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
@@ -178,7 +248,7 @@ export class DailyReportsComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.loadError.set(null);
 
-    const { fromDate, toDate } = this.monthRange(this.selectedYear(), this.selectedMonth());
+    const { fromDate, toDate } = this.dateRange();
     const query: DailyReportListQuery = {
       pageIndex: this.pageIndex(),
       pageSize: this.pageSize(),
@@ -212,18 +282,39 @@ export class DailyReportsComponent implements OnInit, OnDestroy {
     this.searchInput$.next(value);
   }
 
-  onMonthChange(value: number | string): void {
-    const month = Number(value);
-    if (!Number.isFinite(month) || month < 1 || month > 12) return;
-    this.selectedMonth.set(month);
+  onPresetChange(preset: RangePreset): void {
+    if (this.preset() === preset) return;
+    this.preset.set(preset);
+    this.pageIndex.set(1);
+    // Switching *into* custom waits for the user to pick dates; every other
+    // preset resolves to a range immediately, so refetch now.
+    if (preset !== 'custom') this.reload();
+  }
+
+  onCustomFromChange(value: string): void {
+    this.customFrom.set(value);
+    this.applyCustomRange();
+  }
+
+  onCustomToChange(value: string): void {
+    this.customTo.set(value);
+    this.applyCustomRange();
+  }
+
+  /** Refetch once the custom range is coherent (and not inverted). */
+  private applyCustomRange(): void {
+    if (this.invalidRange()) return;
     this.pageIndex.set(1);
     this.reload();
   }
 
-  onYearChange(value: number | string): void {
-    const year = Number(value);
-    if (!Number.isFinite(year)) return;
-    this.selectedYear.set(year);
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.searchSignal.set('');
+    this.preset.set(DEFAULT_PRESET);
+    this.customFrom.set('');
+    this.customTo.set('');
+    this.scope.set(this.isAdmin() ? 'all' : 'mine');
     this.pageIndex.set(1);
     this.reload();
   }
@@ -392,10 +483,7 @@ export class DailyReportsComponent implements OnInit, OnDestroy {
   }
 
   readonly fetchAllRows = async (): Promise<DailyReportListItem[]> => {
-    const { fromDate, toDate } = this.monthRange(
-      this.selectedYear(),
-      this.selectedMonth(),
-    );
+    const { fromDate, toDate } = this.dateRange();
     const query: DailyReportListQuery = {
       pageIndex: 1,
       pageSize: this.totalCount() || this.pageSize(),
@@ -411,15 +499,6 @@ export class DailyReportsComponent implements OnInit, OnDestroy {
   };
 
   trackById = (_: number, r: DailyReportListItem) => r.id;
-
-  private monthRange(year: number, month: number): { fromDate: string; toDate: string } {
-    const pad = (n: number): string => n.toString().padStart(2, '0');
-    const lastDay = new Date(year, month, 0).getDate();
-    return {
-      fromDate: `${year}-${pad(month)}-01`,
-      toDate: `${year}-${pad(month)}-${pad(lastDay)}`,
-    };
-  }
 
   private t(key: string): string {
     return resolveKey(TRANSLATIONS[this.language.lang()], key);

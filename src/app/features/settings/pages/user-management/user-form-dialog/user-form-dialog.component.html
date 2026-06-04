@@ -44,31 +44,38 @@
             [label]="'settings.users.addDialog.phone' | translate" />
         </div>
 
+        <div class="col-md-6">
+          <label class="form-label fw-600">{{ 'settings.users.addDialog.role' | translate }}</label>
+          <select class="form-select"
+                  formControlName="role"
+                  [class.is-invalid]="isInvalid(form.controls.role)">
+            @for (r of roles(); track r) {
+              <option [value]="r">{{ r }}</option>
+            }
+          </select>
+          <app-form-error
+            [control]="form.controls.role"
+            [label]="'settings.users.addDialog.role' | translate" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-600">{{ 'settings.users.addDialog.address' | translate }}</label>
+          <input class="form-control"
+                 formControlName="address"
+                 [class.is-invalid]="isInvalid(form.controls.address)" />
+          <app-form-error
+            [control]="form.controls.address"
+            [label]="'settings.users.addDialog.address' | translate" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-600">{{ 'settings.users.addDialog.specialty' | translate }}</label>
+          <input class="form-control"
+                 formControlName="specialty"
+                 [placeholder]="'settings.users.addDialog.specialtyPh' | translate" />
+        </div>
+
         @if (mode === 'add') {
-          <div class="col-md-6">
-            <label class="form-label fw-600">{{ 'settings.users.addDialog.role' | translate }}</label>
-            <select class="form-select"
-                    formControlName="role"
-                    [class.is-invalid]="isInvalid(form.controls.role)">
-              @for (r of roles; track r) {
-                <option [value]="r">{{ r }}</option>
-              }
-            </select>
-            <app-form-error
-              [control]="form.controls.role"
-              [label]="'settings.users.addDialog.role' | translate" />
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label fw-600">{{ 'settings.users.addDialog.address' | translate }}</label>
-            <input class="form-control"
-                   formControlName="address"
-                   [class.is-invalid]="isInvalid(form.controls.address)" />
-            <app-form-error
-              [control]="form.controls.address"
-              [label]="'settings.users.addDialog.address' | translate" />
-          </div>
-
           <div class="col-md-6">
             <label class="form-label fw-600">{{ 'settings.users.addDialog.password' | translate }}</label>
             <input type="password" class="form-control"

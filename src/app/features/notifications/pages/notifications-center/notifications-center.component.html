@@ -1,0 +1,116 @@
+<app-page-header [title]="'notifications.title' | translate"
+                 [subtitle]="'notifications.subtitle' | translate"
+                 icon="fa-solid fa-bell"></app-page-header>
+
+<!-- Toolbar -->
+<div class="card mb-3">
+  <div class="card-body d-flex flex-wrap align-items-center gap-3">
+    <!-- filters -->
+    <div class="nc-tabs">
+      @for (f of filters; track f) {
+        <button type="button" class="nc-tab" [class.active]="filter() === f" (click)="setFilter(f)">
+          {{ 'notifications.filters.' + f | translate }}
+          @if (f === 'unread' && unreadCount() > 0) { <span class="nc-tab-badge">{{ unreadCount() }}</span> }
+        </button>
+      }
+    </div>
+
+    <div class="ms-auto d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-light btn-sm" [disabled]="unreadCount() === 0" (click)="markAllRead()">
+        <i class="fa-solid fa-check-double me-1"></i>{{ 'notifications.markAllRead' | translate }}
+      </button>
+      @if (isAdmin()) {
+        <button type="button" class="btn btn-light btn-sm" [disabled]="generating()" (click)="generateReminders()">
+          <i class="fa-solid fa-clock-rotate-left me-1" [class.fa-spin]="generating()"></i>{{ 'notifications.center.generateReminders' | translate }}
+        </button>
+        <button type="button" class="btn btn-primary btn-sm" (click)="openSend()">
+          <i class="fa-solid fa-paper-plane me-1"></i>{{ 'notifications.center.sendNotification' | translate }}
+        </button>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- List -->
+<div class="card">
+  <div class="card-body p-0">
+    @if (loading() && items().length === 0) {
+      <div class="text-center py-5"><span class="spinner-border text-primary" role="status"></span></div>
+    } @else if (filtered().length === 0) {
+      <app-empty-state icon="fa-regular fa-bell-slash"
+        [title]="'notifications.empty' | translate"
+        [message]="'notifications.emptyHint' | translate"></app-empty-state>
+    } @else {
+      <div class="nc-list">
+        @for (n of filtered(); track trackId($index, n)) {
+          <div class="nc-item" [class.unread]="!n.isRead" (click)="openNotification(n)">
+            <span class="icon-tile tone-{{ tone(n) }} nc-ic"><i [class]="icon(n)"></i></span>
+            <div class="nc-body">
+              <div class="d-flex align-items-center gap-2">
+                <span class="nc-title">{{ n.title }}</span>
+                @if (!n.isRead) { <span class="badge bg-primary-subtle text-primary">{{ 'notifications.newBadge' | translate }}</span> }
+              </div>
+              <p class="nc-msg mb-1">{{ n.message }}</p>
+              <small class="nc-time" [title]="fullDate(n.createdAt)">
+                <i class="fa-regular fa-clock me-1"></i>{{ time(n) }}
+              </small>
+            </div>
+            @if (!n.isRead) {
+              <button type="button" class="nc-mark" (click)="markRead(n); $event.stopPropagation()"
+                      [title]="'notifications.actions.markRead' | translate">
+                <i class="fa-solid fa-check"></i>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- infinite-scroll sentinel -->
+      <div #sentinel class="nc-sentinel">
+        @if (loadingMore()) { <span class="spinner-border spinner-border-sm text-primary"></span> }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Admin: send notification dialog -->
+@if (sendOpen()) {
+<app-modal [open]="true" [title]="'notifications.send.title' | translate"
+           icon="fa-solid fa-paper-plane" iconTone="primary" size="md" (closed)="closeSend()">
+  <form [formGroup]="sendForm" id="nc-send-form" (ngSubmit)="submitSend()" novalidate>
+    <div class="mb-3">
+      <label class="form-label fw-600">{{ 'notifications.send.userLabel' | translate }} <span class="text-danger">*</span></label>
+      <select class="form-select" formControlName="userId"
+              [class.is-invalid]="sendForm.controls.userId.invalid && sendForm.controls.userId.touched">
+        <option value="">{{ 'notifications.send.userPlaceholder' | translate }}</option>
+        @for (u of users(); track u.userId) {
+          <option [value]="u.userId">{{ userLabel(u) }}</option>
+        }
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-600">{{ 'notifications.send.titleLabel' | translate }} <span class="text-danger">*</span></label>
+      <input type="text" class="form-control" formControlName="title" maxlength="120"
+             [class.is-invalid]="sendForm.controls.title.invalid && sendForm.controls.title.touched"
+             [placeholder]="'notifications.send.titlePlaceholder' | translate" />
+    </div>
+    <div class="mb-1">
+      <label class="form-label fw-600">{{ 'notifications.send.messageLabel' | translate }} <span class="text-danger">*</span></label>
+      <textarea class="form-control" formControlName="message" rows="3" maxlength="500"
+                [class.is-invalid]="sendForm.controls.message.invalid && sendForm.controls.message.touched"
+                [placeholder]="'notifications.send.messagePlaceholder' | translate"></textarea>
+    </div>
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="sending()" (click)="closeSend()">
+      {{ 'notifications.send.cancel' | translate }}
+    </button>
+    <button type="submit" form="nc-send-form" class="btn btn-primary" [disabled]="sending()">
+      @if (sending()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+      @else { <i class="fa-solid fa-paper-plane me-1"></i> }
+      {{ 'notifications.send.submit' | translate }}
+    </button>
+  </ng-container>
+</app-modal>
+}

@@ -25,8 +25,8 @@ export const SETTINGS_ROUTES: Routes = [
         path: 'roles',
         title: 'الأدوار والصلاحيات',
         loadComponent: () =>
-          import('./pages/placeholder/settings-placeholder.component').then(
-            (m) => m.SettingsPlaceholderComponent,
+          import('./pages/roles-permissions/roles-permissions.component').then(
+            (m) => m.RolesPermissionsComponent,
           ),
         data: { titleKey: 'settings.tabs.roles', icon: 'fa-solid fa-shield-halved' },
       },

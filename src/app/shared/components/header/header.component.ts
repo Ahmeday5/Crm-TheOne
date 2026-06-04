@@ -3,17 +3,19 @@ import { Component, computed, inject } from '@angular/core';
 import { roleLabel } from '../../../core/constants/roles.const';
 import { AuthService } from '../../../core/services/auth.service';
 import { CompanySettingsService } from '../../../core/services/company-settings.service';
+import { PushNotificationsService } from '../../../core/services/push-notifications.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { LanguageToggleComponent } from '../language-toggle/language-toggle.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
+import { NotificationsBellComponent } from '../notifications-bell/notifications-bell.component';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { RouterLink } from "@angular/router";
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, ThemeToggleComponent, LanguageToggleComponent, TranslatePipe, RouterLink],
+  imports: [CommonModule, ThemeToggleComponent, LanguageToggleComponent, NotificationsBellComponent, TranslatePipe, RouterLink],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
 })
@@ -22,6 +24,7 @@ export class HeaderComponent {
   private auth = inject(AuthService);
   private language = inject(LanguageService);
   private readonly companySettings = inject(CompanySettingsService);
+  private readonly push = inject(PushNotificationsService);
 
   /** White-label brand — dynamic logo + name from company settings. */
   readonly brandLogo = this.companySettings.logoUrl;
@@ -48,6 +51,9 @@ export class HeaderComponent {
   }
 
   logout(): void {
+    // Unregister this device's push token (request fires with the still-valid
+    // bearer) before the session is cleared.
+    void this.push.disable();
     this.auth.logout();
   }
 }

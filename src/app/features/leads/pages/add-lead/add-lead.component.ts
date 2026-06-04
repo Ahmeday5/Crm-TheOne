@@ -184,11 +184,16 @@ export class AddLeadComponent {
 
   private submitCustomer(assignToSales: boolean, salesPersonId: string | null): void {
     const v = this.form.getRawValue();
+    const company = v.companyName.trim();
     const payload = {
       fullName: v.fullName.trim(),
       email: v.email.trim(),
       phone: v.phone.trim(),
-      companyName: v.companyName.trim(),
+      companyName: company,
+      // The Customers API is inconsistent about the spelling: reads return the
+      // misspelled `campanyName`. Send both so the company name persists
+      // regardless of which key the create endpoint binds.
+      campanyName: company,
       address: v.address.trim(),
       notes: v.notes.trim(),
       campaignId: v.campaignId,

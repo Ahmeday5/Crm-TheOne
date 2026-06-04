@@ -175,16 +175,21 @@ export class SupportTicketFormDialogComponent implements OnInit {
     this.loadError.set(null);
     this.service.getById(id).subscribe({
       next: (t) => {
+        // The gateway may send priority/status as a number OR an enum name —
+        // normalize to the numeric value the <select> options are keyed by,
+        // otherwise the dropdown shows blank even though the table reads fine.
+        const priority = this.toPriorityValue(t.priority, t.priorityName);
+        const status = this.toStatusValue(t.status, t.statusName);
         this.form.patchValue({
           title: t.title,
           description: t.description ?? '',
           customerId: t.customerId,
           serviceId: t.serviceId,
-          priority: t.priority,
-          status: t.status,
+          priority,
+          status,
         });
         // Status patch re-ran the follow-up rule; seed the date for Open tickets.
-        if (t.status === SupportTicketStatus.Open && t.nextFollowUpDate) {
+        if (status === SupportTicketStatus.Open && t.nextFollowUpDate) {
           this.form.controls.nextFollowUpDate.setValue(
             this.toLocalInput(t.nextFollowUpDate),
           );
@@ -202,6 +207,31 @@ export class SupportTicketFormDialogComponent implements OnInit {
 
   retryLoad(): void {
     if (this.ticketId !== null) this.loadTicket(this.ticketId);
+  }
+
+  /** Normalize a backend priority (number or enum name) to its numeric value. */
+  private toPriorityValue(
+    raw: unknown,
+    name?: string | null,
+  ): SupportTicketPriority {
+    if (typeof raw === 'number') return raw;
+    const key = String(raw ?? name ?? '').toLowerCase();
+    return (
+      SUPPORT_TICKET_PRIORITIES.find((p) => p.enumName.toLowerCase() === key)
+        ?.value ?? SupportTicketPriority.Medium
+    );
+  }
+
+  private toStatusValue(
+    raw: unknown,
+    name?: string | null,
+  ): SupportTicketStatus {
+    if (typeof raw === 'number') return raw;
+    const key = String(raw ?? name ?? '').toLowerCase();
+    return (
+      SUPPORT_TICKET_STATUSES.find((s) => s.enumName.toLowerCase() === key)
+        ?.value ?? SupportTicketStatus.Open
+    );
   }
 
   /** Bilingual service label (falls back to the Arabic name). */

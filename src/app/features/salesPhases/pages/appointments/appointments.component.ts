@@ -35,7 +35,6 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { AppointmentFormDialogComponent } from '../../components/appointment-form-dialog/appointment-form-dialog.component';
 import { AppointmentsService } from '../../services/appointments.service';
 
-type ViewMode = 'list' | 'calendar';
 const DEFAULT_PAGE_SIZE = 10;
 
 @Component({
@@ -75,8 +74,6 @@ export class AppointmentsComponent implements OnInit {
   readonly loading = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly busyId = signal<number | null>(null);
-
-  readonly view = signal<ViewMode>('list');
 
   // ─── filters ───
   /**
@@ -191,10 +188,6 @@ export class AppointmentsComponent implements OnInit {
     this.statusFilter.set(
       value === 'all' ? 'all' : (Number(value) as AppointmentStatus),
     );
-  }
-
-  setView(mode: ViewMode): void {
-    this.view.set(mode);
   }
 
   onPageChange(page: number): void {

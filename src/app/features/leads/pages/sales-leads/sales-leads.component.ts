@@ -370,6 +370,25 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
   trackById = (_: number, r: CustomerListItem) => r.id;
 
+  /**
+   * Row highlight by follow-up urgency:
+   *   - `fu-overdue` → next follow-up date has passed.
+   *   - `fu-soon`    → due today or tomorrow.
+   *   - `''`         → no follow-up set or further out.
+   */
+  followUpRowClass(row: CustomerListItem): string {
+    if (!row.nextFollowUpDate) return '';
+    const due = new Date(row.nextFollowUpDate);
+    if (Number.isNaN(due.getTime())) return '';
+    const startOf = (d: Date) =>
+      new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const today = startOf(new Date());
+    const diffDays = Math.round((startOf(due) - today) / 86_400_000);
+    if (diffDays < 0) return 'fu-overdue';
+    if (diffDays <= 1) return 'fu-soon';
+    return '';
+  }
+
   // ─────────── export / print ───────────
 
   get exportColumns(): ExportColumn<CustomerListItem>[] {

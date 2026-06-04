@@ -1,0 +1,127 @@
+<app-page-header [title]="'whatsapp.title' | translate"
+                 [subtitle]="'whatsapp.subtitle' | translate"
+                 icon="fa-brands fa-whatsapp"></app-page-header>
+
+<div class="d-flex flex-wrap gap-2 justify-content-end mb-3">
+  <button type="button" class="btn btn-light" [disabled]="store.loading()" (click)="reload()">
+    <i class="fa-solid fa-rotate me-1" [class.fa-spin]="store.loading()"></i>{{ 'whatsapp.refresh' | translate }}
+  </button>
+  <button type="button" class="btn btn-primary" (click)="openCreate()">
+    <i class="fa-solid fa-plus me-1"></i>{{ 'whatsapp.newSession' | translate }}
+  </button>
+</div>
+
+@if (store.error() && store.sessions().length === 0) {
+  <app-load-error [message]="store.error()" [loading]="store.loading()" (retry)="reload()"></app-load-error>
+}
+
+@if (store.loading() && store.sessions().length === 0) {
+  <div class="text-center py-5"><span class="spinner-border text-success" role="status"></span></div>
+} @else if (store.sessions().length === 0) {
+  <div class="card">
+    <div class="card-body text-center py-5">
+      <span class="icon-tile xl tone-success mb-3"><i class="fa-brands fa-whatsapp"></i></span>
+      <h6 class="fw-700 mb-1">{{ 'whatsapp.empty' | translate }}</h6>
+      <p class="text-muted mb-3">{{ 'whatsapp.emptyHint' | translate }}</p>
+      <button type="button" class="btn btn-primary" (click)="openCreate()">
+        <i class="fa-solid fa-plus me-1"></i>{{ 'whatsapp.newSession' | translate }}
+      </button>
+    </div>
+  </div>
+} @else {
+  <div class="row g-3">
+    @for (s of store.sessions(); track s.id) {
+      <div class="col-12 col-md-6 col-xl-4">
+        <button type="button" class="card session-card h-100 w-100 text-start" (click)="open(s.id)">
+          <div class="card-body d-flex flex-column gap-3">
+            <div class="d-flex align-items-center gap-2">
+              <span class="session-avatar"><i class="fa-brands fa-whatsapp"></i></span>
+              <div class="flex-grow-1 min-w-0">
+                <h6 class="fw-700 mb-0 text-truncate">{{ s.name }}</h6>
+                <small class="text-muted">{{ s.phone || ('whatsapp.method.' + s.connection_method) | translate }}</small>
+              </div>
+              <i class="fa-solid fa-chevron-left chevron"></i>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+              <span class="badge {{ statusClass(s.status) }}">
+                <i class="fa-solid fa-circle me-1 small"></i>{{ statusLabel(s.status) | translate }}
+              </span>
+              <span class="badge {{ healthClass(s.health_status) }}">
+                <i class="fa-solid fa-heart-pulse me-1"></i>{{ healthLabel(s.health_status) | translate }}
+              </span>
+            </div>
+
+            <div class="session-meta small text-muted">
+              <span><i class="fa-regular fa-clock me-1"></i>{{ 'whatsapp.fields.lastConnected' | translate }}: {{ formatDate(s.last_connected_at) }}</span>
+            </div>
+          </div>
+        </button>
+      </div>
+    }
+  </div>
+}
+
+<!-- Create dialog -->
+@if (createOpen()) {
+<app-modal [open]="true" [title]="'whatsapp.form.title' | translate"
+           icon="fa-brands fa-whatsapp" iconTone="success" size="md"
+           (closed)="closeCreate()">
+  <form [formGroup]="form" id="wa-create-form" (ngSubmit)="submitCreate()" novalidate>
+    <div class="mb-3">
+      <label class="form-label fw-600">{{ 'whatsapp.form.nameLabel' | translate }} <span class="text-danger">*</span></label>
+      <input type="text" class="form-control" formControlName="name" maxlength="60"
+             [class.is-invalid]="form.controls.name.invalid && form.controls.name.touched"
+             [placeholder]="'whatsapp.form.namePlaceholder' | translate" />
+      @if (form.controls.name.invalid && form.controls.name.touched) {
+        <div class="invalid-feedback d-block">{{ 'whatsapp.form.nameRequired' | translate }}</div>
+      }
+    </div>
+    <div class="mb-1">
+      <label class="form-label fw-600">{{ 'whatsapp.form.methodLabel' | translate }}</label>
+      <div class="btn-group w-100" role="group">
+        <input type="radio" class="btn-check" formControlName="connection_method" value="qr" id="wa-m-qr" />
+        <label class="btn btn-outline-success" for="wa-m-qr">
+          <i class="fa-solid fa-qrcode me-1"></i>{{ 'whatsapp.method.qr' | translate }}
+        </label>
+        <input type="radio" class="btn-check" formControlName="connection_method" value="code" id="wa-m-code" />
+        <label class="btn btn-outline-success" for="wa-m-code">
+          <i class="fa-solid fa-keyboard me-1"></i>{{ 'whatsapp.method.code' | translate }}
+        </label>
+      </div>
+    </div>
+
+    @if (isCodeMethod) {
+      <div class="mt-3">
+        <label class="form-label fw-600">{{ 'whatsapp.pair.phoneLabel' | translate }} <span class="text-danger">*</span></label>
+        <input type="tel" class="form-control" dir="ltr" formControlName="phone_number" inputmode="numeric"
+               [class.is-invalid]="form.controls.phone_number.touched && phoneInvalid"
+               [placeholder]="'whatsapp.pair.phonePlaceholder' | translate" />
+        <small class="text-muted d-block mt-1">{{ 'whatsapp.pair.hint' | translate }}</small>
+        @if (form.controls.phone_number.touched && phoneInvalid) {
+          <div class="invalid-feedback d-block">{{ 'whatsapp.pair.min9' | translate }}</div>
+        }
+      </div>
+    }
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="store.actionLoading()" (click)="closeCreate()">
+      {{ 'whatsapp.form.cancel' | translate }}
+    </button>
+    <button type="submit" form="wa-create-form" class="btn btn-primary" [disabled]="store.actionLoading()">
+      @if (store.actionLoading()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+      } @else {
+        <i class="fa-solid fa-plus me-1"></i>
+      }
+      {{ 'whatsapp.form.create' | translate }}
+    </button>
+  </ng-container>
+</app-modal>
+}
+
+<!-- Pairing-code linking dialog (code method) -->
+@if (pairingFor(); as p) {
+  <app-pairing-code-dialog [sessionId]="p.id" [phone]="p.phone" (closed)="closePairing()"></app-pairing-code-dialog>
+}

@@ -162,11 +162,16 @@ export class CampaignFormDialogComponent implements OnInit {
 
   /** Mirrors backend → form. Date inputs need `yyyy-MM-dd` slices. */
   private patchFromCampaign(c: Campaign): void {
+    // Read the *local* calendar components, never `toISOString()`. The backend
+    // echoes the date without a timezone marker, so `toISOString()` would shift
+    // it back to the previous UTC day (e.g. Jun 3 → Jun 2) and the edit form
+    // would disagree with the details view, which formats in local time.
     const toDateInput = (iso: string | null | undefined): string => {
       if (!iso) return '';
       const d = new Date(iso);
       if (Number.isNaN(d.getTime()) || d.getFullYear() <= 1) return '';
-      return d.toISOString().slice(0, 10);
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     };
 
     this.form.patchValue({

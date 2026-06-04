@@ -150,7 +150,7 @@
             </thead>
             <tbody>
               @for (row of rows(); track trackById($index, row)) {
-                <tr>
+                <tr [class]="followUpRowClass(row)">
                   <!-- Identity -->
                   <td>
                     <div class="crm-identity">

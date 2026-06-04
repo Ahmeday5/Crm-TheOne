@@ -66,10 +66,11 @@
   </div>
 
   <!-- Filters -->
-  <div class="card mb-4">
+  <div class="card mb-4 filters-card">
     <div class="card-body">
+      <!-- Row 1: search + scope + clear -->
       <div class="row g-3 align-items-end">
-        <div class="col-12 col-md-6 col-lg flex-grow-1">
+        <div class="col-12 col-lg flex-grow-1">
           <label class="form-label fw-600">{{ 'dailyReports.filters.search' | translate }}</label>
           <div class="position-relative">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
@@ -78,28 +79,6 @@
                    [ngModel]="searchTerm"
                    (ngModelChange)="onSearchInput($event)" />
           </div>
-        </div>
-
-        <div class="col-6 col-md-3 col-lg-2">
-          <label class="form-label fw-600">{{ 'dailyReports.filters.month' | translate }}</label>
-          <select class="form-select"
-                  [ngModel]="selectedMonth()"
-                  (ngModelChange)="onMonthChange($event)">
-            @for (m of months(); track m.value) {
-              <option [ngValue]="m.value">{{ m.label }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="col-6 col-md-3 col-lg-2">
-          <label class="form-label fw-600">{{ 'dailyReports.filters.year' | translate }}</label>
-          <select class="form-select"
-                  [ngModel]="selectedYear()"
-                  (ngModelChange)="onYearChange($event)">
-            @for (y of years(); track y) {
-              <option [ngValue]="y">{{ y }}</option>
-            }
-          </select>
         </div>
 
         @if (isAdmin()) {
@@ -123,7 +102,68 @@
             </div>
           </div>
         }
+
+        @if (hasActiveFilters()) {
+          <div class="col-12 col-md-auto">
+            <button type="button" class="btn btn-light w-100 text-danger" (click)="clearFilters()">
+              <i class="fa-solid fa-filter-circle-xmark me-1"></i>
+              {{ 'dailyReports.filters.clear' | translate }}
+            </button>
+          </div>
+        }
       </div>
+
+      <hr class="my-3" />
+
+      <!-- Row 2: period presets + active range chip -->
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="fw-600 text-muted me-1">
+          <i class="fa-solid fa-calendar-range me-1"></i>{{ 'dailyReports.filters.period' | translate }}
+        </span>
+        <div class="period-pills d-flex flex-wrap gap-2">
+          @for (p of presets; track p) {
+            <button type="button"
+                    class="btn btn-sm rounded-pill"
+                    [class.btn-primary]="preset() === p"
+                    [class.btn-light]="preset() !== p"
+                    (click)="onPresetChange(p)">
+              {{ presetLabelKey(p) | translate }}
+            </button>
+          }
+        </div>
+        <span class="badge bg-primary-subtle text-primary ms-auto align-self-center">
+          <i class="fa-solid fa-clock-rotate-left me-1"></i>
+          {{ 'dailyReports.filters.activeRange' | translate }}: {{ activeRangeLabel() }}
+        </span>
+      </div>
+
+      <!-- Row 3: custom range (only when "custom" preset is active) -->
+      @if (preset() === 'custom') {
+        <div class="row g-3 align-items-end mt-1">
+          <div class="col-6 col-md-auto">
+            <label class="form-label fw-600">{{ 'dailyReports.filters.from' | translate }}</label>
+            <input type="date" class="form-control"
+                   [class.is-invalid]="invalidRange()"
+                   [ngModel]="customFrom()"
+                   (ngModelChange)="onCustomFromChange($event)" />
+          </div>
+          <div class="col-6 col-md-auto">
+            <label class="form-label fw-600">{{ 'dailyReports.filters.to' | translate }}</label>
+            <input type="date" class="form-control"
+                   [class.is-invalid]="invalidRange()"
+                   [ngModel]="customTo()"
+                   (ngModelChange)="onCustomToChange($event)" />
+          </div>
+          @if (invalidRange()) {
+            <div class="col-12">
+              <small class="text-danger">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                {{ 'dailyReports.filters.invalidRange' | translate }}
+              </small>
+            </div>
+          }
+        </div>
+      }
     </div>
   </div>
 

@@ -24,6 +24,19 @@ const dailyReports: TranslationFile<'dailyReports'> = {
       scope: 'Scope',
       allReports: 'All employees',
       mine: 'My reports',
+      period: 'Period',
+      from: 'From',
+      to: 'To',
+      clear: 'Clear filters',
+      activeRange: 'Showing',
+      invalidRange: 'Start date must be before end date',
+      presets: {
+        thisMonth: 'This month',
+        lastMonth: 'Last month',
+        last3Months: 'Last 3 months',
+        thisYear: 'This year',
+        custom: 'Custom range',
+      },
     },
 
     empty: {

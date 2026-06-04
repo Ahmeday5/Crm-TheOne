@@ -49,7 +49,8 @@ export class UserManagementComponent {
   private readonly dialog = inject(DialogService);
   private readonly language = inject(LanguageService);
 
-  readonly roles: ReadonlyArray<UserRole> = ALL_ROLES;
+  /** Role options for the filter — from the API, falling back to the bundled list. */
+  readonly roles = signal<string[]>([...ALL_ROLES]);
 
   /** Loaded user list (full result from the API). */
   readonly all = signal<AppUser[]>([]);
@@ -83,12 +84,8 @@ export class UserManagementComponent {
           (u.phone ?? '').toLowerCase();
         if (!hay.includes(q)) return false;
       }
-      if (role !== 'all') {
-        // The list endpoint doesn't return role; we'd need to filter via getById
-        // calls, which is too expensive. Until the backend includes role in the
-        // list, we keep the dropdown for UI parity but skip the filter logic.
-        return true;
-      }
+      // The list endpoint now returns `role`, so filter on it directly.
+      if (role !== 'all' && (u.role ?? '') !== role) return false;
       return true;
     });
   });
@@ -101,12 +98,17 @@ export class UserManagementComponent {
       // No `isActive` field on the API yet — assume all loaded users are active.
       active: total,
       inactive: 0,
-      rolesCount: this.roles.length,
+      rolesCount: this.roles().length,
     };
   });
 
   ngOnInit(): void {
     this.reload();
+    this.users.roles().subscribe({
+      next: (roles) => {
+        if (roles?.length) this.roles.set(roles);
+      },
+    });
   }
 
   // ─────────── data loading ───────────
@@ -209,8 +211,8 @@ export class UserManagementComponent {
     return user.phone || this.t('settings.users.placeholders.notProvided');
   }
 
-  roleLabelFor(role: UserRole): string {
-    return roleLabel(role, this.language.lang());
+  roleLabelFor(role: string | null | undefined): string {
+    return roleLabel((role as UserRole) || null, this.language.lang());
   }
 
   // ─────────── export / print ───────────

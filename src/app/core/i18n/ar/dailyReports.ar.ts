@@ -24,6 +24,19 @@ const dailyReports: TranslationFile<'dailyReports'> = {
       scope: 'النطاق',
       allReports: 'جميع الموظفين',
       mine: 'تقاريري فقط',
+      period: 'الفترة الزمنية',
+      from: 'من تاريخ',
+      to: 'إلى تاريخ',
+      clear: 'مسح الفلاتر',
+      activeRange: 'الفترة المعروضة',
+      invalidRange: 'تاريخ البداية يجب أن يسبق تاريخ النهاية',
+      presets: {
+        thisMonth: 'هذا الشهر',
+        lastMonth: 'الشهر الماضي',
+        last3Months: 'آخر 3 أشهر',
+        thisYear: 'هذا العام',
+        custom: 'فترة مخصصة',
+      },
     },
 
     empty: {

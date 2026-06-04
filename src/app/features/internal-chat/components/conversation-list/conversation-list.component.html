@@ -1,0 +1,90 @@
+<div class="conv-list d-flex flex-column h-100">
+  <!-- Header -->
+  <div class="conv-list__header">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h5 class="fw-700 mb-0">{{ 'chat.title' | translate }}</h5>
+      <div class="d-flex gap-1">
+        <button type="button" class="btn btn-icon btn-soft" [title]="'chat.newChat' | translate"
+                (click)="newChat.emit()">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+        <button type="button" class="btn btn-icon btn-soft" [title]="'chat.newGroup' | translate"
+                (click)="newGroup.emit()">
+          <i class="fa-solid fa-users"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="position-relative mb-3">
+      <i class="fa-solid fa-magnifying-glass conv-search-icon"></i>
+      <input type="text" class="form-control form-control-sm conv-search"
+             [placeholder]="'chat.searchPlaceholder' | translate"
+             [ngModel]="search()" (ngModelChange)="search.set($event)" />
+    </div>
+
+    <!-- Filter pills -->
+    <div class="conv-tabs d-flex gap-2">
+      <button type="button" class="btn btn-sm rounded-pill flex-grow-1"
+              [class.btn-primary]="filter() === 'all'" [class.btn-light]="filter() !== 'all'"
+              (click)="setFilter('all')">
+        {{ 'chat.chatsTab' | translate }}
+      </button>
+      <button type="button" class="btn btn-sm rounded-pill flex-grow-1"
+              [class.btn-primary]="filter() === 'group'" [class.btn-light]="filter() !== 'group'"
+              (click)="setFilter('group')">
+        {{ 'chat.groupsTab' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Rows -->
+  <div class="conv-list__scroll flex-grow-1">
+    @if (filtered().length === 0) {
+      <div class="conv-empty text-center text-muted p-4">
+        <i class="fa-regular fa-comments fs-1 mb-2 d-block"></i>
+        <p class="fw-600 mb-1">{{ 'chat.noConversations' | translate }}</p>
+        <small>{{ 'chat.noConversationsHint' | translate }}</small>
+      </div>
+    } @else {
+      @for (c of filtered(); track c.id) {
+        <button type="button" class="conv-row"
+                [class.active]="activeId() === c.id"
+                (click)="select(c.id)">
+          <span class="conv-avatar" [style.background]="c.avatarColor">
+            @if (c.kind === 'group') {
+              <i class="fa-solid fa-users"></i>
+            } @else {
+              {{ initials(c.name) }}
+            }
+            @if (c.kind === 'direct' && c.online) {
+              <span class="conv-online"></span>
+            }
+          </span>
+
+          <span class="conv-body">
+            <span class="conv-top">
+              <span class="conv-name text-truncate">{{ c.name }}</span>
+              <span class="conv-time">{{ timestamp(c) }}</span>
+            </span>
+            <span class="conv-bottom">
+              <span class="conv-preview text-truncate">
+                @if (c.typing) {
+                  <span class="conv-typing">{{ 'chat.typing' | translate }}</span>
+                } @else {
+                  @if (previewIcon(c); as ic) {
+                    <i class="{{ ic }} me-1"></i>
+                  }
+                  {{ preview(c) }}
+                }
+              </span>
+              @if (c.unread > 0) {
+                <span class="conv-unread">{{ c.unread }}</span>
+              }
+            </span>
+          </span>
+        </button>
+      }
+    }
+  </div>
+</div>

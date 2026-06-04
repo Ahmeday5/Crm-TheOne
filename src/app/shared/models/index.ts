@@ -16,3 +16,4 @@ export * from './resource-management';
 export * from './company-settings';
 export * from './articles';
 export * from './dashboard';
+export * from './notifications';

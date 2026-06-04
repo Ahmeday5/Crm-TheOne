@@ -11,6 +11,26 @@
   }
 }
 
+/* ─── period filter ─── */
+.filters-card {
+  .period-pills .btn {
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+
+    &.btn-primary {
+      box-shadow: 0 2px 8px rgba(13, 110, 253, 0.28);
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+  }
+
+  hr {
+    border-color: var(--border);
+    opacity: 1;
+  }
+}
+
 .report-card {
   .hours-badge {
     display: inline-flex;

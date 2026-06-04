@@ -147,6 +147,12 @@ export const NAV_SECTIONS: NavSection[] = [
         roles: ['Admin'],
       },
       {
+        labelKey: 'sidebar.items.whatsappSessions',
+        path: '/whatsapp-sessions',
+        icon: 'fa-brands fa-whatsapp',
+        roles: ['Admin'],
+      },
+      {
         labelKey: 'sidebar.items.kb',
         path: '/knowledge-base',
         icon: 'fa-solid fa-book',
@@ -277,7 +283,9 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   services: ['Admin'],
   'system-improvements': ['Admin'],
   resources: ['Admin'],
-  notifications: ['Admin'],
+  // `notifications` is intentionally NOT listed — the notification center is
+  // per-user and open to every authenticated role (the admin-only "send"
+  // action is gated inside the page, not by the route).
   goals: ['Admin'],
   security: ['Admin'],
 };

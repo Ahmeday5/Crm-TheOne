@@ -4,6 +4,11 @@ const settings: TranslationFile<'settings'> = {
   settings: {
     title: 'Settings',
     subtitle: "Welcome back! Here's what's happening today.",
+    roles: {
+      subtitle: 'Available roles and the modules each one can access',
+      modules: 'modules',
+      accessTitle: 'Can access:',
+    },
     tabs: {
       users: 'User management',
       roles: 'Roles & permissions',
@@ -54,6 +59,8 @@ const settings: TranslationFile<'settings'> = {
         address: 'Address',
         password: 'Password',
         role: 'Role',
+        specialty: 'Specialty',
+        specialtyPh: 'e.g. Technical support, Sales…',
         cancel: 'Cancel',
         submit: 'Add',
         submitting: 'Adding...',

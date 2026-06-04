@@ -6,6 +6,9 @@ export interface AppUser {
   email: string;
   phone: string | null;
   fullName: string | null;
+  role: UserRole | string | null;
+  address: string | null;
+  specialty: string | null;
 }
 
 /** Body for `POST /Auth/AddApplicationUser`. */
@@ -15,7 +18,8 @@ export interface AddUserRequest {
   password: string;
   email: string;
   phoneNumber: string;
-  role: UserRole;
+  role: UserRole | string;
+  specialty: string;
 }
 
 /** Body for `PUT /Auth/update-user/{id}`. */
@@ -23,4 +27,7 @@ export interface UpdateUserRequest {
   email: string;
   phone: string;
   fullName: string;
+  role: UserRole | string;
+  address: string;
+  specialty: string;
 }

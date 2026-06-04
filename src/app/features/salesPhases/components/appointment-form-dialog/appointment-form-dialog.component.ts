@@ -144,8 +144,10 @@ export class AppointmentFormDialogComponent implements OnInit {
           description: a.description ?? '',
           customerId: a.customerId,
           assignedToUserId: a.assignedToId,
-          type: a.type,
-          priority: a.priority,
+          // Normalize to the numeric code the <select> options use, so the
+          // dropdown pre-selects even if the API serializes an enum name.
+          type: this.toTypeCode(a.type, a.typeNameAr),
+          priority: this.toPriorityCode(a.priority, a.priorityNameAr),
           startDate: this.toLocalInput(a.startDate),
           endDate: this.toLocalInput(a.endDate),
           location: a.location ?? '',
@@ -163,6 +165,28 @@ export class AppointmentFormDialogComponent implements OnInit {
 
   retryLoad(): void {
     if (this.appointmentId !== null) this.loadAppointment(this.appointmentId);
+  }
+
+  /** Resolve a backend type (number, enum name, or Arabic label) to its code. */
+  private toTypeCode(raw: unknown, arName?: string | null): AppointmentType {
+    if (typeof raw === 'number') return raw;
+    const s = String(raw ?? '').toLowerCase();
+    const opt = APPOINTMENT_TYPES.find(
+      (t) => t.en.toLowerCase() === s || t.ar === String(raw) || t.ar === arName,
+    );
+    return opt?.code ?? AppointmentType.Meeting;
+  }
+
+  private toPriorityCode(
+    raw: unknown,
+    arName?: string | null,
+  ): AppointmentPriority {
+    if (typeof raw === 'number') return raw;
+    const s = String(raw ?? '').toLowerCase();
+    const opt = APPOINTMENT_PRIORITIES.find(
+      (p) => p.en.toLowerCase() === s || p.ar === String(raw) || p.ar === arName,
+    );
+    return opt?.code ?? AppointmentPriority.Low;
   }
 
   submit(): void {

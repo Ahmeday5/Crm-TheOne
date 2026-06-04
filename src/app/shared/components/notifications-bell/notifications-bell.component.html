@@ -1,0 +1,55 @@
+<div class="nb">
+  <button class="btn-icon position-relative" type="button" (click)="toggle()"
+          [class.active]="open()" [attr.aria-label]="'notifications.bellAria' | translate">
+    <i class="fa-solid fa-bell fs-5"></i>
+    @if (unreadCount() > 0) {
+      <span class="nb-badge">{{ badge() }}</span>
+    }
+  </button>
+
+  @if (open()) {
+    <div class="nb-panel">
+      <header class="nb-head">
+        <span class="fw-700">{{ 'notifications.title' | translate }}</span>
+        @if (unreadCount() > 0) {
+          <button type="button" class="nb-link" (click)="markAllRead()">
+            <i class="fa-solid fa-check-double me-1"></i>{{ 'notifications.markAllRead' | translate }}
+          </button>
+        }
+      </header>
+
+      <div class="nb-list" (scroll)="onScroll($event)">
+        @if (loading() && items().length === 0) {
+          <div class="text-center py-4"><span class="spinner-border spinner-border-sm text-primary"></span></div>
+        } @else if (items().length === 0) {
+          <div class="nb-empty">
+            <i class="fa-regular fa-bell-slash fs-3 mb-2 d-block"></i>
+            <p class="fw-600 mb-1">{{ 'notifications.empty' | translate }}</p>
+            <small>{{ 'notifications.emptyHint' | translate }}</small>
+          </div>
+        } @else {
+          @for (n of items(); track trackId($index, n)) {
+            <button type="button" class="nb-item" [class.unread]="!n.isRead" (click)="onItemClick(n)">
+              <span class="icon-tile tone-{{ tone(n) }} nb-ic"><i [class]="icon(n)"></i></span>
+              <span class="nb-body">
+                <span class="nb-title text-truncate">{{ n.title }}</span>
+                <span class="nb-msg">{{ n.message }}</span>
+                <span class="nb-time">{{ time(n) }}</span>
+              </span>
+              @if (!n.isRead) { <span class="nb-dot"></span> }
+            </button>
+          }
+          @if (loadingMore()) {
+            <div class="text-center py-2"><span class="spinner-border spinner-border-sm text-primary"></span></div>
+          }
+        }
+      </div>
+
+      <footer class="nb-foot">
+        <button type="button" class="btn btn-light btn-sm w-100" (click)="viewAll()">
+          {{ 'notifications.viewAll' | translate }}
+        </button>
+      </footer>
+    </div>
+  }
+</div>

@@ -1,0 +1,207 @@
+<div class="d-flex align-items-center gap-2 mb-3">
+  <button type="button" class="btn btn-light btn-sm" (click)="back()">
+    <i class="fa-solid fa-arrow-right me-1"></i>{{ 'whatsapp.backToList' | translate }}
+  </button>
+</div>
+
+@if (session(); as s) {
+
+  <!-- Header -->
+  <div class="card mb-3">
+    <div class="card-body d-flex flex-wrap align-items-center gap-3">
+      <span class="wa-avatar"><i class="fa-brands fa-whatsapp"></i></span>
+      <div class="flex-grow-1 min-w-0">
+        <h4 class="fw-700 mb-1 text-truncate">{{ s.name }}</h4>
+        <div class="d-flex flex-wrap gap-2">
+          <span class="badge {{ statusClass() }}">
+            <i class="fa-solid fa-circle me-1 small"></i>{{ statusLabel() | translate }}
+          </span>
+          <span class="badge {{ healthClass() }}">
+            <i class="fa-solid fa-heart-pulse me-1"></i>{{ healthLabel() | translate }}
+          </span>
+          <span class="badge bg-light text-muted">
+            <i class="fa-solid fa-link me-1"></i>{{ 'whatsapp.method.' + s.connection_method | translate }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-primary btn-sm" (click)="openChat()">
+          <i class="fa-regular fa-comments me-1"></i>{{ 'whatsapp.chat.openChat' | translate }}
+        </button>
+        <button type="button" class="btn btn-success btn-sm" [disabled]="store.actionLoading()" (click)="start()">
+          <i class="fa-solid fa-play me-1"></i>{{ 'whatsapp.actions.start' | translate }}
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="store.actionLoading()" (click)="stop()">
+          <i class="fa-solid fa-stop me-1"></i>{{ 'whatsapp.actions.stop' | translate }}
+        </button>
+        <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="store.actionLoading()" (click)="restart()">
+          <i class="fa-solid fa-rotate me-1" [class.fa-spin]="store.actionLoading()"></i>{{ 'whatsapp.actions.restart' | translate }}
+        </button>
+        <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="store.actionLoading()" (click)="remove()">
+          <i class="fa-solid fa-trash me-1"></i>{{ 'whatsapp.actions.delete' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Connection: QR or pairing -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        @if (isQrMethod()) {
+          <div class="card-header d-flex align-items-center gap-2">
+            <i class="fa-solid fa-qrcode text-success"></i>
+            <h6 class="mb-0">{{ 'whatsapp.qr.title' | translate }}</h6>
+          </div>
+          <div class="card-body text-center">
+            @if (connected()) {
+              <div class="connected-state py-4">
+                <span class="connected-badge"><i class="fa-solid fa-check"></i></span>
+                <h6 class="fw-700 mt-3 mb-1">{{ 'whatsapp.qr.connectedTitle' | translate }}</h6>
+                <p class="text-muted mb-0">{{ 'whatsapp.qr.connectedHint' | translate }}</p>
+              </div>
+            } @else if (qr()?.qr_image) {
+              <img class="qr-image" [src]="qr()!.qr_image" alt="WhatsApp QR" />
+              <p class="text-muted small mt-3 mb-0">{{ 'whatsapp.qr.hint' | translate }}</p>
+            } @else {
+              <div class="py-5">
+                <span class="spinner-border text-success" role="status"></span>
+                <p class="text-muted mt-3 mb-0">{{ 'whatsapp.qr.waiting' | translate }}</p>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="card-header d-flex align-items-center gap-2">
+            <i class="fa-solid fa-keyboard text-success"></i>
+            <h6 class="mb-0">{{ 'whatsapp.pair.title' | translate }}</h6>
+          </div>
+          <div class="card-body">
+            @if (connected()) {
+              <div class="connected-state text-center py-4">
+                <span class="connected-badge"><i class="fa-solid fa-check"></i></span>
+                <h6 class="fw-700 mt-3 mb-1">{{ 'whatsapp.qr.connectedTitle' | translate }}</h6>
+                <p class="text-muted mb-0">{{ 'whatsapp.qr.connectedHint' | translate }}</p>
+              </div>
+            } @else {
+              <p class="text-muted small">{{ 'whatsapp.pair.hint' | translate }}</p>
+              <form [formGroup]="pairForm" (ngSubmit)="submitPair()" novalidate>
+                <label class="form-label fw-600">{{ 'whatsapp.pair.phoneLabel' | translate }}</label>
+                <div class="d-flex gap-2">
+                  <input type="tel" class="form-control" formControlName="phone_number" inputmode="numeric"
+                         [class.is-invalid]="pairForm.controls.phone_number.invalid && pairForm.controls.phone_number.touched"
+                         [placeholder]="'whatsapp.pair.phonePlaceholder' | translate" />
+                  <button type="submit" class="btn btn-success text-nowrap" [disabled]="store.pairing()">
+                    @if (store.pairing()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                    {{ 'whatsapp.pair.submit' | translate }}
+                  </button>
+                </div>
+                @if (pairForm.controls.phone_number.invalid && pairForm.controls.phone_number.touched) {
+                  <div class="invalid-feedback d-block">{{ 'whatsapp.pair.invalidPhone' | translate }}</div>
+                }
+              </form>
+
+              @if (pairChars().length) {
+                <div class="pairing-code mt-3">
+                  <small class="text-muted d-block mb-2">{{ 'whatsapp.pair.codeTitle' | translate }}</small>
+                  <div class="pair-tiles">
+                    @for (ch of pairChars(); track $index) {
+                      <span class="pair-tile">{{ ch }}</span>
+                    }
+                  </div>
+                  <small class="text-muted d-block mt-2">{{ 'whatsapp.pair.codeHint' | translate }}</small>
+                </div>
+              }
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Status + connected account -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-signal text-success"></i>
+          <h6 class="mb-0">{{ 'whatsapp.client.title' | translate }}</h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="status-dot" [class.connected]="connected()"
+                  [class.connecting]="status()?.status === 'connecting'"></span>
+            <span class="fw-600">{{ statusLabel() | translate }}</span>
+          </div>
+
+          @if (displayPushname() || displayPhone() || platform()) {
+            <dl class="info-grid mb-0">
+              @if (displayPushname()) {
+                <dt>{{ 'whatsapp.fields.pushname' | translate }}</dt>
+                <dd>{{ displayPushname() }}</dd>
+              }
+              @if (displayPhone()) {
+                <dt>{{ 'whatsapp.fields.phone' | translate }}</dt>
+                <dd dir="ltr">{{ displayPhone() }}</dd>
+              }
+              @if (platform()) {
+                <dt>{{ 'whatsapp.fields.platform' | translate }}</dt>
+                <dd>{{ platform() }}</dd>
+              }
+            </dl>
+          } @else {
+            <p class="text-muted small mb-0">{{ 'whatsapp.client.noClient' | translate }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Health -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-heart-pulse text-success"></i>
+          <h6 class="mb-0">{{ 'whatsapp.health.label' | translate }}</h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <span class="badge {{ healthClass() }} fs-6">
+              <i class="fa-solid fa-heart-pulse me-1"></i>{{ healthLabel() | translate }}
+            </span>
+          </div>
+          <dl class="info-grid mb-0">
+            <dt>{{ 'whatsapp.fields.lastHeartbeat' | translate }}</dt>
+            <dd>{{ formatDateTime(health()?.last_heartbeat_at ?? s.last_heartbeat_at) }}</dd>
+            <dt>{{ 'whatsapp.fields.lastConnected' | translate }}</dt>
+            <dd>{{ formatDateTime(health()?.last_connected_at ?? s.last_connected_at) }}</dd>
+            <dt>{{ 'whatsapp.fields.consecutiveFailures' | translate }}</dt>
+            <dd>{{ health()?.consecutive_failures ?? 0 }}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- Session info -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="fa-solid fa-circle-info text-success"></i>
+          <h6 class="mb-0">{{ 'whatsapp.details' | translate }}</h6>
+        </div>
+        <div class="card-body">
+          <dl class="info-grid mb-0">
+            <dt>{{ 'whatsapp.fields.name' | translate }}</dt>
+            <dd>{{ s.name }}</dd>
+            <dt>{{ 'whatsapp.connectionMethod' | translate }}</dt>
+            <dd>{{ 'whatsapp.method.' + s.connection_method | translate }}</dd>
+            <dt>{{ 'whatsapp.fields.createdAt' | translate }}</dt>
+            <dd>{{ formatDateTime(s.created_at) }}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else if (store.loading()) {
+  <div class="text-center py-5"><span class="spinner-border text-success" role="status"></span></div>
+} @else {
+  <app-load-error [message]="store.error()" [loading]="store.loading()" (retry)="store.loadDetails(id)"></app-load-error>
+}

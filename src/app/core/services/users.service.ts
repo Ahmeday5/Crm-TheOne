@@ -40,6 +40,13 @@ export class UsersService {
     });
   }
 
+  /** Available role names (`["Marketing","Sales",…]`) for the role pickers. */
+  roles(): Observable<string[]> {
+    return this.api.get<string[]>(API_ENDPOINTS.users.roles, {
+      context: withCache({ ttlMs: CACHE_TTL.LONG }),
+    });
+  }
+
   getById(id: string): Observable<AppUser> {
     return this.api.get<AppUser>(API_ENDPOINTS.users.byId(id), {
       context: withSkipLoader(withCache({ ttlMs: CACHE_TTL.MEDIUM })),

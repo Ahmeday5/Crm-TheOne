@@ -1,0 +1,225 @@
+<div class="wa card" [class.show-thread]="store.activeId()">
+
+  <!-- ════════ THREAD (left in RTL) ════════ -->
+  <section class="wa__thread">
+    @if (store.activeConversation(); as c) {
+      <header class="thread-head">
+        <button type="button" class="ic d-lg-none" (click)="backToList()" title="رجوع">
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        <span class="avatar" [style.background]="c.avatarColor">{{ c.initials }}</span>
+        <div class="thread-head__id">
+          <h6 class="mb-0 text-truncate" dir="ltr">{{ c.name }}</h6>
+          <small class="text-success">{{ 'whatsapp.status.connected' | translate }}</small>
+        </div>
+        <div class="thread-head__actions">
+          <button type="button" class="ic" (click)="store.refreshActive()" [title]="'whatsapp.chat.refreshChat' | translate">
+            <i class="fa-solid fa-rotate" [class.fa-spin]="store.loading()"></i>
+          </button>
+          <button type="button" class="ic" (click)="back()" title="تفاصيل الجلسة"><i class="fa-solid fa-circle-info"></i></button>
+        </div>
+      </header>
+
+      <div #scroller class="thread-body">
+        @if (store.hasMore()) {
+          <div class="text-center mb-2">
+            <button type="button" class="btn btn-light btn-sm rounded-pill" [disabled]="store.loadingMore()" (click)="store.loadMore()">
+              @if (store.loadingMore()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+              {{ 'whatsapp.chat.loadMore' | translate }}
+            </button>
+          </div>
+        }
+
+        @if (store.messages().length === 0) {
+          <div class="thread-empty">
+            <i class="fa-regular fa-comment-dots fs-1 mb-2"></i>
+            <p class="mb-0">{{ 'whatsapp.chat.emptyHint' | translate }}</p>
+          </div>
+        }
+
+        @for (m of store.messages(); track trackMsg($index, m); let i = $index) {
+          @if (isNewDay(i)) {
+            <div class="day-sep"><span>{{ daySeparator(m.createdAt) }}</span></div>
+          }
+          <div class="row" [class.out]="m.direction === 'out'">
+            <div class="bubble" [class.out]="m.direction === 'out'" [class.failed]="m.failed">
+              @if (m.mediaPlaceholder) {
+                <p class="b-text"><i class="fa-solid fa-paperclip me-1"></i>{{ 'whatsapp.chat.media' | translate }}</p>
+              } @else {
+                @switch (m.type) {
+                  @case ('image') {
+                    @if (m.mediaUrl) { <img class="b-media" [src]="m.mediaUrl" alt="" /> }
+                    @if (m.text) { <p class="b-text">{{ m.text }}</p> }
+                  }
+                  @case ('video') {
+                    @if (m.mediaUrl) { <video class="b-media" [src]="m.mediaUrl" controls></video> }
+                    @if (m.text) { <p class="b-text">{{ m.text }}</p> }
+                  }
+                  @case ('audio') {
+                    @if (m.mediaUrl) { <audio class="b-audio" [src]="m.mediaUrl" controls></audio> }
+                    @else { <p class="b-text"><i class="fa-solid fa-microphone me-1"></i>{{ 'whatsapp.chat.types.audio' | translate }}</p> }
+                  }
+                  @case ('document') {
+                    <div class="b-doc"><i class="fa-solid fa-file-lines"></i><span class="text-truncate">{{ m.mediaName || m.text }}</span></div>
+                  }
+                  @case ('location') {
+                    <div class="b-loc"><i class="fa-solid fa-location-dot"></i>
+                      <div>@if (m.text) { <div class="fw-600">{{ m.text }}</div> }<small dir="ltr">{{ m.latitude }}, {{ m.longitude }}</small></div>
+                    </div>
+                  }
+                  @case ('contact') {
+                    <div class="b-contact"><i class="fa-solid fa-address-card"></i>
+                      <div><div class="fw-600">{{ m.contactName }}</div><small dir="ltr">{{ m.contactPhone }}</small></div>
+                    </div>
+                  }
+                  @default { <p class="b-text">{{ m.text }}</p> }
+                }
+              }
+              <span class="b-meta">
+                <span class="b-time">{{ clock(m.createdAt) }}</span>
+                @if (m.direction === 'out') {
+                  @if (m.failed) {
+                    <button type="button" class="b-retry" (click)="retry(m.key)" [title]="'whatsapp.chat.retry' | translate"><i class="fa-solid fa-rotate-right"></i></button>
+                  }
+                  <i class="b-tick {{ deliveryClass(m.deliveryStatus) }} {{ deliveryIcon(m.deliveryStatus) }}" [title]="deliveryLabelKey(m.deliveryStatus) | translate"></i>
+                }
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <footer class="composer">
+        <div class="dropdown dropup">
+          <button type="button" class="ic" data-bs-toggle="dropdown" aria-expanded="false" [title]="'whatsapp.chat.attach' | translate">
+            <i class="fa-solid fa-paperclip"></i>
+          </button>
+          <ul class="dropdown-menu">
+            @for (opt of attachOptions; track opt) {
+              <li><button type="button" class="dropdown-item" (click)="openCompose(opt)">{{ 'whatsapp.chat.types.' + opt | translate }}</button></li>
+            }
+          </ul>
+        </div>
+        <textarea class="composer__input" rows="1" [placeholder]="'whatsapp.chat.messagePlaceholder' | translate"
+                  [ngModel]="draft()" (ngModelChange)="draft.set($event)" (keydown)="onKeydown($event)"></textarea>
+        <button type="button" class="composer__send" (click)="send()" [disabled]="!draft().trim() || store.sending()" [title]="'whatsapp.chat.send' | translate">
+          @if (store.sending()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="fa-solid fa-paper-plane"></i> }
+        </button>
+      </footer>
+    } @else {
+      <div class="thread-placeholder">
+        <span class="ph-badge"><i class="fa-brands fa-whatsapp"></i></span>
+        <h5 class="fw-700 mt-3 mb-1">{{ 'whatsapp.chat.selectChat' | translate }}</h5>
+        <p class="text-muted">{{ 'whatsapp.chat.selectChatHint' | translate }}</p>
+      </div>
+    }
+  </section>
+
+  <!-- ════════ CONVERSATION LIST (right in RTL) ════════ -->
+  <aside class="wa__list">
+    <header class="list-head">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <div>
+          <h5 class="fw-700 mb-0">{{ 'whatsapp.chat.conversations' | translate }}</h5>
+          <small class="text-success"><i class="fa-solid fa-circle me-1 live-dot"></i>{{ 'whatsapp.chat.live' | translate }}</small>
+        </div>
+        <div class="d-flex gap-1">
+          <button type="button" class="ic" (click)="store.refreshList()" [title]="'whatsapp.chat.refreshList' | translate">
+            <i class="fa-solid fa-rotate" [class.fa-spin]="store.listLoading()"></i>
+          </button>
+          <button type="button" class="ic" (click)="openNewChat()" [title]="'whatsapp.chat.newChat' | translate">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="position-relative mb-2">
+        <i class="fa-solid fa-magnifying-glass srch-ic"></i>
+        <input type="text" class="form-control form-control-sm srch" [placeholder]="'whatsapp.chat.searchOrStart' | translate"
+               [ngModel]="search()" (ngModelChange)="search.set($event)" />
+      </div>
+
+      <div class="tabs">
+        @for (tab of tabs; track tab) {
+          <button type="button" class="tab" [class.active]="activeTab() === tab" (click)="setTab(tab)">
+            {{ 'whatsapp.chat.tabs.' + tab | translate }}
+            @if (tab === 'all' && store.totalUnread() > 0) { <span class="tab-badge">{{ store.totalUnread() }}</span> }
+          </button>
+        }
+      </div>
+    </header>
+
+    <div class="list-body">
+      @if (activeTab() === 'groups') {
+        <div class="list-empty"><i class="fa-solid fa-users fs-3 mb-2 d-block"></i><small>{{ 'whatsapp.chat.groupsSoon' | translate }}</small></div>
+      } @else if (store.loading() && store.conversations().length === 0) {
+        <div class="text-center py-5"><span class="spinner-border text-success" role="status"></span></div>
+      } @else if (filteredConversations().length === 0) {
+        <div class="list-empty">
+          <i class="fa-regular fa-comments fs-3 mb-2 d-block"></i>
+          <p class="fw-600 mb-1">{{ 'whatsapp.chat.noChats' | translate }}</p>
+          <small>{{ 'whatsapp.chat.noChatsHint' | translate }}</small>
+        </div>
+      } @else {
+        @for (c of filteredConversations(); track trackConv($index, c)) {
+          <button type="button" class="conv" [class.active]="store.activeId() === c.id" (click)="select(c.id)">
+            <span class="avatar" [style.background]="c.avatarColor">{{ c.initials }}</span>
+            <span class="conv__body">
+              <span class="conv__top">
+                <span class="conv__name text-truncate" dir="ltr">{{ c.name }}</span>
+                <span class="conv__time">{{ listTime(c.lastTime) }}</span>
+              </span>
+              <span class="conv__bottom">
+                <span class="conv__preview text-truncate">
+                  @if (c.lastDirection === 'out' && c.lastText) {
+                    <i class="b-tick {{ deliveryClass(c.lastStatus) }} {{ deliveryIcon(c.lastStatus) }} me-1"></i>
+                  }
+                  {{ c.lastText }}
+                </span>
+                <span class="conv__icons">
+                  @if (c.favorite) { <i class="fa-solid fa-star fav me-1"></i> }
+                  @if (c.unread > 0) { <span class="conv__unread">{{ c.unread }}</span> }
+                </span>
+              </span>
+            </span>
+            <i class="fa-solid fa-star conv__favbtn" [class.on]="c.favorite"
+               (click)="toggleFavorite(c.id, $event)"
+               [title]="(c.favorite ? 'whatsapp.chat.removeFavorite' : 'whatsapp.chat.addFavorite') | translate"></i>
+          </button>
+        }
+      }
+    </div>
+  </aside>
+
+  <!-- thin nav rail (decorative, RTL far-right) -->
+  <nav class="wa__rail">
+    <button type="button" class="rail-ic active" title="WhatsApp"><i class="fa-solid fa-comment-dots"></i></button>
+    <button type="button" class="rail-ic" (click)="openNewChat()" [title]="'whatsapp.chat.newChat' | translate"><i class="fa-solid fa-pen-to-square"></i></button>
+    <span class="flex-grow-1"></span>
+    <button type="button" class="rail-ic" (click)="store.refreshList()" [title]="'whatsapp.chat.refreshList' | translate"><i class="fa-solid fa-rotate"></i></button>
+    <button type="button" class="rail-ic" (click)="back()" title="رجوع"><i class="fa-solid fa-arrow-right"></i></button>
+  </nav>
+</div>
+
+<!-- compose media dialog -->
+@if (composeType(); as t) {
+  <app-send-media-dialog [type]="t" (closed)="closeCompose()"></app-send-media-dialog>
+}
+
+<!-- new chat dialog -->
+@if (newChatOpen()) {
+  <div class="newchat-backdrop" (click)="newChatOpen.set(false)">
+    <div class="newchat" (click)="$event.stopPropagation()">
+      <h6 class="fw-700 mb-3"><i class="fa-solid fa-pen-to-square me-2 text-success"></i>{{ 'whatsapp.chat.newChat' | translate }}</h6>
+      <label class="form-label fw-600">{{ 'whatsapp.chat.newChatNumber' | translate }}</label>
+      <input type="tel" class="form-control mb-3" dir="ltr" [placeholder]="'whatsapp.chat.recipientPlaceholder' | translate"
+             [ngModel]="newChatNumber()" (ngModelChange)="newChatNumber.set($event)" (keydown.enter)="confirmNewChat()" autofocus />
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-light" (click)="newChatOpen.set(false)">{{ 'whatsapp.chat.compose.cancel' | translate }}</button>
+        <button type="button" class="btn btn-success" [disabled]="!newChatNumber().trim()" (click)="confirmNewChat()">
+          <i class="fa-solid fa-comment me-1"></i>{{ 'whatsapp.chat.start' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

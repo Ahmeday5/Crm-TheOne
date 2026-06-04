@@ -23,6 +23,7 @@ import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ExportColumn } from '../../../../core/services/table-export.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
@@ -94,6 +95,7 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
   private readonly toast = inject(ToastService);
   private readonly dialog = inject(DialogService);
   private readonly language = inject(LanguageService);
+  private readonly auth = inject(AuthService);
 
   // ─────────── search / filter ───────────
   searchTerm = '';
@@ -140,7 +142,9 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
     note: true,
     edit: true,
     assignSales: true,
-    delete: true,
+    // Marketing users lack the delete permission on the backend — don't show
+    // an action that would only ever 403.
+    delete: this.auth.currentRole() === 'Admin',
   };
 
   readonly kpis = computed(() => {

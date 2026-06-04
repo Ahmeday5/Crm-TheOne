@@ -1,0 +1,114 @@
+<app-modal [open]="true" [title]="title()"
+           [icon]="'fa-solid fa-' + (type === 'location' ? 'location-dot' : type === 'contact' ? 'address-card' : 'paperclip')"
+           iconTone="success" size="md" (closed)="closed.emit()">
+
+  <!-- ─────────── media (image / video / audio / document) ─────────── -->
+  @if (isMedia()) {
+    <ul class="nav nav-pills nav-fill mb-3 gap-2">
+      <li class="nav-item">
+        <button type="button" class="nav-link w-100" [class.active]="mode() === 'upload'" (click)="setMode('upload')">
+          <i class="fa-solid fa-upload me-1"></i>{{ 'whatsapp.chat.compose.sourceTab' | translate }}
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" class="nav-link w-100" [class.active]="mode() === 'url'" (click)="setMode('url')">
+          <i class="fa-solid fa-link me-1"></i>{{ 'whatsapp.chat.compose.urlTab' | translate }}
+        </button>
+      </li>
+    </ul>
+
+    @if (mode() === 'upload') {
+      <label class="upload-drop">
+        <input type="file" [accept]="accept" hidden (change)="onFile($event)" />
+        <i class="fa-solid fa-cloud-arrow-up fs-3 mb-2"></i>
+        <span class="fw-600">{{ 'whatsapp.chat.compose.pickFile' | translate }}</span>
+        @if (fileName()) { <small class="text-muted mt-1 text-truncate w-100 text-center">{{ fileName() }}</small> }
+      </label>
+      @if (fileError()) { <div class="text-danger small mt-2">{{ fileError() }}</div> }
+    } @else {
+      <label class="form-label fw-600">{{ 'whatsapp.chat.compose.urlLabel' | translate }}</label>
+      <input type="url" class="form-control" [ngModel]="url()" (ngModelChange)="url.set($event)"
+             [placeholder]="'whatsapp.chat.compose.urlPlaceholder' | translate" />
+    }
+
+    <!-- preview -->
+    @if (previewUrl()) {
+      <div class="media-preview mt-3">
+        @switch (type) {
+          @case ('image') { <img [src]="previewUrl()" alt="preview" /> }
+          @case ('video') { <video [src]="previewUrl()" controls></video> }
+          @case ('audio') { <audio [src]="previewUrl()" controls></audio> }
+          @default {
+            <div class="doc-chip"><i class="fa-solid fa-file me-2"></i>{{ fileName() || ('whatsapp.chat.media' | translate) }}</div>
+          }
+        }
+      </div>
+    }
+
+    @if (type !== 'audio' && type !== 'document') {
+      <div class="mt-3">
+        <label class="form-label fw-600">{{ 'whatsapp.chat.compose.captionLabel' | translate }}</label>
+        <input type="text" class="form-control" [ngModel]="caption()" (ngModelChange)="caption.set($event)"
+               [placeholder]="'whatsapp.chat.compose.captionPlaceholder' | translate" />
+      </div>
+    }
+  }
+
+  <!-- ─────────── location ─────────── -->
+  @if (type === 'location') {
+    <div class="row g-3">
+      <div class="col-6">
+        <label class="form-label fw-600">{{ 'whatsapp.chat.compose.latitude' | translate }}</label>
+        <input type="number" class="form-control" [ngModel]="latitude()" (ngModelChange)="latitude.set($event)"
+               [class.is-invalid]="touched() && !validLat()" placeholder="30.0444" />
+        @if (touched() && !validLat()) {
+          <div class="invalid-feedback d-block">{{ 'whatsapp.chat.compose.invalidLatitude' | translate }}</div>
+        }
+      </div>
+      <div class="col-6">
+        <label class="form-label fw-600">{{ 'whatsapp.chat.compose.longitude' | translate }}</label>
+        <input type="number" class="form-control" [ngModel]="longitude()" (ngModelChange)="longitude.set($event)"
+               [class.is-invalid]="touched() && !validLng()" placeholder="31.2357" />
+        @if (touched() && !validLng()) {
+          <div class="invalid-feedback d-block">{{ 'whatsapp.chat.compose.invalidLongitude' | translate }}</div>
+        }
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-600">{{ 'whatsapp.chat.compose.description' | translate }}</label>
+        <input type="text" class="form-control" [ngModel]="description()" (ngModelChange)="description.set($event)"
+               [placeholder]="'whatsapp.chat.compose.descriptionPlaceholder' | translate" />
+      </div>
+    </div>
+  }
+
+  <!-- ─────────── contact ─────────── -->
+  @if (type === 'contact') {
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label fw-600">{{ 'whatsapp.chat.compose.contactName' | translate }}</label>
+        <input type="text" class="form-control" [ngModel]="contactName()" (ngModelChange)="contactName.set($event)"
+               [class.is-invalid]="touched() && !contactName().trim()" placeholder="Ahmed" />
+        @if (touched() && !contactName().trim()) {
+          <div class="invalid-feedback d-block">{{ 'whatsapp.chat.compose.required' | translate }}</div>
+        }
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-600">{{ 'whatsapp.chat.compose.contactPhone' | translate }}</label>
+        <input type="tel" class="form-control" dir="ltr" [ngModel]="contactPhone()" (ngModelChange)="contactPhone.set($event)"
+               [class.is-invalid]="touched() && !validContactPhone()" placeholder="201111111111" />
+        @if (touched() && !validContactPhone()) {
+          <div class="invalid-feedback d-block">{{ 'whatsapp.chat.compose.invalidPhone' | translate }}</div>
+        }
+      </div>
+    </div>
+  }
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" (click)="closed.emit()">
+      {{ 'whatsapp.chat.compose.cancel' | translate }}
+    </button>
+    <button type="button" class="btn btn-primary" [disabled]="!canSubmit()" (click)="submit()">
+      <i class="fa-solid fa-paper-plane me-1"></i>{{ 'whatsapp.chat.compose.send' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

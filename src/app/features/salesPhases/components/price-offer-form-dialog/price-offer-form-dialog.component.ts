@@ -133,6 +133,10 @@ export class PriceOfferFormDialogComponent implements OnInit {
   });
 
   readonly netTotal = computed(() => {
+    // Depend on the form snapshot so a discount-only change recomputes the
+    // net — `discount.value` is a plain read, not a tracked signal, and
+    // `subTotal()` doesn't change when only the discount does.
+    this.snapshot();
     const discount = Number(this.form.controls.discount.value) || 0;
     return Math.max(0, this.subTotal() - discount);
   });

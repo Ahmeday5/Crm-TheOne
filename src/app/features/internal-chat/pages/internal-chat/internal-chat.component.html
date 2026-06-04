@@ -1,0 +1,12 @@
+<div class="chat-page card" [class.show-thread]="hasActive()">
+  <aside class="chat-page__list">
+    <app-conversation-list (newChat)="openNewChat()" (newGroup)="openNewGroup()"></app-conversation-list>
+  </aside>
+  <section class="chat-page__thread">
+    <app-chat-thread (back)="back()"></app-chat-thread>
+  </section>
+</div>
+
+@if (dialogOpen()) {
+  <app-new-chat-dialog [mode]="dialogMode()" (closed)="closeDialog()"></app-new-chat-dialog>
+}

@@ -283,11 +283,27 @@ export class SupportTicketsComponent implements OnInit, OnDestroy {
   // ─────────── row helpers ───────────
 
   priorityMeta(row: SupportTicket): SupportTicketPriorityMeta | undefined {
-    return SUPPORT_TICKET_PRIORITY_MAP[row.priority];
+    // The backend may serialize `priority` as a number (1) OR an enum name
+    // ("High"); resolve both so the badge always renders the Arabic label.
+    return (
+      SUPPORT_TICKET_PRIORITY_MAP[row.priority] ??
+      SUPPORT_TICKET_PRIORITIES.find(
+        (p) =>
+          p.enumName.toLowerCase() ===
+          String(row.priority ?? row.priorityName ?? '').toLowerCase(),
+      )
+    );
   }
 
   statusMeta(row: SupportTicket): SupportTicketStatusMeta | undefined {
-    return SUPPORT_TICKET_STATUS_MAP[row.status];
+    return (
+      SUPPORT_TICKET_STATUS_MAP[row.status] ??
+      SUPPORT_TICKET_STATUSES.find(
+        (s) =>
+          s.enumName.toLowerCase() ===
+          String(row.status ?? row.statusName ?? '').toLowerCase(),
+      )
+    );
   }
 
   /** Bilingual service name (falls back to the row's Arabic serviceName). */

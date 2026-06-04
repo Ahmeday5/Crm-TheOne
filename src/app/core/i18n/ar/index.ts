@@ -18,6 +18,9 @@ import dailyReports from './dailyReports.ar';
 import tableTools from './tableTools.ar';
 import resources from './resources.ar';
 import knowledgeBase from './knowledgeBase.ar';
+import chat from './chat.ar';
+import whatsapp from './whatsapp.ar';
+import notifications from './notifications.ar';
 
 const ar: Translations = {
   ...common,
@@ -39,6 +42,9 @@ const ar: Translations = {
   ...tableTools,
   ...resources,
   ...knowledgeBase,
+  ...chat,
+  ...whatsapp,
+  ...notifications,
 };
 
 export default ar;

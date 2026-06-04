@@ -1,0 +1,18 @@
+<div class="nt-stack">
+  @for (t of toasts(); track trackId($index, t)) {
+    <div class="nt" role="alert" (click)="open(t)">
+      <span class="icon-tile tone-{{ tone(t) }} nt-ic"><i [class]="icon(t)"></i></span>
+      <div class="nt-body">
+        <div class="nt-top">
+          <span class="nt-title text-truncate">{{ t.title }}</span>
+          <button type="button" class="nt-close" (click)="dismiss(t, $event)" aria-label="close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <p class="nt-msg mb-0">{{ t.message }}</p>
+        <span class="nt-hint"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i>{{ 'notifications.actions.open' | translate }}</span>
+      </div>
+      <span class="nt-progress"></span>
+    </div>
+  }
+</div>

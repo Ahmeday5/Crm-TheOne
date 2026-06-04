@@ -13,6 +13,9 @@ import { SETTINGS_ROUTES } from './features/settings/settings.routes';
 import { MARKETING_CAMPAIGNS_ROUTES } from './features/marketing-campaigns/marketingCampaigns.routes';
 import { SERVICES_ROUTES } from './features/services/services.routes';
 import { DAILY_REPORTS_ROUTES } from './features/daily-reports/dailyReports.routes';
+import { INTERNAL_CHAT_ROUTES } from './features/internal-chat/internalChat.routes';
+import { WHATSAPP_ROUTES } from './features/whatsapp/whatsapp.routes';
+import { NOTIFICATIONS_ROUTES } from './features/notifications/notifications.routes';
 
 
 export const routes: Routes = [
@@ -34,6 +37,9 @@ export const routes: Routes = [
       ...MARKETING_CAMPAIGNS_ROUTES,
       ...SERVICES_ROUTES,
       ...DAILY_REPORTS_ROUTES,
+      ...INTERNAL_CHAT_ROUTES,
+      ...WHATSAPP_ROUTES,
+      ...NOTIFICATIONS_ROUTES,
       {
         path: 'sales-analysis',
         title: 'تحليل نتائج المبيعات',

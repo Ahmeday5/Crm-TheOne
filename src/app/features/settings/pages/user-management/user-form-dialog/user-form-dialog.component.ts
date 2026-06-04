@@ -5,8 +5,10 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnInit,
   Output,
   SimpleChanges,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -19,7 +21,6 @@ import {
 import { ALL_ROLES } from '../../../../../core/constants/roles.const';
 import { TRANSLATIONS, resolveKey } from '../../../../../core/i18n';
 import { ApiError } from '../../../../../core/models/api-response.model';
-import { UserRole } from '../../../../../core/models/auth.model';
 import {
   AddUserRequest,
   AppUser,
@@ -41,7 +42,7 @@ type Mode = 'add' | 'edit';
   templateUrl: './user-form-dialog.component.html',
   styleUrl: './user-form-dialog.component.scss',
 })
-export class UserFormDialogComponent implements OnChanges {
+export class UserFormDialogComponent implements OnChanges, OnInit {
   @Input({ required: true }) mode!: Mode;
   /** Required in edit mode. */
   @Input() user: AppUser | null = null;
@@ -51,7 +52,13 @@ export class UserFormDialogComponent implements OnChanges {
   /** User cancelled / clicked the backdrop. */
   @Output() cancel = new EventEmitter<void>();
 
-  readonly roles: ReadonlyArray<UserRole> = ALL_ROLES;
+  /** Roles from the API, falling back to the bundled list until they load. */
+  private readonly apiRoles = signal<string[]>([]);
+  readonly roles = computed<string[]>(() => {
+    const fromApi = this.apiRoles();
+    return fromApi.length ? fromApi : [...ALL_ROLES];
+  });
+
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
@@ -61,18 +68,25 @@ export class UserFormDialogComponent implements OnChanges {
   private readonly lang = inject(LanguageService);
 
   /**
-   * Reactive form. The "add"-only fields (`address`, `password`, `role`) are
-   * always declared so we can validate them; their `required` validators only
-   * fire when the form is in add mode (we toggle it in `ngOnChanges`).
+   * Reactive form. `password` is add-only; `role` / `address` / `specialty` now
+   * apply to both add and edit (the update endpoint accepts them). Validators
+   * that only apply in add mode are toggled in `ngOnChanges`.
    */
   readonly form = this.fb.nonNullable.group({
     fullName: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
     phone: ['', [Validators.required, Validators.minLength(6)]],
-    address: [''],
+    role: ['Sales' as string, [Validators.required]],
+    address: ['', [Validators.required]],
+    specialty: [''],
     password: [''],
-    role: ['Sales' as UserRole],
   });
+
+  ngOnInit(): void {
+    this.users.roles().subscribe({
+      next: (roles) => this.apiRoles.set(roles ?? []),
+    });
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if ('mode' in changes || 'user' in changes) {
@@ -83,27 +97,20 @@ export class UserFormDialogComponent implements OnChanges {
         fullName: this.user?.fullName ?? '',
         email: this.user?.email ?? '',
         phone: this.user?.phone ?? '',
-        address: '',
+        role: (this.user?.role as string) || 'Sales',
+        address: this.user?.address ?? '',
+        specialty: this.user?.specialty ?? '',
         password: '',
-        role: 'Sales',
       });
 
-      // Add-only validators
-      const addressC = this.form.controls.address;
+      // Password is required only when creating.
       const passwordC = this.form.controls.password;
-      const roleC = this.form.controls.role;
       if (this.mode === 'add') {
-        addressC.setValidators([Validators.required]);
         passwordC.setValidators([Validators.required, Validators.minLength(6)]);
-        roleC.setValidators([Validators.required]);
       } else {
-        addressC.clearValidators();
         passwordC.clearValidators();
-        roleC.clearValidators();
       }
-      addressC.updateValueAndValidity({ emitEvent: false });
       passwordC.updateValueAndValidity({ emitEvent: false });
-      roleC.updateValueAndValidity({ emitEvent: false });
     }
   }
 
@@ -126,6 +133,7 @@ export class UserFormDialogComponent implements OnChanges {
         email: v.email.trim(),
         phoneNumber: v.phone.trim(),
         role: v.role,
+        specialty: v.specialty.trim(),
       };
       this.users.add(payload).subscribe({
         next: () => {
@@ -147,6 +155,9 @@ export class UserFormDialogComponent implements OnChanges {
       email: v.email.trim(),
       phone: v.phone.trim(),
       fullName: v.fullName.trim(),
+      role: v.role,
+      address: v.address.trim(),
+      specialty: v.specialty.trim(),
     };
     this.users.update(this.user.userId, payload).subscribe({
       next: () => {
