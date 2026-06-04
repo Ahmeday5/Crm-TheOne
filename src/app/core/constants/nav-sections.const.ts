@@ -150,7 +150,6 @@ export const NAV_SECTIONS: NavSection[] = [
         labelKey: 'sidebar.items.whatsappSessions',
         path: '/whatsapp-sessions',
         icon: 'fa-brands fa-whatsapp',
-        roles: ['Admin'],
       },
       {
         labelKey: 'sidebar.items.kb',
@@ -174,7 +173,6 @@ export const NAV_SECTIONS: NavSection[] = [
         labelKey: 'sidebar.items.notifications',
         path: '/notifications',
         icon: 'fa-solid fa-bell',
-        roles: ['Admin'],
       },
       {
         labelKey: 'sidebar.items.devAnalytics',
