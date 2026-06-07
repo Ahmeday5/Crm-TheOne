@@ -8,7 +8,7 @@ export const environment = {
   production: true,
 
   /** Backend API base — endpoints in `api-endpoints.const.ts` are relative to this. */
-  apiUrl: 'https://crmproject.runasp.net/api',
+  apiUrl: 'http://78.89.159.126:9494/TheOneCRMAPI/api',
 
   /** WhatsApp gateway base — the sessions module talks to a separate service. */
   whatsappApiUrl: 'https://whatsapp.theonesystemco.com/api/v1',
