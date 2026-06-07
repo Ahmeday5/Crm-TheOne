@@ -20,10 +20,11 @@ import {
   ChangeCustomerStatusRequest,
   CustomerFollowUpResponse,
   CustomerStatus,
+  CustomerStatusEnum,
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { CustomersService } from '../../services/customers.service';
-import { customerStatusKey, resolveCustomerStatus } from '../../utils/customer-status.util';
+import { customerStatusEnumName, customerStatusKey, resolveCustomerStatus } from '../../utils/customer-status.util';
 
 @Component({
   selector: 'app-change-status-dialog',
@@ -107,10 +108,16 @@ export class ChangeStatusDialogComponent implements OnInit {
     const id = this.selectedId();
     if (id === null) return;
 
+    // Resolve the enum name from the selected status's Arabic name.
+    // Backend expects the string enum name (e.g. "Negotiating"), not the numeric ID.
+    const match = this.statuses().find((s) => s.id === id);
+    const enumName = match ? customerStatusEnumName(match.name) as CustomerStatusEnum : null;
+    if (!enumName) return;
+
     this.submitting.set(true);
     this.errorMessage.set(null);
 
-    const payload: ChangeCustomerStatusRequest = { status: id };
+    const payload: ChangeCustomerStatusRequest = { status: enumName };
     if (this.requiresReason()) {
       payload.notBuyingReason = this.notBuyingReason().trim();
     }

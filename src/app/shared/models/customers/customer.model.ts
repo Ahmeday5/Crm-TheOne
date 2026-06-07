@@ -51,6 +51,25 @@ export interface CustomerListItem {
    * by older endpoint versions that don't yet emit it.
    */
   notBuyerReason?: string | null;
+  /** Full activity log returned inline by the list endpoints. May be empty []. */
+  activities?: CustomerActivity[];
+}
+
+/**
+ * Single entry in a customer's activity log.
+ * Returned inline inside `CustomerListItem.activities` by the list endpoints.
+ */
+export interface CustomerActivity {
+  id: number;
+  activityType: CustomerActivityType;
+  /** Non-null only when activityType === 'ContactAttempted'. */
+  contactResult: ContactResult | null;
+  /** Previous status string — non-null only when activityType === 'StatusChanged'. */
+  fromStatus: string | null;
+  /** Next status string — non-null only when activityType === 'StatusChanged'. */
+  toStatus: string | null;
+  createdByName: string | null;
+  createdAt: string;
 }
 
 /** Role-specific slot of a customer note. */
@@ -115,6 +134,7 @@ export interface CustomerDetails {
   isMarketingToSales?: boolean;
   isSalesToSupport?: boolean;
   isSupportToSales?: boolean;
+  isConsulted?: boolean;
   noteMarketing?: string | null;
   noteSales?: string | null;
   noteSupport?: string | null;
@@ -166,14 +186,20 @@ export interface AssignSupportRequest {
 }
 
 /**
+ * Exact string values the backend `CustomerStatus` enum serializes to.
+ * These are the values sent in `PUT /Customers/{id}/status`.
+ * Numeric IDs: New=1, Negotiating=3, Buyer=4, NotBuyer=5.
+ */
+export type CustomerStatusEnum = 'New' | 'Negotiating' | 'Buyer' | 'NotBuyer';
+
+/**
  * Body for `PUT /Customers/{id}/status`.
  *
- * The backend enforces that `notBuyingReason` is non-empty when `status`
- * resolves to `NotBuyer` (statusId 5) and rejects with HTTP 400 otherwise.
- * For any other status the field should be omitted.
+ * The backend expects the enum **name** as a string (e.g. `"Negotiating"`),
+ * not the numeric ID. `notBuyingReason` is required when `status === "NotBuyer"`.
  */
 export interface ChangeCustomerStatusRequest {
-  status: number;
+  status: CustomerStatusEnum;
   /** Required only when transitioning to `NotBuyer`. */
   notBuyingReason?: string;
 }
@@ -184,18 +210,59 @@ export interface UpdateFollowUpRequest {
   nextFollowUpDate: string;
 }
 
-/** Returned by `POST /Customers/{id}/followUp` and `…/status`. */
+/**
+ * Shared response shape returned by:
+ *   - `PUT  /Customers/{id}/status`
+ *   - `POST /Customers/{id}/followUp`
+ *   - `POST /Customers/{id}/contact`
+ *
+ * The backend returns a lightweight customer projection — it intentionally
+ * omits `status` (use cache-invalidation + reload to get the fresh status).
+ */
 export interface CustomerFollowUpResponse {
   id: number;
   fullName: string;
+  address: string | null;
   lastFollowUpDate: string | null;
   nextFollowUpDate: string | null;
+  isMarketingToSales: boolean;
+  isSalesToSupport: boolean;
+  isSupportToSales: boolean;
+  noteMarketing: string | null;
+  noteSales: string | null;
+  noteSupport: string | null;
 }
 
 /** Dropdown item returned by `GET /Customers/statuses`. */
 export interface CustomerStatus {
   id: number;
   name: string;
+}
+
+/**
+ * Maps to the backend `ContactResult` enum.
+ * Answered = 1, NoAnswer = 2, Busy = 3, WrongNumber = 4.
+ */
+export type ContactResult = 'Answered' | 'NoAnswer' | 'Busy' | 'WrongNumber';
+
+/**
+ * Maps to the backend `CustomerActivityType` enum.
+ * CustomerCreated=1, AssignedToSalesTeam=2, ContactAttempted=3,
+ * SentQuote=4, TransferredToSupport=5, StatusChanged=6, ReturnedToSales=7.
+ */
+export type CustomerActivityType =
+  | 'CustomerCreated'
+  | 'AssignedToSalesTeam'
+  | 'ContactAttempted'
+  | 'SentQuote'
+  | 'TransferredToSupport'
+  | 'StatusChanged'
+  | 'ReturnedToSales';
+
+/** Body for `POST /Customers/{id}/contact`. */
+export interface LogContactAttemptRequest {
+  result: ContactResult;
+  notes?: string;
 }
 
 /** Sales team member returned by `GET /Auth/sales`. */

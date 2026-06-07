@@ -19,7 +19,6 @@ export class MainLayoutComponent implements OnInit {
   private readonly companySettings = inject(CompanySettingsService);
 
   ngOnInit(): void {
-    // White-label identity (logo / favicon / name / currency) for the session.
     this.companySettings.ensureLoaded();
   }
 }

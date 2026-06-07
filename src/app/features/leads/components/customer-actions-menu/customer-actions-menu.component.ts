@@ -35,6 +35,10 @@ export interface CustomerActionsConfig {
   changeStatus?: boolean;
   /** Update follow-up dates. */
   followUp?: boolean;
+  /** Log a contact attempt with call result (Sales + Admin only). */
+  logContact?: boolean;
+  /** Open the full activity log timeline for this customer. */
+  activities?: boolean;
   /** Delete (marketing-only). */
   delete?: boolean;
 }
@@ -65,6 +69,8 @@ export class CustomerActionsMenuComponent {
   readonly actions = input<CustomerActionsConfig>({});
   /** Per-row spinner — when set, all buttons go disabled. */
   readonly busy = input<boolean>(false);
+  /** Activity count for this row — shows a badge on the activities button. */
+  readonly activitiesCount = input<number>(0);
 
   // ── outputs (one per action — host wires only the ones it enables) ──
   readonly view = output<void>();
@@ -74,6 +80,8 @@ export class CustomerActionsMenuComponent {
   readonly assignSupport = output<void>();
   readonly changeStatus = output<void>();
   readonly followUp = output<void>();
+  readonly logContact = output<void>();
+  readonly activities = output<void>();
   readonly delete = output<void>();
 
   readonly telHref = computed(() => toTelHref(this.phone()));
@@ -88,6 +96,8 @@ export class CustomerActionsMenuComponent {
       a.assignSupport ||
       a.changeStatus ||
       a.followUp ||
+      a.logContact ||
+      a.activities ||
       a.delete
     );
   });

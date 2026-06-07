@@ -66,6 +66,8 @@ export const API_ENDPOINTS = {
     changeStatus: (id: number | string) => `Customers/${id}/status`,
     followUp: (id: number | string) => `Customers/${id}/followUp`,
     statuses: 'Customers/statuses',
+    /** Log a contact attempt (call result + optional notes) for this customer. */
+    contact: (id: number | string) => `Customers/${id}/contact`,
     /** Customer picker for price quotations — each item carries its services. */
     dropdown: 'Customers/dropdownCustomers',
   },

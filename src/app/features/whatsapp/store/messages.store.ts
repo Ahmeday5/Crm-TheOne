@@ -56,6 +56,8 @@ export class MessagesStore {
   // ─────────────── state ───────────────
   readonly sessionId = signal<number | null>(null);
   readonly selfNumber = signal<string | null>(null);
+  /** Session's own LID (Linked Identity) — a 16+ digit id WhatsApp uses on linked devices. */
+  private readonly selfLid = signal<string | null>(null);
 
   private readonly serverRows = signal<WaMessage[]>([]);
   private readonly pending = signal<MessageView[]>([]);
@@ -146,6 +148,7 @@ export class MessagesStore {
     this.pagination.set(null);
     this.error.set(null);
     this.selfNumber.set(null);
+    this.selfLid.set(null);
     this.retryThunks.clear();
     this.loadMeta(sessionId);
     this.resolveSelfNumber(sessionId);
@@ -160,6 +163,7 @@ export class MessagesStore {
     this.activeId.set(null);
     this.pagination.set(null);
     this.error.set(null);
+    this.selfLid.set(null);
     this.retryThunks.clear();
   }
 
@@ -378,10 +382,10 @@ export class MessagesStore {
 
   // ─────────────── internals: data ───────────────
 
-  /** Server rows mapped to views, plus optimistic ones. */
+  /** Server rows mapped to views, plus optimistic ones, with LID conversations resolved. */
   private allViews(): MessageView[] {
     const server = this.serverRows().map((m) => this.toView(m));
-    return [...server, ...this.pending()];
+    return this.resolveLids([...server, ...this.pending()]);
   }
 
   private mergeRows(current: WaMessage[], incoming: WaMessage[]): WaMessage[] {
@@ -456,12 +460,18 @@ export class MessagesStore {
   /** Resolve a message's conversation key + direction relative to the session. */
   private classify(m: WaMessage): { conversationId: string; direction: MessageDirection } {
     const self = this.selfNumber();
+    const selfLid = this.selfLid();
     const fromKey = this.convKey(m.from);
     const toKey = this.convKey(m.to);
+    const fromDigits = this.digits(m.from);
+    const toDigits = this.digits(m.to);
 
     if (self) {
-      if (this.digits(m.from) === self) return { conversationId: toKey, direction: 'out' };
-      if (this.digits(m.to) === self) return { conversationId: fromKey, direction: 'in' };
+      // Match against both the phone number and the session's LID (linked device id).
+      const fromIsSelf = fromDigits === self || (!!selfLid && fromDigits === selfLid);
+      const toIsSelf = toDigits === self || (!!selfLid && toDigits === selfLid);
+      if (fromIsSelf) return { conversationId: toKey, direction: 'out' };
+      if (toIsSelf) return { conversationId: fromKey, direction: 'in' };
     }
     // Fallback when we don't know our own number: trust the status flag.
     return m.status === 'received'
@@ -549,13 +559,67 @@ export class MessagesStore {
   private resolveSelfNumber(sessionId: number): void {
     this.sessions.status(sessionId).subscribe({
       next: (status) => {
-        const user = status.clientInfo?.wid?.user;
-        if (user) this.selfNumber.set(this.digits(user));
+        const wid = status.clientInfo?.wid;
+        const me = status.clientInfo?.me;
+        if (wid?.user) this.selfNumber.set(this.digits(wid.user));
+        // Some gateways put the phone in `wid` and the LID in `me` (or vice-versa).
+        // If they differ, save the second as the LID so classify() can match both.
+        if (me?.user && wid?.user && me.user !== wid.user) {
+          this.selfLid.set(this.digits(me.user));
+        }
       },
       error: () => {
         /* leave null — classify() falls back to the status flag */
       },
     });
+  }
+
+  // ─────────────── LID resolution ───────────────
+
+  /**
+   * WhatsApp sometimes uses a LID (Linked Identity — a 16+ digit numeric id)
+   * instead of a real phone number in the `from` field of incoming messages.
+   * This causes replies to appear as a new unknown conversation instead of
+   * threading into the existing chat. We fix this by:
+   *   - for each LID conversation (all incoming, key ≥ 16 digits),
+   *   - finding the phone conversation whose most-recent outgoing message
+   *     was sent closest in time BEFORE the LID message arrived,
+   *   - and re-keying those views to that phone conversation.
+   */
+  private resolveLids(views: MessageView[]): MessageView[] {
+    const isLid = (id: string) => /^\d{16,}$/.test(id);
+    if (!views.some(v => isLid(v.conversationId))) return views;
+
+    const sorted = [...views].sort((a, b) => this.time(a.createdAt) - this.time(b.createdAt));
+    const lidMap = new Map<string, string>(); // LID → resolved phone conversationId
+    // Track the most recent outgoing timestamp per phone conversation.
+    const lastOutTime = new Map<string, number>();
+
+    for (const v of sorted) {
+      if (v.direction === 'out' && !isLid(v.conversationId)) {
+        lastOutTime.set(v.conversationId, this.time(v.createdAt));
+      }
+      if (v.direction === 'in' && isLid(v.conversationId) && !lidMap.has(v.conversationId)) {
+        const t = this.time(v.createdAt);
+        let bestPhone: string | null = null;
+        let bestDiff = Infinity;
+        for (const [phone, lastT] of lastOutTime) {
+          if (lastT <= t && (t - lastT) < bestDiff) {
+            bestDiff = t - lastT;
+            bestPhone = phone;
+          }
+        }
+        if (bestPhone) lidMap.set(v.conversationId, bestPhone);
+      }
+    }
+
+    if (!lidMap.size) return views;
+
+    return views.map(v =>
+      isLid(v.conversationId) && lidMap.has(v.conversationId)
+        ? { ...v, conversationId: lidMap.get(v.conversationId)! }
+        : v,
+    );
   }
 
   // ─────────────── helpers ───────────────

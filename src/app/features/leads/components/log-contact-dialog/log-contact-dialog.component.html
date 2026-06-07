@@ -1,0 +1,84 @@
+<app-modal
+  [open]="true"
+  [title]="'customers.contactModal.title' | translate"
+  icon="fa-solid fa-phone"
+  iconTone="primary"
+  size="md"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <div class="mb-3">
+    <p class="text-muted mb-2">{{ 'customers.contactModal.hint' | translate }}</p>
+
+    @if (customerName) {
+      <div class="card bg-light p-3">
+        <p class="fw-600 mb-0">
+          <i class="fa-solid fa-user me-2 text-primary"></i>{{ customerName }}
+        </p>
+      </div>
+    }
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label fw-600">
+      {{ 'customers.contactModal.resultLabel' | translate }}
+      <span class="text-danger">*</span>
+    </label>
+    <div class="list-group">
+      @for (opt of RESULT_OPTIONS; track opt.value) {
+        <label class="list-group-item list-group-item-action d-flex align-items-center gap-3"
+               [class.active]="selectedResult() === opt.value"
+               style="cursor: pointer;"
+               (click)="onSelect(opt.value)">
+          <input type="radio"
+                 class="form-check-input mt-0"
+                 name="contactResult"
+                 [value]="opt.value"
+                 [checked]="selectedResult() === opt.value"
+                 (change)="onSelect(opt.value)" />
+          <i [class]="opt.icon + ' ' + opt.iconClass"></i>
+          <span class="fw-600">{{ resultLabel(opt.value) }}</span>
+        </label>
+      }
+    </div>
+  </div>
+
+  <div class="mb-1">
+    <label class="form-label fw-600">{{ 'customers.contactModal.notes' | translate }}</label>
+    <textarea class="form-control"
+              rows="3"
+              [maxlength]="500"
+              [placeholder]="'customers.contactModal.notesPh' | translate"
+              [ngModel]="notes()"
+              (ngModelChange)="onNotesChange($event)"
+              [disabled]="submitting()"></textarea>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <ng-container modal-footer>
+    <button type="button"
+            class="btn btn-light"
+            [disabled]="submitting()"
+            (click)="cancel.emit()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button type="button"
+            class="btn btn-primary"
+            [disabled]="!canSubmit()"
+            (click)="submit()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-phone me-1"></i>
+      }
+      {{ 'customers.contactModal.submit' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

@@ -1,0 +1,103 @@
+<div class="modal fade show d-block" tabindex="-1" role="dialog" (click)="close.emit()">
+  <div class="modal-dialog modal-dialog-scrollable modal-md" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+
+      <!-- ══ Header ══════════════════════════════════════════════ -->
+      <div class="act-header">
+
+        <div class="act-header-icon" aria-hidden="true">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+
+        <div class="act-header-body">
+          <h5 class="act-header-title">{{ 'customers.activities.title' | translate }}</h5>
+          <span class="act-header-sub">{{ customerName() }}</span>
+        </div>
+
+        @if (activities().length) {
+          <span class="act-header-count" [attr.aria-label]="activities().length + ' activities'">
+            {{ activities().length }}
+          </span>
+        }
+
+        <button class="act-header-close"
+                type="button"
+                (click)="close.emit()"
+                [attr.aria-label]="'customers.activities.close' | translate">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+
+      </div>
+
+      <!-- ══ Body ════════════════════════════════════════════════ -->
+      <div class="act-body">
+
+        @if (activities().length === 0) {
+          <div class="act-empty">
+            <div class="act-empty-icon-wrap" aria-hidden="true">
+              <i class="fa-regular fa-clock-rotate-left"></i>
+            </div>
+            <p class="act-empty-text">{{ 'customers.activities.empty' | translate }}</p>
+          </div>
+        } @else {
+          <div class="act-timeline"
+               role="list"
+               [attr.aria-label]="'customers.activities.title' | translate">
+
+            @for (act of activities(); track act.id; let last = $last) {
+              @if (activityDisplay(act); as display) {
+                <div class="act-item" [class.is-last]="last" role="listitem">
+
+                  <!-- Track: colored dot + vertical connector -->
+                  <div class="act-track" aria-hidden="true">
+                    <div class="act-dot {{ display.dotClass }}">
+                      <i [class]="display.icon"></i>
+                    </div>
+                    @if (!last) { <div class="act-connector"></div> }
+                  </div>
+
+                  <!-- Content -->
+                  <div class="act-content">
+                    <p class="act-title">{{ display.titleKey | translate }}</p>
+
+                    <div class="act-meta">
+                      <i class="fa-regular fa-clock" aria-hidden="true"></i>
+                      <span>{{ formatDateTime(act.createdAt) }}</span>
+                      @if (act.createdByName) {
+                        <span class="act-sep" aria-hidden="true">·</span>
+                        <span>{{ act.createdByName }}</span>
+                      }
+                    </div>
+
+                    <!-- ContactAttempted: result badge -->
+                    @if (act.contactResult) {
+                      <span class="act-result-badge {{ contactResultClass(act.contactResult) }}">
+                        <i [class]="display.icon" aria-hidden="true"></i>
+                        {{ contactResultKey(act.contactResult) | translate }}
+                      </span>
+                    }
+
+                    <!-- StatusChanged: from → to -->
+                    @if (act.fromStatus || act.toStatus) {
+                      <div class="act-status-change">
+                        <span class="act-from">{{ resolveStatus(act.fromStatus) }}</span>
+                        <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i>
+                        <span class="act-to">{{ resolveStatus(act.toStatus) }}</span>
+                      </div>
+                    }
+                  </div>
+
+                </div>
+              }
+            }
+
+          </div>
+        }
+
+      </div>
+      <!-- ══ No footer — close is in the header ══════════════════ -->
+
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>

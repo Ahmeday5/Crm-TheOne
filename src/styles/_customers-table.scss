@@ -175,6 +175,146 @@
   font-size: var(--fs-xs);
 }
 
+/* ── activity count badge inside the dropdown item ─────────── */
+.crm-act-badge-pill {
+  background: var(--info-soft);
+  color: var(--info);
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 0.2em 0.5em;
+  margin-inline-start: auto;
+}
+
+/* ── customer journey stepper ──────────────────────────────── */
+/*
+ * Classic pipeline stepper — dots on top, labels below, connected by
+ * a 2 px line that is vertically centered with the dot row.
+ *
+ *       ●────────●────────○
+ *     تسويق   مبيعات    دعم
+ *
+ * Structure:
+ *   .crm-stepper                      flex-row, align-items: flex-start
+ *     .crm-stepper-item               flex-col, dot + label
+ *       .crm-stepper-dot              circle, role + state modifiers
+ *       .crm-stepper-label            tiny centered label
+ *     .crm-stepper-line               connector between items
+ *
+ * Modifiers:
+ *   .role-marketing / .role-sales / .role-support  → color token
+ *   .is-passed   → filled dot, ✓ icon, muted label
+ *   .is-active   → filled dot + glow ring, bold role-colored label
+ *   .is-pending  → surface-bg + dashed border, no icon, dim label
+ */
+
+$dot-size: 1.5rem;
+$dot-icon: 0.55rem;
+$dot-half: 0.75rem; // $dot-size / 2 — used to center the connector line
+
+.crm-stepper {
+  display: flex;
+  align-items: flex-start; // tops aligned — line gets margin-top to center with dots
+  flex-wrap: wrap;          // steps wrap to next line instead of overflowing
+  margin-top: 0.45rem;
+  row-gap: 0.4rem;
+  gap: 0;
+  direction: ltr; // pipeline always reads L→R
+}
+
+// ── step column (dot above, label below) ──────────────────────
+.crm-stepper-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.22rem;
+  flex-shrink: 0;
+}
+
+// ── dot ───────────────────────────────────────────────────────
+.crm-stepper-dot {
+  width: $dot-size;
+  height: $dot-size;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $dot-icon;
+  flex-shrink: 0;
+  transition: box-shadow 0.18s ease, transform 0.12s ease;
+
+  // pending: lightweight surface + dashed ring
+  &.is-pending {
+    background: var(--surface-1);
+    border: 1.5px dashed var(--border);
+    color: var(--text-muted);
+  }
+
+  // passed / active share white icon on colored bg
+  &.is-passed,
+  &.is-active { color: #fff; }
+
+  &.role-marketing.is-passed,
+  &.role-marketing.is-active { background: var(--info); }
+
+  &.role-sales.is-passed,
+  &.role-sales.is-active     { background: var(--success); }
+
+  &.role-support.is-passed,
+  &.role-support.is-active   { background: var(--warning); }
+
+  // active: elevate slightly + role-tinted glow ring
+  &.is-active {
+    transform: scale(1.06);
+    &.role-marketing { box-shadow: 0 0 0 4px var(--info-soft),    0 2px 6px rgba(0,0,0,.12); }
+    &.role-sales     { box-shadow: 0 0 0 4px var(--success-soft), 0 2px 6px rgba(0,0,0,.12); }
+    &.role-support   { box-shadow: 0 0 0 4px var(--warning-soft), 0 2px 6px rgba(0,0,0,.12); }
+  }
+}
+
+// ── label ─────────────────────────────────────────────────────
+.crm-stepper-label {
+  font-size: 0.6rem;
+  white-space: nowrap;
+  text-align: center;
+  line-height: 1;
+  font-weight: var(--fw-500);
+
+  &.is-pending { color: var(--text-muted); opacity: 0.65; }
+  &.is-passed  { color: var(--text-2); }
+
+  &.is-active {
+    font-weight: var(--fw-600);
+    &.role-marketing { color: var(--info); }
+    &.role-sales     { color: var(--success); }
+    &.role-support   { color: var(--warning); }
+  }
+}
+
+// ── connector line ─────────────────────────────────────────────
+// Sits between two .crm-stepper-item columns.
+// margin-top centers the 2px bar with the dot row.
+.crm-stepper-line {
+  height: 2px;
+  width: 0.875rem;
+  flex-shrink: 0;
+  border-radius: 1px;
+  margin-top: calc(#{$dot-half} - 1px); // vertically align with dot centers
+
+  // "from" step's role color — shows progress visually
+  &.role-marketing { background: var(--info); }
+  &.role-sales     { background: var(--success); }
+  &.role-support   { background: var(--warning); }
+
+  // leading into a pending step → dashed gray
+  &.is-pending {
+    background: repeating-linear-gradient(
+      90deg,
+      var(--border) 0 4px,
+      transparent 4px 8px
+    );
+  }
+}
+
 /* ── follow-up cell ────────────────────────────────────────── */
 .crm-followup {
   display: flex;

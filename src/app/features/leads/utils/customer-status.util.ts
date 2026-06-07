@@ -15,20 +15,17 @@ import { Lang } from '../../../core/services/language.service';
  * usable when the backend adds a status before the frontend catches up.
  */
 
-/** Canonical keys — one per backend enum value. */
+/**
+ * Canonical keys — match the backend `CustomerStatus` enum:
+ * New = 0, Negotiating = 1, Buyer = 2, NotBuyer = 3.
+ * `none` is kept as a safe fallback for records with no status set.
+ */
 export type CustomerStatusKey =
   | 'new'
   | 'none'
   | 'negotiating'
   | 'buyer'
-  | 'notBuyer'
-  | 'assignedToSalesTeam'
-  | 'contacted'
-  | 'noAnswer'
-  | 'noResponse'
-  | 'quoteSent'
-  | 'assignedToSupport'
-  | 'transferredToSupport';
+  | 'notBuyer';
 
 interface StatusEntry {
   key: CustomerStatusKey;
@@ -38,21 +35,16 @@ interface StatusEntry {
   arabic: string;
   english: string;
   badge: string;
+  /** Exact enum name sent to `PUT /Customers/{id}/status` as `status`. */
+  enumName: string;
 }
 
 const STATUSES: StatusEntry[] = [
-  { key: 'new',                 code: 'new',                 arabic: 'جديد',                  english: 'New',                badge: 'badge-status-new' },
-  { key: 'none',                code: 'none',                arabic: 'بدون حالة',             english: 'No status',          badge: 'badge-status-unknown' },
-  { key: 'negotiating',         code: 'negotiating',         arabic: 'تفاوض',                 english: 'Negotiating',        badge: 'badge-status-negotiating' },
-  { key: 'buyer',               code: 'buyer',               arabic: 'مشتري',                 english: 'Buyer',              badge: 'badge-status-purchased' },
-  { key: 'notBuyer',            code: 'notbuyer',            arabic: 'غير مشتري',             english: 'Not buyer',          badge: 'badge-status-lost' },
-  { key: 'assignedToSalesTeam', code: 'assignedtosalesteam', arabic: 'محول لفريق المبيعات',   english: 'Assigned to sales',  badge: 'badge-status-default' },
-  { key: 'contacted',           code: 'contacted',           arabic: 'تم التواصل',            english: 'Contacted',          badge: 'badge-status-default' },
-  { key: 'noAnswer',            code: 'noanswer',            arabic: 'لا يرد',                english: 'No answer',          badge: 'badge-status-lost' },
-  { key: 'noResponse',          code: 'noresponse',          arabic: 'لا يوجد رد',            english: 'No response',        badge: 'badge-status-lost' },
-  { key: 'quoteSent',           code: 'quotesent',           arabic: 'تم إرسال عرض سعر',     english: 'Quote sent',         badge: 'badge-status-default' },
-  { key: 'assignedToSupport',   code: 'assignedtosupport',   arabic: 'محول للدعم',            english: 'Assigned to support',badge: 'badge-status-default' },
-  { key: 'transferredToSupport',code: 'transferredtosupport',arabic: 'محول للدعم الفني',      english: 'Transferred to support', badge: 'badge-status-default' },
+  { key: 'new',        code: 'new',        arabic: 'جديد',         english: 'New',        badge: 'badge-status-new',          enumName: 'New' },
+  { key: 'none',       code: 'none',       arabic: 'بدون حالة',    english: 'No status',  badge: 'badge-status-unknown',      enumName: '' },
+  { key: 'negotiating',code: 'negotiating',arabic: 'تفاوض',        english: 'Negotiating',badge: 'badge-status-negotiating',  enumName: 'Negotiating' },
+  { key: 'buyer',      code: 'buyer',      arabic: 'مشتري',        english: 'Buyer',      badge: 'badge-status-purchased',    enumName: 'Buyer' },
+  { key: 'notBuyer',   code: 'notbuyer',   arabic: 'غير مشتري',    english: 'Not buyer',  badge: 'badge-status-lost',         enumName: 'NotBuyer' },
 ];
 
 const CODE_INDEX: Map<string, StatusEntry> = new Map(STATUSES.map((s) => [s.code, s]));
@@ -93,4 +85,15 @@ export function customerStatusBadgeClass(raw: string | null | undefined): string
  */
 export function customerStatusKey(raw: string | null | undefined): CustomerStatusKey | null {
   return findEntry(raw)?.key ?? null;
+}
+
+/**
+ * Returns the exact enum name to send to `PUT /Customers/{id}/status`.
+ * Example: Arabic "تفاوض" or English code "negotiating" → "Negotiating".
+ * Returns null when the status is unknown or has no backend enum name.
+ */
+export function customerStatusEnumName(raw: string | null | undefined): string | null {
+  const entry = findEntry(raw);
+  if (!entry || !entry.enumName) return null;
+  return entry.enumName;
 }

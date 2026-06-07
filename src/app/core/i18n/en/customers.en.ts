@@ -81,6 +81,7 @@ const customers: TranslationFile<'customers'> = {
       assignSupport: 'Assign to support',
       changeStatus: 'Change status',
       followUp: 'Update follow-up',
+      logContact: 'Log call',
       lastFollowUp: 'Last follow-up',
       nextFollowUp: 'Next follow-up',
       noPhone: 'Phone number not available',
@@ -96,6 +97,28 @@ const customers: TranslationFile<'customers'> = {
       fromMarketing: 'From marketing',
       toSupport: 'To support',
       fromSupport: 'From support',
+    },
+
+    journey: {
+      marketing: 'Marketing',
+      sales: 'Sales',
+      support: 'Support',
+    },
+
+    activities: {
+      title: 'Customer Activity Log',
+      btnLabel: 'Activity Log',
+      empty: 'No activity has been recorded for this customer yet.',
+      close: 'Close',
+      types: {
+        customerCreated:      'Customer created',
+        assignedToSalesTeam:  'Assigned to sales team',
+        contactAttempted:     'Contact attempted',
+        sentQuote:            'Quote sent',
+        transferredToSupport: 'Transferred to support',
+        statusChanged:        'Status changed',
+        returnedToSales:      'Returned to sales',
+      },
     },
 
     form: {
@@ -214,6 +237,25 @@ const customers: TranslationFile<'customers'> = {
         sales: 'Sales note',
         support: 'Support note',
       },
+    },
+
+    contactModal: {
+      title: 'Log contact attempt',
+      hint: 'Record the outcome of your call and add an optional note.',
+      resultLabel: 'Call result',
+      pickResult: 'Select result',
+      results: {
+        Answered: 'Answered',
+        NoAnswer: 'No answer',
+        Busy: 'Busy',
+        WrongNumber: 'Wrong number',
+      },
+      notes: 'Notes (optional)',
+      notesPh: 'e.g. Discussed the quote, will call back…',
+      submit: 'Log attempt',
+      cancel: 'Cancel',
+      success: 'Contact attempt logged ✓',
+      failed: 'Could not log contact attempt — please try again.',
     },
 
     followUpModal: {

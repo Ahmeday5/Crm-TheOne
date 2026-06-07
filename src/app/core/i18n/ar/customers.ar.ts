@@ -81,6 +81,7 @@ const customers: TranslationFile<'customers'> = {
       assignSupport: 'تحويل لفريق الدعم',
       changeStatus: 'تغيير الحالة',
       followUp: 'تحديث المتابعة',
+      logContact: 'تسجيل مكالمة',
       lastFollowUp: 'آخر متابعة',
       nextFollowUp: 'المتابعة القادمة',
       noPhone: 'رقم الهاتف غير متاح',
@@ -96,6 +97,28 @@ const customers: TranslationFile<'customers'> = {
       fromMarketing: 'من التسويق',
       toSupport: 'إلى الدعم',
       fromSupport: 'من الدعم',
+    },
+
+    journey: {
+      marketing: 'تسويق',
+      sales: 'مبيعات',
+      support: 'دعم',
+    },
+
+    activities: {
+      title: 'سجل نشاط العميل',
+      btnLabel: 'سجل النشاط',
+      empty: 'لا يوجد نشاط مسجل لهذا العميل حتى الآن.',
+      close: 'إغلاق',
+      types: {
+        customerCreated:      'تم إنشاء العميل',
+        assignedToSalesTeam:  'تم التعيين لفريق المبيعات',
+        contactAttempted:     'محاولة تواصل',
+        sentQuote:            'تم إرسال عرض سعر',
+        transferredToSupport: 'تم النقل للدعم الفني',
+        statusChanged:        'تم تغيير الحالة',
+        returnedToSales:      'تمت الإعادة للمبيعات',
+      },
     },
 
     form: {
@@ -214,6 +237,25 @@ const customers: TranslationFile<'customers'> = {
         sales: 'ملاحظة المبيعات',
         support: 'ملاحظة الدعم',
       },
+    },
+
+    contactModal: {
+      title: 'تسجيل محاولة تواصل',
+      hint: 'سجّل نتيجة المكالمة مع العميل وأضف أي ملاحظة اختيارية.',
+      resultLabel: 'نتيجة المكالمة',
+      pickResult: 'اختر النتيجة',
+      results: {
+        Answered: 'تم الرد',
+        NoAnswer: 'لا يرد',
+        Busy: 'مشغول',
+        WrongNumber: 'رقم خاطئ',
+      },
+      notes: 'ملاحظات (اختياري)',
+      notesPh: 'مثال: تحدثنا عن العرض، سيفكر ويرد لاحقاً…',
+      submit: 'تسجيل',
+      cancel: 'إلغاء',
+      success: 'تم تسجيل محاولة التواصل بنجاح ✓',
+      failed: 'تعذر تسجيل محاولة التواصل — يرجى المحاولة مجددًا.',
     },
 
     followUpModal: {

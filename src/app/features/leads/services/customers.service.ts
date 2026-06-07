@@ -20,6 +20,7 @@ import {
   CustomerListQuery,
   CustomerNoteResponse,
   CustomerStatus,
+  LogContactAttemptRequest,
   PagedResult,
   SalesPerson,
   SaveCustomerNoteRequest,
@@ -200,6 +201,26 @@ export class CustomersService {
   ): Observable<CustomerFollowUpResponse> {
     return this.api.put<CustomerFollowUpResponse>(
       API_ENDPOINTS.customers.followUp(customerId),
+      payload,
+      { context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)) },
+    );
+  }
+
+  /**
+   * Records a contact attempt (call result + optional notes) for a customer.
+   * The backend logs this as a `CustomerActivity` of type `ContactAttempted`,
+   * which is what the sales-person call-count spec reads — so counts stay
+   * accurate regardless of the customer's current status.
+   *
+   * Returns the same lightweight projection as `changeStatus` — callers can
+   * patch `lastFollowUpDate` in-place from the response without a full reload.
+   */
+  logContactAttempt(
+    customerId: number,
+    payload: LogContactAttemptRequest,
+  ): Observable<CustomerFollowUpResponse> {
+    return this.api.post<CustomerFollowUpResponse>(
+      API_ENDPOINTS.customers.contact(customerId),
       payload,
       { context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)) },
     );

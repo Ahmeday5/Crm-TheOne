@@ -221,10 +221,12 @@
                       [phone]="row.phone"
                       [actions]="actionsConfig"
                       [busy]="busyId() === row.id"
+                      [activitiesCount]="(row.activities ?? []).length"
                       (view)="openDetails(row)"
                       (note)="openNote(row)"
                       (edit)="openEdit(row)"
                       (assignSales)="openAssign(row)"
+                      (activities)="openActivities(row)"
                       (delete)="confirmDelete(row)">
                     </app-customer-actions-menu>
                   </td>
@@ -275,6 +277,14 @@
     (saved)="onEdited()"
     (cancel)="closeEdit()">
   </app-customer-edit-dialog>
+}
+
+@if (activitiesDialog(); as row) {
+  <app-customer-activities-dialog
+    [customerName]="row.fullName"
+    [activities]="row.activities ?? []"
+    (close)="closeActivities()">
+  </app-customer-activities-dialog>
 }
 
 @if (noteDialog(); as row) {

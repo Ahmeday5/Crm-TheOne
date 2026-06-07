@@ -36,6 +36,8 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ChannelSourcesService } from '../../../marketing-campaigns/services/channel-sources.service';
 import { AssignSupportDialogComponent } from '../../components/assign-support-dialog/assign-support-dialog.component';
 import { ChangeStatusDialogComponent } from '../../components/change-status-dialog/change-status-dialog.component';
+import { LogContactDialogComponent } from '../../components/log-contact-dialog/log-contact-dialog.component';
+import { CustomerActivitiesDialogComponent } from '../../components/customer-activities-dialog/customer-activities-dialog.component';
 import {
   CustomerActionsConfig,
   CustomerActionsMenuComponent,
@@ -57,6 +59,14 @@ interface SourceItem {
   name: string;
 }
 
+interface JourneyStep {
+  icon: string;
+  labelKey: string;
+  role: 'marketing' | 'sales' | 'support';
+  /** passed = completed ✓ | active = current ● | pending = not yet ○ */
+  state: 'passed' | 'active' | 'pending';
+}
+
 @Component({
   selector: 'app-sales-leads',
   standalone: true,
@@ -73,6 +83,8 @@ interface SourceItem {
     AssignSupportDialogComponent,
     ChangeStatusDialogComponent,
     FollowUpDialogComponent,
+    LogContactDialogComponent,
+    CustomerActivitiesDialogComponent,
     CustomerNoteDialogComponent,
     CustomerNotesCellComponent,
     CustomerActionsMenuComponent,
@@ -114,6 +126,8 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   readonly assignSupportDialog = signal<CustomerListItem | null>(null);
   readonly changeStatusDialog = signal<CustomerListItem | null>(null);
   readonly followUpDialog = signal<CustomerListItem | null>(null);
+  readonly logContactDialog = signal<CustomerListItem | null>(null);
+  readonly activitiesDialog = signal<CustomerListItem | null>(null);
   readonly noteDialog = signal<CustomerListItem | null>(null);
 
   /** True when the current user is an Admin — drives subtitle/empty copy. */
@@ -145,6 +159,8 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     assignSupport: true,
     changeStatus: true,
     followUp: true,
+    logContact: this.auth.currentRole() === 'Sales' || this.auth.currentRole() === 'Admin',
+    activities: true,
   };
 
   /** Page-scope KPIs derived from the loaded rows. */
@@ -308,6 +324,33 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     this.closeFollowUp();
   }
 
+  openLogContact(row: CustomerListItem): void {
+    this.logContactDialog.set(row);
+  }
+
+  closeLogContact(): void {
+    this.logContactDialog.set(null);
+  }
+
+  onContactLogged(res: CustomerFollowUpResponse): void {
+    this.rows.update((list) =>
+      list.map((row) =>
+        row.id === res.id
+          ? { ...row, lastFollowUpDate: res.lastFollowUpDate }
+          : row,
+      ),
+    );
+    this.closeLogContact();
+  }
+
+  openActivities(row: CustomerListItem): void {
+    this.activitiesDialog.set(row);
+  }
+
+  closeActivities(): void {
+    this.activitiesDialog.set(null);
+  }
+
   openNote(row: CustomerListItem): void {
     this.noteDialog.set(row);
   }
@@ -330,6 +373,50 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
       ),
     );
     this.closeNote();
+  }
+
+  // ─────────── journey stepper ───────────
+
+  /**
+   * Builds the ordered stage list for the pipeline stepper.
+   * Always shows ALL stages so the current position is obvious at a glance.
+   *
+   *   isMarketingToSales only  → [✓ تسويق] [● مبيعات] [○ دعم]
+   *   + isSalesToSupport        → [✓ تسويق] [✓ مبيعات] [● دعم]
+   *   + isSupportToSales        → [✓ تسويق] [✓ مبيعات] [✓ دعم] [● مبيعات]
+   */
+  buildJourney(row: CustomerListItem): JourneyStep[] {
+    if (!row.isMarketingToSales && !row.isSalesToSupport && !row.isSupportToSales) return [];
+
+    if (row.isSupportToSales) {
+      return [
+        { icon: 'fa-solid fa-bullhorn',    labelKey: 'customers.journey.marketing', role: 'marketing', state: 'passed' },
+        { icon: 'fa-solid fa-user-tie',    labelKey: 'customers.journey.sales',     role: 'sales',     state: 'passed' },
+        { icon: 'fa-solid fa-headset',     labelKey: 'customers.journey.support',   role: 'support',   state: 'passed' },
+        { icon: 'fa-solid fa-rotate-left', labelKey: 'customers.journey.sales',     role: 'sales',     state: 'active' },
+      ];
+    }
+
+    if (row.isSalesToSupport) {
+      return [
+        { icon: 'fa-solid fa-bullhorn', labelKey: 'customers.journey.marketing', role: 'marketing', state: 'passed'  },
+        { icon: 'fa-solid fa-user-tie', labelKey: 'customers.journey.sales',     role: 'sales',     state: 'passed'  },
+        { icon: 'fa-solid fa-headset',  labelKey: 'customers.journey.support',   role: 'support',   state: 'active'  },
+      ];
+    }
+
+    return [
+      { icon: 'fa-solid fa-bullhorn', labelKey: 'customers.journey.marketing', role: 'marketing', state: 'passed'  },
+      { icon: 'fa-solid fa-user-tie', labelKey: 'customers.journey.sales',     role: 'sales',     state: 'active'  },
+      { icon: 'fa-solid fa-headset',  labelKey: 'customers.journey.support',   role: 'support',   state: 'pending' },
+    ];
+  }
+
+  /** CSS class for the connector line between steps.
+   *  Colored with the "from" step's role color unless the target step is pending. */
+  stepConnectorClass(steps: JourneyStep[], index: number): string {
+    if (steps[index].state === 'pending') return 'is-pending';
+    return `role-${steps[index - 1].role}`;
   }
 
   // ─────────── helpers ───────────

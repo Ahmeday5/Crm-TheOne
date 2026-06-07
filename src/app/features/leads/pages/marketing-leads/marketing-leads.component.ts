@@ -37,6 +37,7 @@ import {
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ChannelSourcesService } from '../../../marketing-campaigns/services/channel-sources.service';
 import { AssignSalesDialogComponent } from '../../components/assign-sales-dialog/assign-sales-dialog.component';
+import { CustomerActivitiesDialogComponent } from '../../components/customer-activities-dialog/customer-activities-dialog.component';
 import {
   CustomerActionsConfig,
   CustomerActionsMenuComponent,
@@ -78,6 +79,7 @@ interface SourceItem {
     StatCardComponent,
     TableToolsComponent,
     AssignSalesDialogComponent,
+    CustomerActivitiesDialogComponent,
     CustomerDetailsDialogComponent,
     CustomerEditDialogComponent,
     CustomerNoteDialogComponent,
@@ -127,6 +129,7 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
   } | null>(null);
   readonly detailsDialog = signal<number | null>(null);
   readonly editDialog = signal<number | null>(null);
+  readonly activitiesDialog = signal<CustomerListItem | null>(null);
   readonly noteDialog = signal<CustomerListItem | null>(null);
 
   /** Per-row spinner key. */
@@ -142,6 +145,7 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
     note: true,
     edit: true,
     assignSales: true,
+    activities: true,
     // Marketing users lack the delete permission on the backend — don't show
     // an action that would only ever 403.
     delete: this.auth.currentRole() === 'Admin',
@@ -325,6 +329,14 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
 
   closeEdit(): void {
     this.editDialog.set(null);
+  }
+
+  openActivities(row: CustomerListItem): void {
+    this.activitiesDialog.set(row);
+  }
+
+  closeActivities(): void {
+    this.activitiesDialog.set(null);
   }
 
   openNote(row: CustomerListItem): void {

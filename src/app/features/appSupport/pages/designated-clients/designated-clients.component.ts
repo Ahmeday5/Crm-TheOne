@@ -36,6 +36,7 @@ import {
   CustomerActionsConfig,
   CustomerActionsMenuComponent,
 } from '../../../leads/components/customer-actions-menu/customer-actions-menu.component';
+import { CustomerActivitiesDialogComponent } from '../../../leads/components/customer-activities-dialog/customer-activities-dialog.component';
 import { CustomerDetailsDialogComponent } from '../../../leads/components/customer-details-dialog/customer-details-dialog.component';
 import { CustomerNoteDialogComponent } from '../../../leads/components/customer-note-dialog/customer-note-dialog.component';
 import { CustomerNotesCellComponent } from '../../../leads/components/customer-notes-cell/customer-notes-cell.component';
@@ -79,6 +80,7 @@ interface SourceItem {
     TableToolsComponent,
     CustomerNotesCellComponent,
     CustomerActionsMenuComponent,
+    CustomerActivitiesDialogComponent,
     CustomerDetailsDialogComponent,
     CustomerNoteDialogComponent,
     ConsultationDialogComponent,
@@ -116,6 +118,7 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
 
   // ─────────── dialogs ───────────
   readonly consultDialog = signal<CustomerListItem | null>(null);
+  readonly activitiesDialog = signal<CustomerListItem | null>(null);
   readonly detailsDialog = signal<number | null>(null);
   readonly noteDialog = signal<CustomerListItem | null>(null);
 
@@ -127,6 +130,7 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
   readonly actionsConfig: CustomerActionsConfig = {
     view: true,
     note: true,
+    activities: true,
   };
 
   readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
@@ -266,6 +270,14 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
 
   closeDetails(): void {
     this.detailsDialog.set(null);
+  }
+
+  openActivities(row: CustomerListItem): void {
+    this.activitiesDialog.set(row);
+  }
+
+  closeActivities(): void {
+    this.activitiesDialog.set(null);
   }
 
   openNote(row: CustomerListItem): void {

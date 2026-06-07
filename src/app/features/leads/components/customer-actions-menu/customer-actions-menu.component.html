@@ -99,6 +99,25 @@
             </button>
           </li>
         }
+        @if (actions().logContact) {
+          <li>
+            <button type="button" class="dropdown-item" (click)="logContact.emit()">
+              <i class="fa-solid fa-phone-volume"></i>
+              <span>{{ 'customers.table.logContact' | translate }}</span>
+            </button>
+          </li>
+        }
+        @if (actions().activities) {
+          <li>
+            <button type="button" class="dropdown-item" (click)="activities.emit()">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <span class="flex-fill">{{ 'customers.activities.btnLabel' | translate }}</span>
+              @if (activitiesCount() > 0) {
+                <span class="badge rounded-pill crm-act-badge-pill">{{ activitiesCount() }}</span>
+              }
+            </button>
+          </li>
+        }
         @if (actions().delete) {
           <li><hr class="dropdown-divider"></li>
           <li>

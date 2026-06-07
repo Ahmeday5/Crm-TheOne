@@ -266,8 +266,10 @@
                       <app-customer-actions-menu
                         [phone]="row.phone"
                         [actions]="actionsConfig"
+                        [activitiesCount]="(row.activities ?? []).length"
                         (view)="openDetails(row)"
-                        (note)="openNote(row)">
+                        (note)="openNote(row)"
+                        (activities)="openActivities(row)">
                       </app-customer-actions-menu>
                     </div>
                   </td>
@@ -308,6 +310,14 @@
     [customerId]="id"
     (closed)="closeDetails()">
   </app-customer-details-dialog>
+}
+
+@if (activitiesDialog(); as row) {
+  <app-customer-activities-dialog
+    [customerName]="row.fullName"
+    [activities]="row.activities ?? []"
+    (close)="closeActivities()">
+  </app-customer-activities-dialog>
 }
 
 @if (noteDialog(); as row) {

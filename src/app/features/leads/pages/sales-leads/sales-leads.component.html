@@ -222,27 +222,30 @@
                           <span class="crm-person-empty">{{ 'customers.table.notAssigned' | translate }}</span>
                         }
                       </div>
-                      @if (row.isMarketingToSales || row.isSalesToSupport || row.isSupportToSales) {
-                        <div class="crm-chip-row">
-                          @if (row.isMarketingToSales) {
-                            <span class="crm-chip tone-info">
-                              <i class="fa-solid fa-bullhorn"></i>
-                              {{ 'customers.transfer.fromMarketing' | translate }}
-                            </span>
-                          }
-                          @if (row.isSalesToSupport) {
-                            <span class="crm-chip tone-warning">
-                              <i class="fa-solid fa-arrow-right-arrow-left"></i>
-                              {{ 'customers.transfer.toSupport' | translate }}
-                            </span>
-                          }
-                          @if (row.isSupportToSales) {
-                            <span class="crm-chip tone-success">
-                              <i class="fa-solid fa-rotate-left"></i>
-                              {{ 'customers.transfer.fromSupport' | translate }}
-                            </span>
-                          }
-                        </div>
+                      @if (buildJourney(row); as steps) {
+                        @if (steps.length) {
+                          <div class="crm-stepper" role="list">
+                            @for (step of steps; track $index; let first = $first) {
+                              @if (!first) {
+                                <div class="crm-stepper-line {{ stepConnectorClass(steps, $index) }}"
+                                     aria-hidden="true"></div>
+                              }
+                              <div class="crm-stepper-item" role="listitem">
+                                <div class="crm-stepper-dot role-{{ step.role }} is-{{ step.state }}"
+                                     [title]="step.labelKey | translate">
+                                  @if (step.state === 'passed') {
+                                    <i class="fa-solid fa-check" aria-hidden="true"></i>
+                                  } @else if (step.state === 'active') {
+                                    <i [class]="step.icon" aria-hidden="true"></i>
+                                  }
+                                </div>
+                                <span class="crm-stepper-label role-{{ step.role }} is-{{ step.state }}">
+                                  {{ step.labelKey | translate }}
+                                </span>
+                              </div>
+                            }
+                          </div>
+                        }
                       }
                     </div>
                   </td>
@@ -299,11 +302,14 @@
                     <app-customer-actions-menu
                       [phone]="row.phone"
                       [actions]="actionsConfig"
+                      [activitiesCount]="(row.activities ?? []).length"
                       (view)="openDetails(row)"
                       (note)="openNote(row)"
                       (assignSupport)="openAssignSupport(row)"
                       (changeStatus)="openChangeStatus(row)"
-                      (followUp)="openFollowUp(row)">
+                      (followUp)="openFollowUp(row)"
+                      (logContact)="openLogContact(row)"
+                      (activities)="openActivities(row)">
                     </app-customer-actions-menu>
                   </td>
                 </tr>
@@ -364,6 +370,23 @@
     (updated)="onFollowUpUpdated($event)"
     (cancel)="closeFollowUp()">
   </app-follow-up-dialog>
+}
+
+@if (logContactDialog(); as row) {
+  <app-log-contact-dialog
+    [customerId]="row.id"
+    [customerName]="row.fullName"
+    (logged)="onContactLogged($event)"
+    (cancel)="closeLogContact()">
+  </app-log-contact-dialog>
+}
+
+@if (activitiesDialog(); as row) {
+  <app-customer-activities-dialog
+    [customerName]="row.fullName"
+    [activities]="row.activities ?? []"
+    (close)="closeActivities()">
+  </app-customer-activities-dialog>
 }
 
 @if (noteDialog(); as row) {
