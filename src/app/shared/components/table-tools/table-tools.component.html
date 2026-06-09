@@ -1,3 +1,16 @@
+<div class="d-inline-flex align-items-center gap-2">
+
+@if (showRefresh()) {
+  <button type="button"
+          class="btn btn-light table-tools-btn"
+          [disabled]="disabled()"
+          (click)="refresh.emit()"
+          [title]="'tableTools.refresh' | translate"
+          [attr.aria-label]="'tableTools.refresh' | translate">
+    <i class="fa-solid fa-rotate-right"></i>
+  </button>
+}
+
 <div class="table-tools" appClickOutside (appClickOutside)="close()">
   <button type="button"
           class="btn btn-light table-tools-btn"
@@ -42,4 +55,6 @@
       }
     </div>
   }
+</div>
+
 </div>

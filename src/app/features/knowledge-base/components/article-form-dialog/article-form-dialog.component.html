@@ -117,14 +117,22 @@
                  [disabled]="attachments().length >= maxAttachments"
                  (change)="onFilesSelected($event)" />
           @if (attachments().length > 0) {
-            <div class="d-flex flex-wrap gap-2 mt-2">
+            <div class="d-flex flex-wrap gap-3 mt-2">
               @for (f of attachments(); track f.name + $index) {
-                <span class="badge bg-secondary-subtle text-secondary d-inline-flex align-items-center gap-2 px-2 py-2">
-                  <i class="fa-solid fa-image"></i>
-                  <span class="text-truncate" style="max-width: 160px;">{{ f.name }}</span>
-                  <button type="button" class="btn-close btn-close-sm" aria-label="remove"
-                          (click)="removeAttachment($index)"></button>
-                </span>
+                <div class="kb-img-preview position-relative">
+                  <img [src]="previewUrls()[$index]" [alt]="f.name"
+                       class="kb-img-preview__thumb rounded border"
+                       style="width:80px;height:80px;object-fit:cover;display:block" />
+                  <span class="kb-img-preview__name text-truncate small text-muted d-block mt-1"
+                        style="max-width:80px" [title]="f.name">{{ f.name }}</span>
+                  <button type="button"
+                          class="kb-img-preview__remove btn btn-danger btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center"
+                          style="width:20px;height:20px;position:absolute;top:-6px;inset-inline-end:-6px;font-size:10px"
+                          aria-label="remove"
+                          (click)="removeAttachment($index)">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
               }
             </div>
           }

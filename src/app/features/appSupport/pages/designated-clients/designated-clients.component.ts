@@ -30,6 +30,7 @@ import {
   CustomerListItem,
   CustomerNoteResponse,
   CustomerStatus,
+  SupportCustomerStats,
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import {
@@ -112,6 +113,10 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
   readonly loading = signal(false);
   readonly loadError = signal<string | null>(null);
 
+  // ─────────── stats ───────────
+  readonly stats = signal<SupportCustomerStats | null>(null);
+  readonly statsLoading = signal(false);
+
   // ─────────── dropdown data ───────────
   readonly statuses = signal<CustomerStatus[]>([]);
   readonly sources = signal<SourceItem[]>([]);
@@ -150,17 +155,12 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
   );
 
   readonly kpis = computed(() => {
-    const list = this.rows();
+    const s = this.stats();
     return {
-      total: this.count(),
-      consulted: list.filter((r) => r.isConsulted === true).length,
-      pending: list.filter((r) => r.isConsulted !== true).length,
-      withNotes: list.filter(
-        (r) =>
-          !!r.noteMarketing?.trim() ||
-          !!r.noteSales?.trim() ||
-          !!r.noteSupport?.trim(),
-      ).length,
+      total: s?.totalCustomers ?? this.count(),
+      consulted: s?.consultedCustomers ?? 0,
+      pending: s?.waitingConsultation ?? 0,
+      withNotes: s?.customersWithNotes ?? 0,
     };
   });
 
@@ -175,6 +175,7 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
 
     this.loadFilters();
     this.reload();
+    this.loadStats();
   }
 
   ngOnDestroy(): void {
@@ -183,6 +184,17 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
   }
 
   // ─────────── data loading ───────────
+
+  loadStats(force = false): void {
+    this.statsLoading.set(true);
+    this.customers.supportStats(force).subscribe({
+      next: (s) => {
+        this.stats.set(s);
+        this.statsLoading.set(false);
+      },
+      error: () => this.statsLoading.set(false),
+    });
+  }
 
   private loadFilters(): void {
     this.customers.statuses().subscribe({
@@ -193,17 +205,21 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
     });
   }
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
+    if (force) this.loadStats(true);
     this.customers
-      .listForSupport({
-        PageIndex: this.pageIndex(),
-        PageSize: this.pageSize(),
-        Search: this.searchSignal().trim() || undefined,
-        CustomerStatusId: this.selectedStatusId() ?? undefined,
-        SourceId: this.selectedSourceId() ?? undefined,
-      })
+      .listForSupport(
+        {
+          PageIndex: this.pageIndex(),
+          PageSize: this.pageSize(),
+          Search: this.searchSignal().trim() || undefined,
+          CustomerStatusId: this.selectedStatusId() ?? undefined,
+          SourceId: this.selectedSourceId() ?? undefined,
+        },
+        force,
+      )
       .subscribe({
         next: (page) => {
           this.rows.set(page.data ?? []);

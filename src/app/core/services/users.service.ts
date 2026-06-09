@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../constants/api-endpoints.const';
 import { CACHE_TTL } from '../constants/cache-policy.const';
 import {
   withCache,
+  withCacheBypass,
   withCacheInvalidate,
   withInlineHandling,
   withSkipLoader,
@@ -34,10 +35,11 @@ import { ApiService } from './api.service';
 export class UsersService {
   private readonly api = inject(ApiService);
 
-  list(): Observable<AppUser[]> {
-    return this.api.get<AppUser[]>(API_ENDPOINTS.users.list, {
-      context: withCache({ ttlMs: CACHE_TTL.MEDIUM }),
-    });
+  list(force = false): Observable<AppUser[]> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.MEDIUM }))
+      : withCache({ ttlMs: CACHE_TTL.MEDIUM });
+    return this.api.get<AppUser[]>(API_ENDPOINTS.users.list, { context: ctx });
   }
 
   /** Available role names (`["Marketing","Sales",…]`) for the role pickers. */

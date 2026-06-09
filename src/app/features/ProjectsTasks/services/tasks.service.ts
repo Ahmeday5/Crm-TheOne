@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
   withCache,
+  withCacheBypass,
   withCacheInvalidate,
   withInlineHandling,
   withSkipLoader,
@@ -37,13 +38,13 @@ export class TasksService {
 
   // ─────────── admin (ManagerTasks) ───────────
 
-  list(query: TaskListQuery = {}): Observable<PagedResult<TaskListItem>> {
+  list(query: TaskListQuery = {}, force = false): Observable<PagedResult<TaskListItem>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<PagedResult<TaskListItem>>(
       API_ENDPOINTS.managerTasks.list,
-      {
-        params: query as Record<string, unknown>,
-        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
-      },
+      { params: query as Record<string, unknown>, context: ctx },
     );
   }
 
@@ -88,13 +89,13 @@ export class TasksService {
 
   // ─────────── developer (DeveloperTasks) ───────────
 
-  myList(query: TaskListQuery = {}): Observable<PagedResult<TaskListItem>> {
+  myList(query: TaskListQuery = {}, force = false): Observable<PagedResult<TaskListItem>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<PagedResult<TaskListItem>>(
       API_ENDPOINTS.developerTasks.myTasks,
-      {
-        params: query as Record<string, unknown>,
-        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
-      },
+      { params: query as Record<string, unknown>, context: ctx },
     );
   }
 

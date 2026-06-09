@@ -105,11 +105,14 @@ export interface Appointment {
   description: string;
   startDate: string;
   endDate: string;
-  type: AppointmentType;
+  /** API returns the enum member name as a string (e.g. "FollowUp"), not a number. */
+  type: AppointmentType | string;
   typeNameAr: string;
-  priority: AppointmentPriority;
+  /** API returns the enum member name as a string (e.g. "High"), not a number. */
+  priority: AppointmentPriority | string;
   priorityNameAr: string;
-  status: AppointmentStatus;
+  /** API returns the enum member name as a string (e.g. "Completed"), not a number. */
+  status: AppointmentStatus | string;
   statusNameAr: string;
   location: string | null;
   meetingLink: string | null;

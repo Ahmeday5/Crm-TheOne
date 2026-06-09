@@ -1,34 +1,15 @@
-/**
- * Production environment.
- *
- * Override per-build via `angular.json` -> projects.<name>.architect.build.configurations.<env>.fileReplacements
- * if/when a `environment.development.ts` is added.
- */
 export const environment = {
   production: true,
 
   /** Backend API base — endpoints in `api-endpoints.const.ts` are relative to this. */
-  apiUrl: 'http://78.89.159.126:9494/TheOneCRMAPI/api',
+  apiUrl: 'http://15.235.51.177/TheOneCRMAPI/api',
 
   /** WhatsApp gateway base — the sessions module talks to a separate service. */
   whatsappApiUrl: 'https://whatsapp.theonesystemco.com/api/v1',
 
-  /**
-   * WhatsApp gateway API token. This host authenticates with its own token —
-   * NOT the CRM bearer — so requests carry it explicitly and opt out of the
-   * CRM auth interceptor.
-   */
-  whatsappApiToken: 'wavex_X2GO4pnn_8coxpiWnGecdB1N4eEghO2V7ojkOOWnPPvwX0TBooeyl1nKW',
+  whatsappApiToken:
+    'wavex_X2GO4pnn_8coxpiWnGecdB1N4eEghO2V7ojkOOWnPPvwX0TBooeyl1nKW',
 
-  /**
-   * Firebase Cloud Messaging web config — drives real-time push notifications.
-   *
-   * Fill these from Firebase Console → Project settings → General (web app
-   * config) + Cloud Messaging → Web Push certificates (`vapidKey`). The SAME
-   * values (except `vapidKey`) must also be copied into
-   * `public/firebase-messaging-sw.js`. While `apiKey`/`vapidKey` are empty the
-   * push integration stays dormant and the app falls back to polling.
-   */
   firebase: {
     apiKey: 'AIzaSyD3jrSMr364-FbMcn1uT1fEcrp6NJZJ_Ik',
     authDomain: 'theonecrm-c6fc5.firebaseapp.com',

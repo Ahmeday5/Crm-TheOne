@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
   withCache,
+  withCacheBypass,
   withCacheInvalidate,
   withInlineHandling,
   withSkipLoader,
@@ -37,25 +38,26 @@ export class ProjectsService {
 
   // ─────────── admin (ManagerProjects) reads ───────────
 
-  list(query: ProjectListQuery = {}): Observable<PagedResult<ProjectListItem>> {
+  list(query: ProjectListQuery = {}, force = false): Observable<PagedResult<ProjectListItem>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<PagedResult<ProjectListItem>>(
       API_ENDPOINTS.managerProjects.list,
-      {
-        params: query as Record<string, unknown>,
-        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
-      },
+      { params: query as Record<string, unknown>, context: ctx },
     );
   }
 
   activeList(
     query: ProjectListQuery = {},
+    force = false,
   ): Observable<PagedResult<ProjectListItem>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<PagedResult<ProjectListItem>>(
       API_ENDPOINTS.managerProjects.active,
-      {
-        params: query as Record<string, unknown>,
-        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
-      },
+      { params: query as Record<string, unknown>, context: ctx },
     );
   }
 
@@ -91,25 +93,26 @@ export class ProjectsService {
 
   // ─────────── developer (DeveloperProjects) reads ───────────
 
-  myList(query: ProjectListQuery = {}): Observable<PagedResult<ProjectListItem>> {
+  myList(query: ProjectListQuery = {}, force = false): Observable<PagedResult<ProjectListItem>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<PagedResult<ProjectListItem>>(
       API_ENDPOINTS.developerProjects.myProjects,
-      {
-        params: query as Record<string, unknown>,
-        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
-      },
+      { params: query as Record<string, unknown>, context: ctx },
     );
   }
 
   myActiveList(
     query: ProjectListQuery = {},
+    force = false,
   ): Observable<PagedResult<ProjectListItem>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<PagedResult<ProjectListItem>>(
       API_ENDPOINTS.developerProjects.myActive,
-      {
-        params: query as Record<string, unknown>,
-        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
-      },
+      { params: query as Record<string, unknown>, context: ctx },
     );
   }
 

@@ -92,6 +92,7 @@ export function articleTypeBadgeClass(type: ArticleTypeName | string): string {
 
 /** An uploaded file attached to an article. */
 export interface ArticleAttachment {
+  id: number;
   fileUrl: string;
   fileName: string;
 }

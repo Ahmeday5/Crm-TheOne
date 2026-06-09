@@ -204,17 +204,20 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     });
   }
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
     this.customers
-      .listForSales({
-        PageIndex: this.pageIndex(),
-        PageSize: this.pageSize(),
-        Search: this.searchSignal().trim() || undefined,
-        CustomerStatusId: this.selectedStatusId() ?? undefined,
-        SourceId: this.selectedSourceId() ?? undefined,
-      })
+      .listForSales(
+        {
+          PageIndex: this.pageIndex(),
+          PageSize: this.pageSize(),
+          Search: this.searchSignal().trim() || undefined,
+          CustomerStatusId: this.selectedStatusId() ?? undefined,
+          SourceId: this.selectedSourceId() ?? undefined,
+        },
+        force,
+      )
       .subscribe({
         next: (page) => {
           this.rows.set(page.data ?? []);
@@ -336,7 +339,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     this.rows.update((list) =>
       list.map((row) =>
         row.id === res.id
-          ? { ...row, lastFollowUpDate: res.lastFollowUpDate }
+          ? { ...row, lastFollowUpDate: res.lastFollowUpDate, nextFollowUpDate: null }
           : row,
       ),
     );
@@ -457,22 +460,27 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
   trackById = (_: number, r: CustomerListItem) => r.id;
 
-  /**
-   * Row highlight by follow-up urgency:
-   *   - `fu-overdue` → next follow-up date has passed.
-   *   - `fu-soon`    → due today or tomorrow.
-   *   - `''`         → no follow-up set or further out.
-   */
-  followUpRowClass(row: CustomerListItem): string {
-    if (!row.nextFollowUpDate) return '';
+  followUpState(row: CustomerListItem): {
+    type: 'overdue' | 'today' | 'tomorrow' | null;
+    daysAgo: number;
+  } {
+    if (!row.nextFollowUpDate) return { type: null, daysAgo: 0 };
     const due = new Date(row.nextFollowUpDate);
-    if (Number.isNaN(due.getTime())) return '';
+    if (Number.isNaN(due.getTime())) return { type: null, daysAgo: 0 };
     const startOf = (d: Date) =>
       new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-    const today = startOf(new Date());
-    const diffDays = Math.round((startOf(due) - today) / 86_400_000);
-    if (diffDays < 0) return 'fu-overdue';
-    if (diffDays <= 1) return 'fu-soon';
+    const diffDays = Math.round((startOf(due) - startOf(new Date())) / 86_400_000);
+    if (diffDays < 0) return { type: 'overdue', daysAgo: Math.abs(diffDays) };
+    if (diffDays === 0) return { type: 'today', daysAgo: 0 };
+    if (diffDays === 1) return { type: 'tomorrow', daysAgo: 0 };
+    return { type: null, daysAgo: 0 };
+  }
+
+  followUpTdClass(row: CustomerListItem): string {
+    const { type } = this.followUpState(row);
+    if (type === 'overdue') return 'fu-cell-overdue';
+    if (type === 'today') return 'fu-cell-today';
+    if (type === 'tomorrow') return 'fu-cell-tomorrow';
     return '';
   }
 

@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
   withCache,
+  withCacheBypass,
   withCacheInvalidate,
   withInlineHandling,
   withSkipLoader,
@@ -24,6 +25,7 @@ import {
   PagedResult,
   SalesPerson,
   SaveCustomerNoteRequest,
+  SupportCustomerStats,
   SupportPerson,
   UpdateCustomerRequest,
   UpdateFollowUpRequest,
@@ -54,37 +56,40 @@ export class CustomersService {
 
   list(
     query: CustomerListQuery = {},
+    force = false,
   ): Observable<PagedResult<CustomerListItem>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<PagedResult<CustomerListItem>>(
       API_ENDPOINTS.customers.list,
-      {
-        params: query as Record<string, unknown>,
-        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
-      },
+      { params: query as Record<string, unknown>, context: ctx },
     );
   }
 
   listForSales(
     query: CustomerListQuery = {},
+    force = false,
   ): Observable<PagedResult<CustomerListItem>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<PagedResult<CustomerListItem>>(
       API_ENDPOINTS.customers.salesCustomers,
-      {
-        params: query as Record<string, unknown>,
-        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
-      },
+      { params: query as Record<string, unknown>, context: ctx },
     );
   }
 
   listForSupport(
     query: CustomerListQuery = {},
+    force = false,
   ): Observable<PagedResult<CustomerListItem>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<PagedResult<CustomerListItem>>(
       API_ENDPOINTS.customers.supportCustomers,
-      {
-        params: query as Record<string, unknown>,
-        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
-      },
+      { params: query as Record<string, unknown>, context: ctx },
     );
   }
 
@@ -98,6 +103,16 @@ export class CustomersService {
     return this.api.get<CustomerStatus[]>(API_ENDPOINTS.customers.statuses, {
       context: withCache({ ttlMs: CACHE_TTL.LONG }),
     });
+  }
+
+  supportStats(force = false): Observable<SupportCustomerStats> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withSkipLoader(withCache({ ttlMs: CACHE_TTL.SHORT }));
+    return this.api.get<SupportCustomerStats>(
+      API_ENDPOINTS.support.customerStats,
+      { context: ctx },
+    );
   }
 
   salesTeam(): Observable<SalesPerson[]> {

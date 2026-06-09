@@ -136,7 +136,9 @@
           [columns]="exportColumns"
           [rows]="visibleExportRows"
           [fetchAll]="fetchAllRows"
-          [disabled]="loading() || visibleRows().length === 0">
+          [disabled]="loading() || visibleRows().length === 0"
+          [showRefresh]="true"
+          (refresh)="reload(true)">
         </app-table-tools>
       </div>
       <div class="card-body p-0">
@@ -175,15 +177,24 @@
                   <td>
                     <span class="badge {{ typeBadgeClass(row.type) }}">{{ row.typeNameAr || '—' }}</span>
                   </td>
-                  <td>
+                  <td [class]="priorityTdClass(row)">
                     <span class="badge {{ priorityBadgeClass(row.priority) }}">
                       {{ row.priorityNameAr || '—' }}
                     </span>
                   </td>
                   <td>
-                    <span class="badge {{ statusBadgeClass(row.status) }}">
-                      {{ row.statusNameAr || '—' }}
-                    </span>
+                    <div class="d-inline-flex align-items-center gap-1">
+                      <span class="badge {{ statusBadgeClass(row.status) }}">
+                        {{ row.statusNameAr || '—' }}
+                      </span>
+                      <button type="button"
+                              class="btn p-0 border-0 bg-transparent text-muted"
+                              style="line-height:1;font-size:0.72rem"
+                              [attr.title]="'sales.appointments.statusDialog.changeBtn' | translate"
+                              (click)="openChangeStatus(row)">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                      </button>
+                    </div>
                   </td>
                   <td class="text-nowrap">
                     <i class="fa-regular fa-calendar text-muted me-1"></i>{{ formatDateTime(row.startDate) }}
@@ -252,4 +263,50 @@
     (updated)="onSaved()"
     (cancel)="closeForm()">
   </app-appointment-form-dialog>
+}
+
+@if (changeStatusDialog(); as apt) {
+  <app-modal
+    [open]="true"
+    [title]="'sales.appointments.statusDialog.title' | translate"
+    icon="fa-solid fa-circle-dot"
+    iconTone="primary"
+    size="sm"
+    [closeOnBackdrop]="!confirmingStatus()"
+    [closeOnEsc]="!confirmingStatus()"
+    (closed)="closeChangeStatus()">
+
+    <p class="fw-600 mb-3">{{ apt.title }}</p>
+
+    <div class="d-flex flex-column gap-2">
+      @for (s of statuses; track s.code) {
+        <label class="d-flex align-items-center gap-2 p-2 rounded border"
+               style="cursor:pointer"
+               [class.border-primary]="newStatusCode() === s.code"
+               [class.bg-primary-subtle]="newStatusCode() === s.code">
+          <input type="radio"
+                 class="form-check-input m-0 flex-shrink-0"
+                 [checked]="newStatusCode() === s.code"
+                 (change)="newStatusCode.set(s.code)">
+          <span class="badge {{ statusBadgeClass(s.code) }}">{{ optionLabel(s) }}</span>
+        </label>
+      }
+    </div>
+
+    <ng-container modal-footer>
+      <button type="button" class="btn btn-light"
+              [disabled]="confirmingStatus()"
+              (click)="closeChangeStatus()">
+        {{ 'sales.appointments.statusDialog.cancel' | translate }}
+      </button>
+      <button type="button" class="btn btn-primary"
+              [disabled]="!newStatusCode() || confirmingStatus()"
+              (click)="confirmChangeStatus()">
+        @if (confirmingStatus()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        {{ 'sales.appointments.statusDialog.confirm' | translate }}
+      </button>
+    </ng-container>
+  </app-modal>
 }

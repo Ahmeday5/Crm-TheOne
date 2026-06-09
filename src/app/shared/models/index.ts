@@ -17,3 +17,4 @@ export * from './company-settings';
 export * from './articles';
 export * from './dashboard';
 export * from './notifications';
+export * from './goals';

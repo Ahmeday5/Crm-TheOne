@@ -100,6 +100,7 @@ export const API_ENDPOINTS = {
     create: 'Appointments/CreateAppointment',
     update: (id: number | string) => `Appointments/UpdateAppointment/${id}`,
     delete: (id: number | string) => `Appointments/DeleteAppointment/${id}`,
+    changeStatus: (id: number | string) => `Appointments/${id}/status`,
     stats: 'Appointments/GetStats',
   },
   support: {
@@ -107,6 +108,8 @@ export const API_ENDPOINTS = {
       `Support/${customerId}/ReturnToSalesPerson`,
     /** KPI strip + status breakdown + weekly-resolved trend for the dashboard. */
     dashboard: 'Support/Dashboard',
+    /** Live KPI counts for the designated-clients page. */
+    customerStats: 'Support/CustomerStats',
   },
   supportTickets: {
     list: 'SupportTickets/GetTickets',
@@ -184,6 +187,21 @@ export const API_ENDPOINTS = {
   adminDashboard: {
     get: 'AdminDashboard',
   },
+  /** Goals & motivation — Admin CRUD + employee progress tracking. */
+  goals: {
+    list: 'Goals',
+    my: 'Goals/my',
+    byId: (id: number | string) => `Goals/${id}`,
+    create: 'Goals',
+    update: (id: number | string) => `Goals/${id}`,
+    delete: (id: number | string) => `Goals/${id}`,
+    /** Aggregate stats — admin sees all, employee sees own. */
+    stats: 'Goals/stats',
+    /** PATCH: update currentProgress for a goal. Body: { value: number } */
+    progress: (id: number | string) => `Goals/${id}/progress`,
+    /** GET: per-goal stats (full goal object — same shape as byId). */
+    goalStats: (id: number | string) => `Goals/${id}/stats`,
+  },
   /** Per-user notification center + bell badge + FCM push registration. */
   notifications: {
     list: 'Notifications',
@@ -204,6 +222,7 @@ export const API_ENDPOINTS = {
     create: 'Articles/CreateArticle',
     update: (id: number | string) => `Articles/UpdateArticle/${id}`,
     delete: (id: number | string) => `Articles/DeleteArticle/${id}`,
+    deleteAttachment: (id: number | string) => `Articles/DeleteAttachment/${id}`,
     projectOptions: 'Articles/ProjectOptions',
     customerOptions: 'Articles/CustomerOptions',
   },

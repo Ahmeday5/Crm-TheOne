@@ -41,7 +41,9 @@
       [columns]="exportColumns"
       [rows]="visibleExportRows"
       [fetchAll]="fetchAllRows"
-      [disabled]="loading() || visibleRows().length === 0">
+      [disabled]="loading() || visibleRows().length === 0"
+      [showRefresh]="true"
+      (refresh)="reload(true)">
     </app-table-tools>
   </div>
 

@@ -77,13 +77,50 @@
         <span class="text-muted">({{ a.attachments.length }})</span>
       </h6>
       <div class="row g-2">
-        @for (att of a.attachments; track att.fileUrl) {
+        @for (att of a.attachments; track att.id) {
           <div class="col-6 col-md-3">
-            <a [href]="attachmentUrl(att.fileUrl)" target="_blank" rel="noopener"
-               class="d-block border rounded-2 overflow-hidden" [title]="att.fileName">
-              <img [src]="attachmentUrl(att.fileUrl)" [alt]="att.fileName"
-                   style="width: 100%; height: 90px; object-fit: cover; display: block;">
-            </a>
+            <div class="position-relative border rounded-2 overflow-hidden kb-attachment">
+              <!-- Image / link -->
+              <a [href]="attachmentUrl(att.fileUrl)" target="_blank" rel="noopener"
+                 class="d-block" [title]="att.fileName">
+                <img [src]="attachmentUrl(att.fileUrl)" [alt]="att.fileName"
+                     style="width: 100%; height: 90px; object-fit: cover; display: block;">
+              </a>
+
+              <!-- Delete overlay (confirm state) -->
+              @if (confirmDeleteAttachmentId() === att.id) {
+                <div class="kb-attachment__confirm d-flex flex-column align-items-center justify-content-center gap-1 p-1">
+                  <span class="small text-white fw-600 text-center" style="font-size: 0.7rem;">
+                    {{ 'kb.deleteDialog.title' | translate }}؟
+                  </span>
+                  <div class="d-flex gap-1">
+                    <button type="button" class="btn btn-danger btn-sm py-0 px-2"
+                            [disabled]="deletingAttachmentId() === att.id"
+                            (click)="confirmDeleteAttachment(att)">
+                      @if (deletingAttachmentId() === att.id) {
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                      } @else {
+                        <i class="fa-solid fa-check"></i>
+                      }
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm py-0 px-2"
+                            [disabled]="deletingAttachmentId() === att.id"
+                            (click)="cancelDeleteAttachment()">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <!-- Delete button (hover-visible) -->
+                <button type="button"
+                        class="kb-attachment__delete btn btn-sm btn-danger"
+                        (click)="requestDeleteAttachment(att)"
+                        [title]="'kb.actions.delete' | translate"
+                        [attr.aria-label]="'kb.actions.delete' | translate">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              }
+            </div>
           </div>
         }
       </div>

@@ -113,10 +113,10 @@ export class UserManagementComponent {
 
   // ─────────── data loading ───────────
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
-    this.users.list().subscribe({
+    this.users.list(force).subscribe({
       next: (rows) => {
         this.all.set(rows);
         this.loading.set(false);
@@ -230,6 +230,14 @@ export class UserManagementComponent {
       {
         header: this.t('settings.users.list.col.phone'),
         value: (u) => u.phone,
+      },
+      {
+        header: this.t('settings.users.list.col.role'),
+        value: (u) => this.roleLabelFor(u.role),
+      },
+      {
+        header: this.t('settings.users.list.col.specialty'),
+        value: (u) => u.specialty ?? '',
       },
     ];
   }

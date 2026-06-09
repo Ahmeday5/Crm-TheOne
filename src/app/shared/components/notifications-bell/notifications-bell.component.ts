@@ -85,7 +85,7 @@ export class NotificationsBellComponent implements OnInit {
 
   onItemClick(n: AppNotification): void {
     if (!n.isRead) this.store.markRead(n.id);
-    const route = notificationRoute(n.relatedEntityType, this.auth.currentRole());
+    const route = notificationRoute(n.relatedEntityType, this.auth.currentRole(), n.type);
     if (route) {
       this.close();
       this.router.navigate(route);

@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  EventEmitter,
+  Output,
   computed,
   inject,
   input,
@@ -55,6 +57,10 @@ export class TableToolsComponent {
   /** Pulls every page; when omitted the "all pages" actions are hidden. */
   readonly fetchAll = input<FetchAllRows<any> | null>(null);
   readonly disabled = input<boolean>(false);
+  /** When true, a refresh button is rendered beside the export dropdown. */
+  readonly showRefresh = input<boolean>(false);
+  /** Emitted when the user clicks the refresh button. */
+  @Output() readonly refresh = new EventEmitter<void>();
 
   private readonly exporter = inject(TableExportService);
   private readonly toast = inject(ToastService);

@@ -14,9 +14,16 @@
         <p class="text-muted mb-0">{{ 'kb.subtitle' | translate }}</p>
       </div>
     </div>
-    <button type="button" class="btn btn-primary" (click)="openAdd()">
-      <i class="fa-solid fa-plus me-1"></i>{{ 'kb.addArticle' | translate }}
-    </button>
+    <div class="d-flex align-items-center gap-2">
+      <button type="button" class="btn btn-light" [disabled]="loading()"
+              (click)="reload(true)"
+              [title]="'tableTools.refresh' | translate">
+        <i class="fa-solid fa-rotate-right"></i>
+      </button>
+      <button type="button" class="btn btn-primary" (click)="openAdd()">
+        <i class="fa-solid fa-plus me-1"></i>{{ 'kb.addArticle' | translate }}
+      </button>
+    </div>
   </header>
 
   <!-- KPI strip -->
@@ -122,26 +129,47 @@
             <div class="card-body d-flex flex-column">
               <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
                 <h5 class="fw-700 mb-0 kb-card__title">{{ a.title }}</h5>
-                <div class="d-inline-flex gap-1 flex-shrink-0">
-                  <button type="button" class="btn btn-sm btn-light" (click)="openDetails(a)"
-                          [title]="'kb.actions.view' | translate" [attr.aria-label]="'kb.actions.view' | translate">
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                  <button type="button" class="btn btn-sm btn-light" [disabled]="busyId() === a.id"
-                          (click)="openEdit(a)"
-                          [title]="'kb.actions.edit' | translate" [attr.aria-label]="'kb.actions.edit' | translate">
-                    <i class="fa-solid fa-pen"></i>
-                  </button>
-                  <button type="button" class="btn btn-sm btn-icon btn-danger-soft" [disabled]="busyId() === a.id"
-                          (click)="confirmDelete(a)"
-                          [title]="'kb.actions.delete' | translate" [attr.aria-label]="'kb.actions.delete' | translate">
-                    @if (busyId() === a.id) {
-                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    } @else {
+
+                @if (confirmDeleteId() === a.id) {
+                  <!-- Inline delete confirmation -->
+                  <div class="d-inline-flex align-items-center gap-1 flex-shrink-0">
+                    <span class="small text-danger fw-600 text-nowrap">{{ 'kb.deleteDialog.title' | translate }}؟</span>
+                    <button type="button" class="btn btn-sm btn-danger"
+                            [disabled]="deletingId() === a.id"
+                            (click)="confirmDelete(a)"
+                            [title]="'kb.deleteDialog.confirm' | translate">
+                      @if (deletingId() === a.id) {
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                      } @else {
+                        <i class="fa-solid fa-check"></i>
+                      }
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light"
+                            [disabled]="deletingId() === a.id"
+                            (click)="cancelDelete()"
+                            [title]="'kb.deleteDialog.cancel' | translate">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+                } @else {
+                  <!-- Normal actions -->
+                  <div class="d-inline-flex gap-1 flex-shrink-0">
+                    <button type="button" class="btn btn-sm btn-light" (click)="openDetails(a)"
+                            [title]="'kb.actions.view' | translate" [attr.aria-label]="'kb.actions.view' | translate">
+                      <i class="fa-solid fa-eye"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light"
+                            (click)="openEdit(a)"
+                            [title]="'kb.actions.edit' | translate" [attr.aria-label]="'kb.actions.edit' | translate">
+                      <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light text-danger"
+                            (click)="requestDelete(a.id)"
+                            [title]="'kb.actions.delete' | translate" [attr.aria-label]="'kb.actions.delete' | translate">
                       <i class="fa-solid fa-trash"></i>
-                    }
-                  </button>
-                </div>
+                    </button>
+                  </div>
+                }
               </div>
 
               <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
@@ -210,6 +238,7 @@
 @if (viewingId() !== null) {
   <app-article-details-dialog
     [articleId]="viewingId()!"
-    (cancel)="closeDetails()">
+    (cancel)="closeDetails()"
+    (changed)="onDetailsChanged()">
   </app-article-details-dialog>
 }

@@ -154,20 +154,23 @@ export class CampaignsComponent {
 
   // ─────────── data loading ───────────
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
 
     const status = this.statusFilter();
     const channel = this.channelFilter();
     this.campaigns
-      .list({
-        pageIndex: this.pageIndex(),
-        pageSize: this.pageSize(),
-        search: this.searchSignal().trim() || undefined,
-        status: status !== 'all' ? CAMPAIGN_STATUS_CODE[status] : undefined,
-        channelSourceId: channel !== 'all' ? Number(channel) : undefined,
-      })
+      .list(
+        {
+          pageIndex: this.pageIndex(),
+          pageSize: this.pageSize(),
+          search: this.searchSignal().trim() || undefined,
+          status: status !== 'all' ? CAMPAIGN_STATUS_CODE[status] : undefined,
+          channelSourceId: channel !== 'all' ? Number(channel) : undefined,
+        },
+        force,
+      )
       .subscribe({
         next: (res) => {
           this.all.set(res.data ?? []);

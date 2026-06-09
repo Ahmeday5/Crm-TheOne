@@ -276,6 +276,13 @@ const sales: TranslationFile<'sales'> = {
         confirm: 'حذف',
         cancel: 'إلغاء',
       },
+      statusDialog: {
+        title: 'تغيير حالة الموعد',
+        changeBtn: 'تغيير الحالة',
+        confirm: 'تأكيد',
+        cancel: 'إلغاء',
+        changed: 'تم تغيير الحالة بنجاح ✓',
+      },
     },
     contracts: {
       title: 'العقود',

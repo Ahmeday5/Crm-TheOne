@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
   withCache,
+  withCacheBypass,
   withCacheInvalidate,
   withInlineHandling,
   withSkipLoader,
@@ -40,12 +41,15 @@ const ASSIGNABLE_ROLES = new Set(['Admin', 'Support']);
 export class AppointmentsService {
   private readonly api = inject(ApiService);
 
-  list(query: AppointmentListQuery = {}): Observable<AppointmentPage> {
+  list(query: AppointmentListQuery = {}, force = false): Observable<AppointmentPage> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api
       .get<unknown>(API_ENDPOINTS.appointments.list, {
         params: query as Record<string, unknown>,
         skipUnwrap: true,
-        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
+        context: ctx,
       })
       .pipe(map((res) => this.normalizePage(res)));
   }
@@ -82,6 +86,14 @@ export class AppointmentsService {
     return this.api.delete<unknown>(API_ENDPOINTS.appointments.delete(id), {
       context: withSkipLoader(withCacheInvalidate(['Appointments'])),
     });
+  }
+
+  changeStatus(id: number, status: string): Observable<unknown> {
+    return this.api.put<unknown>(
+      API_ENDPOINTS.appointments.changeStatus(id),
+      { status },
+      { context: withInlineHandling(withCacheInvalidate(['Appointments'])) },
+    );
   }
 
   /**

@@ -1,0 +1,316 @@
+<app-modal
+  [open]="true"
+  [title]="(isEditMode() ? 'goals.form.editTitle' : 'goals.form.createTitle') | translate"
+  icon="fa-solid fa-trophy"
+  iconTone="primary"
+  size="lg"
+  (closed)="cancel.emit()">
+
+  <form #goalForm="ngForm" (ngSubmit)="submit()" novalidate autocomplete="off">
+
+    @if (errorMessage()) {
+      <div class="gform-alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <!-- ══ Section 1: Basic Info ══ -->
+    <div class="gform-section">
+      <div class="gform-section__header">
+        <span class="gform-section__icon gform-section__icon--blue">
+          <i class="fa-solid fa-align-left"></i>
+        </span>
+        <span class="gform-section__title">المعلومات الأساسية</span>
+      </div>
+      <div class="gform-section__body">
+
+        <div class="gform-field">
+          <label class="gform-label">
+            {{ 'goals.form.title' | translate }}
+            <span class="gform-required">*</span>
+          </label>
+          <input
+            type="text"
+            class="form-control gform-input"
+            [placeholder]="'goals.form.titlePh' | translate"
+            [ngModel]="title()"
+            (ngModelChange)="title.set($event)"
+            name="title"
+            required />
+        </div>
+
+        <div class="gform-field">
+          <label class="gform-label">
+            {{ 'goals.form.description' | translate }}
+            <span class="gform-required">*</span>
+          </label>
+          <textarea
+            class="form-control gform-input"
+            rows="3"
+            [placeholder]="'goals.form.descriptionPh' | translate"
+            [ngModel]="description()"
+            (ngModelChange)="description.set($event)"
+            name="description"
+            required>
+          </textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ Section 2: Goal Type + Period ══ -->
+    <div class="gform-section">
+      <div class="gform-section__header">
+        <span class="gform-section__icon gform-section__icon--violet">
+          <i class="fa-solid fa-sliders"></i>
+        </span>
+        <span class="gform-section__title">نوع الهدف والفترة</span>
+      </div>
+      <div class="gform-section__body">
+
+        <div class="gform-row-2">
+          <!-- Goal Type (create only) -->
+          @if (!isEditMode()) {
+            <div class="gform-field">
+              <label class="gform-label">
+                {{ 'goals.form.type' | translate }}
+                <span class="gform-required">*</span>
+              </label>
+              <div class="gform-type-picker">
+                @for (t of GOAL_TYPES; track t) {
+                  <button type="button"
+                          class="gform-type-btn"
+                          [class.active]="type() === t"
+                          (click)="onTypeChange(t)">
+                    <span class="gform-type-btn__icon">
+                      <i [class]="t === 'Individual' ? 'fa-solid fa-user' : 'fa-solid fa-users'"></i>
+                    </span>
+                    <div class="gform-type-btn__text">
+                      <span class="gform-type-btn__label">{{ ('goals.type.' + t) | translate }}</span>
+                      <span class="gform-type-btn__hint">
+                        {{ t === 'Individual' ? 'لموظف واحد فقط' : 'لفريق المبيعات' }}
+                      </span>
+                    </div>
+                    @if (type() === t) {
+                      <i class="fa-solid fa-check gform-type-btn__check"></i>
+                    }
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Period -->
+          <div class="gform-field">
+            <label class="gform-label">
+              {{ 'goals.form.period' | translate }}
+              <span class="gform-required">*</span>
+            </label>
+            <div class="gform-period-picker">
+              @for (p of GOAL_PERIODS; track p) {
+                <button type="button"
+                        class="gform-period-btn"
+                        [class.active]="period() === p"
+                        (click)="period.set(p)">
+                  <i [class]="periodIcon(p)"></i>
+                  {{ ('goals.period.' + p) | translate }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ Section 3: Values ══ -->
+    <div class="gform-section">
+      <div class="gform-section__header">
+        <span class="gform-section__icon gform-section__icon--green">
+          <i class="fa-solid fa-coins"></i>
+        </span>
+        <span class="gform-section__title">القيم والمكافآت</span>
+      </div>
+      <div class="gform-section__body">
+        <div class="gform-row-3">
+
+          <div class="gform-field">
+            <label class="gform-label">
+              {{ 'goals.form.targetValue' | translate }}
+              <span class="gform-required">*</span>
+            </label>
+            <div class="gform-input-wrap">
+              <span class="gform-input-icon"><i class="fa-solid fa-bullseye"></i></span>
+              <input type="number" class="form-control gform-input gform-input--icon"
+                     min="1"
+                     [placeholder]="'goals.form.targetValuePh' | translate"
+                     [ngModel]="targetValue()"
+                     (ngModelChange)="targetValue.set($event)"
+                     name="targetValue" required />
+            </div>
+          </div>
+
+          <div class="gform-field">
+            <label class="gform-label">
+              {{ 'goals.form.points' | translate }}
+              <span class="gform-required">*</span>
+            </label>
+            <div class="gform-input-wrap">
+              <span class="gform-input-icon gform-input-icon--pts"><i class="fa-solid fa-star"></i></span>
+              <input type="number" class="form-control gform-input gform-input--icon"
+                     min="1"
+                     [placeholder]="'goals.form.pointsPh' | translate"
+                     [ngModel]="points()"
+                     (ngModelChange)="points.set($event)"
+                     name="points" required />
+            </div>
+          </div>
+
+          <div class="gform-field">
+            <label class="gform-label">
+              {{ 'goals.form.financialReward' | translate }}
+              <span class="gform-required">*</span>
+            </label>
+            <div class="gform-input-wrap">
+              <span class="gform-input-icon gform-input-icon--reward"><i class="fa-solid fa-coins"></i></span>
+              <input type="number" class="form-control gform-input gform-input--icon"
+                     min="0"
+                     [placeholder]="'goals.form.financialRewardPh' | translate"
+                     [ngModel]="financialReward()"
+                     (ngModelChange)="financialReward.set($event)"
+                     name="financialReward" required />
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ Section 4: Schedule ══ -->
+    <div class="gform-section">
+      <div class="gform-section__header">
+        <span class="gform-section__icon gform-section__icon--amber">
+          <i class="fa-solid fa-calendar-days"></i>
+        </span>
+        <span class="gform-section__title">الجدول الزمني</span>
+      </div>
+      <div class="gform-section__body">
+        <div class="gform-row-2">
+
+          <div class="gform-field">
+            <label class="gform-label">
+              {{ 'goals.form.startDate' | translate }}
+              <span class="gform-required">*</span>
+            </label>
+            <div class="gform-input-wrap">
+              <span class="gform-input-icon"><i class="fa-regular fa-calendar"></i></span>
+              <input type="datetime-local"
+                     class="form-control gform-input gform-input--icon"
+                     [ngModel]="startDate()"
+                     (ngModelChange)="startDate.set($event)"
+                     name="startDate" required />
+            </div>
+          </div>
+
+          <div class="gform-field">
+            <label class="gform-label">
+              {{ 'goals.form.endDate' | translate }}
+              <span class="gform-required">*</span>
+            </label>
+            <div class="gform-input-wrap">
+              <span class="gform-input-icon"><i class="fa-regular fa-calendar-check"></i></span>
+              <input type="datetime-local"
+                     class="form-control gform-input gform-input--icon"
+                     [class.is-invalid]="endDate() && !endDateValid()"
+                     [ngModel]="endDate()"
+                     (ngModelChange)="endDate.set($event)"
+                     name="endDate" required />
+            </div>
+            @if (endDate() && !endDateValid()) {
+              <p class="gform-hint gform-hint--error">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                {{ 'goals.form.endDateHint' | translate }}
+              </p>
+            }
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ Section 5: Assignment (Individual only, create mode) ══ -->
+    @if (showAssignedTo() && !isEditMode()) {
+      <div class="gform-section">
+        <div class="gform-section__header">
+          <span class="gform-section__icon gform-section__icon--indigo">
+            <i class="fa-solid fa-user-tie"></i>
+          </span>
+          <span class="gform-section__title">تعيين الهدف</span>
+        </div>
+        <div class="gform-section__body">
+
+          <div class="gform-field">
+            <label class="gform-label">
+              {{ 'goals.form.assignedTo' | translate }}
+              <span class="gform-required">*</span>
+            </label>
+
+            @if (loadingSales()) {
+              <div class="gform-loading">
+                <span class="spinner-border spinner-border-sm"></span>
+                <span>جاري تحميل الموظفين...</span>
+              </div>
+            } @else if (salesPersons().length === 0) {
+              <div class="gform-empty">
+                <i class="fa-solid fa-user-slash"></i>
+                <span>لا يوجد موظفو مبيعات متاحون</span>
+              </div>
+            } @else {
+              <div class="gform-employee-list">
+                @for (person of salesPersons(); track person.userId) {
+                  <label class="gform-employee-item"
+                         [class.selected]="assignedToId() === person.userId">
+                    <input type="radio"
+                           class="visually-hidden"
+                           [value]="person.userId"
+                           [checked]="assignedToId() === person.userId"
+                           (change)="assignedToId.set(person.userId)"
+                           name="assignedToId" />
+                    <span class="gform-emp-av">
+                      {{ (person.fullName || '?').charAt(0).toUpperCase() }}
+                    </span>
+                    <span class="gform-emp-name">{{ person.fullName }}</span>
+                    @if (assignedToId() === person.userId) {
+                      <i class="fa-solid fa-check gform-emp-check"></i>
+                    }
+                  </label>
+                }
+              </div>
+            }
+          </div>
+
+        </div>
+      </div>
+    }
+
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" (click)="cancel.emit()" [disabled]="submitting()">
+      {{ 'goals.form.cancel' | translate }}
+    </button>
+    <button type="button"
+            class="gform-submit-btn"
+            [disabled]="!canSubmit()"
+            (click)="submit()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm"></span>
+      } @else {
+        <i class="fa-solid fa-check"></i>
+      }
+      {{ (isEditMode() ? 'goals.form.update' : 'goals.form.save') | translate }}
+    </button>
+  </ng-container>
+
+</app-modal>

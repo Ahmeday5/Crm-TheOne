@@ -2,6 +2,7 @@ import { TranslationFile } from '../i18n.types';
 
 const tableTools: TranslationFile<'tableTools'> = {
   tableTools: {
+    refresh: 'تحديث',
     label: 'تصدير / طباعة',
     excel: 'تصدير إلى Excel',
     print: 'طباعة (PDF)',

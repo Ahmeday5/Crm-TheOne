@@ -97,7 +97,9 @@
           [columns]="exportColumns"
           [rows]="rows()"
           [fetchAll]="fetchAllRows"
-          [disabled]="loading() || rows().length === 0">
+          [disabled]="loading() || rows().length === 0"
+          [showRefresh]="true"
+          (refresh)="reload(true)">
         </app-table-tools>
       </div>
       <div class="card-body p-0">

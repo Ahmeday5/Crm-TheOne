@@ -9,18 +9,95 @@
   pointer-events: none;
 }
 
-/* ─── follow-up urgency row highlight ─── */
-tr.fu-overdue > td {
-  background: var(--danger-soft, rgba(239, 68, 68, 0.10)) !important;
-  box-shadow: inset 4px 0 0 var(--danger, #ef4444);
+/* ─── follow-up urgency — animated cell fill ─────────────── */
+
+/* box-shadow trick: inset 0 0 0 1000px fills the whole cell
+   without needing !important (shadow draws above bg-color) */
+@keyframes fu-fill-overdue {
+  0%, 100% {
+    box-shadow: inset 3px 0 0 rgba(220, 38, 38, 0.55),
+                inset 0 0 0 1000px rgba(220, 38, 38, 0.05);
+  }
+  50% {
+    box-shadow: inset 4px 0 0 #dc2626,
+                inset 0 0 0 1000px rgba(220, 38, 38, 0.20);
+  }
 }
-tr.fu-overdue:hover > td {
-  background: var(--danger-soft, rgba(239, 68, 68, 0.16)) !important;
+
+@keyframes fu-fill-today {
+  0%, 100% {
+    box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.55),
+                inset 0 0 0 1000px rgba(245, 158, 11, 0.05);
+  }
+  50% {
+    box-shadow: inset 4px 0 0 #f59e0b,
+                inset 0 0 0 1000px rgba(245, 158, 11, 0.20);
+  }
 }
-tr.fu-soon > td {
-  background: rgba(245, 158, 11, 0.12) !important;
-  box-shadow: inset 4px 0 0 #f59e0b;
+
+@keyframes fu-fill-tomorrow {
+  0%, 100% {
+    box-shadow: inset 3px 0 0 rgba(14, 165, 233, 0.4),
+                inset 0 0 0 1000px rgba(14, 165, 233, 0.04);
+  }
+  50% {
+    box-shadow: inset 3px 0 0 #0ea5e9,
+                inset 0 0 0 1000px rgba(14, 165, 233, 0.14);
+  }
 }
-tr.fu-soon:hover > td {
-  background: rgba(245, 158, 11, 0.20) !important;
+
+@keyframes fu-icon-beat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+}
+
+td.fu-cell-overdue  { animation: fu-fill-overdue  1.5s ease-in-out infinite; }
+td.fu-cell-today    { animation: fu-fill-today    2s   ease-in-out infinite; }
+td.fu-cell-tomorrow { animation: fu-fill-tomorrow 3s   ease-in-out infinite; }
+
+/* ─── urgency badge ─── */
+.fu-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  line-height: 1.5;
+  margin-bottom: 0.3rem;
+  i { font-size: 0.62rem; display: inline-block; }
+}
+
+.fu-badge--overdue {
+  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.12);
+  border: 1px solid rgba(220, 38, 38, 0.28);
+}
+.fu-badge--today {
+  color: #92400e;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.fu-badge--tomorrow {
+  color: #075985;
+  background: rgba(14, 165, 233, 0.10);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+}
+
+/* icon beats on the two urgent states */
+.fu-badge--overdue i,
+.fu-badge--today i { animation: fu-icon-beat 1.5s ease-in-out infinite; }
+
+/* next-date row accent */
+.crm-followup-row.is-overdue {
+  color: #b91c1c;
+  i { opacity: 1; color: #b91c1c; }
+}
+.crm-followup-row.is-today,
+.crm-followup-row.is-tomorrow {
+  color: #92400e;
+  i { opacity: 1; color: #b45309; }
 }

@@ -18,9 +18,9 @@ import dailyReports from './dailyReports.en';
 import tableTools from './tableTools.en';
 import resources from './resources.en';
 import knowledgeBase from './knowledgeBase.en';
-import chat from './chat.en';
 import whatsapp from './whatsapp.en';
 import notifications from './notifications.en';
+import goals from './goals.en';
 
 const en: Translations = {
   ...common,
@@ -42,9 +42,9 @@ const en: Translations = {
   ...tableTools,
   ...resources,
   ...knowledgeBase,
-  ...chat,
-  ...whatsapp,
+...whatsapp,
   ...notifications,
+  ...goals,
 };
 
 export default en;

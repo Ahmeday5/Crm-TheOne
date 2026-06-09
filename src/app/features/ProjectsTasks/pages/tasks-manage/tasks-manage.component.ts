@@ -226,8 +226,8 @@ export class TasksManageComponent implements OnInit, OnDestroy {
 
   // ─────────── data ───────────
 
-  private fetch(query: TaskListQuery) {
-    return this.isAdmin() ? this.tasks.list(query) : this.tasks.myList(query);
+  private fetch(query: TaskListQuery, force = false) {
+    return this.isAdmin() ? this.tasks.list(query, force) : this.tasks.myList(query, force);
   }
 
   private buildQuery(): TaskListQuery {
@@ -252,14 +252,17 @@ export class TasksManageComponent implements OnInit, OnDestroy {
     });
   }
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
-    this.fetch({
-      ...this.buildQuery(),
-      PageIndex: this.pageIndex(),
-      PageSize: this.pageSize(),
-    }).subscribe({
+    this.fetch(
+      {
+        ...this.buildQuery(),
+        PageIndex: this.pageIndex(),
+        PageSize: this.pageSize(),
+      },
+      force,
+    ).subscribe({
       next: (page) => {
         this.rows.set(page.data ?? []);
         this.count.set(page.count ?? 0);

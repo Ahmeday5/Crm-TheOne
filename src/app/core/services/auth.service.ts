@@ -96,6 +96,7 @@ export class AuthService {
         context: withInlineHandling(withSkipAuth()),
       })
       .pipe(
+        tap(() => this.httpCache.clear()),
         tap((data) => this.persistSession(data)),
         tap(() => this.hydrateProfile()),
         map((data) => this.toUser(data)),
@@ -218,7 +219,12 @@ export class AuthService {
     this.storage.set(environment.tokenKey, data.accessToken);
     this.storage.set(environment.refreshTokenKey, data.refreshToken);
 
-    const user = this.toUser(data);
+    const existing = this.currentUserSignal();
+    const user: User = {
+      ...this.toUser(data),
+      fullName: existing?.fullName ?? null,
+      phone: existing?.phone ?? null,
+    };
     this.storage.setJson(environment.userKey, user);
     this.currentUserSignal.set(user);
 

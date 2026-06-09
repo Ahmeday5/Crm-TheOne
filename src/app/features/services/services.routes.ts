@@ -11,7 +11,7 @@ export const SERVICES_ROUTES: Routes = [
   {
     path: 'services',
     title: 'إدارة الخدمات',
-    data: { roles: ['Admin'] },
+    data: { roles: ['Admin', 'Marketing'] },
     loadComponent: () =>
       import('./pages/services-list/services-list.component').then(
         (m) => m.ServicesListComponent,

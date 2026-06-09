@@ -98,15 +98,18 @@ export class PriceOffersComponent implements OnInit {
 
   // ─────────── data ───────────
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
     this.service
-      .list({
-        PageIndex: this.pageIndex(),
-        PageSize: this.pageSize(),
-        CustomerId: this.selectedCustomerId() ?? undefined,
-      })
+      .list(
+        {
+          PageIndex: this.pageIndex(),
+          PageSize: this.pageSize(),
+          CustomerId: this.selectedCustomerId() ?? undefined,
+        },
+        force,
+      )
       .subscribe({
         next: (page) => {
           this.rows.set(page.data ?? []);

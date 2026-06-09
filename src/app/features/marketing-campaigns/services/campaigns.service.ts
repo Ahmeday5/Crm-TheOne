@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
   withCache,
+  withCacheBypass,
   withCacheInvalidate,
   withInlineHandling,
   withSkipLoader,
@@ -52,10 +53,13 @@ const CAMPAIGN_CACHE_KEYS = ['Campaigns', 'Marketing', 'AdminDashboard'] as cons
 export class CampaignsService {
   private readonly api = inject(ApiService);
 
-  list(query: CampaignListQuery = {}): Observable<PagedResult<Campaign>> {
+  list(query: CampaignListQuery = {}, force = false): Observable<PagedResult<Campaign>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.MEDIUM }))
+      : withCache({ ttlMs: CACHE_TTL.MEDIUM });
     return this.api.get<PagedResult<Campaign>>(API_ENDPOINTS.campaigns.list, {
       params: query as Record<string, unknown>,
-      context: withCache({ ttlMs: CACHE_TTL.MEDIUM }),
+      context: ctx,
     });
   }
 

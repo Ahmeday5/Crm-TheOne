@@ -107,7 +107,9 @@
         [columns]="exportColumns"
         [rows]="rows()"
         [fetchAll]="fetchAllRows"
-        [disabled]="loading() || rows().length === 0">
+        [disabled]="loading() || rows().length === 0"
+        [showRefresh]="true"
+        (refresh)="reload(true)">
       </app-table-tools>
     </div>
 
@@ -150,7 +152,7 @@
             </thead>
             <tbody>
               @for (row of rows(); track trackById($index, row)) {
-                <tr [class]="followUpRowClass(row)">
+                <tr>
                   <!-- Identity -->
                   <td>
                     <div class="crm-identity">
@@ -273,8 +275,32 @@
                   </td>
 
                   <!-- Follow-up -->
-                  <td>
+                  <td [class]="followUpTdClass(row)">
                     <div class="crm-followup">
+                      @if (followUpState(row); as fus) {
+                        @if (fus.type) {
+                          <span class="fu-badge"
+                                [class.fu-badge--overdue]="fus.type === 'overdue'"
+                                [class.fu-badge--today]="fus.type === 'today'"
+                                [class.fu-badge--tomorrow]="fus.type === 'tomorrow'">
+                            @if (fus.type === 'overdue') {
+                              <i class="fa-solid fa-circle-exclamation"></i>
+                              {{ 'customers.table.fuOverdue' | translate }}
+                              @if (fus.daysAgo === 1) {
+                                &nbsp;·&nbsp;{{ 'customers.table.fuYesterday' | translate }}
+                              } @else {
+                                &nbsp;·&nbsp;{{ fus.daysAgo }}&nbsp;{{ 'customers.table.fuDays' | translate }}
+                              }
+                            } @else if (fus.type === 'today') {
+                              <i class="fa-solid fa-clock"></i>
+                              {{ 'customers.table.fuToday' | translate }}
+                            } @else if (fus.type === 'tomorrow') {
+                              <i class="fa-solid fa-calendar-plus"></i>
+                              {{ 'customers.table.fuTomorrow' | translate }}
+                            }
+                          </span>
+                        }
+                      }
                       <div class="crm-followup-row">
                         <i class="fa-solid fa-clock-rotate-left text-muted"></i>
                         @if (row.lastFollowUpDate) {
@@ -283,8 +309,11 @@
                           <span class="crm-followup-empty">{{ 'customers.table.lastFollowUp' | translate }}</span>
                         }
                       </div>
-                      <div class="crm-followup-row">
-                        <i class="fa-solid fa-calendar-day text-muted"></i>
+                      <div class="crm-followup-row"
+                           [class.is-overdue]="followUpState(row).type === 'overdue'"
+                           [class.is-today]="followUpState(row).type === 'today'"
+                           [class.is-tomorrow]="followUpState(row).type === 'tomorrow'">
+                        <i class="fa-solid fa-calendar-day"></i>
                         @if (row.nextFollowUpDate) {
                           {{ formatDate(row.nextFollowUpDate) }}
                         } @else {

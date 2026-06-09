@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
   withCache,
+  withCacheBypass,
   withCacheInvalidate,
   withInlineHandling,
   withSkipLoader,
@@ -34,13 +35,13 @@ import {
 export class ContractsService {
   private readonly api = inject(ApiService);
 
-  list(query: ContractListQuery = {}): Observable<PagedResult<ContractListItem>> {
+  list(query: ContractListQuery = {}, force = false): Observable<PagedResult<ContractListItem>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<PagedResult<ContractListItem>>(
       API_ENDPOINTS.contracts.list,
-      {
-        params: query as Record<string, unknown>,
-        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
-      },
+      { params: query as Record<string, unknown>, context: ctx },
     );
   }
 

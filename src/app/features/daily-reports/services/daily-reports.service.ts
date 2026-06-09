@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
   withCache,
+  withCacheBypass,
   withCacheInvalidate,
   withInlineHandling,
   withSkipLoader,
@@ -33,18 +34,24 @@ export class DailyReportsService {
   private readonly api = inject(ApiService);
 
   /** Admin-scoped — returns every user's daily reports. */
-  list(query: DailyReportListQuery = {}): Observable<PagedResult<DailyReportListItem>> {
+  list(query: DailyReportListQuery = {}, force = false): Observable<PagedResult<DailyReportListItem>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.MEDIUM }))
+      : withCache({ ttlMs: CACHE_TTL.MEDIUM });
     return this.api.get<PagedResult<DailyReportListItem>>(API_ENDPOINTS.reports.list, {
       params: query as Record<string, unknown>,
-      context: withCache({ ttlMs: CACHE_TTL.MEDIUM }),
+      context: ctx,
     });
   }
 
   /** Caller-scoped — returns the signed-in user's daily reports. */
-  myReports(query: DailyReportListQuery = {}): Observable<PagedResult<DailyReportListItem>> {
+  myReports(query: DailyReportListQuery = {}, force = false): Observable<PagedResult<DailyReportListItem>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.MEDIUM }))
+      : withCache({ ttlMs: CACHE_TTL.MEDIUM });
     return this.api.get<PagedResult<DailyReportListItem>>(API_ENDPOINTS.reports.myReports, {
       params: query as Record<string, unknown>,
-      context: withCache({ ttlMs: CACHE_TTL.MEDIUM }),
+      context: ctx,
     });
   }
 

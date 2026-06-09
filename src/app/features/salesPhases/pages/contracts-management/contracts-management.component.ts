@@ -141,11 +141,11 @@ export class ContractsManagementComponent implements OnInit {
     this.loadStatistics();
   }
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
     this.service
-      .list({ PageIndex: this.pageIndex(), PageSize: this.pageSize() })
+      .list({ PageIndex: this.pageIndex(), PageSize: this.pageSize() }, force)
       .subscribe({
         next: (page) => {
           this.rows.set(page.data ?? []);

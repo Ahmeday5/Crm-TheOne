@@ -244,7 +244,7 @@ export class DailyReportsComponent implements OnInit, OnDestroy {
 
   // ─────────── data loading ───────────
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
 
@@ -259,8 +259,8 @@ export class DailyReportsComponent implements OnInit, OnDestroy {
 
     const useMine = !this.isAdmin() || this.scope() === 'mine';
     const request$: Observable<PagedResult<DailyReportListItem>> = useMine
-      ? this.reports.myReports(query)
-      : this.reports.list(query);
+      ? this.reports.myReports(query, force)
+      : this.reports.list(query, force);
 
     request$.subscribe({
       next: (res) => {

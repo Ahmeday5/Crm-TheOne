@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
   withCache,
+  withCacheBypass,
   withCacheInvalidate,
   withInlineHandling,
   withSkipLoader,
@@ -32,15 +33,18 @@ import {
 export class ServicesService {
   private readonly api = inject(ApiService);
 
-  list(query: PagedQuery = {}): Observable<PagedResult<AppService>> {
+  list(query: PagedQuery = {}, force = false): Observable<PagedResult<AppService>> {
     const params: Record<string, unknown> = {
       Search: query.search,
       PageIndex: query.pageIndex,
       PageSize: query.pageSize,
     };
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.MEDIUM }))
+      : withCache({ ttlMs: CACHE_TTL.MEDIUM });
     return this.api.get<PagedResult<AppService>>(API_ENDPOINTS.services.list, {
       params,
-      context: withCache({ ttlMs: CACHE_TTL.MEDIUM }),
+      context: ctx,
     });
   }
 

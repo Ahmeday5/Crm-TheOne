@@ -9,12 +9,15 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { CompanySettingsService } from '../../../../core/services/company-settings.service';
 import { LanguageService } from '../../../../core/services/language.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import {
   Article,
+  ArticleAttachment,
   articleStatusBadgeClass,
   articleTypeBadgeClass,
 } from '../../../../shared/models';
@@ -27,19 +30,27 @@ import { ArticlesService } from '../../services/articles.service';
   imports: [CommonModule, TranslatePipe, ModalComponent, LoadErrorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './article-details-dialog.component.html',
+  styleUrl: './article-details-dialog.component.scss',
 })
 export class ArticleDetailsDialogComponent implements OnInit {
   @Input({ required: true }) articleId!: number;
 
   @Output() cancel = new EventEmitter<void>();
+  /** Emitted after any mutation (e.g. attachment deleted) so the parent can refresh. */
+  @Output() changed = new EventEmitter<void>();
 
   private readonly service = inject(ArticlesService);
   private readonly company = inject(CompanySettingsService);
+  private readonly toast = inject(ToastService);
   protected readonly language = inject(LanguageService);
 
   readonly details = signal<Article | null>(null);
   readonly loading = signal(false);
   readonly loadError = signal<string | null>(null);
+
+  // ── attachment delete state ──
+  readonly confirmDeleteAttachmentId = signal<number | null>(null);
+  readonly deletingAttachmentId = signal<number | null>(null);
 
   readonly typeBadge = articleTypeBadgeClass;
   readonly statusBadge = articleStatusBadgeClass;
@@ -63,6 +74,42 @@ export class ArticleDetailsDialogComponent implements OnInit {
     });
   }
 
+  // ─────────── attachment delete ───────────
+
+  requestDeleteAttachment(attachment: ArticleAttachment): void {
+    this.confirmDeleteAttachmentId.set(attachment.id);
+  }
+
+  cancelDeleteAttachment(): void {
+    this.confirmDeleteAttachmentId.set(null);
+  }
+
+  confirmDeleteAttachment(attachment: ArticleAttachment): void {
+    if (this.deletingAttachmentId()) return;
+    this.deletingAttachmentId.set(attachment.id);
+    this.service.deleteAttachment(attachment.id).subscribe({
+      next: () => {
+        this.deletingAttachmentId.set(null);
+        this.confirmDeleteAttachmentId.set(null);
+        // Remove the attachment from the local details signal (immediate feedback).
+        this.details.update((a) =>
+          a
+            ? { ...a, attachments: a.attachments.filter((x) => x.id !== attachment.id) }
+            : a,
+        );
+        this.toast.success(this.t('kb.messages.attachmentDeleted'));
+        this.changed.emit();
+      },
+      error: () => {
+        this.deletingAttachmentId.set(null);
+        this.confirmDeleteAttachmentId.set(null);
+        this.toast.error(this.t('kb.messages.attachmentDeleteFailed'));
+      },
+    });
+  }
+
+  // ─────────── helpers ───────────
+
   /** Resolve a server-relative attachment path to an absolute URL. */
   attachmentUrl(path: string): string {
     return this.company.assetUrl(path) ?? path;
@@ -76,5 +123,9 @@ export class ArticleDetailsDialogComponent implements OnInit {
       this.language.lang() === 'ar' ? 'ar-EG' : 'en-GB',
       { year: 'numeric', month: 'short', day: 'numeric' },
     );
+  }
+
+  private t(key: string): string {
+    return resolveKey(TRANSLATIONS[this.language.lang()], key);
   }
 }

@@ -90,7 +90,7 @@ const knowledgeBase: TranslationFile<'kb'> = {
     deleteDialog: {
       title: 'Delete article',
       message: 'Are you sure you want to delete this article? This action cannot be undone.',
-      confirm: 'Delete',
+      confirm: 'Confirm delete',
       cancel: 'Cancel',
     },
     messages: {
@@ -98,6 +98,8 @@ const knowledgeBase: TranslationFile<'kb'> = {
       updated: 'Article updated successfully',
       deleted: 'Article deleted successfully',
       loadFailed: 'Failed to load articles',
+      attachmentDeleted: 'Attachment deleted successfully',
+      attachmentDeleteFailed: 'Failed to delete attachment. Please try again.',
     },
   },
 };

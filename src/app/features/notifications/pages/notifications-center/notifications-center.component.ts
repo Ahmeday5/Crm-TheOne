@@ -170,7 +170,7 @@ export class NotificationsCenterComponent implements OnInit, AfterViewInit, OnDe
   /** Card click: mark read, then jump to the related entity (when one exists). */
   openNotification(n: AppNotification): void {
     this.markRead(n);
-    const route = notificationRoute(n.relatedEntityType, this.auth.currentRole());
+    const route = notificationRoute(n.relatedEntityType, this.auth.currentRole(), n.type);
     if (route) this.router.navigate(route);
   }
 

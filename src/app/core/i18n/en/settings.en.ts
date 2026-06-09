@@ -42,6 +42,7 @@ const settings: TranslationFile<'settings'> = {
           role: 'Role',
           email: 'Email',
           phone: 'Phone',
+          specialty: 'Specialty',
           status: 'Status',
           createdAt: 'Created at',
           actions: 'Actions',

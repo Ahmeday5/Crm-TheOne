@@ -140,10 +140,10 @@ export class SupportTicketsComponent implements OnInit, OnDestroy {
 
   // ─────────── loaders ───────────
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
-    this.service.list(this.buildQuery()).subscribe({
+    this.service.list(this.buildQuery(), force).subscribe({
       next: (page) => {
         this.rows.set(page.data ?? []);
         this.totalCount.set(page.count ?? 0);

@@ -16,8 +16,6 @@ import {
   takeUntil,
 } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
-import { ApiError } from '../../../../core/models/api-response.model';
-import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -67,9 +65,8 @@ const TYPE_ACCENT: Record<string, string> = {
 })
 export class KnowledgeBaseComponent implements OnInit, OnDestroy {
   private readonly service = inject(ArticlesService);
-  private readonly toast = inject(ToastService);
-  private readonly dialog = inject(DialogService);
   protected readonly language = inject(LanguageService);
+  private readonly toast = inject(ToastService);
 
   readonly types = ARTICLE_TYPES;
 
@@ -92,7 +89,10 @@ export class KnowledgeBaseComponent implements OnInit, OnDestroy {
   readonly dialogMode = signal<FormMode | null>(null);
   readonly editing = signal<Article | null>(null);
   readonly viewingId = signal<number | null>(null);
-  readonly busyId = signal<number | null>(null);
+
+  // ── delete state ──
+  readonly confirmDeleteId = signal<number | null>(null);
+  readonly deletingId = signal<number | null>(null);
 
   readonly typeBadge = articleTypeBadgeClass;
   readonly statusBadge = articleStatusBadgeClass;
@@ -141,10 +141,10 @@ export class KnowledgeBaseComponent implements OnInit, OnDestroy {
     };
   }
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
-    this.service.list(this.buildQuery()).subscribe({
+    this.service.list(this.buildQuery(), force).subscribe({
       next: (page) => {
         this.rows.set(page.data ?? []);
         this.count.set(page.count ?? 0);
@@ -221,31 +221,33 @@ export class KnowledgeBaseComponent implements OnInit, OnDestroy {
     this.viewingId.set(null);
   }
 
+  onDetailsChanged(): void {
+    this.reload();
+  }
+
   // ─────────── delete ───────────
 
-  async confirmDelete(article: Article): Promise<void> {
-    const ok = await this.dialog.confirm({
-      title: this.t('kb.deleteDialog.title'),
-      message: this.t('kb.deleteDialog.message'),
-      confirmText: this.t('kb.deleteDialog.confirm'),
-      cancelText: this.t('kb.deleteDialog.cancel'),
-      type: 'danger',
-    });
-    if (!ok) return;
+  requestDelete(id: number): void {
+    this.confirmDeleteId.set(id);
+  }
 
-    this.busyId.set(article.id);
+  cancelDelete(): void {
+    this.confirmDeleteId.set(null);
+  }
+
+  confirmDelete(article: Article): void {
+    if (this.deletingId()) return;
+    this.deletingId.set(article.id);
     this.service.delete(article.id).subscribe({
       next: () => {
-        this.busyId.set(null);
+        this.deletingId.set(null);
+        this.confirmDeleteId.set(null);
         this.toast.success(this.t('kb.messages.deleted'));
-        if (this.rows().length === 1 && this.pageIndex() > 1) {
-          this.pageIndex.update((p) => p - 1);
-        }
         this.reload();
       },
-      error: (err: ApiError) => {
-        this.busyId.set(null);
-        if (err?.message) this.toast.error(err.message);
+      error: () => {
+        this.deletingId.set(null);
+        this.confirmDeleteId.set(null);
       },
     });
   }

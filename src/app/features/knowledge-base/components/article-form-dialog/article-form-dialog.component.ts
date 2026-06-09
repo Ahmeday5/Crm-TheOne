@@ -6,6 +6,7 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnDestroy,
   OnInit,
   Output,
   SimpleChanges,
@@ -54,7 +55,7 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024;
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './article-form-dialog.component.html',
 })
-export class ArticleFormDialogComponent implements OnInit, OnChanges {
+export class ArticleFormDialogComponent implements OnInit, OnChanges, OnDestroy {
   @Input({ required: true }) mode!: FormMode;
   @Input() article: Article | null = null;
 
@@ -77,6 +78,8 @@ export class ArticleFormDialogComponent implements OnInit, OnChanges {
 
   /** Newly picked attachment files (create only). */
   readonly attachments = signal<File[]>([]);
+  /** Object URLs for previewing picked images — revoked on removal/reset. */
+  readonly previewUrls = signal<string[]>([]);
 
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -113,9 +116,15 @@ export class ArticleFormDialogComponent implements OnInit, OnChanges {
     if ('mode' in changes || 'article' in changes) {
       this.errorMessage.set(null);
       this.submitting.set(false);
+      this.revokeAllPreviews();
       this.attachments.set([]);
+      this.previewUrls.set([]);
       this.patchFromArticle();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.revokeAllPreviews();
   }
 
   // ─────────── category picker ───────────
@@ -164,8 +173,9 @@ export class ArticleFormDialogComponent implements OnInit, OnChanges {
     input.value = '';
     if (picked.length === 0) return;
 
-    const current = this.attachments();
-    const next = [...current];
+    const nextFiles = [...this.attachments()];
+    const nextUrls = [...this.previewUrls()];
+
     for (const file of picked) {
       if (!file.type.startsWith('image/')) {
         this.toast.error(this.t('kb.form.invalidImage'));
@@ -175,17 +185,26 @@ export class ArticleFormDialogComponent implements OnInit, OnChanges {
         this.toast.error(this.t('kb.form.imageTooLarge'));
         continue;
       }
-      if (next.length >= this.maxAttachments) {
+      if (nextFiles.length >= this.maxAttachments) {
         this.toast.warning(this.t('kb.form.maxAttachments'));
         break;
       }
-      next.push(file);
+      nextFiles.push(file);
+      nextUrls.push(URL.createObjectURL(file));
     }
-    this.attachments.set(next);
+    this.attachments.set(nextFiles);
+    this.previewUrls.set(nextUrls);
   }
 
   removeAttachment(index: number): void {
+    const urls = this.previewUrls();
+    if (urls[index]) URL.revokeObjectURL(urls[index]);
     this.attachments.update((list) => list.filter((_, i) => i !== index));
+    this.previewUrls.update((list) => list.filter((_, i) => i !== index));
+  }
+
+  private revokeAllPreviews(): void {
+    for (const url of this.previewUrls()) URL.revokeObjectURL(url);
   }
 
   // ─────────── submit ───────────

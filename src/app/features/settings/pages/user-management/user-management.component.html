@@ -21,7 +21,7 @@
         </div>
       </div>
     </div>
-
+    
     <div class="col-12 col-sm-6 col-lg-3">
       <div class="card kpi-card">
         <div class="card-body d-flex align-items-center justify-content-between gap-3">
@@ -112,7 +112,9 @@
         [reportTitle]="'settings.users.list.title' | translate"
         [columns]="exportColumns"
         [rows]="visible()"
-        [disabled]="loading() || visible().length === 0">
+        [disabled]="loading() || visible().length === 0"
+        [showRefresh]="true"
+        (refresh)="reload(true)">
       </app-table-tools>
     </div>
     <div class="card-body p-0">
@@ -139,6 +141,8 @@
                 <th>{{ 'settings.users.list.col.name' | translate }}</th>
                 <th>{{ 'settings.users.list.col.email' | translate }}</th>
                 <th>{{ 'settings.users.list.col.phone' | translate }}</th>
+                <th>{{ 'settings.users.list.col.role' | translate }}</th>
+                <th>{{ 'settings.users.list.col.specialty' | translate }}</th>
                 <th>{{ 'settings.users.list.col.status' | translate }}</th>
                 <th class="text-end">{{ 'settings.users.list.col.actions' | translate }}</th>
               </tr>
@@ -149,17 +153,7 @@
                   <td>
                     <div class="d-flex align-items-center gap-3">
                       <span class="user-avatar">{{ initialOf(u) }}</span>
-                      <div class="min-w-0">
-                        <span class="fw-600 text-truncate d-block">{{ displayName(u) }}</span>
-                        <small class="d-flex align-items-center gap-1 mt-1">
-                          @if (u.role) {
-                            <span class="badge bg-primary-subtle text-primary">{{ roleLabelFor(u.role) }}</span>
-                          }
-                          @if (u.specialty) {
-                            <span class="text-muted text-truncate">{{ u.specialty }}</span>
-                          }
-                        </small>
-                      </div>
+                      <span class="fw-600 text-truncate">{{ displayName(u) }}</span>
                     </div>
                   </td>
                   <td>
@@ -173,6 +167,16 @@
                       <i class="fa-solid fa-phone text-muted"></i>
                       <span class="small" dir="ltr">{{ displayPhone(u) }}</span>
                     </div>
+                  </td>
+                  <td>
+                    @if (u.role) {
+                      <span class="badge bg-primary-subtle text-primary">{{ roleLabelFor(u.role) }}</span>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  <td>
+                    <span class="small text-muted">{{ u.specialty || '—' }}</span>
                   </td>
                   <td>
                     <span class="badge success">

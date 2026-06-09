@@ -91,6 +91,11 @@ const customers: TranslationFile<'customers'> = {
       assignment: 'التعيين',
       contact: 'بيانات التواصل',
       followUpHeader: 'المتابعة',
+      fuOverdue: 'متأخر',
+      fuToday: 'اليوم',
+      fuTomorrow: 'غداً',
+      fuDays: 'أيام',
+      fuYesterday: 'أمس',
     },
 
     transfer: {

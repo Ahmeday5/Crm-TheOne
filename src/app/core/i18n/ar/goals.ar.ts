@@ -1,0 +1,179 @@
+import { TranslationFile } from '../i18n.types';
+
+const goals: TranslationFile<'goals'> = {
+  goals: {
+    title: 'الأهداف والتحفيز',
+    subtitle: 'تتبع الأهداف وحفّز فريقك لتحقيق نتائج استثنائية',
+    myTitle: 'أهدافي',
+    mySubtitle: 'الأهداف المُعيَّنة لك — تابع تقدمك وحقق المكافآت',
+    addNew: 'إضافة هدف جديد',
+    noGoals: 'لا توجد أهداف حتى الآن',
+    noGoalsHint: 'أضف هدفاً جديداً لتحفيز فريق المبيعات',
+    noMyGoals: 'لا توجد أهداف مُعيَّنة لك',
+    noMyGoalsHint: 'ستظهر هنا الأهداف التي يُعيّنها لك المدير',
+
+    kpi: {
+      total: 'إجمالي الأهداف',
+      active: 'أهداف نشطة',
+      individual: 'أهداف فردية',
+      team: 'أهداف جماعية',
+      achieved: 'أهداف محققة',
+      inProgress: 'قيد التنفيذ',
+      totalPoints: 'إجمالي النقاط',
+    },
+
+    stats: {
+      title: 'إحصائيات الأهداف',
+      breakdown: 'تفاصيل النقاط المكتسبة',
+      breakdownEmpty: 'لا توجد نقاط مكتسبة بعد',
+      colGoal: 'الهدف',
+      colType: 'النوع',
+      colPeriod: 'الفترة',
+      colPoints: 'النقاط',
+      colReward: 'المكافأة (ج.م)',
+      colUser: 'الموظف',
+      colAchievedAt: 'تاريخ التحقيق',
+      colFrom: 'من',
+      colTo: 'إلى',
+    },
+
+    type: {
+      label: 'نوع الهدف',
+      Individual: 'فردي',
+      Team: 'جماعي',
+    },
+
+    period: {
+      label: 'الفترة الزمنية',
+      Daily: 'يومي',
+      Weekly: 'أسبوعي',
+      Monthly: 'شهري',
+      Yearly: 'سنوي',
+    },
+
+    status: {
+      active: 'نشط',
+      upcoming: 'قادم',
+      expired: 'منتهي',
+      achieved: 'محقق',
+      inProgress: 'قيد التنفيذ',
+    },
+
+    card: {
+      target: 'الهدف المستهدف',
+      points: 'النقاط',
+      reward: 'المكافأة المالية',
+      assignedTo: 'مُعيَّن لـ',
+      createdBy: 'أُنشئ بواسطة',
+      period: 'الفترة',
+      daysLeft: 'يوم متبقي',
+      dayLeft: 'يوم متبقي',
+      daysAgo: 'أيام',
+      ended: 'انتهى منذ',
+      startsIn: 'يبدأ بعد',
+      currency: 'ج.م',
+      currentProgress: 'التقدم الحالي',
+      progressOf: 'من',
+      achievedOn: 'حُقق في',
+      updateProgress: 'تحديث التقدم',
+      notStarted: 'لم يبدأ بعد',
+    },
+
+    progress: {
+      title: 'تحديث التقدم',
+      subtitle: 'أدخل قيمة التقدم الجديدة',
+      currentLabel: 'التقدم الحالي',
+      targetLabel: 'الهدف',
+      newValueLabel: 'القيمة الجديدة',
+      newValuePh: 'أدخل قيمة التقدم...',
+      previewLabel: 'النسبة الجديدة',
+      willAchieve: '🏆 سيتم تحقيق الهدف!',
+      update: 'تحديث',
+      cancel: 'إلغاء',
+    },
+
+    celebration: {
+      title: 'مبروك! لقد حققت هدفك!',
+    },
+
+    form: {
+      createTitle: 'إضافة هدف جديد',
+      editTitle: 'تعديل الهدف',
+      title: 'عنوان الهدف',
+      titlePh: 'مثال: تحقيق 50 عملية بيع هذا الشهر',
+      description: 'الوصف',
+      descriptionPh: 'وصف تفصيلي للهدف وكيفية تحقيقه...',
+      type: 'نوع الهدف',
+      period: 'الفترة الزمنية',
+      targetValue: 'القيمة المستهدفة',
+      targetValuePh: 'مثال: 5000',
+      points: 'النقاط',
+      pointsPh: 'مثال: 100',
+      financialReward: 'المكافأة المالية (ج.م)',
+      financialRewardPh: 'مثال: 500',
+      startDate: 'تاريخ البداية',
+      endDate: 'تاريخ النهاية',
+      assignedTo: 'تعيين لموظف',
+      assignedToPh: 'اختر موظف مبيعات...',
+      endDateHint: 'يجب أن يكون بعد تاريخ البداية بيوم على الأقل',
+      save: 'حفظ الهدف',
+      update: 'حفظ التعديلات',
+      cancel: 'إلغاء',
+    },
+
+    confirm: {
+      deleteTitle: 'حذف الهدف',
+      deleteMessage: 'هل أنت متأكد من حذف هذا الهدف؟ لا يمكن التراجع عن هذا الإجراء.',
+      deleteConfirm: 'حذف',
+      deleteCancel: 'إلغاء',
+    },
+
+    messages: {
+      loadFailed: 'فشل تحميل الأهداف، يرجى المحاولة مرة أخرى',
+      statsLoadFailed: 'فشل تحميل الإحصائيات',
+      createSuccess: 'تم إنشاء الهدف بنجاح',
+      createFailed: 'فشل إنشاء الهدف',
+      updateSuccess: 'تم تحديث الهدف بنجاح',
+      updateFailed: 'فشل تحديث الهدف',
+      deleteSuccess: 'تم حذف الهدف بنجاح',
+      deleteFailed: 'فشل حذف الهدف',
+      progressUpdated: 'تم تحديث التقدم بنجاح ✓',
+      progressFailed: 'فشل تحديث التقدم',
+      salesLoadFailed: 'فشل تحميل قائمة الموظفين',
+    },
+
+    filter: {
+      all: 'الكل',
+      active: 'النشطة',
+      upcoming: 'القادمة',
+      expired: 'المنتهية',
+      individual: 'فردية',
+      team: 'جماعية',
+      search: 'بحث',
+      searchPh: 'ابحث عن هدف...',
+      byPeriod: 'الفترة',
+      byAchieved: 'الحالة',
+      achievedAll: 'الكل',
+      achievedYes: 'محققة',
+      achievedNo: 'قيد التنفيذ',
+    },
+
+    leaderboard: {
+      title: 'لوحة المتصدرين',
+      subtitle: 'ترتيب الموظفين حسب النقاط المحققة',
+      empty: 'لا توجد بيانات بعد',
+      goalsAchieved: 'هدف محقق',
+      pointsUnit: 'نقطة',
+    },
+
+    detail: {
+      title: 'تفاصيل الهدف',
+      viewStats: 'عرض التفاصيل',
+      achievementRate: 'نسبة الإنجاز',
+      assignedTo: 'مُعيَّن لـ',
+      createdBy: 'أُنشئ بواسطة',
+    },
+  },
+};
+
+export default goals;

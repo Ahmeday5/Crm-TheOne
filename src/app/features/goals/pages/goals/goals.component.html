@@ -1,0 +1,803 @@
+<section class="goals-page">
+
+  <!-- ══════════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════════ -->
+  <header class="gp-header">
+    <div class="gp-header__left">
+      <div class="gp-header__icon">
+        <i class="fa-solid fa-trophy"></i>
+        <span class="gp-header__icon-pulse"></span>
+      </div>
+      <div>
+        <h1 class="gp-header__title">
+          {{ (isAdmin() ? 'goals.title' : 'goals.myTitle') | translate }}
+        </h1>
+        <p class="gp-header__sub">
+          {{ (isAdmin() ? 'goals.subtitle' : 'goals.mySubtitle') | translate }}
+        </p>
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button type="button" class="btn btn-light" [disabled]="loading()"
+              (click)="load(true)"
+              [title]="'tableTools.refresh' | translate">
+        <i class="fa-solid fa-rotate-right"></i>
+      </button>
+      @if (isAdmin()) {
+        <button type="button" class="gp-add-btn" (click)="openCreate()">
+          <span class="gp-add-btn__icon"><i class="fa-solid fa-plus"></i></span>
+          {{ 'goals.addNew' | translate }}
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════
+       STATS
+  ══════════════════════════════════════════════ -->
+  @if (statsLoading()) {
+    <div class="gs-skeleton-grid">
+      @for (i of [1,2,3,4,5,6]; track i) {
+        <div class="skel skel--stat"></div>
+      }
+    </div>
+  } @else {
+    @if (stats(); as s) {
+      <div class="gs-grid">
+
+        <div class="gs-card gs-card--indigo" (click)="null">
+          <div class="gs-card__bg-icon"><i class="fa-solid fa-bullseye"></i></div>
+          <div class="gs-card__icon"><i class="fa-solid fa-bullseye"></i></div>
+          <div class="gs-card__body">
+            <span class="gs-card__val">{{ formatNumber(s.totalGoals) }}</span>
+            <span class="gs-card__label">{{ 'goals.kpi.total' | translate }}</span>
+          </div>
+        </div>
+
+        <div class="gs-card gs-card--green">
+          <div class="gs-card__bg-icon"><i class="fa-solid fa-circle-check"></i></div>
+          <div class="gs-card__icon"><i class="fa-solid fa-circle-check"></i></div>
+          <div class="gs-card__body">
+            <span class="gs-card__val">{{ formatNumber(s.achievedGoals) }}</span>
+            <span class="gs-card__label">{{ 'goals.kpi.achieved' | translate }}</span>
+            @if (s.totalGoals > 0) {
+              <span class="gs-card__rate">
+                {{ (s.achievedGoals / s.totalGoals * 100).toFixed(0) }}%
+              </span>
+            }
+          </div>
+        </div>
+
+        <div class="gs-card gs-card--amber">
+          <div class="gs-card__bg-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+          <div class="gs-card__icon"><i class="fa-solid fa-hourglass-half"></i></div>
+          <div class="gs-card__body">
+            <span class="gs-card__val">{{ formatNumber(s.inProgressGoals) }}</span>
+            <span class="gs-card__label">{{ 'goals.kpi.inProgress' | translate }}</span>
+          </div>
+        </div>
+
+        <div class="gs-card gs-card--blue">
+          <div class="gs-card__bg-icon"><i class="fa-solid fa-user"></i></div>
+          <div class="gs-card__icon"><i class="fa-solid fa-user"></i></div>
+          <div class="gs-card__body">
+            <span class="gs-card__val">{{ formatNumber(s.individualGoals) }}</span>
+            <span class="gs-card__label">{{ 'goals.kpi.individual' | translate }}</span>
+          </div>
+        </div>
+
+        <div class="gs-card gs-card--violet">
+          <div class="gs-card__bg-icon"><i class="fa-solid fa-users"></i></div>
+          <div class="gs-card__icon"><i class="fa-solid fa-users"></i></div>
+          <div class="gs-card__body">
+            <span class="gs-card__val">{{ formatNumber(s.teamGoals) }}</span>
+            <span class="gs-card__label">{{ 'goals.kpi.team' | translate }}</span>
+          </div>
+        </div>
+
+        <div class="gs-card gs-card--pink">
+          <div class="gs-card__bg-icon"><i class="fa-solid fa-star"></i></div>
+          <div class="gs-card__icon"><i class="fa-solid fa-star"></i></div>
+          <div class="gs-card__body">
+            <span class="gs-card__val">{{ formatNumber(s.totalPointsAwarded) }}</span>
+            <span class="gs-card__label">{{ 'goals.kpi.totalPoints' | translate }}</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ══ Leaderboard (admin only) ══ -->
+      @if (isAdmin() && leaderboard().length > 0) {
+        <div class="glb-section">
+          <div class="glb-section__head">
+            <div class="glb-section__title-wrap">
+              <span class="glb-trophy-icon">🏆</span>
+              <div>
+                <h2 class="glb-title">{{ 'goals.leaderboard.title' | translate }}</h2>
+                <p class="glb-subtitle">{{ 'goals.leaderboard.subtitle' | translate }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Podium (top 1-3) -->
+          <div class="glb-podium">
+            <!-- 2nd place (left) -->
+            @if (leaderboard().length > 1) {
+              <div class="glb-podium__spot glb-podium__spot--2">
+                <div class="glb-podium__avatar glb-podium__avatar--silver">
+                  {{ leaderboard()[1].initials }}
+                </div>
+                <span class="glb-podium__medal glb-podium__medal--silver">
+                  <i class="fa-solid fa-medal"></i>
+                </span>
+                <p class="glb-podium__name">{{ leaderboard()[1].name }}</p>
+                <p class="glb-podium__pts">
+                  <i class="fa-solid fa-star"></i>
+                  {{ formatNumber(leaderboard()[1].totalPoints) }}
+                </p>
+                <div class="glb-podium__bar glb-podium__bar--2"></div>
+              </div>
+            }
+
+            <!-- 1st place (center) -->
+            <div class="glb-podium__spot glb-podium__spot--1">
+              <span class="glb-podium__crown"><i class="fa-solid fa-crown"></i></span>
+              <div class="glb-podium__avatar glb-podium__avatar--gold">
+                {{ leaderboard()[0].initials }}
+              </div>
+              <span class="glb-podium__medal glb-podium__medal--gold">
+                <i class="fa-solid fa-crown"></i>
+              </span>
+              <p class="glb-podium__name">{{ leaderboard()[0].name }}</p>
+              <p class="glb-podium__pts">
+                <i class="fa-solid fa-star"></i>
+                {{ formatNumber(leaderboard()[0].totalPoints) }}
+              </p>
+              <div class="glb-podium__bar glb-podium__bar--1"></div>
+            </div>
+
+            <!-- 3rd place (right) -->
+            @if (leaderboard().length > 2) {
+              <div class="glb-podium__spot glb-podium__spot--3">
+                <div class="glb-podium__avatar glb-podium__avatar--bronze">
+                  {{ leaderboard()[2].initials }}
+                </div>
+                <span class="glb-podium__medal glb-podium__medal--bronze">
+                  <i class="fa-solid fa-award"></i>
+                </span>
+                <p class="glb-podium__name">{{ leaderboard()[2].name }}</p>
+                <p class="glb-podium__pts">
+                  <i class="fa-solid fa-star"></i>
+                  {{ formatNumber(leaderboard()[2].totalPoints) }}
+                </p>
+                <div class="glb-podium__bar glb-podium__bar--3"></div>
+              </div>
+            }
+          </div>
+
+          <!-- Ranks 4+ -->
+          @if (leaderboard().length > 3) {
+            <div class="glb-list">
+              @for (entry of leaderboard(); track entry.name; let i = $index) {
+                @if (i >= 3) {
+                  <div class="glb-row" [style.animation-delay.ms]="i * 40">
+                    <span class="glb-row__rank">{{ i + 1 }}</span>
+                    <span class="glb-row__avatar">{{ entry.initials }}</span>
+                    <div class="glb-row__info">
+                      <span class="glb-row__name">{{ entry.name }}</span>
+                      <span class="glb-row__goals">
+                        {{ entry.goalCount }} {{ 'goals.leaderboard.goalsAchieved' | translate }}
+                      </span>
+                    </div>
+                    <div class="glb-row__stats">
+                      <span class="glb-row__pts">
+                        <i class="fa-solid fa-star"></i>
+                        {{ formatNumber(entry.totalPoints) }}
+                      </span>
+                      <span class="glb-row__reward">
+                        {{ formatNumber(entry.totalReward) }} {{ 'goals.card.currency' | translate }}
+                      </span>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ══ Points Breakdown (admin only) ══ -->
+      @if (isAdmin() && s.pointsBreakdown.length > 0) {
+        <div class="gbd-card">
+          <button type="button" class="gbd-toggle"
+                  (click)="breakdownExpanded.set(!breakdownExpanded())">
+            <div class="gbd-toggle__left">
+              <span class="gbd-toggle__icon"><i class="fa-solid fa-star"></i></span>
+              <span class="gbd-toggle__label">{{ 'goals.stats.breakdown' | translate }}</span>
+              <span class="gbd-count">{{ s.pointsBreakdown.length }}</span>
+            </div>
+            <i class="fa-solid gbd-toggle__chevron"
+               [class.fa-chevron-down]="!breakdownExpanded()"
+               [class.fa-chevron-up]="breakdownExpanded()"></i>
+          </button>
+          @if (breakdownExpanded()) {
+            <div class="gbd-body">
+              <div class="table-responsive">
+                <table class="gbd-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'goals.stats.colGoal' | translate }}</th>
+                      <th>{{ 'goals.stats.colType' | translate }}</th>
+                      <th>{{ 'goals.stats.colPeriod' | translate }}</th>
+                      <th>{{ 'goals.stats.colFrom' | translate }}</th>
+                      <th>{{ 'goals.stats.colTo' | translate }}</th>
+                      <th class="text-end">{{ 'goals.stats.colPoints' | translate }}</th>
+                      <th class="text-end">{{ 'goals.stats.colReward' | translate }}</th>
+                      <th>{{ 'goals.stats.colUser' | translate }}</th>
+                      <th>{{ 'goals.stats.colAchievedAt' | translate }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of s.pointsBreakdown; track row.goalId) {
+                      <tr>
+                        <td class="fw-semibold">{{ row.goalTitle }}</td>
+                        <td>
+                          <span class="gbd-type"
+                                [class.gbd-type--ind]="row.goalType === 'Individual'"
+                                [class.gbd-type--team]="row.goalType === 'Team'">
+                            <i [class]="row.goalType === 'Individual' ? 'fa-solid fa-user' : 'fa-solid fa-users'"></i>
+                            {{ ('goals.type.' + row.goalType) | translate }}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="gbd-period">
+                            <i [class]="periodIcon(row.period)"></i>
+                            {{ ('goals.period.' + row.period) | translate }}
+                          </span>
+                        </td>
+                        <td class="text-nowrap text-muted small">{{ formatDate(row.startDate) }}</td>
+                        <td class="text-nowrap text-muted small">{{ formatDate(row.endDate) }}</td>
+                        <td class="text-end">
+                          <span class="gbd-pts">
+                            <i class="fa-solid fa-star"></i>
+                            {{ formatNumber(row.pointsEarned) }}
+                          </span>
+                        </td>
+                        <td class="text-end fw-semibold" style="color:#16a34a">
+                          {{ formatNumber(row.rewardEarned) }}
+                        </td>
+                        <td class="text-nowrap">
+                          <div class="gbd-user">
+                            <span class="gbd-user__av">{{ (row.userName||'?').charAt(0).toUpperCase() }}</span>
+                            {{ row.userName || '—' }}
+                          </div>
+                        </td>
+                        <td class="text-nowrap text-muted small">{{ formatDate(row.achievedAt) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  }
+
+  <!-- ══════════════════════════════════════════════
+       FILTERS
+  ══════════════════════════════════════════════ -->
+  <div class="gf-bar">
+    <div class="gf-bar__top">
+      <div class="gf-search-wrap">
+        <i class="fa-solid fa-magnifying-glass gf-search-icon"></i>
+        <input class="form-control gf-search-input"
+               [placeholder]="'goals.filter.searchPh' | translate"
+               [ngModel]="search()"
+               (ngModelChange)="onSearch($event)">
+      </div>
+      <div class="gf-type-group">
+        @for (tp of ['all','Individual','Team']; track tp) {
+          <button type="button"
+                  class="gf-type-btn"
+                  [class.active]="filterType() === tp"
+                  (click)="setFilterType(tp)">
+            @if (tp === 'Individual') { <i class="fa-solid fa-user"></i> }
+            @else if (tp === 'Team') { <i class="fa-solid fa-users"></i> }
+            {{ (tp === 'all' ? 'goals.filter.all'
+              : tp === 'Individual' ? 'goals.filter.individual'
+              : 'goals.filter.team') | translate }}
+          </button>
+        }
+      </div>
+      <select class="form-select form-select-sm gf-select"
+              [ngModel]="filterPeriod()"
+              (ngModelChange)="setFilterPeriod($event)">
+        <option value="all">{{ 'goals.filter.byPeriod' | translate }}: {{ 'goals.filter.all' | translate }}</option>
+        @for (p of ['Daily','Weekly','Monthly','Yearly']; track p) {
+          <option [value]="p">{{ ('goals.period.' + p) | translate }}</option>
+        }
+      </select>
+      <select class="form-select form-select-sm gf-select"
+              [ngModel]="filterAchieved()"
+              (ngModelChange)="setFilterAchieved($event)">
+        <option value="all">{{ 'goals.filter.byAchieved' | translate }}: {{ 'goals.filter.all' | translate }}</option>
+        <option value="achieved">{{ 'goals.filter.achievedYes' | translate }}</option>
+        <option value="inProgress">{{ 'goals.filter.achievedNo' | translate }}</option>
+      </select>
+    </div>
+    <div class="gf-status-tabs">
+      @for (tab of ['all','active','upcoming','expired']; track tab) {
+        <button type="button"
+                class="gf-status-tab"
+                [class.active]="filterStatus() === tab"
+                (click)="setFilterStatus(tab)">
+          <span class="gf-dot" [class]="'gf-dot--' + tab"></span>
+          {{ ('goals.filter.' + tab) | translate }}
+          @if (tab !== 'all') {
+            <span class="gf-tab-count">{{ countByStatus(tab) }}</span>
+          }
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       GOALS GRID
+  ══════════════════════════════════════════════ -->
+  @if (loading()) {
+    <div class="goals-grid">
+      @for (i of [1,2,3,4,5,6]; track i) {
+        <div class="goal-card-skel">
+          <div class="skel skel--header"></div>
+          <div class="skel-body">
+            <div class="skel skel--text w-75"></div>
+            <div class="skel skel--text w-50"></div>
+            <div class="skel skel--bar"></div>
+            <div class="skel skel--stats"></div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (loadError()) {
+    <app-load-error [message]="loadError()!" (retry)="load()"></app-load-error>
+  } @else if (filteredGoals().length === 0) {
+    <app-empty-state
+      [title]="(isAdmin() ? 'goals.noGoals' : 'goals.noMyGoals') | translate"
+      [message]="(isAdmin() ? 'goals.noGoalsHint' : 'goals.noMyGoalsHint') | translate"
+      icon="fa-solid fa-trophy">
+    </app-empty-state>
+  } @else {
+    <div class="goals-grid">
+      @for (goal of filteredGoals(); track goal.id; let idx = $index) {
+        <article class="goal-card" [style.--idx]="idx">
+
+          <!-- ── Gradient header ── -->
+          <div class="goal-card__header" [class]="cardHeaderClass(goal)">
+            <div class="goal-card__header-pattern"></div>
+            <!-- Achieved stamp -->
+            @if (goal.isAchieved) {
+              <div class="goal-card__stamp">
+                <i class="fa-solid fa-trophy"></i>
+              </div>
+            }
+            <!-- Badges row -->
+            <div class="goal-card__header-badges">
+              <span class="gc-badge gc-badge--type">
+                <i [class]="goal.type === 'Individual' ? 'fa-solid fa-user' : 'fa-solid fa-users'"></i>
+                {{ ('goals.type.' + goal.type) | translate }}
+              </span>
+              <span class="gc-badge gc-badge--period">
+                <i [class]="periodIcon(goal.period)"></i>
+                {{ ('goals.period.' + goal.period) | translate }}
+              </span>
+            </div>
+            <!-- Title inside header -->
+            <h3 class="goal-card__header-title">{{ goal.title }}</h3>
+            <!-- Assignee in header -->
+            @if (goal.type === 'Individual' && goal.assignedToName) {
+              <div class="goal-card__header-assignee">
+                <span class="gc-av">{{ goal.assignedToName.charAt(0).toUpperCase() }}</span>
+                <span>{{ goal.assignedToName }}</span>
+              </div>
+            } @else if (goal.type === 'Team') {
+              <div class="goal-card__header-assignee">
+                <span class="gc-av gc-av--team"><i class="fa-solid fa-users"></i></span>
+                <span>{{ 'goals.type.Team' | translate }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- ── Card body ── -->
+          <div class="goal-card__body">
+
+            @if (goal.description) {
+              <p class="goal-card__desc">{{ goal.description }}</p>
+            }
+
+            <!-- Progress section -->
+            <div class="goal-card__progress">
+              <div class="gcp-header">
+                <span class="gcp-label">
+                  <i class="fa-solid fa-chart-line"></i>
+                  {{ 'goals.card.currentProgress' | translate }}
+                </span>
+                <span class="gcp-pct" [style.color]="achievementColor(achievementPercent(goal))">
+                  {{ achievementPercent(goal) }}%
+                </span>
+              </div>
+              <div class="gcp-track">
+                <div class="gcp-fill"
+                     [style.width.%]="achievementPercent(goal)"
+                     [style.background]="achievementColor(achievementPercent(goal))">
+                </div>
+              </div>
+              <div class="gcp-numbers">
+                <span>
+                  <strong>{{ formatNumber(goal.currentProgress) }}</strong>
+                  <small> / {{ formatNumber(goal.targetValue) }}</small>
+                </span>
+                @if (goal.isAchieved && goal.achievedAt) {
+                  <span class="gcp-achieved-date">
+                    <i class="fa-solid fa-check-circle"></i>
+                    {{ formatDate(goal.achievedAt) }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <!-- Metrics -->
+            <div class="goal-card__metrics">
+              <div class="gcm-item">
+                <span class="gcm-icon gcm-icon--pts"><i class="fa-solid fa-star"></i></span>
+                <div>
+                  <span class="gcm-val">{{ formatNumber(goal.points) }}</span>
+                  <span class="gcm-lbl">{{ 'goals.card.points' | translate }}</span>
+                </div>
+              </div>
+              <div class="gcm-item">
+                <span class="gcm-icon gcm-icon--reward"><i class="fa-solid fa-coins"></i></span>
+                <div>
+                  <span class="gcm-val">{{ formatNumber(goal.financialReward) }}<small> {{ 'goals.card.currency' | translate }}</small></span>
+                  <span class="gcm-lbl">{{ 'goals.card.reward' | translate }}</span>
+                </div>
+              </div>
+              <div class="gcm-item">
+                <span class="gcm-icon gcm-icon--target"><i class="fa-solid fa-bullseye"></i></span>
+                <div>
+                  <span class="gcm-val">{{ formatNumber(goal.targetValue) }}</span>
+                  <span class="gcm-lbl">{{ 'goals.card.target' | translate }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="goal-card__timeline">
+              <div class="gct-track">
+                <div class="gct-fill" [class]="'gct-fill--' + goalStatus(goal)"
+                     [style.width.%]="goalTimeProgress(goal)"></div>
+              </div>
+              <div class="gct-meta">
+                <span class="gct-days" [class]="'gct-days--' + goalStatus(goal)">
+                  <i class="fa-solid fa-clock"></i>
+                  {{ goalDaysLabel(goal) }}
+                </span>
+                <span class="gct-range">{{ formatDate(goal.startDate) }} — {{ formatDate(goal.endDate) }}</span>
+              </div>
+            </div>
+
+            <!-- Employee: prominent update-progress CTA -->
+            @if (!isAdmin() && !goal.isAchieved) {
+              <button type="button" class="gc-progress-cta" (click)="openProgress(goal)">
+                <span class="gc-progress-cta__left">
+                  <span class="gc-progress-cta__icon-wrap">
+                    <i class="fa-solid fa-pencil"></i>
+                  </span>
+                  <span class="gc-progress-cta__text">
+                    <span class="gc-progress-cta__label">{{ 'goals.card.updateProgress' | translate }}</span>
+                    <span class="gc-progress-cta__hint">
+                      {{ formatNumber(goal.currentProgress) }} / {{ formatNumber(goal.targetValue) }}
+                    </span>
+                  </span>
+                </span>
+                <span class="gc-progress-cta__badge"
+                      [style.background]="achievementColor(achievementPercent(goal))">
+                  {{ achievementPercent(goal) }}%
+                </span>
+              </button>
+            }
+
+            <!-- Footer: status badge + actions -->
+            <div class="goal-card__footer">
+              @if (goal.isAchieved) {
+                <span class="gc-status-badge gc-status-badge--achieved">
+                  <i class="fa-solid fa-trophy"></i>
+                  {{ 'goals.status.achieved' | translate }}
+                </span>
+              } @else {
+                <span class="gc-status-badge" [class]="'gc-status-badge--' + goalStatus(goal)">
+                  <span class="gc-status-dot"></span>
+                  {{ ('goals.status.' + goalStatus(goal)) | translate }}
+                </span>
+              }
+
+              <div class="goal-card__actions">
+                <button type="button" class="gc-btn gc-btn--info"
+                        [title]="'goals.detail.viewStats' | translate"
+                        (click)="openGoalDetail(goal)">
+                  <i class="fa-solid fa-chart-bar"></i>
+                </button>
+                @if (isAdmin()) {
+                  <button type="button" class="gc-btn gc-btn--edit"
+                          (click)="openEdit(goal)">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button type="button" class="gc-btn gc-btn--delete"
+                          (click)="openDelete(goal)">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Meta: created by + date -->
+            @if (goal.createdByName || goal.createdAt) {
+              <div class="goal-card__meta">
+                @if (goal.createdByName) {
+                  <span><i class="fa-solid fa-user-pen"></i> {{ goal.createdByName }}</span>
+                }
+                @if (goal.createdAt) {
+                  <span><i class="fa-regular fa-clock"></i> {{ formatDate(goal.createdAt) }}</span>
+                }
+              </div>
+            }
+
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+</section>
+
+<!-- ══════════════════════════════════════════════
+     GOAL DETAIL MODAL  (/Goals/{id}/stats)
+══════════════════════════════════════════════ -->
+@if (goalDetailDialog(); as g) {
+  <app-modal
+    [open]="true"
+    [title]="'goals.detail.title' | translate"
+    icon="fa-solid fa-chart-bar"
+    iconTone="primary"
+    size="md"
+    (closed)="closeGoalDetail()">
+
+    @if (goalDetailLoading()) {
+      <div class="d-flex align-items-center justify-content-center py-5">
+        <span class="spinner-border text-primary me-2"></span>
+      </div>
+    } @else {
+      <div class="gd-modal">
+        <!-- Banner -->
+        <div class="gd-banner" [class]="cardHeaderClass(g)">
+          <div class="gd-banner__pattern"></div>
+          <div class="gd-banner__badges">
+            <span class="gc-badge gc-badge--type">
+              <i [class]="g.type === 'Individual' ? 'fa-solid fa-user' : 'fa-solid fa-users'"></i>
+              {{ ('goals.type.' + g.type) | translate }}
+            </span>
+            <span class="gc-badge gc-badge--period">
+              <i [class]="periodIcon(g.period)"></i>
+              {{ ('goals.period.' + g.period) | translate }}
+            </span>
+          </div>
+          <h3 class="gd-banner__title">{{ g.title }}</h3>
+          @if (g.description) { <p class="gd-banner__desc">{{ g.description }}</p> }
+        </div>
+
+        <!-- Stats grid -->
+        <div class="gd-stats">
+          <div class="gd-stat">
+            <span class="gd-stat__label">{{ 'goals.card.currentProgress' | translate }}</span>
+            <span class="gd-stat__val gd-stat__val--accent">{{ formatNumber(g.currentProgress) }}</span>
+          </div>
+          <div class="gd-stat">
+            <span class="gd-stat__label">{{ 'goals.card.target' | translate }}</span>
+            <span class="gd-stat__val">{{ formatNumber(g.targetValue) }}</span>
+          </div>
+          <div class="gd-stat">
+            <span class="gd-stat__label">{{ 'goals.detail.achievementRate' | translate }}</span>
+            <span class="gd-stat__val"
+                  [style.color]="achievementColor(achievementPercent(g))">
+              {{ achievementPercent(g) }}%
+            </span>
+          </div>
+          <div class="gd-stat">
+            <span class="gd-stat__label">{{ 'goals.card.points' | translate }}</span>
+            <span class="gd-stat__val gd-stat__val--gold">
+              <i class="fa-solid fa-star" style="font-size:.75em"></i>
+              {{ formatNumber(g.points) }}
+            </span>
+          </div>
+          <div class="gd-stat">
+            <span class="gd-stat__label">{{ 'goals.card.reward' | translate }}</span>
+            <span class="gd-stat__val gd-stat__val--green">{{ formatNumber(g.financialReward) }} {{ 'goals.card.currency' | translate }}</span>
+          </div>
+          @if (g.isAchieved && g.achievedAt) {
+            <div class="gd-stat">
+              <span class="gd-stat__label">{{ 'goals.card.achievedOn' | translate }}</span>
+              <span class="gd-stat__val gd-stat__val--green">{{ formatDate(g.achievedAt) }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Progress bar -->
+        <div class="gd-progress">
+          <div class="gd-progress__track">
+            <div class="gd-progress__fill"
+                 [style.width.%]="achievementPercent(g)"
+                 [style.background]="achievementColor(achievementPercent(g))">
+            </div>
+          </div>
+        </div>
+
+        <!-- Timeline + people -->
+        <div class="gd-meta-row">
+          <div class="gd-meta-item">
+            <i class="fa-regular fa-calendar"></i>
+            <span>{{ formatDate(g.startDate) }} — {{ formatDate(g.endDate) }}</span>
+          </div>
+          @if (g.assignedToName) {
+            <div class="gd-meta-item">
+              <i class="fa-solid fa-user-tie"></i>
+              <span>{{ g.assignedToName }}</span>
+            </div>
+          }
+          @if (g.createdByName) {
+            <div class="gd-meta-item">
+              <i class="fa-solid fa-user-pen"></i>
+              <span>{{ g.createdByName }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+  </app-modal>
+}
+
+<!-- ══════════════════════════════════════════════
+     CELEBRATION TOAST
+══════════════════════════════════════════════ -->
+@if (celebratingTitle(); as title) {
+  <div class="goal-celebration">
+    <span class="goal-celebration__icon">🏆</span>
+    <div class="goal-celebration__text">
+      <span class="goal-celebration__headline">{{ 'goals.celebration.title' | translate }}</span>
+      <span class="goal-celebration__title">{{ title }}</span>
+    </div>
+    <span class="goal-celebration__sparkle"><i class="fa-solid fa-star"></i></span>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════
+     PROGRESS MODAL
+══════════════════════════════════════════════ -->
+@if (progressGoal(); as g) {
+  <app-modal
+    [open]="true"
+    [title]="'goals.progress.title' | translate"
+    icon="fa-solid fa-chart-line"
+    iconTone="primary"
+    size="sm"
+    [closeOnBackdrop]="!progressUpdating()"
+    [closeOnEsc]="!progressUpdating()"
+    (closed)="closeProgress()">
+
+    <div class="gpm-body">
+      <p class="gpm-goal-title">{{ g.title }}</p>
+      <div class="gpm-current">
+        <div class="gpm-stat">
+          <span class="gpm-stat__lbl">{{ 'goals.progress.currentLabel' | translate }}</span>
+          <span class="gpm-stat__val gpm-stat__val--accent">{{ formatNumber(g.currentProgress) }}</span>
+        </div>
+        <div class="gpm-divider"></div>
+        <div class="gpm-stat">
+          <span class="gpm-stat__lbl">{{ 'goals.progress.targetLabel' | translate }}</span>
+          <span class="gpm-stat__val">{{ formatNumber(g.targetValue) }}</span>
+        </div>
+        <div class="gpm-divider"></div>
+        <div class="gpm-stat">
+          <span class="gpm-stat__lbl">النسبة</span>
+          <span class="gpm-stat__val" [style.color]="achievementColor(achievementPercent(g))">
+            {{ achievementPercent(g) }}%
+          </span>
+        </div>
+      </div>
+      <div class="gpm-track mb-3">
+        <div class="gpm-fill"
+             [style.width.%]="achievementPercent(g)"
+             [style.background]="achievementColor(achievementPercent(g))">
+        </div>
+      </div>
+      <label class="form-label fw-semibold">{{ 'goals.progress.newValueLabel' | translate }}</label>
+      <input type="number" class="form-control"
+             [placeholder]="'goals.progress.newValuePh' | translate"
+             [ngModel]="progressInput()"
+             (ngModelChange)="progressInput.set(+$event)"
+             min="0" [max]="g.targetValue">
+      @if (progressInput() !== g.currentProgress) {
+        <div class="gpm-preview mt-3">
+          <div class="gpm-track mb-1">
+            <div class="gpm-fill gpm-fill--preview"
+                 [style.width.%]="previewPercent(g)"
+                 [style.background]="achievementColor(previewPercent(g))">
+            </div>
+          </div>
+          <div class="d-flex align-items-center justify-content-between">
+            <small class="text-muted">
+              {{ 'goals.progress.previewLabel' | translate }}:
+              <strong [style.color]="achievementColor(previewPercent(g))">{{ previewPercent(g) }}%</strong>
+            </small>
+            @if (progressInput() >= g.targetValue) {
+              <small class="gpm-will-achieve">🏆 {{ 'goals.progress.willAchieve' | translate }}</small>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <ng-container modal-footer>
+      <button type="button" class="btn btn-light" [disabled]="progressUpdating()" (click)="closeProgress()">
+        {{ 'goals.progress.cancel' | translate }}
+      </button>
+      <button type="button" class="btn btn-primary d-flex align-items-center gap-2"
+              [disabled]="progressUpdating() || progressInput() < 0"
+              (click)="submitProgress()">
+        @if (progressUpdating()) { <span class="spinner-border spinner-border-sm"></span> }
+        @else { <i class="fa-solid fa-chart-line"></i> }
+        {{ 'goals.progress.update' | translate }}
+      </button>
+    </ng-container>
+  </app-modal>
+}
+
+<!-- ══════════════════════════════════════════════
+     CREATE / EDIT FORM
+══════════════════════════════════════════════ -->
+@if (formDialog()) {
+  <app-goal-form-dialog
+    [goal]="editGoal()"
+    (saved)="onSaved($event)"
+    (cancel)="closeForm()">
+  </app-goal-form-dialog>
+}
+
+<!-- ══════════════════════════════════════════════
+     DELETE CONFIRM
+══════════════════════════════════════════════ -->
+@if (deleteDialog(); as toDelete) {
+  <app-modal
+    [open]="true"
+    [title]="'goals.confirm.deleteTitle' | translate"
+    icon="fa-solid fa-trash"
+    iconTone="danger"
+    size="sm"
+    (closed)="closeDelete()">
+    <p class="text-muted mb-1">{{ 'goals.confirm.deleteMessage' | translate }}</p>
+    <p class="fw-semibold mb-0">{{ toDelete.title }}</p>
+    <ng-container modal-footer>
+      <button type="button" class="btn btn-light" (click)="closeDelete()" [disabled]="deleting()">
+        {{ 'goals.confirm.deleteCancel' | translate }}
+      </button>
+      <button type="button" class="btn btn-danger d-flex align-items-center gap-2"
+              [disabled]="deleting()" (click)="confirmDelete()">
+        @if (deleting()) { <span class="spinner-border spinner-border-sm"></span> }
+        @else { <i class="fa-solid fa-trash"></i> }
+        {{ 'goals.confirm.deleteConfirm' | translate }}
+      </button>
+    </ng-container>
+  </app-modal>
+}

@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
   withCache,
+  withCacheBypass,
   withCacheInvalidate,
   withInlineHandling,
   withSkipLoader,
@@ -39,13 +40,13 @@ export class SupportTicketsService {
 
   // ─────────── reads ───────────
 
-  list(query: SupportTicketListQuery = {}): Observable<PagedResult<SupportTicket>> {
+  list(query: SupportTicketListQuery = {}, force = false): Observable<PagedResult<SupportTicket>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<PagedResult<SupportTicket>>(
       API_ENDPOINTS.supportTickets.list,
-      {
-        params: query as Record<string, unknown>,
-        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
-      },
+      { params: query as Record<string, unknown>, context: ctx },
     );
   }
 

@@ -1,8 +1,3 @@
-/*
- * Schedule page — only the two bits the design system doesn't already cover:
- * the brand-blue page title and the calendar-placeholder glyph. KPI tiles,
- * cards, table, badges and pagination all reuse shared components/utilities.
- */
 :host {
   display: block;
 }
@@ -17,3 +12,38 @@
   font-size: 4rem;
   color: var(--brand-200);
 }
+
+// ── Priority cell animations ──────────────────────────────────────
+// Uses inset box-shadow so it draws above Bootstrap's background-color
+// without requiring !important.
+
+@keyframes apt-fill-urgent {
+  0%, 100% { box-shadow: inset 0 0 0 1000px rgba(220, 38, 38, 0.18); }
+  50%       { box-shadow: inset 0 0 0 1000px rgba(220, 38, 38, 0.38); }
+}
+@keyframes apt-fill-high {
+  0%, 100% { box-shadow: inset 0 0 0 1000px rgba(239, 68, 68, 0.12); }
+  50%       { box-shadow: inset 0 0 0 1000px rgba(239, 68, 68, 0.26); }
+}
+@keyframes apt-fill-medium {
+  0%, 100% { box-shadow: inset 0 0 0 1000px rgba(245, 158, 11, 0.10); }
+  50%       { box-shadow: inset 0 0 0 1000px rgba(245, 158, 11, 0.22); }
+}
+@keyframes apt-fill-low {
+  0%, 100% { box-shadow: inset 0 0 0 1000px rgba(14, 165, 233, 0.08); }
+  50%       { box-shadow: inset 0 0 0 1000px rgba(14, 165, 233, 0.16); }
+}
+
+td.apt-cell-urgent {
+  animation: apt-fill-urgent 1.4s ease-in-out infinite;
+}
+td.apt-cell-high {
+  animation: apt-fill-high 1.8s ease-in-out infinite;
+}
+td.apt-cell-medium {
+  animation: apt-fill-medium 2.5s ease-in-out infinite;
+}
+td.apt-cell-low {
+  animation: apt-fill-low 3s ease-in-out infinite;
+}
+

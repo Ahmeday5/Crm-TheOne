@@ -4,8 +4,10 @@ import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
   withCache,
+  withCacheBypass,
   withCacheInvalidate,
   withInlineHandling,
+  withSilentErrors,
   withSkipLoader,
 } from '../../../core/http/http-context.tokens';
 import { ApiService } from '../../../core/services/api.service';
@@ -28,10 +30,13 @@ import {
 export class ArticlesService {
   private readonly api = inject(ApiService);
 
-  list(query: ArticleListQuery = {}): Observable<PagedResult<Article>> {
+  list(query: ArticleListQuery = {}, force = false): Observable<PagedResult<Article>> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<PagedResult<Article>>(API_ENDPOINTS.articles.list, {
       params: query as Record<string, unknown>,
-      context: withCache({ ttlMs: CACHE_TTL.SHORT }),
+      context: ctx,
     });
   }
 
@@ -57,6 +62,13 @@ export class ArticlesService {
     return this.api.delete<unknown>(API_ENDPOINTS.articles.delete(id), {
       context: withSkipLoader(withCacheInvalidate(['Articles'])),
     });
+  }
+
+  deleteAttachment(attachmentId: number): Observable<unknown> {
+    return this.api.delete<unknown>(
+      API_ENDPOINTS.articles.deleteAttachment(attachmentId),
+      { context: withSilentErrors(withSkipLoader()) },
+    );
   }
 
   // ─────────── category pickers ───────────

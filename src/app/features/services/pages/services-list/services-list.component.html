@@ -14,10 +14,12 @@
         <p class="text-muted mb-0">{{ 'services.subtitle' | translate }}</p>
       </div>
     </div>
-    <button type="button" class="btn btn-primary" (click)="openAdd()">
-      <i class="fa-solid fa-plus me-1"></i>
-      {{ 'services.new' | translate }}
-    </button>
+    @if (canEdit()) {
+      <button type="button" class="btn btn-primary" (click)="openAdd()">
+        <i class="fa-solid fa-plus me-1"></i>
+        {{ 'services.new' | translate }}
+      </button>
+    }
   </header>
 
   <!-- KPIs -->
@@ -87,7 +89,9 @@
         [columns]="exportColumns"
         [rows]="rows()"
         [fetchAll]="fetchAllRows"
-        [disabled]="loading() || rows().length === 0">
+        [disabled]="loading() || rows().length === 0"
+        [showRefresh]="true"
+        (refresh)="reload(true)">
       </app-table-tools>
     </div>
 
@@ -128,22 +132,24 @@
 
 <!-- Action cell template -->
 <ng-template #actionsCell let-row>
-  <div class="d-inline-flex gap-1">
-    <button type="button"
-            class="btn btn-sm btn-light"
-            [disabled]="busyId() === row.id"
-            [attr.aria-label]="'services.table.edit' | translate"
-            (click)="openEdit(row)">
-      <i class="fa-solid fa-pen"></i>
-    </button>
-    <button type="button"
-            class="btn btn-sm btn-icon btn-danger-soft"
-            [disabled]="busyId() === row.id"
-            [attr.aria-label]="'services.table.delete' | translate"
-            (click)="confirmDelete(row)">
-      <i class="fa-solid fa-trash"></i>
-    </button>
-  </div>
+  @if (canEdit()) {
+    <div class="d-inline-flex gap-1">
+      <button type="button"
+              class="btn btn-sm btn-light"
+              [disabled]="busyId() === row.id"
+              [attr.aria-label]="'services.table.edit' | translate"
+              (click)="openEdit(row)">
+        <i class="fa-solid fa-pen"></i>
+      </button>
+      <button type="button"
+              class="btn btn-sm btn-icon btn-danger-soft"
+              [disabled]="busyId() === row.id"
+              [attr.aria-label]="'services.table.delete' | translate"
+              (click)="confirmDelete(row)">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>
+  }
 </ng-template>
 
 @if (dialogMode()) {

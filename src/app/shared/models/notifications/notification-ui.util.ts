@@ -34,11 +34,17 @@ export function notificationTone(type: NotificationType): string {
  * role (the same notification reaches different roles, each with its own page).
  * Returns `null` when there's no sensible destination for that role — the click
  * then just marks the notification read.
+ *
+ * @param entityType  `relatedEntityType` from the backend (preferred signal).
+ * @param role        The logged-in user's role.
+ * @param notifType   `type` field — used as fallback when `entityType` is null.
  */
 export function notificationRoute(
   entityType: string | null | undefined,
   role: UserRole | null,
+  notifType?: string,
 ): string[] | null {
+  // ── Primary: entity-type routing (most specific) ──
   switch (entityType) {
     case 'SupportTicket':
       return role === 'Admin' || role === 'Support' ? ['/SupportTickets'] : null;
@@ -49,16 +55,37 @@ export function notificationRoute(
         : null;
 
     case 'Customer':
-      switch (role) {
-        case 'Marketing': return ['/leads/marketing-leadsCustomer'];
-        case 'Sales': return ['/leads/sales-leadsCustomer'];
-        case 'Support': return ['/Designated-clients'];
-        case 'Admin': return ['/leads/sales-leadsCustomer'];
-        default: return null;
-      }
+      return customerRoute(role);
+  }
+
+  // ── Fallback: derive destination from the notification type ──
+  switch (notifType) {
+    case 'NewSupportTicket':
+      return role === 'Admin' || role === 'Support' ? ['/SupportTickets'] : null;
+
+    case 'AppointmentScheduled':
+      return role === 'Admin' || role === 'Sales' || role === 'Support'
+        ? ['/schedule']
+        : null;
+
+    case 'NewCustomerAssigned':
+    case 'CustomerTransferredToSupport':
+    case 'CustomerReturnedToSales':
+    case 'FollowUpReminder':
+      return customerRoute(role);
 
     default:
       return null;
+  }
+}
+
+function customerRoute(role: UserRole | null): string[] | null {
+  switch (role) {
+    case 'Marketing': return ['/leads/marketing-leadsCustomer'];
+    case 'Sales':     return ['/leads/sales-leadsCustomer'];
+    case 'Support':   return ['/Designated-clients'];
+    case 'Admin':     return ['/leads/sales-leadsCustomer'];
+    default:          return null;
   }
 }
 

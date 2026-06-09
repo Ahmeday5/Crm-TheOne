@@ -273,25 +273,28 @@ export class ProjectManageComponent implements OnInit, OnDestroy {
   // ─────────── data loading ───────────
 
   /** Picks the right endpoint for the current role + tab. */
-  private fetch(query: ProjectListQuery) {
+  private fetch(query: ProjectListQuery, force = false) {
     if (this.isAdmin()) {
       return this.activeTab() === 'active'
-        ? this.service.activeList(query)
-        : this.service.list(query);
+        ? this.service.activeList(query, force)
+        : this.service.list(query, force);
     }
     return this.activeTab() === 'active'
-      ? this.service.myActiveList(query)
-      : this.service.myList(query);
+      ? this.service.myActiveList(query, force)
+      : this.service.myList(query, force);
   }
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
-    this.fetch({
-      PageIndex: this.pageIndex(),
-      PageSize: this.pageSize(),
-      Search: this.searchSignal().trim() || undefined,
-    }).subscribe({
+    this.fetch(
+      {
+        PageIndex: this.pageIndex(),
+        PageSize: this.pageSize(),
+        Search: this.searchSignal().trim() || undefined,
+      },
+      force,
+    ).subscribe({
       next: (page) => {
         this.rows.set(page.data ?? []);
         this.count.set(page.count ?? 0);

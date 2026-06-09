@@ -51,6 +51,13 @@ const DEFAULT_DURATION: Record<ToastType, number> = {
 const MAX_VISIBLE = 5;
 
 /**
+ * Dedup window: if the same error message fires again within this many ms
+ * it is silently dropped. Prevents the common pattern where both the HTTP
+ * error interceptor and the calling component show the same toast.
+ */
+const ERROR_DEDUP_MS = 600;
+
+/**
  * Toast notifications — RTL-aware, signal-driven.
  *
  *   toast.success('تم الحفظ');
@@ -67,6 +74,9 @@ export class ToastService {
 
   readonly position = signal<ToastPosition>('top-left');
 
+  /** Tracks recently shown error messages to suppress duplicates. */
+  private readonly recentErrors = new Map<string, number>();
+
   // ─────────── public API ───────────
 
   success(message: string, options?: ToastOptions): string {
@@ -74,6 +84,15 @@ export class ToastService {
   }
 
   error(message: string, options?: ToastOptions): string {
+    const key = message + (options?.title ?? '');
+    const now = Date.now();
+    const last = this.recentErrors.get(key);
+    if (last !== undefined && now - last < ERROR_DEDUP_MS) return '';
+    this.recentErrors.set(key, now);
+    // Evict stale entries so the map doesn't grow unboundedly.
+    for (const [k, ts] of this.recentErrors) {
+      if (now - ts >= ERROR_DEDUP_MS) this.recentErrors.delete(k);
+    }
     return this.show('error', message, options);
   }
 

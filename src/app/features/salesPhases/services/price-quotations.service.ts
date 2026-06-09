@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
   withCache,
+  withCacheBypass,
   withCacheInvalidate,
   withInlineHandling,
   withSkipLoader,
@@ -33,10 +34,14 @@ export class PriceQuotationsService {
 
   list(
     query: PriceQuotationListQuery = {},
+    force = false,
   ): Observable<PriceQuotationPage> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<PriceQuotationPage>(API_ENDPOINTS.priceQuotations.list, {
       params: query as Record<string, unknown>,
-      context: withCache({ ttlMs: CACHE_TTL.SHORT }),
+      context: ctx,
     });
   }
 

@@ -90,7 +90,7 @@ const knowledgeBase: TranslationFile<'kb'> = {
     deleteDialog: {
       title: 'حذف المقالة',
       message: 'هل أنت متأكد من حذف هذه المقالة؟ لا يمكن التراجع عن هذا الإجراء.',
-      confirm: 'حذف',
+      confirm: 'تأكيد الحذف',
       cancel: 'إلغاء',
     },
     messages: {
@@ -98,6 +98,8 @@ const knowledgeBase: TranslationFile<'kb'> = {
       updated: 'تم تحديث المقالة بنجاح',
       deleted: 'تم حذف المقالة بنجاح',
       loadFailed: 'تعذّر تحميل المقالات',
+      attachmentDeleted: 'تم حذف المرفق بنجاح',
+      attachmentDeleteFailed: 'تعذّر حذف المرفق، يرجى المحاولة لاحقاً',
     },
   },
 };

@@ -6,6 +6,7 @@ import { SKIP_ERROR_TOAST } from '../http/http-context.tokens';
 import { ApiError, ApiFieldErrors } from '../models/api-response.model';
 import { API_ENDPOINTS } from '../constants/api-endpoints.const';
 import { environment } from '../../../environments/environment';
+import { LanguageService } from '../services/language.service';
 
 /**
  * Normalizes every HTTP failure into an `ApiError` and (unless the caller
@@ -14,15 +15,18 @@ import { environment } from '../../../environments/environment';
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const toast = inject(ToastService);
+  const lang = inject(LanguageService);
 
   return next(req).pipe(
     catchError((err: HttpErrorResponse) => {
-      const apiError = normalizeError(err);
+      const isAr = lang.lang() === 'ar';
+      const apiError = normalizeError(err, isAr);
       logError(req.method, req.url, err, apiError);
 
       const silent =
         req.context.get(SKIP_ERROR_TOAST) ||
-        req.url.includes(API_ENDPOINTS.auth.refresh);
+        req.url.includes(API_ENDPOINTS.auth.refresh) ||
+        err.status === 401;
 
       if (!silent) toast.error(apiError.message);
 
@@ -31,19 +35,44 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   );
 };
 
-function normalizeError(err: HttpErrorResponse): ApiError {
+/** FK / unique-constraint keywords in raw backend messages. */
+const FK_PATTERN = /FOREIGN KEY|foreign key|constraint|REFERENCE|conflicted/i;
+const DUPLICATE_PATTERN = /duplicate|already exists|unique.*constraint|constraint.*unique/i;
+
+function friendlyMessage(raw: string, isAr: boolean): string | null {
+  if (FK_PATTERN.test(raw)) {
+    return isAr
+      ? 'البيانات تحتوي على إشارة لعنصر غير موجود (ربط غير صحيح)'
+      : 'The data references a record that does not exist (invalid relation)';
+  }
+  if (DUPLICATE_PATTERN.test(raw)) {
+    return isAr
+      ? 'هذا السجل موجود مسبقاً، تحقق من البريد الإلكتروني أو رقم الهاتف'
+      : 'This record already exists. Check the email or phone number';
+  }
+  return null;
+}
+
+function normalizeError(err: HttpErrorResponse, isAr: boolean): ApiError {
   const status = err.status ?? 0;
   const body = err.error ?? {};
 
-  const message =
+  const rawMessage: string =
     body?.message ||
     body?.error ||
     body?.detail ||
     body?.title ||
-    statusMessage(status, err);
+    '';
+
+  const message =
+    (rawMessage && friendlyMessage(rawMessage, isAr)) ||
+    rawMessage ||
+    statusMessage(status, err, isAr);
 
   const fieldErrors: ApiFieldErrors | undefined =
-    body?.errors && typeof body.errors === 'object' ? body.errors : undefined;
+    body?.errors && typeof body.errors === 'object' && !Array.isArray(body.errors)
+      ? body.errors
+      : undefined;
 
   return {
     status,
@@ -54,19 +83,24 @@ function normalizeError(err: HttpErrorResponse): ApiError {
   };
 }
 
-function statusMessage(status: number, err: HttpErrorResponse): string {
+function statusMessage(status: number, err: HttpErrorResponse, isAr: boolean): string {
   if (status === 0) {
+    if (isAr) {
+      return err.message?.includes('Failed to fetch')
+        ? 'تعذّر الاتصال بالخادم (CORS أو الإنترنت). راجع الكونسل لتفاصيل أكثر.'
+        : 'تعذّر الاتصال بالخادم، تحقق من اتصال الإنترنت';
+    }
     return err.message?.includes('Failed to fetch')
-      ? 'تعذّر الاتصال بالخادم (CORS أو الإنترنت). راجع الكونسل لتفاصيل أكثر.'
-      : 'تعذّر الاتصال بالخادم، تحقق من اتصال الإنترنت';
+      ? 'Could not reach the server (CORS or network). Check the console for details.'
+      : 'Could not reach the server. Check your internet connection.';
   }
 
-  const messages: Record<number, string> = {
+  const ar: Record<number, string> = {
     400: 'بيانات غير صحيحة',
     401: 'بيانات الدخول غير صحيحة',
     403: 'ليس لديك صلاحية للقيام بهذا الإجراء',
     404: 'المورد المطلوب غير موجود',
-    409: 'تعارض في البيانات',
+    409: 'تعارض في البيانات — السجل موجود مسبقاً',
     422: 'فشل التحقق من البيانات',
     429: 'طلبات كثيرة جداً، يرجى الانتظار قليلاً',
     500: 'خطأ في الخادم، يرجى المحاولة لاحقاً',
@@ -75,7 +109,22 @@ function statusMessage(status: number, err: HttpErrorResponse): string {
     504: 'انتهت مهلة الاتصال بالخادم',
   };
 
-  return messages[status] ?? `خطأ غير متوقع (${status})`;
+  const en: Record<number, string> = {
+    400: 'Invalid request data',
+    401: 'Invalid credentials',
+    403: 'You do not have permission to perform this action',
+    404: 'The requested resource was not found',
+    409: 'Conflict — this record already exists',
+    422: 'Validation failed',
+    429: 'Too many requests. Please wait a moment.',
+    500: 'Server error. Please try again later.',
+    502: 'Service temporarily unavailable',
+    503: 'Service temporarily unavailable',
+    504: 'Request to server timed out',
+  };
+
+  const map = isAr ? ar : en;
+  return map[status] ?? (isAr ? `خطأ غير متوقع (${status})` : `Unexpected error (${status})`);
 }
 
 function logError(

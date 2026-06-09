@@ -18,6 +18,7 @@ import { ExportColumn } from '../../../../core/services/table-export.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
@@ -27,6 +28,7 @@ import {
   APPOINTMENT_TYPES,
   Appointment,
   AppointmentCustomerOption,
+  AppointmentPriority,
   AppointmentStats,
   AppointmentStatus,
   AppointmentType,
@@ -49,6 +51,7 @@ const DEFAULT_PAGE_SIZE = 10;
     PaginationComponent,
     LoadErrorComponent,
     TableToolsComponent,
+    ModalComponent,
     AppointmentFormDialogComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,6 +77,9 @@ export class AppointmentsComponent implements OnInit {
   readonly loading = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly busyId = signal<number | null>(null);
+  readonly changeStatusDialog = signal<Appointment | null>(null);
+  readonly newStatusCode = signal<number>(0);
+  readonly confirmingStatus = signal(false);
 
   // ─── filters ───
   /**
@@ -97,10 +103,11 @@ export class AppointmentsComponent implements OnInit {
   readonly visibleRows = computed(() => {
     const t = this.typeFilter();
     const s = this.statusFilter();
-    return this.rows().filter(
-      (r) =>
-        (t === 'all' || r.type === t) && (s === 'all' || r.status === s),
-    );
+    return this.rows().filter(r => {
+      const rt = this.toTypeCode(r.type);
+      const rs = this.toStatusCode(r.status);
+      return (t === 'all' || rt === t) && (s === 'all' || rs === s);
+    });
   });
 
   ngOnInit(): void {
@@ -111,20 +118,23 @@ export class AppointmentsComponent implements OnInit {
 
   // ─────────── data ───────────
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
     const uid = this.auth.currentUser()?.userId;
     this.service
-      .list({
-        PageIndex: this.pageIndex(),
-        PageSize: this.pageSize(),
-        Search: this.search().trim() || undefined,
-        AssignedToUserId: this.mineOnly() && uid ? uid : undefined,
-        CustomerId: this.customerId() ?? undefined,
-        FromDate: this.toIso(this.fromDate()),
-        ToDate: this.toIso(this.toDate()),
-      })
+      .list(
+        {
+          PageIndex: this.pageIndex(),
+          PageSize: this.pageSize(),
+          Search: this.search().trim() || undefined,
+          AssignedToUserId: this.mineOnly() && uid ? uid : undefined,
+          CustomerId: this.customerId() ?? undefined,
+          FromDate: this.toIso(this.fromDate()),
+          ToDate: this.toIso(this.toDate()),
+        },
+        force,
+      )
       .subscribe({
         next: (page) => {
           this.rows.set(page.data ?? []);
@@ -263,8 +273,8 @@ export class AppointmentsComponent implements OnInit {
     return this.language.lang() === 'ar' ? opt.ar : opt.en;
   }
 
-  typeBadgeClass(t: AppointmentType): string {
-    switch (t) {
+  typeBadgeClass(t: AppointmentType | string): string {
+    switch (this.toTypeCode(t)) {
       case AppointmentType.Meeting:
       case AppointmentType.Presentation:
         return 'bg-primary-subtle text-primary';
@@ -282,33 +292,114 @@ export class AppointmentsComponent implements OnInit {
     }
   }
 
-  statusBadgeClass(s: AppointmentStatus): string {
-    switch (s) {
-      case AppointmentStatus.Scheduled:
-        return 'bg-info-subtle text-info';
-      case AppointmentStatus.Completed:
-        return 'bg-success-subtle text-success';
+  statusBadgeClass(s: AppointmentStatus | string | number): string {
+    switch (this.toStatusCode(s)) {
+      case AppointmentStatus.Scheduled:  return 'bg-info-subtle text-info';
+      case AppointmentStatus.Completed:  return 'bg-success-subtle text-success';
       case AppointmentStatus.Cancelled:
-      case AppointmentStatus.NoShow:
+      case AppointmentStatus.NoShow:     return 'bg-danger-subtle text-danger';
+      case AppointmentStatus.Postponed:  return 'bg-warning-subtle text-warning';
+      default:                           return 'bg-secondary-subtle text-secondary';
+    }
+  }
+
+  priorityBadgeClass(p: AppointmentPriority | string): string {
+    switch (this.toPriorityCode(p)) {
+      case AppointmentPriority.Urgent:
+      case AppointmentPriority.High:
         return 'bg-danger-subtle text-danger';
-      case AppointmentStatus.Postponed:
+      case AppointmentPriority.Medium:
         return 'bg-warning-subtle text-warning';
+      case AppointmentPriority.Low:
+        return 'bg-info-subtle text-info';
       default:
         return 'bg-secondary-subtle text-secondary';
     }
   }
 
-  priorityBadgeClass(p: number): string {
-    switch (p) {
-      case 4:
-        return 'bg-danger-subtle text-danger';
-      case 3:
-        return 'bg-warning-subtle text-warning';
-      case 2:
-        return 'bg-info-subtle text-info';
-      default:
-        return 'bg-secondary-subtle text-secondary';
+  /** Returns the CSS class for the priority cell.
+   *  Animations stop when the appointment is Completed (resets to default). */
+  priorityTdClass(row: Appointment): string {
+    if (this.toStatusCode(row.status) === AppointmentStatus.Completed) return '';
+    switch (this.toPriorityCode(row.priority)) {
+      case AppointmentPriority.Urgent: return 'apt-cell-urgent';
+      case AppointmentPriority.High:   return 'apt-cell-high';
+      case AppointmentPriority.Medium: return 'apt-cell-medium';
+      case AppointmentPriority.Low:    return 'apt-cell-low';
+      default: return '';
     }
+  }
+
+  // ─────────── status-change modal ───────────
+
+  openChangeStatus(row: Appointment): void {
+    this.changeStatusDialog.set(row);
+    this.newStatusCode.set(this.toStatusCode(row.status));
+  }
+
+  closeChangeStatus(): void {
+    this.changeStatusDialog.set(null);
+    this.newStatusCode.set(0);
+  }
+
+  confirmChangeStatus(): void {
+    const apt = this.changeStatusDialog();
+    const code = this.newStatusCode();
+    if (!apt || !code) return;
+    const statusName = this.statusCodeToName(code as AppointmentStatus);
+    this.confirmingStatus.set(true);
+    this.service.changeStatus(apt.id, statusName).subscribe({
+      next: () => {
+        const opt = APPOINTMENT_STATUSES.find((s) => s.code === code);
+        this.rows.update((list) =>
+          list.map((r) =>
+            r.id === apt.id
+              ? { ...r, status: statusName, statusNameAr: opt?.ar ?? r.statusNameAr }
+              : r,
+          ),
+        );
+        this.confirmingStatus.set(false);
+        this.closeChangeStatus();
+        this.loadStats();
+        this.toast.success(this.t('sales.appointments.statusDialog.changed'));
+      },
+      error: () => {
+        this.confirmingStatus.set(false);
+      },
+    });
+  }
+
+  private statusCodeToName(status: AppointmentStatus): string {
+    const map: Record<AppointmentStatus, string> = {
+      [AppointmentStatus.Scheduled]: 'Scheduled',
+      [AppointmentStatus.Completed]: 'Completed',
+      [AppointmentStatus.Cancelled]: 'Cancelled',
+      [AppointmentStatus.Postponed]: 'Postponed',
+      [AppointmentStatus.NoShow]:    'NoShow',
+    };
+    return map[status] ?? 'Scheduled';
+  }
+
+  // ─── enum-name ↔ numeric-code helpers ───────────────────────────
+  // The GET response returns PascalCase enum names ("FollowUp", "High", "Completed")
+  // while the TypeScript enums are numeric. These helpers accept either form.
+
+  private toStatusCode(s: AppointmentStatus | string | number): AppointmentStatus {
+    if (typeof s === 'number') return s as AppointmentStatus;
+    const val = (AppointmentStatus as Record<string, unknown>)[s as string];
+    return typeof val === 'number' ? val as AppointmentStatus : 0 as AppointmentStatus;
+  }
+
+  private toPriorityCode(p: AppointmentPriority | string): AppointmentPriority {
+    if (typeof p === 'number') return p as AppointmentPriority;
+    const val = (AppointmentPriority as Record<string, unknown>)[p as string];
+    return typeof val === 'number' ? val as AppointmentPriority : 0 as AppointmentPriority;
+  }
+
+  private toTypeCode(t: AppointmentType | string): AppointmentType {
+    if (typeof t === 'number') return t as AppointmentType;
+    const val = (AppointmentType as Record<string, unknown>)[t as string];
+    return typeof val === 'number' ? val as AppointmentType : 0 as AppointmentType;
   }
 
   formatDateTime(value: string | null | undefined): string {
@@ -334,17 +425,17 @@ export class AppointmentsComponent implements OnInit {
   // ─────────── export / print ───────────
 
   appointmentTypeLabel(r: Appointment): string {
-    const opt = APPOINTMENT_TYPES.find((o) => o.code === r.type);
+    const opt = APPOINTMENT_TYPES.find((o) => o.code === this.toTypeCode(r.type));
     return opt ? this.optionLabel(opt) : r.typeNameAr;
   }
 
   appointmentStatusLabel(r: Appointment): string {
-    const opt = APPOINTMENT_STATUSES.find((o) => o.code === r.status);
+    const opt = APPOINTMENT_STATUSES.find((o) => o.code === this.toStatusCode(r.status));
     return opt ? this.optionLabel(opt) : r.statusNameAr;
   }
 
   appointmentPriorityLabel(r: Appointment): string {
-    const opt = APPOINTMENT_PRIORITIES.find((o) => o.code === r.priority);
+    const opt = APPOINTMENT_PRIORITIES.find((o) => o.code === this.toPriorityCode(r.priority));
     return opt ? this.optionLabel(opt) : r.priorityNameAr;
   }
 
@@ -410,9 +501,11 @@ export class AppointmentsComponent implements OnInit {
     );
     const t = this.typeFilter();
     const s = this.statusFilter();
-    return (page.data ?? []).filter(
-      (r) => (t === 'all' || r.type === t) && (s === 'all' || r.status === s),
-    );
+    return (page.data ?? []).filter(r => {
+      const rt = this.toTypeCode(r.type);
+      const rs = this.toStatusCode(r.status);
+      return (t === 'all' || rt === t) && (s === 'all' || rs === s);
+    });
   };
 
   trackById = (_: number, r: Appointment) => r.id;

@@ -55,6 +55,14 @@ export interface CustomerListItem {
   activities?: CustomerActivity[];
 }
 
+/** Response shape from `GET Support/CustomerStats`. */
+export interface SupportCustomerStats {
+  totalCustomers: number;
+  consultedCustomers: number;
+  waitingConsultation: number;
+  customersWithNotes: number;
+}
+
 /**
  * Single entry in a customer's activity log.
  * Returned inline inside `CustomerListItem.activities` by the list endpoints.

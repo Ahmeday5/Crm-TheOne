@@ -195,17 +195,20 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
     });
   }
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
     this.customers
-      .list({
-        PageIndex: this.pageIndex(),
-        PageSize: this.pageSize(),
-        Search: this.searchSignal().trim() || undefined,
-        CustomerStatusId: this.selectedStatusId() ?? undefined,
-        SourceId: this.selectedSourceId() ?? undefined,
-      })
+      .list(
+        {
+          PageIndex: this.pageIndex(),
+          PageSize: this.pageSize(),
+          Search: this.searchSignal().trim() || undefined,
+          CustomerStatusId: this.selectedStatusId() ?? undefined,
+          SourceId: this.selectedSourceId() ?? undefined,
+        },
+        force,
+      )
       .subscribe({
         next: (page) => {
           this.rows.set(page.data ?? []);

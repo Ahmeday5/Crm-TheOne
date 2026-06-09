@@ -117,12 +117,6 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: 'fa-solid fa-chart-bar',
         roles: ['Admin'],
       },*/
-      // Chat is for everyone (no `roles`).
-      {
-        labelKey: 'sidebar.items.chat',
-        path: '/internal-chat',
-        icon: 'fa-regular fa-comment-dots',
-      },
       // Daily reports — every authenticated user can submit; admins see all.
       {
         labelKey: 'sidebar.items.dailyReports',
@@ -144,7 +138,7 @@ export const NAV_SECTIONS: NavSection[] = [
         labelKey: 'sidebar.items.services',
         path: '/services',
         icon: 'fa-solid fa-screwdriver-wrench',
-        roles: ['Admin'],
+        roles: ['Admin', 'Marketing'],
       },
       {
         labelKey: 'sidebar.items.whatsappSessions',
@@ -212,7 +206,7 @@ export const NAV_SECTIONS: NavSection[] = [
         labelKey: 'sidebar.items.goals',
         path: '/goals',
         icon: 'fa-solid fa-trophy',
-        roles: ['Admin'],
+        roles: ['Admin', 'Sales'],
       },
     ],
   },
@@ -233,7 +227,7 @@ export const NAV_SECTIONS: NavSection[] = [
  * Maps a top-level URL segment → roles allowed to enter it.
  * Used by the role guard so a user typing the URL by hand still hits a wall.
  *
- * Anything not in this map is allowed for any authenticated user (chat, etc.).
+ * Anything not in this map is allowed for any authenticated user.
  */
 export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   // Dashboards — root '' (homepage) is Admin-only.
@@ -278,12 +272,12 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   // Admin-only
   ReportAndAnalytics: ['Admin'],
   settings: ['Admin'],
-  services: ['Admin'],
+  services: ['Admin', 'Marketing'],
   'system-improvements': ['Admin'],
   resources: ['Admin'],
   // `notifications` is intentionally NOT listed — the notification center is
   // per-user and open to every authenticated role (the admin-only "send"
   // action is gated inside the page, not by the route).
-  goals: ['Admin'],
+  goals: ['Admin', 'Sales'],
   security: ['Admin'],
 };

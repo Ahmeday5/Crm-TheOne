@@ -16,6 +16,7 @@ import {
 } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
+import { AuthService } from '../../../../core/services/auth.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ExportColumn } from '../../../../core/services/table-export.service';
@@ -58,6 +59,9 @@ export class ServicesListComponent {
   private readonly toast = inject(ToastService);
   private readonly dialog = inject(DialogService);
   private readonly language = inject(LanguageService);
+  private readonly auth = inject(AuthService);
+
+  readonly canEdit = computed(() => this.auth.currentRole() === 'Admin');
 
   /** Reactive search input — debounced before hitting the API. */
   searchTerm = '';
@@ -137,15 +141,18 @@ export class ServicesListComponent {
 
   // ─────────── data loading ───────────
 
-  reload(): void {
+  reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
     this.services
-      .list({
-        pageIndex: this.pageIndex(),
-        pageSize: this.pageSize(),
-        search: this.searchSignal().trim() || undefined,
-      })
+      .list(
+        {
+          pageIndex: this.pageIndex(),
+          pageSize: this.pageSize(),
+          search: this.searchSignal().trim() || undefined,
+        },
+        force,
+      )
       .subscribe({
         next: (page) => {
           this.rows.set(page.data ?? []);

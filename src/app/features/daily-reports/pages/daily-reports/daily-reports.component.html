@@ -20,7 +20,9 @@
         [columns]="exportColumns"
         [rows]="rows()"
         [fetchAll]="fetchAllRows"
-        [disabled]="loading() || rows().length === 0">
+        [disabled]="loading() || rows().length === 0"
+        [showRefresh]="true"
+        (refresh)="reload(true)">
       </app-table-tools>
       <button type="button" class="btn btn-primary" (click)="openCreate()">
         <i class="fa-solid fa-plus me-1"></i>

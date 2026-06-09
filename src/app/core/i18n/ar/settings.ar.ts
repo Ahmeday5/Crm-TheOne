@@ -42,6 +42,7 @@ const settings: TranslationFile<'settings'> = {
           role: 'الدور',
           email: 'البريد الإلكتروني',
           phone: 'الهاتف',
+          specialty: 'التخصص',
           status: 'الحالة',
           createdAt: 'تاريخ الإنشاء',
           actions: 'الإجراءات',
