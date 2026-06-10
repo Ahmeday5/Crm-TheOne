@@ -20,11 +20,13 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import {
   AppService,
   CustomerDropdownItem,
@@ -61,6 +63,7 @@ interface ItemSeed {
     TranslatePipe,
     MoneyPipe,
     ModalComponent,
+    SearchableSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './price-offer-form-dialog.component.html',
@@ -81,10 +84,21 @@ export class PriceOfferFormDialogComponent implements OnInit {
   private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
 
+  /**
+   * Populated via `(itemsLoaded)` from the customer select so
+   * `rebuildItemsFor` can look up the selected customer's linked services.
+   */
   readonly customers = signal<CustomerDropdownItem[]>([]);
   readonly catalogue = signal<AppService[]>([]);
-  readonly loadingCustomers = signal(false);
   readonly loadingQuote = signal(false);
+
+  readonly customersFetchFn = (): Observable<Record<string, unknown>[]> =>
+    this.service.customersDropdown() as unknown as Observable<Record<string, unknown>[]>;
+
+  onCustomersLoaded(items: Record<string, unknown>[]): void {
+    this.customers.set(items as unknown as CustomerDropdownItem[]);
+  }
+
   readonly submitting = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
@@ -153,24 +167,12 @@ export class PriceOfferFormDialogComponent implements OnInit {
         this.rebuildItemsFor(id == null ? null : Number(id));
       });
 
-    this.loadCustomers();
     this.loadCatalogue();
 
     if (this.quotationId !== null) this.loadQuote(this.quotationId);
   }
 
   // ─────────── data ───────────
-
-  private loadCustomers(): void {
-    this.loadingCustomers.set(true);
-    this.service.customersDropdown().subscribe({
-      next: (rows) => {
-        this.customers.set(rows ?? []);
-        this.loadingCustomers.set(false);
-      },
-      error: () => this.loadingCustomers.set(false),
-    });
-  }
 
   private loadCatalogue(): void {
     // One generous page — the catalogue is small and reused as a picker.

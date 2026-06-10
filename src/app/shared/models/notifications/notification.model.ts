@@ -14,6 +14,8 @@ export type NotificationType =
   | 'CustomerTransferredToSupport'
   | 'AppointmentScheduled'
   | 'FollowUpReminder'
+  | 'TaskAssigned'
+  | 'ProjectAssigned'
   | (string & {});
 
 export interface AppNotification {

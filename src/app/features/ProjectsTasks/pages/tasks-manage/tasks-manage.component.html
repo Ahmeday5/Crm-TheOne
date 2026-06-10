@@ -122,10 +122,39 @@
 </section>
 
 <!-- ── Cell templates ── -->
-<ng-template #assigneeCell let-row>
-  <span class="d-inline-flex align-items-center gap-1">
-    <i class="fa-solid fa-user-circle text-muted"></i>{{ row.assignedToName || '—' }}
-  </span>
+
+<ng-template #titleCell let-row>
+  <div class="task-title-cell">
+    <span class="task-name">{{ row.title }}</span>
+    @if (parseTags(row.tags).length > 0) {
+      <div class="task-tags">
+        @for (tag of parseTags(row.tags); track tag) {
+          <span class="task-tag">{{ tag }}</span>
+        }
+      </div>
+    }
+    @if (row.description) {
+      <span class="task-desc">{{ row.description }}</span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #assigneesCell let-row>
+  @if (row.assignees.length === 0) {
+    <span class="text-muted small">—</span>
+  } @else {
+    <div class="assignees-cell">
+      @for (a of row.assignees.slice(0, 2); track a.userId) {
+        <span class="assignee-chip">
+          <span class="assignee-avatar">{{ a.fullName.charAt(0).toUpperCase() }}</span>
+          <span class="assignee-name">{{ a.fullName }}</span>
+        </span>
+      }
+      @if (row.assignees.length > 2) {
+        <span class="assignee-more">+{{ row.assignees.length - 2 }}</span>
+      }
+    </div>
+  }
 </ng-template>
 
 <ng-template #priorityCell let-row>
@@ -147,13 +176,50 @@
 </ng-template>
 
 <ng-template #dueCell let-row>
-  <span class="small">{{ formatDate(row.dueDate) }}</span>
+  <div class="due-cell" [class.is-overdue]="isOverdue(row)">
+    <span class="due-date">
+      <i class="fa-regular me-1"
+         [class.fa-calendar]="!isOverdue(row)"
+         [class.fa-calendar-xmark]="isOverdue(row)"></i>
+      {{ formatDate(row.dueDate) }}
+    </span>
+    @if (isOverdue(row)) {
+      <span class="overdue-pill">{{ 'projects.tasksManage.table.overdue' | translate }}</span>
+    }
+    @if (row.completedAt) {
+      <span class="completed-hint">
+        <i class="fa-solid fa-check me-1"></i>{{ formatDate(row.completedAt) }}
+      </span>
+    }
+  </div>
 </ng-template>
 
 <ng-template #hoursCell let-row>
-  <span class="small text-muted">
-    {{ row.actualHours ?? row.estimatedHours }} / {{ row.estimatedHours }}
-  </span>
+  <div class="hours-cell">
+    <span class="hours-label">
+      <span [class.text-success]="row.actualHours !== null" [class.text-muted]="row.actualHours === null">
+        {{ row.actualHours ?? '—' }}
+      </span>
+      <span class="text-muted"> / {{ row.estimatedHours }}h</span>
+    </span>
+    @if (row.estimatedHours > 0) {
+      <div class="hours-bar">
+        <div class="hours-fill"
+             [style.width.%]="hoursProgress(row)"
+             [class.fill-success]="hoursProgress(row) >= 100"
+             [class.fill-warning]="hoursProgress(row) >= 60 && hoursProgress(row) < 100"
+             [class.fill-info]="hoursProgress(row) < 60">
+        </div>
+      </div>
+    }
+  </div>
+</ng-template>
+
+<ng-template #createdCell let-row>
+  <div class="created-cell">
+    <span class="created-name">{{ row.createdByName || '—' }}</span>
+    <span class="created-date">{{ formatDate(row.createdAt) }}</span>
+  </div>
 </ng-template>
 
 <!-- ── Row actions ── -->

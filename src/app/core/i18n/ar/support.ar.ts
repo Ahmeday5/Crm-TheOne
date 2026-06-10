@@ -78,6 +78,7 @@ const support: TranslationFile<'support'> = {
         customerLocked: 'لا يمكن تغيير العميل بعد إنشاء التذكرة.',
         service: 'الخدمة',
         servicePlaceholder: 'اختر الخدمة',
+        selectCustomerFirst: 'اختر العميل أولاً لعرض الخدمات المتاحة له',
         loadingServices: 'جارٍ تحميل الخدمات…',
         priority: 'الأولوية',
         status: 'الحالة',

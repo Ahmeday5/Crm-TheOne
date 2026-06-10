@@ -24,6 +24,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { MultiSelectComponent } from '../../../../shared/components/multi-select/multi-select.component';
+import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import {
   CAMPAIGN_STATUSES,
   CAMPAIGN_STATUS_CODE,
@@ -51,6 +52,7 @@ import { ChannelSourceDialogComponent } from '../channel-source-dialog/channel-s
     FormErrorComponent,
     ChannelSourceDialogComponent,
     MultiSelectComponent,
+    SearchableSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './campaign-form-dialog.component.html',
@@ -88,6 +90,9 @@ export class CampaignFormDialogComponent implements OnInit {
   readonly statuses: ReadonlyArray<CampaignStatus> = CAMPAIGN_STATUSES;
 
   readonly channelSources = signal<ChannelSource[]>([]);
+  readonly channelSourceOptions = computed(
+    () => this.channelSources() as unknown as Record<string, unknown>[],
+  );
   readonly countries = signal<CountryOption[]>([]);
   readonly loadingSources = signal(false);
   readonly loadingCountries = signal(false);

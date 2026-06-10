@@ -11,17 +11,18 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import {
   CONTRACT_STATUSES,
   ContractStatusCode,
   CreateContractRequest,
-  CustomerDropdownItem,
   UpdateContractRequest,
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -44,6 +45,7 @@ import { ContractsService } from '../../services/contracts.service';
     TranslatePipe,
     ModalComponent,
     FormErrorComponent,
+    SearchableSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './contract-form-dialog.component.html',
@@ -63,9 +65,10 @@ export class ContractFormDialogComponent implements OnInit {
   private readonly language = inject(LanguageService);
 
   readonly statuses = CONTRACT_STATUSES;
-  readonly customers = signal<CustomerDropdownItem[]>([]);
-  readonly loadingCustomers = signal(false);
   readonly loadingContract = signal(false);
+
+  readonly customersFetchFn = (): Observable<Record<string, unknown>[]> =>
+    this.service.customersDropdown() as unknown as Observable<Record<string, unknown>[]>;
   readonly submitting = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
@@ -97,15 +100,6 @@ export class ContractFormDialogComponent implements OnInit {
   );
 
   ngOnInit(): void {
-    this.loadingCustomers.set(true);
-    this.service.customersDropdown().subscribe({
-      next: (rows) => {
-        this.customers.set(rows ?? []);
-        this.loadingCustomers.set(false);
-      },
-      error: () => this.loadingCustomers.set(false),
-    });
-
     if (this.contractId !== null) this.loadContract(this.contractId);
   }
 

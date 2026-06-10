@@ -28,19 +28,14 @@
         <label for="project-customer" class="form-label fw-600">
           {{ 'projects.manage.form.customer' | translate }} <span class="text-danger">*</span>
         </label>
-        <select id="project-customer"
-                class="form-select"
-                formControlName="customerId"
-                [class.is-invalid]="isInvalid('customerId')">
-          <option [ngValue]="null" disabled>
-            {{ (loadingCustomers() ? 'projects.manage.form.loadingCustomers' : 'projects.manage.form.customerPlaceholder') | translate }}
-          </option>
-          @for (c of customers(); track c.id) {
-            <option [ngValue]="c.id">
-              {{ c.fullName }}{{ c.campanyName ? ' — ' + c.campanyName : '' }}
-            </option>
-          }
-        </select>
+        <app-searchable-select
+          formControlName="customerId"
+          [fetchFn]="customersFetchFn"
+          labelKey="fullName"
+          valueKey="id"
+          subLabelKey="campanyName"
+          [placeholder]="'projects.manage.form.customerPlaceholder' | translate"
+          [isInvalid]="isInvalid('customerId')" />
         <app-form-error [control]="form.controls.customerId" [label]="'projects.manage.form.customer' | translate" />
       </div>
 

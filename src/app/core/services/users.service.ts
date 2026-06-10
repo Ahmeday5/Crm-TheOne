@@ -57,19 +57,19 @@ export class UsersService {
 
   add(payload: AddUserRequest): Observable<unknown> {
     return this.api.post<unknown>(API_ENDPOINTS.users.add, payload, {
-      context: withInlineHandling(withCacheInvalidate(['Auth/Get'])),
+      context: withInlineHandling(withCacheInvalidate(['Auth/Get', 'Auth/developers'])),
     });
   }
 
   update(id: string, payload: UpdateUserRequest): Observable<AppUser> {
     return this.api.put<AppUser>(API_ENDPOINTS.users.update(id), payload, {
-      context: withInlineHandling(withCacheInvalidate(['Auth/Get'])),
+      context: withInlineHandling(withCacheInvalidate(['Auth/Get', 'Auth/developers'])),
     });
   }
 
   delete(id: string): Observable<unknown> {
     return this.api.delete<unknown>(API_ENDPOINTS.users.delete(id), {
-      context: withSkipLoader(withCacheInvalidate(['Auth/Get'])),
+      context: withSkipLoader(withCacheInvalidate(['Auth/Get', 'Auth/developers'])),
     });
   }
 }

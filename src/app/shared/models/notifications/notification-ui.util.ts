@@ -12,6 +12,8 @@ export function notificationIcon(type: NotificationType): string {
     case 'CustomerTransferredToSupport': return 'fa-solid fa-right-left';
     case 'AppointmentScheduled': return 'fa-solid fa-calendar-check';
     case 'FollowUpReminder': return 'fa-solid fa-bell-concierge';
+    case 'TaskAssigned': return 'fa-solid fa-list-check';
+    case 'ProjectAssigned': return 'fa-solid fa-diagram-project';
     default: return 'fa-solid fa-bell';
   }
 }
@@ -25,6 +27,8 @@ export function notificationTone(type: NotificationType): string {
     case 'CustomerTransferredToSupport': return 'purple';
     case 'AppointmentScheduled': return 'info';
     case 'FollowUpReminder': return 'warning';
+    case 'TaskAssigned': return 'primary';
+    case 'ProjectAssigned': return 'success';
     default: return 'primary';
   }
 }
@@ -56,6 +60,12 @@ export function notificationRoute(
 
     case 'Customer':
       return customerRoute(role);
+
+    case 'Task':
+      return role === 'Admin' || role === 'Developer' ? ['/TasksManage'] : null;
+
+    case 'Project':
+      return role === 'Admin' || role === 'Developer' ? ['/ProjectManage'] : null;
   }
 
   // ── Fallback: derive destination from the notification type ──
@@ -73,6 +83,12 @@ export function notificationRoute(
     case 'CustomerReturnedToSales':
     case 'FollowUpReminder':
       return customerRoute(role);
+
+    case 'TaskAssigned':
+      return role === 'Admin' || role === 'Developer' ? ['/TasksManage'] : null;
+
+    case 'ProjectAssigned':
+      return role === 'Admin' || role === 'Developer' ? ['/ProjectManage'] : null;
 
     default:
       return null;

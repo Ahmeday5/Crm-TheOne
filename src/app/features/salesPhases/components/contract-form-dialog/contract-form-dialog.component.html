@@ -41,23 +41,19 @@
           {{ 'sales.contractsMgmt.form.customer' | translate }}
           <span class="text-danger">*</span>
         </label>
-        <select class="form-select" formControlName="customerId"
-                [class.is-invalid]="isInvalid('customerId')">
-          <option [ngValue]="null" disabled>
-            @if (loadingCustomers()) {
-              {{ 'sales.priceOffers.form.loadingCustomers' | translate }}
-            } @else {
-              {{ 'sales.priceOffers.form.customerPlaceholder' | translate }}
-            }
-          </option>
-          @for (c of customers(); track c.id) {
-            <option [ngValue]="c.id">
-              {{ c.fullName }}@if (c.campanyName) { — {{ c.campanyName }} }
-            </option>
-          }
-        </select>
+        <app-searchable-select
+          formControlName="customerId"
+          [fetchFn]="customersFetchFn"
+          labelKey="fullName"
+          valueKey="id"
+          subLabelKey="campanyName"
+          [placeholder]="'sales.priceOffers.form.customerPlaceholder' | translate"
+          [isInvalid]="isInvalid('customerId')" />
         @if (isEditMode) {
-          <small class="text-muted">{{ 'sales.contractsMgmt.form.customerLocked' | translate }}</small>
+          <small class="text-muted d-block mt-1">
+            <i class="fa-solid fa-lock me-1"></i>
+            {{ 'sales.contractsMgmt.form.customerLocked' | translate }}
+          </small>
         } @else {
           <app-form-error [control]="form.controls.customerId"
             [label]="'sales.contractsMgmt.form.customer' | translate" />

@@ -43,21 +43,14 @@
           {{ 'support.tickets.form.customer' | translate }}
           <span class="text-danger">*</span>
         </label>
-        <select class="form-select" formControlName="customerId"
-                [class.is-invalid]="isInvalid('customerId')">
-          <option [ngValue]="null" disabled>
-            @if (loadingCustomers()) {
-              {{ 'support.tickets.form.loadingCustomers' | translate }}
-            } @else {
-              {{ 'support.tickets.form.customerPlaceholder' | translate }}
-            }
-          </option>
-          @for (c of customers(); track c.id) {
-            <option [ngValue]="c.id">
-              {{ c.fullName }}@if (c.campanyName) { — {{ c.campanyName }} }
-            </option>
-          }
-        </select>
+        <app-searchable-select
+          formControlName="customerId"
+          [fetchFn]="customersFetchFn"
+          labelKey="fullName"
+          valueKey="id"
+          subLabelKey="campanyName"
+          [placeholder]="'support.tickets.form.customerPlaceholder' | translate"
+          [isInvalid]="isInvalid('customerId')" />
         @if (isEditMode) {
           <small class="text-muted d-block mt-1">
             <i class="fa-solid fa-lock me-1"></i>
@@ -69,27 +62,29 @@
         }
       </div>
 
-      <!-- Service -->
+      <!-- Service — scoped to the selected customer -->
       <div class="col-md-6">
         <label class="form-label fw-600">
           {{ 'support.tickets.form.service' | translate }}
           <span class="text-danger">*</span>
         </label>
-        <select class="form-select" formControlName="serviceId"
-                [class.is-invalid]="isInvalid('serviceId')">
-          <option [ngValue]="null" disabled>
-            @if (loadingServices()) {
-              {{ 'support.tickets.form.loadingServices' | translate }}
-            } @else {
-              {{ 'support.tickets.form.servicePlaceholder' | translate }}
-            }
-          </option>
-          @for (s of services(); track s.id) {
-            <option [ngValue]="s.id">{{ serviceLabel(s) }}</option>
-          }
-        </select>
-        <app-form-error [control]="form.controls.serviceId"
-          [label]="'support.tickets.form.service' | translate" />
+        <app-searchable-select
+          formControlName="serviceId"
+          [options]="serviceOptionsAsRecords()"
+          labelKey="name"
+          valueKey="id"
+          [externalLoading]="loadingServices()"
+          [placeholder]="'support.tickets.form.servicePlaceholder' | translate"
+          [isInvalid]="isInvalid('serviceId')" />
+        @if (!form.controls.customerId.value && !isEditMode) {
+          <small class="text-muted d-flex align-items-center gap-1 mt-1">
+            <i class="fa-solid fa-circle-info"></i>
+            {{ 'support.tickets.form.selectCustomerFirst' | translate }}
+          </small>
+        } @else {
+          <app-form-error [control]="form.controls.serviceId"
+            [label]="'support.tickets.form.service' | translate" />
+        }
       </div>
 
       <!-- Priority -->

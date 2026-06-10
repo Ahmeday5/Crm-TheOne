@@ -173,7 +173,7 @@
                       <span class="text-muted">—</span>
                     }
                     @if (row.campaignName) {
-                      <div class="small text-muted mt-1 text-truncate" style="max-width: 11rem;" [title]="row.campaignName">
+                      <div class="campaign-clip" [appTip]="row.campaignName">
                         {{ row.campaignName }}
                       </div>
                     }

@@ -122,8 +122,10 @@ export class TasksManageComponent implements OnInit, OnDestroy {
   readonly categoryBadge = taskCategoryBadgeClass;
 
   // ── cell templates ──
-  private readonly assigneeCell =
-    viewChild<TemplateRef<{ $implicit: TaskListItem }>>('assigneeCell');
+  private readonly titleCell =
+    viewChild<TemplateRef<{ $implicit: TaskListItem }>>('titleCell');
+  private readonly assigneesCell =
+    viewChild<TemplateRef<{ $implicit: TaskListItem }>>('assigneesCell');
   private readonly priorityCell =
     viewChild<TemplateRef<{ $implicit: TaskListItem }>>('priorityCell');
   private readonly statusCell =
@@ -134,32 +136,42 @@ export class TasksManageComponent implements OnInit, OnDestroy {
     viewChild<TemplateRef<{ $implicit: TaskListItem }>>('dueCell');
   private readonly hoursCell =
     viewChild<TemplateRef<{ $implicit: TaskListItem }>>('hoursCell');
+  private readonly createdCell =
+    viewChild<TemplateRef<{ $implicit: TaskListItem }>>('createdCell');
 
   readonly columns = computed<ReadonlyArray<TableColumn<TaskListItem>>>(() => [
-    { key: 'title', label: 'projects.tasksManage.table.task', i18nLabel: true },
+    {
+      key: 'title',
+      label: 'projects.tasksManage.table.task',
+      i18nLabel: true,
+      cellTemplate: this.titleCell(),
+    },
     { key: 'projectName', label: 'projects.tasksManage.table.project', i18nLabel: true },
     {
-      key: 'assignedToName',
+      key: 'assignees',
       label: 'projects.tasksManage.table.assignee',
       i18nLabel: true,
-      cellTemplate: this.assigneeCell(),
+      cellTemplate: this.assigneesCell(),
     },
     {
       key: 'priority',
       label: 'projects.tasksManage.table.priority',
       i18nLabel: true,
+      align: 'center',
       cellTemplate: this.priorityCell(),
     },
     {
       key: 'status',
       label: 'projects.tasksManage.table.status',
       i18nLabel: true,
+      align: 'center',
       cellTemplate: this.statusCell(),
     },
     {
       key: 'category',
       label: 'projects.tasksManage.table.category',
       i18nLabel: true,
+      align: 'center',
       cellTemplate: this.categoryCell(),
     },
     {
@@ -175,6 +187,12 @@ export class TasksManageComponent implements OnInit, OnDestroy {
       align: 'center',
       cellTemplate: this.hoursCell(),
     },
+    {
+      key: 'createdByName',
+      label: 'projects.tasksManage.table.createdBy',
+      i18nLabel: true,
+      cellTemplate: this.createdCell(),
+    },
   ]);
 
   // ─────────── export ───────────
@@ -183,7 +201,10 @@ export class TasksManageComponent implements OnInit, OnDestroy {
     return [
       { header: this.t('projects.tasksManage.table.task'), value: (r) => r.title },
       { header: this.t('projects.tasksManage.table.project'), value: (r) => r.projectName },
-      { header: this.t('projects.tasksManage.table.assignee'), value: (r) => r.assignedToName },
+      {
+        header: this.t('projects.tasksManage.table.assignee'),
+        value: (r) => r.assignees.map((a) => a.fullName).join(', ') || '—',
+      },
       {
         header: this.t('projects.tasksManage.table.priority'),
         value: (r) => this.t('projects.manage.priorities.' + r.priority),
@@ -196,7 +217,21 @@ export class TasksManageComponent implements OnInit, OnDestroy {
         header: this.t('projects.tasksManage.table.category'),
         value: (r) => this.t('projects.tasksManage.categories.' + r.category),
       },
-      { header: this.t('projects.tasksManage.table.hours'), value: (r) => r.estimatedHours },
+      {
+        header: this.t('projects.tasksManage.table.dueDate'),
+        value: (r) => this.formatDate(r.dueDate),
+      },
+      {
+        header: this.t('projects.tasksManage.table.hours'),
+        value: (r) => `${r.actualHours ?? '—'} / ${r.estimatedHours}h`,
+      },
+      {
+        header: this.t('projects.tasksManage.table.createdBy'),
+        value: (r) => r.createdByName || '—',
+      },
+      { header: 'Created at', value: (r) => this.formatDate(r.createdAt) },
+      { header: 'Completed at', value: (r) => this.formatDate(r.completedAt) },
+      { header: 'Tags', value: (r) => r.tags || '—' },
     ];
   }
 
@@ -407,6 +442,22 @@ export class TasksManageComponent implements OnInit, OnDestroy {
       this.language.lang() === 'ar' ? 'ar-EG' : 'en-GB',
       { year: 'numeric', month: 'short', day: 'numeric' },
     );
+  }
+
+  parseTags(tags: string | null | undefined): string[] {
+    if (!tags?.trim()) return [];
+    return tags.split(',').map((t) => t.trim()).filter(Boolean);
+  }
+
+  isOverdue(row: TaskListItem): boolean {
+    if (row.status === 'Completed') return false;
+    const due = new Date(row.dueDate);
+    return !Number.isNaN(due.getTime()) && due < new Date();
+  }
+
+  hoursProgress(row: TaskListItem): number {
+    if (!row.estimatedHours) return 0;
+    return Math.min(100, Math.round(((row.actualHours ?? 0) / row.estimatedHours) * 100));
   }
 
   private t(key: string): string {

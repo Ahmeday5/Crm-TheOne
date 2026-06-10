@@ -28,6 +28,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
+import { TipDirective } from '../../../../shared/directives/tip.directive';
 import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import {
   CustomerListItem,
@@ -78,6 +79,7 @@ interface SourceItem {
     PaginationComponent,
     StatCardComponent,
     TableToolsComponent,
+    TipDirective,
     AssignSalesDialogComponent,
     CustomerActivitiesDialogComponent,
     CustomerDetailsDialogComponent,

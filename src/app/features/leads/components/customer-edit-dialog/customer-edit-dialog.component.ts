@@ -13,6 +13,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
@@ -20,9 +21,9 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import {
   AppService,
-  CampaignDropdownItem,
   CustomerDetails,
   PagedResult,
 } from '../../../../shared/models';
@@ -45,6 +46,7 @@ import { ServicesService } from '../../../services/services/services.service';
     ModalComponent,
     FormErrorComponent,
     LoadErrorComponent,
+    SearchableSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-edit-dialog.component.html',
@@ -67,7 +69,9 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
   readonly loadError = signal<string | null>(null);
   readonly submitAttempted = signal(false);
 
-  readonly campaigns = signal<CampaignDropdownItem[]>([]);
+  readonly campaignsFetchFn = (): Observable<Record<string, unknown>[]> =>
+    this.customers.campaignsDropdown() as unknown as Observable<Record<string, unknown>[]>;
+
   readonly servicesList = signal<AppService[]>([]);
 
   readonly form = this.fb.nonNullable.group({
@@ -103,9 +107,6 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
   }
 
   private loadDropdowns(): void {
-    this.customers.campaignsDropdown().subscribe({
-      next: (items) => this.campaigns.set(items),
-    });
     this.servicesApi.list({ pageSize: 100 }).subscribe({
       next: (result: PagedResult<AppService>) =>
         this.servicesList.set(result.data ?? []),

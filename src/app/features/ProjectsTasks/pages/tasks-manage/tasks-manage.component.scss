@@ -1,1 +1,187 @@
-/* Styling driven entirely by global theme — see src/styles/_tokens.scss */
+// ── Task title cell ───────────────────────────────────────────────────────────
+
+.task-title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 280px;
+
+  .task-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--text-primary, #1a1d23);
+  }
+
+  .task-desc {
+    font-size: 0.72rem;
+    color: var(--text-muted, #6c757d);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+  }
+
+  .task-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+  }
+
+  .task-tag {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 100px;
+    font-size: 0.67rem;
+    font-weight: 500;
+    background: rgba(111, 66, 193, 0.08);
+    color: #6f42c1;
+    border: 1px solid rgba(111, 66, 193, 0.18);
+    line-height: 1.6;
+  }
+}
+
+// ── Assignees cell ────────────────────────────────────────────────────────────
+
+.assignees-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  .assignee-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .assignee-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--bs-primary, #0d6efd);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(13, 110, 253, 0.25);
+  }
+
+  .assignee-name {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-primary, #1a1d23);
+  }
+
+  .assignee-more {
+    font-size: 0.75rem;
+    color: var(--text-muted, #6c757d);
+    font-weight: 600;
+    padding-inline-start: 4px;
+  }
+}
+
+// ── Due date cell ─────────────────────────────────────────────────────────────
+
+.due-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  .due-date {
+    font-size: 0.82rem;
+    color: var(--text-secondary, #495057);
+    display: flex;
+    align-items: center;
+  }
+
+  .overdue-pill {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 100px;
+    font-size: 0.67rem;
+    font-weight: 600;
+    background: rgba(220, 53, 69, 0.1);
+    color: var(--bs-danger, #dc3545);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    line-height: 1.6;
+  }
+
+  .completed-hint {
+    font-size: 0.7rem;
+    color: var(--bs-success, #198754);
+    display: flex;
+    align-items: center;
+  }
+
+  &.is-overdue .due-date {
+    color: var(--bs-danger, #dc3545);
+  }
+}
+
+// ── Hours cell ────────────────────────────────────────────────────────────────
+
+.hours-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+
+  .hours-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .hours-bar {
+    width: 72px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--bs-border-color, rgba(0, 0, 0, 0.08));
+    overflow: hidden;
+
+    .hours-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+
+      &.fill-info    { background: var(--bs-info, #0dcaf0); }
+      &.fill-warning { background: var(--bs-warning, #ffc107); }
+      &.fill-success { background: var(--bs-success, #198754); }
+    }
+  }
+}
+
+// ── Created-by cell ───────────────────────────────────────────────────────────
+
+.created-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .created-name {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-primary, #1a1d23);
+  }
+
+  .created-date {
+    font-size: 0.7rem;
+    color: var(--text-muted, #6c757d);
+  }
+}
+
+// ── Search icon alignment ─────────────────────────────────────────────────────
+
+.search-icon {
+  position: absolute;
+  inset-inline-start: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted, #6c757d);
+  pointer-events: none;
+  font-size: 0.85rem;
+}

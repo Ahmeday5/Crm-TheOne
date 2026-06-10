@@ -39,20 +39,14 @@
               {{ 'campaigns.create.addChannelSource' | translate }}
             </button>
           </label>
-          <select id="campaign-channel" class="form-select" formControlName="channelSourceId"
-            [class.is-invalid]="isInvalid(form.controls.channelSourceId)"
-            [attr.disabled]="loadingSources() ? '' : null">
-            <option [ngValue]="null" disabled>
-              @if (loadingSources()) {
-              {{ 'common.loading' | translate }}
-              } @else {
-              {{ 'campaigns.create.platformPlaceholder' | translate }}
-              }
-            </option>
-            @for (s of channelSources(); track s.id) {
-            <option [ngValue]="s.id">{{ s.name }}</option>
-            }
-          </select>
+          <app-searchable-select
+            formControlName="channelSourceId"
+            [options]="channelSourceOptions()"
+            labelKey="name"
+            valueKey="id"
+            [placeholder]="'campaigns.create.platformPlaceholder' | translate"
+            [externalLoading]="loadingSources()"
+            [isInvalid]="isInvalid(form.controls.channelSourceId)" />
           <app-form-error [control]="form.controls.channelSourceId" [label]="'campaigns.create.platform' | translate" />
         </div>
 

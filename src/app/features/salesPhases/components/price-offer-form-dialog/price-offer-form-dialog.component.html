@@ -29,22 +29,15 @@
           <i class="fa-solid fa-user text-primary"></i>
           {{ 'sales.priceOffers.form.customer' | translate }}
         </h6>
-        <select class="form-select"
-                formControlName="customerId"
-                [class.is-invalid]="form.controls.customerId.invalid && form.controls.customerId.touched">
-          <option [ngValue]="null" disabled>
-            @if (loadingCustomers()) {
-              {{ 'sales.priceOffers.form.loadingCustomers' | translate }}
-            } @else {
-              {{ 'sales.priceOffers.form.customerPlaceholder' | translate }}
-            }
-          </option>
-          @for (c of customers(); track c.id) {
-            <option [ngValue]="c.id">
-              {{ c.fullName }}@if (c.campanyName) { — {{ c.campanyName }} }
-            </option>
-          }
-        </select>
+        <app-searchable-select
+          formControlName="customerId"
+          [fetchFn]="customersFetchFn"
+          labelKey="fullName"
+          valueKey="id"
+          subLabelKey="campanyName"
+          [placeholder]="'sales.priceOffers.form.customerPlaceholder' | translate"
+          [isInvalid]="form.controls.customerId.invalid && form.controls.customerId.touched"
+          (itemsLoaded)="onCustomersLoaded($event)" />
         @if (form.controls.customerId.invalid && form.controls.customerId.touched) {
           <small class="text-danger">{{ 'sales.priceOffers.form.customerRequired' | translate }}</small>
         }

@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
@@ -20,7 +21,9 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import {
-  AppService,
+  SearchableSelectComponent,
+} from '../../../../shared/components/searchable-select/searchable-select.component';
+import {
   CreateSupportTicketRequest,
   CustomerDropdownItem,
   SUPPORT_TICKET_PRIORITIES,
@@ -38,6 +41,10 @@ import { SupportTicketsService } from '../../services/support-tickets.service';
  * The host owns visibility (`@if`) and reacts to `created` / `updated`.
  * In edit mode the customer is locked: `UpdateTicket` only accepts
  * title / description / serviceId / priority / status (no `customerId`).
+ *
+ * Service picker is scoped to the selected customer: once a customer is
+ * chosen, `SupportTickets/CustomerServices/{id}` is called and only the
+ * services that customer is subscribed to appear in the picker.
  */
 @Component({
   selector: 'app-support-ticket-form-dialog',
@@ -48,6 +55,7 @@ import { SupportTicketsService } from '../../services/support-tickets.service';
     TranslatePipe,
     ModalComponent,
     FormErrorComponent,
+    SearchableSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './support-ticket-form-dialog.component.html',
@@ -73,14 +81,26 @@ export class SupportTicketFormDialogComponent implements OnInit {
   readonly priorities = SUPPORT_TICKET_PRIORITIES;
   readonly statuses = SUPPORT_TICKET_STATUSES;
 
-  readonly customers = signal<CustomerDropdownItem[]>([]);
-  readonly services = signal<AppService[]>([]);
-  readonly loadingCustomers = signal(false);
-  readonly loadingServices = signal(false);
   readonly loadingTicket = signal(false);
   readonly submitting = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
+
+  /** Services belonging to the currently selected customer. */
+  readonly serviceItems = signal<{ id: number; name: string }[]>([]);
+  readonly loadingServices = signal(false);
+
+  /** Cast to `Record[]` so SearchableSelect's `[options]` input is satisfied. */
+  readonly serviceOptionsAsRecords = computed(
+    () => this.serviceItems() as unknown as Record<string, unknown>[],
+  );
+
+  // ─── Fetch function for customer picker ─────────────────────
+  /** Non-paginated: returns all customers in one call. */
+  readonly customersFetchFn = (): Observable<Record<string, unknown>[]> =>
+    this.service.customersDropdown() as unknown as Observable<Record<string, unknown>[]>;
+
+  // ─── Form ────────────────────────────────────────────────────
 
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(3)]],
@@ -116,9 +136,38 @@ export class SupportTicketFormDialogComponent implements OnInit {
       .subscribe((status) => this.applyFollowUpRule(Number(status)));
     this.applyFollowUpRule(this.form.controls.status.value);
 
-    this.loadCustomers();
-    this.loadServices();
+    // Reload services whenever the customer changes (create mode only).
+    // Also reset the selected serviceId so the user picks from the new list.
+    this.form.controls.customerId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((customerId) => {
+        if (customerId) {
+          this.form.controls.serviceId.setValue(null, { emitEvent: false });
+          this.loadCustomerServices(customerId as number);
+        } else {
+          this.serviceItems.set([]);
+        }
+      });
+
     if (this.ticketId !== null) this.loadTicket(this.ticketId);
+  }
+
+  /**
+   * Fetch the services a specific customer is subscribed to.
+   * Called on customer selection change and when loading an existing ticket.
+   */
+  private loadCustomerServices(customerId: number): void {
+    this.loadingServices.set(true);
+    this.service
+      .customerServices(customerId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items) => {
+          this.serviceItems.set(items ?? []);
+          this.loadingServices.set(false);
+        },
+        error: () => this.loadingServices.set(false),
+      });
   }
 
   /**
@@ -148,38 +197,17 @@ export class SupportTicketFormDialogComponent implements OnInit {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  private loadCustomers(): void {
-    this.loadingCustomers.set(true);
-    this.service.customersDropdown().subscribe({
-      next: (rows) => {
-        this.customers.set(rows ?? []);
-        this.loadingCustomers.set(false);
-      },
-      error: () => this.loadingCustomers.set(false),
-    });
-  }
-
-  private loadServices(): void {
-    this.loadingServices.set(true);
-    this.service.servicesDropdown().subscribe({
-      next: (rows) => {
-        this.services.set(rows ?? []);
-        this.loadingServices.set(false);
-      },
-      error: () => this.loadingServices.set(false),
-    });
-  }
-
   private loadTicket(id: number): void {
     this.loadingTicket.set(true);
     this.loadError.set(null);
     this.service.getById(id).subscribe({
       next: (t) => {
-        // The gateway may send priority/status as a number OR an enum name —
-        // normalize to the numeric value the <select> options are keyed by,
-        // otherwise the dropdown shows blank even though the table reads fine.
         const priority = this.toPriorityValue(t.priority, t.priorityName);
         const status = this.toStatusValue(t.status, t.statusName);
+
+        // Load the customer's services first; patch serviceId once options arrive.
+        this.loadCustomerServices(t.customerId);
+
         this.form.patchValue({
           title: t.title,
           description: t.description ?? '',
@@ -188,7 +216,6 @@ export class SupportTicketFormDialogComponent implements OnInit {
           priority,
           status,
         });
-        // Status patch re-ran the follow-up rule; seed the date for Open tickets.
         if (status === SupportTicketStatus.Open && t.nextFollowUpDate) {
           this.form.controls.nextFollowUpDate.setValue(
             this.toLocalInput(t.nextFollowUpDate),
@@ -234,13 +261,6 @@ export class SupportTicketFormDialogComponent implements OnInit {
     );
   }
 
-  /** Bilingual service label (falls back to the Arabic name). */
-  serviceLabel(service: AppService): string {
-    const name =
-      this.language.lang() === 'ar' ? service.nameAr : service.nameEn;
-    return name || service.nameAr || service.nameEn;
-  }
-
   submit(): void {
     if (this.submitting()) return;
     if (this.form.invalid) {
@@ -252,8 +272,6 @@ export class SupportTicketFormDialogComponent implements OnInit {
     this.submitting.set(true);
     this.errorMessage.set(null);
 
-    // Only Open tickets carry a follow-up date; everything else sends null
-    // (the backend rejects an empty string).
     const nextFollowUpDate =
       Number(v.status) === SupportTicketStatus.Open && v.nextFollowUpDate
         ? new Date(v.nextFollowUpDate).toISOString()

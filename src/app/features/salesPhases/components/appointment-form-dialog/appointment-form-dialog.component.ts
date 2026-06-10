@@ -11,17 +11,17 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import {
   APPOINTMENT_PRIORITIES,
   APPOINTMENT_TYPES,
-  AppointmentAssignee,
-  AppointmentCustomerOption,
   AppointmentPriority,
   AppointmentRequest,
   AppointmentType,
@@ -45,6 +45,7 @@ import { AppointmentsService } from '../../services/appointments.service';
     TranslatePipe,
     ModalComponent,
     FormErrorComponent,
+    SearchableSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './appointment-form-dialog.component.html',
@@ -66,14 +67,26 @@ export class AppointmentFormDialogComponent implements OnInit {
   readonly types = APPOINTMENT_TYPES;
   readonly priorities = APPOINTMENT_PRIORITIES;
 
-  readonly users = signal<AppointmentAssignee[]>([]);
-  readonly customers = signal<AppointmentCustomerOption[]>([]);
-  readonly loadingUsers = signal(false);
-  readonly loadingCustomers = signal(false);
   readonly loadingAppointment = signal(false);
   readonly submitting = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
+
+  // ─── Fetch functions for SearchableSelect ───────────────────
+
+  /** Non-paginated: customers list (id + name + optional company). */
+  readonly customersFetchFn = (): Observable<Record<string, unknown>[]> =>
+    this.service.customersDropdown() as unknown as Observable<Record<string, unknown>[]>;
+
+  /** Non-paginated: assignable users (Support + Admin roles). */
+  readonly usersFetchFn = (): Observable<Record<string, unknown>[]> =>
+    this.service.assignableUsers() as unknown as Observable<Record<string, unknown>[]>;
+
+  /** User display: prefer fullName, fall back to email. */
+  readonly userTransformLabel = (item: Record<string, unknown>): string =>
+    String(item['fullName'] ?? item['email'] ?? '');
+
+  // ─── Form ────────────────────────────────────────────────────
 
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(2)]],
@@ -107,31 +120,7 @@ export class AppointmentFormDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadUsers();
-    this.loadCustomers();
     if (this.appointmentId !== null) this.loadAppointment(this.appointmentId);
-  }
-
-  private loadUsers(): void {
-    this.loadingUsers.set(true);
-    this.service.assignableUsers().subscribe({
-      next: (rows) => {
-        this.users.set(rows ?? []);
-        this.loadingUsers.set(false);
-      },
-      error: () => this.loadingUsers.set(false),
-    });
-  }
-
-  private loadCustomers(): void {
-    this.loadingCustomers.set(true);
-    this.service.customersDropdown().subscribe({
-      next: (rows) => {
-        this.customers.set(rows ?? []);
-        this.loadingCustomers.set(false);
-      },
-      error: () => this.loadingCustomers.set(false),
-    });
   }
 
   private loadAppointment(id: number): void {
@@ -144,8 +133,6 @@ export class AppointmentFormDialogComponent implements OnInit {
           description: a.description ?? '',
           customerId: a.customerId,
           assignedToUserId: a.assignedToId,
-          // Normalize to the numeric code the <select> options use, so the
-          // dropdown pre-selects even if the API serializes an enum name.
           type: this.toTypeCode(a.type, a.typeNameAr),
           priority: this.toPriorityCode(a.priority, a.priorityNameAr),
           startDate: this.toLocalInput(a.startDate),

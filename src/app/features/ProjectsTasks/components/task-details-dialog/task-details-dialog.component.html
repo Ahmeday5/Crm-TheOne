@@ -53,7 +53,20 @@
       </div>
       <div class="col-6 col-md-4">
         <p class="text-muted small mb-1">{{ 'projects.tasksManage.details.assignee' | translate }}</p>
-        <p class="fw-600 mb-0">{{ details()!.assignedToName || '—' }}</p>
+        @if (details()!.assignees.length === 0) {
+          <p class="fw-600 mb-0">—</p>
+        } @else {
+          <div class="d-flex flex-column gap-1">
+            @for (a of details()!.assignees; track a.userId) {
+              <span class="fw-600 d-flex align-items-center gap-2">
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--bs-primary,#0d6efd);color:#fff;font-size:.62rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">
+                  {{ a.fullName.charAt(0).toUpperCase() }}
+                </span>
+                {{ a.fullName }}
+              </span>
+            }
+          </div>
+        }
       </div>
       <div class="col-6 col-md-4">
         <p class="text-muted small mb-1">{{ 'projects.tasksManage.details.createdBy' | translate }}</p>

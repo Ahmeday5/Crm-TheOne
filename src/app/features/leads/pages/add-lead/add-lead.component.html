@@ -105,20 +105,13 @@
               <label for="add-campaign" class="form-label fw-600">
                 {{ 'customers.form.campaign' | translate }} <span class="text-danger">*</span>
               </label>
-              <select id="add-campaign"
-                      class="form-select"
-                      formControlName="campaignId"
-                      [class.is-invalid]="form.controls.campaignId.invalid && (form.controls.campaignId.dirty || form.controls.campaignId.touched || submitAttempted())">
-                <option [ngValue]="null">{{ 'customers.form.campaignPh' | translate }}</option>
-                @for (c of campaigns(); track c.id) {
-                  <option [ngValue]="c.id">{{ c.name }}</option>
-                }
-              </select>
-              @if (campaigns().length === 0) {
-                <small class="text-muted d-block mt-1">
-                  <i class="fa-solid fa-circle-info me-1"></i>{{ 'customers.form.noCampaigns' | translate }}
-                </small>
-              }
+              <app-searchable-select
+                formControlName="campaignId"
+                [fetchFn]="campaignsFetchFn"
+                labelKey="name"
+                valueKey="id"
+                [placeholder]="'customers.form.campaignPh' | translate"
+                [isInvalid]="form.controls.campaignId.invalid && (form.controls.campaignId.dirty || form.controls.campaignId.touched || submitAttempted())" />
               <app-form-error
                 [control]="form.controls.campaignId"
                 [forceShow]="submitAttempted()"
@@ -165,22 +158,24 @@
                 [label]="'customers.form.service' | translate" />
             </div>
 
-            <!-- Notes -->
-            <div class="col-12">
-              <label for="add-notes" class="form-label fw-600">
-                {{ 'customers.form.notes' | translate }}
-              </label>
-              <textarea id="add-notes"
-                        class="form-control"
-                        formControlName="notes"
-                        rows="4"
-                        maxlength="500"
-                        [class.is-invalid]="form.controls.notes.invalid && (form.controls.notes.dirty || form.controls.notes.touched)"
-                        [placeholder]="'customers.form.notesPh' | translate"></textarea>
-              <app-form-error
-                [control]="form.controls.notes"
-                [label]="'customers.form.notes' | translate" />
-            </div>
+            <!-- Notes — hidden for Sales role; visible for Admin and Marketing only -->
+            @if (showNotesField()) {
+              <div class="col-12">
+                <label for="add-notes" class="form-label fw-600">
+                  {{ 'customers.form.notes' | translate }}
+                </label>
+                <textarea id="add-notes"
+                          class="form-control"
+                          formControlName="notes"
+                          rows="4"
+                          maxlength="500"
+                          [class.is-invalid]="form.controls.notes.invalid && (form.controls.notes.dirty || form.controls.notes.touched)"
+                          [placeholder]="'customers.form.notesPh' | translate"></textarea>
+                <app-form-error
+                  [control]="form.controls.notes"
+                  [label]="'customers.form.notes' | translate" />
+              </div>
+            }
           </div>
 
           @if (errorMessage()) {

@@ -14,6 +14,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Observable } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -22,9 +23,9 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import {
   AppService,
-  CampaignDropdownItem,
   PagedResult,
   SalesPerson,
 } from '../../../../shared/models';
@@ -48,6 +49,7 @@ import { ServicesService } from '../../../services/services/services.service';
     PageHeaderComponent,
     FormErrorComponent,
     ModalComponent,
+    SearchableSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './add-lead.component.html',
@@ -66,7 +68,12 @@ export class AddLeadComponent {
   readonly errorMessage = signal<string | null>(null);
   readonly submitAttempted = signal(false);
 
-  readonly campaigns = signal<CampaignDropdownItem[]>([]);
+  /** Notes field is hidden for Sales reps — only Marketing and Admin can add notes at creation. */
+  readonly showNotesField = computed(() => this.auth.currentRole() !== 'Sales');
+
+  readonly campaignsFetchFn = (): Observable<Record<string, unknown>[]> =>
+    this.customers.campaignsDropdown() as unknown as Observable<Record<string, unknown>[]>;
+
   readonly servicesList = signal<AppService[]>([]);
   readonly salesTeam = signal<SalesPerson[]>([]);
   readonly salesTeamLoading = signal(false);
@@ -98,9 +105,6 @@ export class AddLeadComponent {
   }
 
   private loadDropdowns(): void {
-    this.customers.campaignsDropdown().subscribe({
-      next: (items) => this.campaigns.set(items),
-    });
     this.servicesApi.list({ pageSize: 100 }).subscribe({
       next: (result: PagedResult<AppService>) => this.servicesList.set(result.data ?? []),
     });

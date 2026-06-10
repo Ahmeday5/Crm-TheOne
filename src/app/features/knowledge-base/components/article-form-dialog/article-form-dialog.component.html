@@ -66,15 +66,15 @@
         </select>
       </div>
       <div class="col-md-8">
-        <label for="art-cat" class="form-label fw-600">{{ 'kb.form.category' | translate }}</label>
-        <select id="art-cat" class="form-select" formControlName="categoryId">
-          <option [ngValue]="null">
-            {{ (loadingCategories() ? 'kb.form.loadingCategories' : 'kb.form.categoryPlaceholder') | translate }}
-          </option>
-          @for (c of categoryOptions(); track c.id) {
-            <option [ngValue]="c.id">{{ c.name }}</option>
-          }
-        </select>
+        <label class="form-label fw-600">{{ 'kb.form.category' | translate }}</label>
+        <app-searchable-select
+          formControlName="categoryId"
+          [options]="categoryOptionsAsRecords()"
+          labelKey="name"
+          valueKey="id"
+          [placeholder]="'kb.form.categoryPlaceholder' | translate"
+          [externalLoading]="loadingCategories()"
+          [allowClear]="true" />
       </div>
 
       <!-- Summary -->

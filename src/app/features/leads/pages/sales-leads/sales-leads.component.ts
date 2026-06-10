@@ -26,6 +26,7 @@ import { LoadErrorComponent } from '../../../../shared/components/load-error/loa
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
+import { TipDirective } from '../../../../shared/directives/tip.directive';
 import {
   CustomerFollowUpResponse,
   CustomerListItem,
@@ -79,6 +80,7 @@ interface JourneyStep {
     LoadErrorComponent,
     EmptyStateComponent,
     TableToolsComponent,
+    TipDirective,
     CustomerDetailsDialogComponent,
     AssignSupportDialogComponent,
     ChangeStatusDialogComponent,

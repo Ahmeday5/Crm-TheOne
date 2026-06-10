@@ -35,52 +35,42 @@
           [label]="'sales.appointments.form.title' | translate" />
       </div>
 
+      <!-- Customer -->
       <div class="col-md-6">
         <label class="form-label fw-600">
           {{ 'sales.appointments.form.customer' | translate }}
           <span class="text-danger">*</span>
         </label>
-        <select class="form-select" formControlName="customerId"
-                [class.is-invalid]="isInvalid('customerId')">
-          <option [ngValue]="null" disabled>
-            @if (loadingCustomers()) {
-              {{ 'sales.priceOffers.form.loadingCustomers' | translate }}
-            } @else {
-              {{ 'sales.appointments.form.customerPlaceholder' | translate }}
-            }
-          </option>
-          @for (c of customers(); track c.id) {
-            <option [ngValue]="c.id">
-              {{ c.fullName }}@if (c.campanyName) { — {{ c.campanyName }} }
-            </option>
-          }
-        </select>
+        <app-searchable-select
+          formControlName="customerId"
+          [fetchFn]="customersFetchFn"
+          labelKey="fullName"
+          valueKey="id"
+          subLabelKey="campanyName"
+          [placeholder]="'sales.appointments.form.customerPlaceholder' | translate"
+          [isInvalid]="isInvalid('customerId')" />
         <app-form-error [control]="form.controls.customerId"
           [label]="'sales.appointments.form.customer' | translate" />
       </div>
 
+      <!-- Assigned to -->
       <div class="col-md-6">
         <label class="form-label fw-600">
           {{ 'sales.appointments.form.assignedTo' | translate }}
           <span class="text-danger">*</span>
         </label>
-        <select class="form-select" formControlName="assignedToUserId"
-                [class.is-invalid]="isInvalid('assignedToUserId')">
-          <option value="" disabled>
-            @if (loadingUsers()) {
-              {{ 'sales.appointments.form.loadingUsers' | translate }}
-            } @else {
-              {{ 'sales.appointments.form.assignedToPlaceholder' | translate }}
-            }
-          </option>
-          @for (u of users(); track u.userId) {
-            <option [value]="u.userId">{{ u.fullName || u.email }}</option>
-          }
-        </select>
+        <app-searchable-select
+          formControlName="assignedToUserId"
+          [fetchFn]="usersFetchFn"
+          [transformLabel]="userTransformLabel"
+          valueKey="userId"
+          [placeholder]="'sales.appointments.form.assignedToPlaceholder' | translate"
+          [isInvalid]="isInvalid('assignedToUserId')" />
         <app-form-error [control]="form.controls.assignedToUserId"
           [label]="'sales.appointments.form.assignedTo' | translate" />
       </div>
 
+      <!-- Type -->
       <div class="col-md-6">
         <label class="form-label fw-600">
           {{ 'sales.appointments.form.type' | translate }}
@@ -93,6 +83,7 @@
         </select>
       </div>
 
+      <!-- Priority -->
       <div class="col-md-6">
         <label class="form-label fw-600">
           {{ 'sales.appointments.form.priority' | translate }}
@@ -105,6 +96,7 @@
         </select>
       </div>
 
+      <!-- Start Date -->
       <div class="col-md-6">
         <label class="form-label fw-600">
           {{ 'sales.appointments.form.startDate' | translate }}
@@ -116,6 +108,7 @@
           [label]="'sales.appointments.form.startDate' | translate" />
       </div>
 
+      <!-- End Date -->
       <div class="col-md-6">
         <label class="form-label fw-600">
           {{ 'sales.appointments.form.endDate' | translate }}
@@ -128,6 +121,7 @@
           [label]="'sales.appointments.form.endDate' | translate" />
       </div>
 
+      <!-- Location -->
       <div class="col-md-6">
         <label class="form-label fw-600">
           {{ 'sales.appointments.form.location' | translate }}
@@ -136,6 +130,7 @@
                [placeholder]="'sales.appointments.form.locationPlaceholder' | translate">
       </div>
 
+      <!-- Meeting Link -->
       <div class="col-md-6">
         <label class="form-label fw-600">
           {{ 'sales.appointments.form.meetingLink' | translate }}
@@ -144,6 +139,7 @@
                placeholder="https://meet.google.com/...">
       </div>
 
+      <!-- Description -->
       <div class="col-12">
         <label class="form-label fw-600">
           {{ 'sales.appointments.form.description' | translate }}
@@ -152,6 +148,7 @@
                   [placeholder]="'sales.appointments.form.descriptionPlaceholder' | translate"></textarea>
       </div>
 
+      <!-- Notes -->
       <div class="col-12">
         <label class="form-label fw-600">
           {{ 'sales.appointments.form.notes' | translate }}

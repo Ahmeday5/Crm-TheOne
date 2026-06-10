@@ -120,6 +120,12 @@ export function taskCategoryBadgeClass(
   }
 }
 
+/** Single assignee entry in the task response. */
+export interface TaskAssignee {
+  userId: string;
+  fullName: string;
+}
+
 /** A task as returned by the list endpoints and the by-id reads. */
 export interface TaskListItem {
   id: number;
@@ -127,8 +133,7 @@ export interface TaskListItem {
   description: string;
   projectId: number;
   projectName: string;
-  assignedToId: string;
-  assignedToName: string;
+  assignees: TaskAssignee[];
   createdById: string;
   createdByName: string;
   status: TaskStatusName;
@@ -154,7 +159,7 @@ export interface CreateTaskRequest {
   title: string;
   description: string;
   projectId: number;
-  assignedToId: string;
+  assignedToIds: string[];
   status: TaskStatusName;
   priority: ProjectPriorityName;
   category: TaskCategoryName;

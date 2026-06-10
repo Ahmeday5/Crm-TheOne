@@ -90,23 +90,16 @@
 
         <!-- Campaign -->
         <div class="col-md-6">
-          <label for="edit-campaign" class="form-label fw-600">
+          <label class="form-label fw-600">
             {{ 'customers.form.campaign' | translate }} <span class="text-danger">*</span>
           </label>
-          <select id="edit-campaign"
-                  class="form-select"
-                  formControlName="campaignId"
-                  [class.is-invalid]="form.controls.campaignId.invalid && (form.controls.campaignId.dirty || form.controls.campaignId.touched || submitAttempted())">
-            <option [ngValue]="null">{{ 'customers.form.campaignPh' | translate }}</option>
-            @for (c of campaigns(); track c.id) {
-              <option [ngValue]="c.id">{{ c.name }}</option>
-            }
-          </select>
-          @if (campaigns().length === 0) {
-            <small class="text-muted d-block mt-1">
-              <i class="fa-solid fa-circle-info me-1"></i>{{ 'customers.form.noCampaigns' | translate }}
-            </small>
-          }
+          <app-searchable-select
+            formControlName="campaignId"
+            [fetchFn]="campaignsFetchFn"
+            labelKey="name"
+            valueKey="id"
+            [placeholder]="'customers.form.campaignPh' | translate"
+            [isInvalid]="form.controls.campaignId.invalid && (form.controls.campaignId.dirty || form.controls.campaignId.touched || submitAttempted())" />
           <app-form-error
             [control]="form.controls.campaignId"
             [forceShow]="submitAttempted()"

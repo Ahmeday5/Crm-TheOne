@@ -40,6 +40,7 @@
         <i class="fa-solid fa-magnifying-glass ms-search-icon" aria-hidden="true"></i>
         <input type="text"
                class="ms-search-input"
+               dir="auto"
                [placeholder]="searchPlaceholder()"
                [ngModel]="query()"
                (ngModelChange)="onQueryChange($event)"
@@ -59,12 +60,12 @@
         <div class="ms-bulk">
           <button type="button" class="ms-bulk-btn" (click)="selectAll($event)">
             <i class="fa-solid fa-check-double me-1"></i>
-            Select all
+            {{ selectAllLabel() }}
           </button>
           @if (selectedIds().length > 0) {
             <button type="button" class="ms-bulk-btn ms-bulk-clear" (click)="clearAll($event)">
               <i class="fa-solid fa-eraser me-1"></i>
-              Clear ({{ selectedIds().length }})
+              {{ clearLabel() }} ({{ selectedIds().length }})
             </button>
           }
         </div>
@@ -74,7 +75,7 @@
         @if (loading()) {
           <div class="ms-state">
             <span class="spinner-border spinner-border-sm me-2"></span>
-            Loading…
+            {{ loadingLabel() }}
           </div>
         } @else if (filteredOptions().length === 0) {
           <div class="ms-state ms-empty">
@@ -102,7 +103,7 @@
 
       @if (selectedIds().length > 0) {
         <div class="ms-footer">
-          <span class="ms-count">{{ selectedIds().length }} selected</span>
+          <span class="ms-count">{{ selectedIds().length }} {{ selectedSuffix() }}</span>
         </div>
       }
     </div>

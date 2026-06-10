@@ -26,6 +26,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
+import { TipDirective } from '../../../../shared/directives/tip.directive';
 import {
   CustomerListItem,
   CustomerNoteResponse,
@@ -79,6 +80,7 @@ interface SourceItem {
     LoadErrorComponent,
     EmptyStateComponent,
     TableToolsComponent,
+    TipDirective,
     CustomerNotesCellComponent,
     CustomerActionsMenuComponent,
     CustomerActivitiesDialogComponent,

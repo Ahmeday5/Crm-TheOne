@@ -19,6 +19,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
@@ -29,9 +30,9 @@ import {
   MultiSelectComponent,
   MultiSelectOption,
 } from '../../../../shared/components/multi-select/multi-select.component';
+import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import {
   CreateProjectRequest,
-  CustomerDropdownItem,
   FormMode,
   PROJECT_PRIORITY_OPTIONS,
   PROJECT_STATUSES,
@@ -59,6 +60,7 @@ function nonEmptyArray(control: AbstractControl): ValidationErrors | null {
     ModalComponent,
     FormErrorComponent,
     MultiSelectComponent,
+    SearchableSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './project-form-dialog.component.html',
@@ -81,8 +83,9 @@ export class ProjectFormDialogComponent implements OnInit, OnChanges {
   readonly statuses = PROJECT_STATUSES;
   readonly priorities = PROJECT_PRIORITY_OPTIONS;
 
-  readonly customers = signal<CustomerDropdownItem[]>([]);
-  readonly loadingCustomers = signal(false);
+  readonly customersFetchFn = (): Observable<Record<string, unknown>[]> =>
+    this.service.customersDropdown() as unknown as Observable<Record<string, unknown>[]>;
+
   readonly engineerOptions = signal<MultiSelectOption<string>[]>([]);
   readonly loadingEngineers = signal(false);
 
@@ -111,7 +114,6 @@ export class ProjectFormDialogComponent implements OnInit, OnChanges {
   );
 
   ngOnInit(): void {
-    this.loadCustomers();
     this.loadEngineers();
   }
 
@@ -124,17 +126,6 @@ export class ProjectFormDialogComponent implements OnInit, OnChanges {
   }
 
   // ─────────── lookups ───────────
-
-  private loadCustomers(): void {
-    this.loadingCustomers.set(true);
-    this.service.customersDropdown().subscribe({
-      next: (rows) => {
-        this.customers.set(rows ?? []);
-        this.loadingCustomers.set(false);
-      },
-      error: () => this.loadingCustomers.set(false),
-    });
-  }
 
   private loadEngineers(): void {
     this.loadingEngineers.set(true);

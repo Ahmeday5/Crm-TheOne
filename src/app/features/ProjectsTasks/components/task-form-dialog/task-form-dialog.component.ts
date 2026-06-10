@@ -12,7 +12,14 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
+import { Observable, map } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
@@ -20,8 +27,16 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import {
+  MultiSelectComponent,
+  MultiSelectOption,
+} from '../../../../shared/components/multi-select/multi-select.component';
+import {
+  SearchableSelectComponent,
+  SelectFetchParams,
+  SelectPageResult,
+} from '../../../../shared/components/searchable-select/searchable-select.component';
+import {
   CreateTaskRequest,
-  DeveloperOption,
   FormMode,
   PROJECT_PRIORITY_OPTIONS,
   ProjectPriorityName,
@@ -35,9 +50,9 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ProjectsService } from '../../services/projects.service';
 import { TasksService } from '../../services/tasks.service';
 
-interface ProjectOption {
-  id: number;
-  title: string;
+function nonEmptyArray(control: AbstractControl): ValidationErrors | null {
+  const value = control.value as unknown[];
+  return Array.isArray(value) && value.length > 0 ? null : { required: true };
 }
 
 @Component({
@@ -49,6 +64,8 @@ interface ProjectOption {
     TranslatePipe,
     ModalComponent,
     FormErrorComponent,
+    SearchableSelectComponent,
+    MultiSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './task-form-dialog.component.html',
@@ -72,9 +89,11 @@ export class TaskFormDialogComponent implements OnInit, OnChanges {
   readonly priorities = PROJECT_PRIORITY_OPTIONS;
   readonly categories = TASK_CATEGORIES;
 
-  readonly projectOptions = signal<ProjectOption[]>([]);
-  readonly loadingProjects = signal(false);
-  readonly developers = signal<DeveloperOption[]>([]);
+  readonly projectsFetchFn = (params: SelectFetchParams): Observable<SelectPageResult> =>
+    this.projects.list({ Search: params.search, PageIndex: params.pageIndex, PageSize: params.pageSize })
+      .pipe(map((result) => ({ count: result.count, data: result.data as unknown as Record<string, unknown>[] })));
+
+  readonly developerOptions = signal<MultiSelectOption<string>[]>([]);
   readonly loadingDevelopers = signal(false);
 
   readonly submitting = signal(false);
@@ -84,7 +103,7 @@ export class TaskFormDialogComponent implements OnInit, OnChanges {
     title: ['', [Validators.required, Validators.minLength(2)]],
     description: [''],
     projectId: this.fb.control<number | null>(null, Validators.required),
-    assignedToId: ['', Validators.required],
+    assignedToIds: this.fb.nonNullable.control<string[]>([], nonEmptyArray),
     status: ['ToDo' as TaskStatusName, Validators.required],
     priority: ['Medium' as ProjectPriorityName, Validators.required],
     category: ['Development' as TaskCategoryName, Validators.required],
@@ -100,7 +119,6 @@ export class TaskFormDialogComponent implements OnInit, OnChanges {
   );
 
   ngOnInit(): void {
-    this.loadProjects();
     this.loadDevelopers();
   }
 
@@ -112,24 +130,13 @@ export class TaskFormDialogComponent implements OnInit, OnChanges {
     }
   }
 
-  private loadProjects(): void {
-    this.loadingProjects.set(true);
-    this.projects.list({ PageIndex: 1, PageSize: 1000 }).subscribe({
-      next: (page) => {
-        this.projectOptions.set(
-          (page.data ?? []).map((p) => ({ id: p.id, title: p.title })),
-        );
-        this.loadingProjects.set(false);
-      },
-      error: () => this.loadingProjects.set(false),
-    });
-  }
-
   private loadDevelopers(): void {
     this.loadingDevelopers.set(true);
     this.projects.developers().subscribe({
       next: (rows) => {
-        this.developers.set(rows ?? []);
+        this.developerOptions.set(
+          (rows ?? []).map((d) => ({ id: d.userId, name: d.fullName })),
+        );
         this.loadingDevelopers.set(false);
       },
       error: () => this.loadingDevelopers.set(false),
@@ -142,7 +149,7 @@ export class TaskFormDialogComponent implements OnInit, OnChanges {
       title: t?.title ?? '',
       description: t?.description ?? '',
       projectId: t?.projectId ?? this.defaultProjectId ?? null,
-      assignedToId: t?.assignedToId ?? '',
+      assignedToIds: t?.assignees?.map((a) => a.userId) ?? [],
       status: t?.status ?? 'ToDo',
       priority: t?.priority ?? 'Medium',
       category: t?.category ?? 'Development',
@@ -164,7 +171,7 @@ export class TaskFormDialogComponent implements OnInit, OnChanges {
       title: v.title.trim(),
       description: (v.description ?? '').trim(),
       projectId: Number(v.projectId),
-      assignedToId: v.assignedToId,
+      assignedToIds: v.assignedToIds,
       status: v.status,
       priority: v.priority,
       category: v.category,

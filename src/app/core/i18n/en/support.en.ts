@@ -78,6 +78,7 @@ const support: TranslationFile<'support'> = {
         customerLocked: 'The customer cannot be changed after the ticket is created.',
         service: 'Service',
         servicePlaceholder: 'Select a service',
+        selectCustomerFirst: 'Select a customer first to see available services',
         loadingServices: 'Loading services…',
         priority: 'Priority',
         status: 'Status',

@@ -22,6 +22,7 @@ import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import {
   ARTICLE_ACCESS_LEVELS,
   ARTICLE_MAX_ATTACHMENTS,
@@ -51,6 +52,7 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024;
     TranslatePipe,
     ModalComponent,
     FormErrorComponent,
+    SearchableSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './article-form-dialog.component.html',
@@ -74,6 +76,9 @@ export class ArticleFormDialogComponent implements OnInit, OnChanges, OnDestroy 
   readonly maxAttachments = ARTICLE_MAX_ATTACHMENTS;
 
   readonly categoryOptions = signal<ArticleCategoryOption[]>([]);
+  readonly categoryOptionsAsRecords = computed(
+    () => this.categoryOptions() as unknown as Record<string, unknown>[],
+  );
   readonly loadingCategories = signal(false);
 
   /** Newly picked attachment files (create only). */

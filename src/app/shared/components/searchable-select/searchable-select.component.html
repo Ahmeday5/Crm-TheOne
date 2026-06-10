@@ -1,0 +1,162 @@
+<div
+  class="ss-host"
+  [class.is-open]="isOpen()"
+  [class.is-disabled]="isDisabled()"
+  [class.is-invalid]="isInvalid()"
+  [class.has-value]="selectedValue() !== null && selectedValue() !== undefined"
+  role="combobox"
+  [attr.aria-expanded]="isOpen()"
+  aria-haspopup="listbox"
+  [attr.aria-disabled]="isDisabled()">
+
+  <!-- ─── Trigger button ─── -->
+  <button
+    type="button"
+    class="ss-trigger"
+    [disabled]="isDisabled()"
+    (click)="togglePanel()">
+
+    <span class="ss-trigger-label">
+      @if (selectedLabel()) {
+        <span class="ss-selected-label">{{ selectedLabel() }}</span>
+        @if (selectedSubLabel()) {
+          <span class="ss-selected-sub">{{ selectedSubLabel() }}</span>
+        }
+      } @else {
+        <span class="ss-placeholder">{{ placeholder() }}</span>
+      }
+    </span>
+
+    <span class="ss-trigger-actions">
+      <!-- Loading spinner (internal fetch or external parent loading) -->
+      @if ((isLoading() || externalLoading()) && !isOpen()) {
+        <span
+          class="spinner-border spinner-border-sm ss-spinner"
+          role="status"
+          aria-hidden="true"></span>
+      }
+
+      <!-- Clear button -->
+      @if (
+        allowClear() &&
+        selectedValue() !== null &&
+        selectedValue() !== undefined &&
+        !isDisabled() &&
+        !isLoading()
+      ) {
+        <button
+          type="button"
+          class="ss-clear"
+          aria-label="مسح الاختيار"
+          (click)="clearValue($event)">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      }
+
+      <i class="fa-solid fa-chevron-down ss-caret" aria-hidden="true"></i>
+    </span>
+  </button>
+
+  <!-- ─── Dropdown panel ─── -->
+  @if (isOpen()) {
+    <div class="ss-panel" role="listbox">
+
+      <!-- Search input -->
+      <div class="ss-search-wrapper">
+        <i class="fa-solid fa-magnifying-glass ss-search-icon" aria-hidden="true"></i>
+        <input
+          #searchInput
+          type="text"
+          class="ss-search-input"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+          [placeholder]="searchPlaceholder()"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchInputChange($event)"
+          (click)="$event.stopPropagation()"
+          aria-autocomplete="list"
+          aria-label="بحث" />
+        @if (searchQuery()) {
+          <button
+            type="button"
+            class="ss-search-clear"
+            aria-label="مسح البحث"
+            (click)="onSearchInputChange(''); $event.stopPropagation()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        }
+      </div>
+
+      <!-- Options list -->
+      <div #optionsList class="ss-list">
+
+        <!-- Loading state -->
+        @if (isLoading()) {
+          <div class="ss-state">
+            <span class="spinner-border spinner-border-sm ss-state-spinner"></span>
+            <span>{{ loadingText() }}</span>
+          </div>
+        }
+
+        <!-- Error state -->
+        @else if (hasError()) {
+          <div class="ss-state ss-state-error">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span>{{ errorText() }}</span>
+            <button type="button" class="ss-retry-btn" (click)="retryLoad()">
+              <i class="fa-solid fa-rotate-right me-1"></i>
+              إعادة المحاولة
+            </button>
+          </div>
+        }
+
+        <!-- Empty state -->
+        @else if (filteredItems().length === 0) {
+          <div class="ss-state ss-state-empty">
+            <i class="fa-regular fa-face-meh ss-empty-icon"></i>
+            <span>{{ emptyText() }}</span>
+          </div>
+        }
+
+        <!-- Option rows -->
+        @else {
+          @for (item of filteredItems(); track item[valueKey()]; let idx = $index) {
+            <button
+              type="button"
+              class="ss-option"
+              data-option
+              [class.is-selected]="isItemSelected(item)"
+              [class.is-highlighted]="highlightedIndex() === idx"
+              role="option"
+              [attr.aria-selected]="isItemSelected(item)"
+              (click)="selectItem(item); $event.stopPropagation()"
+              (mouseenter)="highlightedIndex.set(idx)">
+
+              <span class="ss-option-content">
+                <span class="ss-option-label">{{ getItemLabel(item) }}</span>
+                @if (subLabelKey() && item[subLabelKey()!]) {
+                  <span class="ss-option-sub">{{ item[subLabelKey()!] }}</span>
+                }
+              </span>
+
+              @if (isItemSelected(item)) {
+                <i class="fa-solid fa-check ss-check-icon" aria-hidden="true"></i>
+              }
+            </button>
+          }
+        }
+      </div>
+
+      <!-- Footer: total count -->
+      @if (!isLoading() && !hasError() && filteredItems().length > 0) {
+        <div class="ss-footer">
+          <span class="ss-count">
+            {{ filteredItems().length }}
+            @if (filteredItems().length === 1) { نتيجة } @else { نتائج }
+          </span>
+        </div>
+      }
+    </div>
+  }
+</div>

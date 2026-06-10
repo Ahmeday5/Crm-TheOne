@@ -120,4 +120,12 @@ export class SupportTicketsService {
       })
       .pipe(map((page) => page.data ?? []));
   }
+
+  /** Services subscribed by a specific customer — drives the ticket form's service picker. */
+  customerServices(customerId: number): Observable<{ id: number; name: string }[]> {
+    return this.api.get<{ id: number; name: string }[]>(
+      API_ENDPOINTS.supportTickets.customerServices(customerId),
+      { context: withSkipLoader(withCache({ ttlMs: CACHE_TTL.SHORT })) },
+    );
+  }
 }

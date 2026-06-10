@@ -25,40 +25,34 @@
 
       <!-- Project -->
       <div class="col-md-6">
-        <label for="task-project" class="form-label fw-600">
+        <label class="form-label fw-600">
           {{ 'projects.tasksManage.form.project' | translate }} <span class="text-danger">*</span>
         </label>
-        <select id="task-project"
-                class="form-select"
-                formControlName="projectId"
-                [class.is-invalid]="isInvalid('projectId')">
-          <option [ngValue]="null" disabled>
-            {{ (loadingProjects() ? 'projects.tasksManage.form.loadingProjects' : 'projects.tasksManage.form.projectPlaceholder') | translate }}
-          </option>
-          @for (p of projectOptions(); track p.id) {
-            <option [ngValue]="p.id">{{ p.title }}</option>
-          }
-        </select>
+        <app-searchable-select
+          formControlName="projectId"
+          [pagedFetchFn]="projectsFetchFn"
+          labelKey="title"
+          valueKey="id"
+          [placeholder]="'projects.tasksManage.form.projectPlaceholder' | translate"
+          [isInvalid]="isInvalid('projectId')" />
         <app-form-error [control]="form.controls.projectId" [label]="'projects.tasksManage.form.project' | translate" />
       </div>
 
-      <!-- Assignee -->
+      <!-- Assignees -->
       <div class="col-md-6">
-        <label for="task-assignee" class="form-label fw-600">
+        <label class="form-label fw-600 d-flex align-items-center gap-2">
+          <i class="fa-solid fa-users text-primary"></i>
           {{ 'projects.tasksManage.form.assignee' | translate }} <span class="text-danger">*</span>
         </label>
-        <select id="task-assignee"
-                class="form-select"
-                formControlName="assignedToId"
-                [class.is-invalid]="isInvalid('assignedToId')">
-          <option value="" disabled>
-            {{ (loadingDevelopers() ? 'projects.tasksManage.form.loadingDevelopers' : 'projects.tasksManage.form.assigneePlaceholder') | translate }}
-          </option>
-          @for (d of developers(); track d.userId) {
-            <option [value]="d.userId">{{ d.fullName }}</option>
-          }
-        </select>
-        <app-form-error [control]="form.controls.assignedToId" [label]="'projects.tasksManage.form.assignee' | translate" />
+        <app-multi-select
+          formControlName="assignedToIds"
+          [options]="developerOptions()"
+          [loading]="loadingDevelopers()"
+          [placeholder]="'projects.tasksManage.form.assigneePlaceholder' | translate"
+          [searchPlaceholder]="'projects.tasksManage.form.assigneeSearch' | translate"
+          [emptyText]="'projects.tasksManage.form.assigneeEmpty' | translate">
+        </app-multi-select>
+        <app-form-error [control]="form.controls.assignedToIds" [label]="'projects.tasksManage.form.assignee' | translate" />
       </div>
 
       <!-- Status -->

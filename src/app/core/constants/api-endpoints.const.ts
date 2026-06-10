@@ -120,6 +120,7 @@ export const API_ENDPOINTS = {
     statistics: 'SupportTickets/TicketStatistics',
     statuses: 'SupportTickets/TicketStatuses',
     priorities: 'SupportTickets/TicketPriorities',
+    customerServices: (customerId: number | string) => `SupportTickets/CustomerServices/${customerId}`,
   },
   marketing: {
     statistics: 'Marketing/DashboardsStatistics',

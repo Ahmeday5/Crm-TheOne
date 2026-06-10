@@ -134,6 +134,25 @@
 .crm-chip.tone-warning { background: var(--warning-soft); color: var(--warning); border-color: transparent; }
 .crm-chip.tone-brand   { background: var(--brand-soft);   color: var(--brand);   border-color: transparent; }
 
+/* ── campaign name — truncated with TipDirective tooltip ──── */
+.campaign-clip {
+  display: block;
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-xs);
+  color: var(--text-3, #94a3b8);
+  margin-top: 3px;
+  cursor: default;
+
+  // Visual hint: subtle underline-dotted shows the text is hoverable
+  &[appTip] {
+    text-decoration: underline dotted rgba(148, 163, 184, 0.5);
+    text-underline-offset: 2px;
+  }
+}
+
 /* ── assignment cell ───────────────────────────────────────── */
 .crm-assignment {
   display: flex;

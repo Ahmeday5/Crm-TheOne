@@ -60,6 +60,10 @@ export class MultiSelectComponent implements ControlValueAccessor {
   readonly loading = input<boolean>(false);
   /** When true, shows a "Select all" / "Clear" pair above the list. */
   readonly showBulkActions = input<boolean>(true);
+  readonly selectAllLabel = input<string>('Select all');
+  readonly clearLabel = input<string>('Clear');
+  readonly loadingLabel = input<string>('Loading…');
+  readonly selectedSuffix = input<string>('selected');
 
   // ─────────── state ───────────
   readonly open = signal(false);
