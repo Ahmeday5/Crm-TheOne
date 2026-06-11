@@ -287,6 +287,7 @@ export class ProjectManageComponent implements OnInit, OnDestroy {
   reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
+    if (force) this.loadStats();
     this.fetch(
       {
         PageIndex: this.pageIndex(),

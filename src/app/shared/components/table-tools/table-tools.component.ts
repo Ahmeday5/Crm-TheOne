@@ -10,6 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { TRANSLATIONS, resolveKey } from '../../../core/i18n';
+import { HttpCacheService } from '../../../core/services/http-cache.service';
 import { LanguageService } from '../../../core/services/language.service';
 import {
   ExportColumn,
@@ -65,11 +66,17 @@ export class TableToolsComponent {
   private readonly exporter = inject(TableExportService);
   private readonly toast = inject(ToastService);
   private readonly language = inject(LanguageService);
+  private readonly cache = inject(HttpCacheService);
 
   readonly open = signal(false);
   readonly busy = signal(false);
 
   readonly hasFetchAll = computed(() => this.fetchAll() !== null);
+
+  onRefreshClick(): void {
+    this.cache.clear();
+    this.refresh.emit();
+  }
 
   toggle(): void {
     if (this.disabled() || this.busy()) return;

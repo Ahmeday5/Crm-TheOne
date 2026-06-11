@@ -291,9 +291,12 @@ const dashboard: TranslationFile<'dashboard'> = {
         project: 'المشروع',
         all: 'الكل',
         reset: 'إعادة تعيين',
+        allTime: 'كل الأوقات',
+        thisWeek: 'الأسبوع الحالي',
         thisMonth: 'الشهر الحالي',
         thisQuarter: 'الربع الحالي',
-        allTime: 'كل الأوقات',
+        halfYear: 'نصف السنة',
+        thisYear: 'السنة الحالية',
       },
       kpi: {
         completedTasks: 'المهام المكتملة',

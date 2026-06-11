@@ -121,6 +121,7 @@ export class AppointmentsComponent implements OnInit {
   reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
+    if (force) this.loadStats();
     const uid = this.auth.currentUser()?.userId;
     this.service
       .list(

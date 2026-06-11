@@ -153,13 +153,8 @@ export const API_ENDPOINTS = {
     statistics: 'ManagerTasks/GetStatistics',
     controlPanel: 'ManagerTasks/GetControlPanel',
   },
-  /** Developer-team analytics page — summary, per-dev stats, and chart feeds. */
-  developerAnalytics: {
-    summary: 'DeveloperAnalytics/Summary',
-    developerStats: 'DeveloperAnalytics/DeveloperStats',
-    charts: 'DeveloperAnalytics/Charts',
-    bugAnalytics: 'DeveloperAnalytics/BugAnalytics',
-  },
+  /** Developer-team analytics page — single unified endpoint. */
+  developerAnalytics: 'DeveloperAnalytics',
   /** Developer-facing tasks — read-only scope + status/hours updates only. */
   developerTasks: {
     myTasks: 'DeveloperTasks/GetMyTasks',

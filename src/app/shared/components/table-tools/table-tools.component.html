@@ -4,10 +4,10 @@
   <button type="button"
           class="btn btn-light table-tools-btn"
           [disabled]="disabled()"
-          (click)="refresh.emit()"
-          [title]="'tableTools.refresh' | translate"
+          (click)="onRefreshClick()"
           [attr.aria-label]="'tableTools.refresh' | translate">
     <i class="fa-solid fa-rotate-right"></i>
+    <span class="table-tools-label">{{ 'tableTools.refresh' | translate }}</span>
   </button>
 }
 

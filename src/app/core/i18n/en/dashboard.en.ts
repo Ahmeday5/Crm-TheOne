@@ -282,9 +282,12 @@ const dashboard: TranslationFile<'dashboard'> = {
         project: 'Project',
         all: 'All',
         reset: 'Reset',
+        allTime: 'All time',
+        thisWeek: 'This week',
         thisMonth: 'This month',
         thisQuarter: 'This quarter',
-        allTime: 'All time',
+        halfYear: 'Half year',
+        thisYear: 'This year',
       },
       kpi: {
         completedTasks: 'Completed tasks',

@@ -144,6 +144,7 @@ export class ContractsManagementComponent implements OnInit {
   reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
+    if (force) this.loadStatistics();
     this.service
       .list({ PageIndex: this.pageIndex(), PageSize: this.pageSize() }, force)
       .subscribe({

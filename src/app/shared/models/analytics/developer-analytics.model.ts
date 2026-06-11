@@ -84,3 +84,11 @@ export interface BugAnalytics {
   distributionByProject: BugDistributionPoint[];
   monthlyOpenVsResolved: MonthlyBugPoint[];
 }
+
+/** Combined payload of `GET /DeveloperAnalytics`. */
+export interface DeveloperAnalyticsAll {
+  summary: DeveloperAnalyticsSummary;
+  developerStats: DeveloperStatRow[];
+  charts: DeveloperAnalyticsCharts;
+  bugAnalytics: BugAnalytics;
+}

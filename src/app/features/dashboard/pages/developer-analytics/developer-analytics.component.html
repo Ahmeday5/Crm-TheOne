@@ -9,7 +9,6 @@
       <i class="fa-solid fa-download me-1"></i>{{ 'dashboard.devAnalytics.export' | translate }}
     </button>
   </div>
-
   <!-- Filters -->
   <div class="card mb-4">
     <div class="card-body">
@@ -17,9 +16,9 @@
         <div class="col-12 col-md-3">
           <label class="form-label small text-muted">{{ 'dashboard.devAnalytics.filters.period' | translate }}</label>
           <select class="form-select" [ngModel]="period()" (ngModelChange)="onPeriod($event)">
-            <option value="all">{{ 'dashboard.devAnalytics.filters.allTime' | translate }}</option>
-            <option value="month">{{ 'dashboard.devAnalytics.filters.thisMonth' | translate }}</option>
-            <option value="quarter">{{ 'dashboard.devAnalytics.filters.thisQuarter' | translate }}</option>
+            @for (opt of periodOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.i18nKey | translate }}</option>
+            }
           </select>
         </div>
         <div class="col-12 col-md-3">

@@ -21,14 +21,25 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import {
-  BugAnalytics,
-  DeveloperAnalyticsCharts,
-  DeveloperAnalyticsSummary,
+  DeveloperAnalyticsAll,
   DeveloperStatRow,
 } from '../../../../shared/models';
-import { DeveloperAnalyticsService } from '../../services/developer-analytics.service';
+import {
+  DeveloperAnalyticsService,
+} from '../../services/developer-analytics.service';
 
-type PeriodFilter = 'all' | 'month' | 'quarter';
+/**
+ * Period values sent to the API — must match the backend `AnalyticsPeriod`
+ * enum Description strings exactly (backend uses DescriptionEnumConverter).
+ */
+const PERIOD_OPTIONS = [
+  { value: '', i18nKey: 'dashboard.devAnalytics.filters.allTime' },
+  { value: 'الأسبوع الحالي', i18nKey: 'dashboard.devAnalytics.filters.thisWeek' },
+  { value: 'الشهر الحالي', i18nKey: 'dashboard.devAnalytics.filters.thisMonth' },
+  { value: 'الربع الحالي', i18nKey: 'dashboard.devAnalytics.filters.thisQuarter' },
+  { value: 'نصف السنة', i18nKey: 'dashboard.devAnalytics.filters.halfYear' },
+  { value: 'السنة الحالية', i18nKey: 'dashboard.devAnalytics.filters.thisYear' },
+] as const;
 
 @Component({
   selector: 'app-developer-analytics',
@@ -51,42 +62,40 @@ export class DeveloperAnalyticsComponent implements OnInit {
   private readonly toast = inject(ToastService);
   protected readonly language = inject(LanguageService);
 
-  // ── raw server data ──
-  readonly summary = signal<DeveloperAnalyticsSummary | null>(null);
-  private readonly allStats = signal<DeveloperStatRow[]>([]);
-  readonly charts = signal<DeveloperAnalyticsCharts | null>(null);
-  readonly bugs = signal<BugAnalytics | null>(null);
+  // ── raw server data (single endpoint) ──
+  private readonly rawData = signal<DeveloperAnalyticsAll | null>(null);
   readonly loading = signal(false);
 
-  // ── filters (client-side; the endpoints take no params) ──
-  readonly period = signal<PeriodFilter>('all');
+  // ── derived slices ──
+  readonly summary = computed(() => this.rawData()?.summary ?? null);
+  private readonly allStats = computed(() => this.rawData()?.developerStats ?? []);
+  private readonly charts = computed(() => this.rawData()?.charts ?? null);
+  private readonly bugs = computed(() => this.rawData()?.bugAnalytics ?? null);
+
+  // ── developer / project options — populated from the initial unfiltered load
+  //    and kept stable so the dropdowns don't shrink when filters are active ──
+  private optionsLoaded = false;
+  private readonly devOptionsList = signal<{ id: string; name: string }[]>([]);
+  private readonly projOptionsList = signal<{ id: number; name: string }[]>([]);
+
+  readonly developerOptions = this.devOptionsList.asReadonly();
+  readonly projectOptions = this.projOptionsList.asReadonly();
+
+  // ── period options (matches backend AnalyticsPeriod enum descriptions) ──
+  readonly periodOptions = PERIOD_OPTIONS;
+
+  // ── server-side filter state ──
+  readonly period = signal<string>('');
   readonly developerFilter = signal<string>('');
   readonly projectFilter = signal<number | null>(null);
 
-  /** Developer options for the filter — derived from the stats rows. */
-  readonly developerOptions = computed(() =>
-    this.allStats().map((s) => ({ id: s.developerId, name: s.fullName })),
-  );
-
-  /** Project options for the filter — derived from the charts feed. */
-  readonly projectOptions = computed(() =>
-    (this.charts()?.projectsProgress ?? []).map((p) => ({
-      id: p.projectId,
-      name: p.projectName,
-    })),
-  );
-
-  /** Developer table after the developer filter is applied. */
-  readonly stats = computed(() => {
-    const dev = this.developerFilter();
-    const rows = this.allStats();
-    return dev ? rows.filter((r) => r.developerId === dev) : rows;
-  });
+  /** Filtered stats table — server already filters; keep as-is. */
+  readonly stats = computed(() => this.allStats());
 
   // ── KPI helpers ──
   readonly openBugs = computed(() => this.summary()?.openBugs ?? 0);
 
-  // ── Chart 1: task completion over time (line, completed vs pending) ──
+  // ── Chart 1: task completion over time ──
   readonly completionChart = computed<Record<string, unknown>>(() => {
     const pts = this.charts()?.taskCompletionOverTime ?? [];
     return {
@@ -111,12 +120,9 @@ export class DeveloperAnalyticsComponent implements OnInit {
     };
   });
 
-  // ── Chart 2: projects progress (bar; respects the project filter) ──
+  // ── Chart 2: projects progress ──
   readonly progressChart = computed<Record<string, unknown>>(() => {
-    const proj = this.projectFilter();
-    const pts = (this.charts()?.projectsProgress ?? []).filter(
-      (p) => proj === null || p.projectId === proj,
-    );
+    const pts = this.charts()?.projectsProgress ?? [];
     return {
       series: [
         {
@@ -135,7 +141,7 @@ export class DeveloperAnalyticsComponent implements OnInit {
     };
   });
 
-  // ── Chart 3: monthly open vs resolved bugs (bar) ──
+  // ── Chart 3: monthly open vs resolved bugs ──
   readonly monthlyBugsChart = computed<Record<string, unknown>>(() => {
     const pts = this.bugs()?.monthlyOpenVsResolved ?? [];
     return {
@@ -153,16 +159,24 @@ export class DeveloperAnalyticsComponent implements OnInit {
     };
   });
 
-  // ── Chart 4: bug distribution by project (donut; respects project filter) ──
+  // ── Chart 4: bug distribution (donut) ──
   readonly bugDistributionChart = computed<Record<string, unknown>>(() => {
-    const proj = this.projectFilter();
-    const pts = (this.bugs()?.distributionByProject ?? []).filter(
-      (p) => proj === null || p.projectId === proj,
-    );
+    const pts = this.bugs()?.distributionByProject ?? [];
+
+    if (pts.length === 0) {
+      return {
+        series: [1],
+        chart: { type: 'donut', height: 320, fontFamily: 'inherit' },
+        labels: [this.t('dashboard.devAnalytics.charts.noData')],
+        colors: ['#e5e7eb'],
+        legend: { position: 'bottom' },
+        dataLabels: { enabled: false },
+      };
+    }
+
     return {
       series: pts.map(
-        (p) =>
-          p.count ?? p.bugCount ?? (p.openBugs ?? 0) + (p.resolvedBugs ?? 0),
+        (p) => p.count ?? p.bugCount ?? (p.openBugs ?? 0) + (p.resolvedBugs ?? 0),
       ),
       chart: { type: 'donut', height: 320, fontFamily: 'inherit' },
       labels: pts.map((p) => p.projectName),
@@ -176,52 +190,66 @@ export class DeveloperAnalyticsComponent implements OnInit {
     this.reload();
   }
 
-  /** (Re)fetch all four analytics feeds — also wired to the table's refresh. */
   reload(): void {
     this.loading.set(true);
+    this.analytics
+      .all({
+        Period: this.period() || undefined,
+        DeveloperId: this.developerFilter() || undefined,
+        ProjectId: this.projectFilter() ?? undefined,
+      })
+      .subscribe({
+        next: (data) => {
+          this.rawData.set(data);
+          this.loading.set(false);
 
-    this.analytics.summary().subscribe({
-      next: (s) => this.summary.set(s),
-      error: () => this.summary.set(null),
-    });
-    this.analytics.developerStats().subscribe({
-      next: (rows) => this.allStats.set(rows ?? []),
-      error: () => this.allStats.set([]),
-    });
-    this.analytics.charts().subscribe({
-      next: (c) => this.charts.set(c),
-      error: () => this.charts.set(null),
-    });
-    this.analytics.bugAnalytics().subscribe({
-      next: (b) => {
-        this.bugs.set(b);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.bugs.set(null);
-        this.loading.set(false);
-      },
-    });
+          // Populate filter dropdowns from the first (unfiltered) response so they
+          // stay stable even after the user applies a filter.
+          if (!this.optionsLoaded) {
+            this.devOptionsList.set(
+              (data.developerStats ?? []).map((s) => ({ id: s.developerId, name: s.fullName })),
+            );
+            this.projOptionsList.set(
+              (data.charts?.projectsProgress ?? []).map((p) => ({
+                id: p.projectId,
+                name: p.projectName,
+              })),
+            );
+            this.optionsLoaded = true;
+          }
+        },
+        error: () => {
+          this.rawData.set(null);
+          this.loading.set(false);
+        },
+      });
   }
 
   // ── filter handlers ──
 
-  onPeriod(value: PeriodFilter): void {
+  onPeriod(value: string): void {
     this.period.set(value);
-  }
-  onDeveloper(value: string): void {
-    this.developerFilter.set(value);
-  }
-  onProject(value: number | null): void {
-    this.projectFilter.set(value);
-  }
-  reset(): void {
-    this.period.set('all');
-    this.developerFilter.set('');
-    this.projectFilter.set(null);
+    this.reload();
   }
 
-  // ── export (developer stats table) ──
+  onDeveloper(value: string): void {
+    this.developerFilter.set(value);
+    this.reload();
+  }
+
+  onProject(value: number | null): void {
+    this.projectFilter.set(value);
+    this.reload();
+  }
+
+  reset(): void {
+    this.period.set('');
+    this.developerFilter.set('');
+    this.projectFilter.set(null);
+    this.reload();
+  }
+
+  // ── export ──
 
   exportReport(): void {
     const rows = this.stats();
