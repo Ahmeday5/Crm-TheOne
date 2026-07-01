@@ -16,8 +16,7 @@
         <!-- Brand side (visible from lg up) -->
         <div class="col-xl-6 col-lg-6 d-none d-lg-block">
           <div class="brand-side">
-            <img [src]="brandLogo() || fallbackLogo" class="brand-logo mb-4" alt="logo"
-                 (error)="onLogoError($event)" />
+            <img [src]="brandLogo() || fallbackLogo" class="brand-logo mb-4" alt="logo" (error)="onLogoError($event)" />
             <h1 class="brand-headline">
               {{ 'auth.welcome' | translate }} <br />
               <span class="brand-highlight">{{ brandName() || ('header.app' | translate) }}</span>
@@ -25,10 +24,34 @@
             <p class="brand-lead mb-4">{{ 'auth.subtitle' | translate }}</p>
 
             <div class="row g-3">
-              <div class="col-6"><div class="stat-card"><h2>10+</h2><p>{{ 'auth.stats.modules' | translate }}</p></div></div>
-              <div class="col-6"><div class="stat-card"><h2>5</h2><p>{{ 'auth.stats.roles' | translate }}</p></div></div>
-              <div class="col-6"><div class="stat-card"><h2>99%</h2><p>{{ 'auth.stats.uptime' | translate }}</p></div></div>
-              <div class="col-6"><div class="stat-card"><h2>24/7</h2><p>{{ 'auth.stats.support' | translate }}</p></div></div>
+              <div class="col-6">
+                <div class="stat-card">
+                  <h2>10+</h2>
+                  <p>{{ 'auth.stats.modules' | translate }}</p>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="stat-card">
+                  <h2>5</h2>
+                  <p>{{ 'auth.stats.roles' | translate }}</p>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="stat-card">
+                  <h2>99%</h2>
+                  <p>{{ 'auth.stats.uptime' | translate }}</p>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="stat-card">
+                  <h2>24/7</h2>
+                  <p>{{ 'auth.stats.support' | translate }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-2">
+              <h5 style="color: #fff;">Developed by <strong>TheOneSystem</strong></h5>
             </div>
           </div>
         </div>
@@ -45,25 +68,18 @@
             <form (ngSubmit)="login()" #loginForm="ngForm" novalidate>
               <div class="mb-3">
                 <label class="form-label fw-600">{{ 'auth.email' | translate }}</label>
-                <input type="email" class="form-control"
-                       name="email" [(ngModel)]="email" required
-                       autocomplete="email"
-                       [disabled]="submitting()"
-                       [placeholder]="'auth.emailPlaceholder' | translate" />
+                <input type="email" class="form-control" name="email" [(ngModel)]="email" required autocomplete="email"
+                  [disabled]="submitting()" [placeholder]="'auth.emailPlaceholder' | translate" />
               </div>
 
               <div class="mb-3">
                 <label class="form-label fw-600">{{ 'auth.password' | translate }}</label>
                 <div class="position-relative">
-                  <input [type]="showPassword ? 'text' : 'password'"
-                         class="form-control pe-5"
-                         name="password" [(ngModel)]="password" required
-                         autocomplete="current-password"
-                         [disabled]="submitting()"
-                         [placeholder]="'auth.passwordPlaceholder' | translate" />
-                  <button type="button" class="btn-icon password-toggle"
-                          (click)="togglePassword()" [disabled]="submitting()"
-                          [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+                  <input [type]="showPassword ? 'text' : 'password'" class="form-control pe-5" name="password"
+                    [(ngModel)]="password" required autocomplete="current-password" [disabled]="submitting()"
+                    [placeholder]="'auth.passwordPlaceholder' | translate" />
+                  <button type="button" class="btn-icon password-toggle" (click)="togglePassword()"
+                    [disabled]="submitting()" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
                     <i class="bi" [class.bi-eye-slash]="showPassword" [class.bi-eye]="!showPassword"></i>
                   </button>
                 </div>
@@ -71,29 +87,27 @@
 
               <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox"
-                         id="rememberMe" name="rememberMe" [(ngModel)]="rememberMe"
-                         [disabled]="submitting()" />
+                  <input class="form-check-input" type="checkbox" id="rememberMe" name="rememberMe"
+                    [(ngModel)]="rememberMe" [disabled]="submitting()" />
                   <label class="form-check-label" for="rememberMe">{{ 'auth.remember' | translate }}</label>
                 </div>
                 <a href="#" class="link-primary fw-600 small">{{ 'auth.forgot' | translate }}</a>
               </div>
 
               @if (errorMessage()) {
-                <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3" role="alert">
-                  <i class="fa-solid fa-circle-exclamation"></i>
-                  <span>{{ errorMessage() }}</span>
-                </div>
+              <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3" role="alert">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span>{{ errorMessage() }}</span>
+              </div>
               }
 
-              <button type="submit" class="btn btn-submit w-100"
-                      [disabled]="submitting() || !loginForm.form.valid">
+              <button type="submit" class="btn btn-submit w-100" [disabled]="submitting() || !loginForm.form.valid">
                 @if (submitting()) {
-                  <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  {{ 'auth.login.submit' | translate }}...
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                {{ 'auth.login.submit' | translate }}...
                 } @else {
-                  {{ 'auth.login.submit' | translate }}
-                  <i class="fa-solid fa-arrow-left arrow-icon ms-1 fs-5 align-middle"></i>
+                {{ 'auth.login.submit' | translate }}
+                <i class="fa-solid fa-arrow-left arrow-icon ms-1 fs-5 align-middle"></i>
                 }
               </button>
             </form>
