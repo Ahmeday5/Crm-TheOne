@@ -203,7 +203,7 @@ export class AddLeadComponent {
       campaignId: v.campaignId,
       serviceIds: v.serviceIds,
       assignToSalesTeam: assignToSales,
-      salesPersonId: assignToSales ? salesPersonId : 'null',
+      salesPersonId: assignToSales ? salesPersonId : '',
     };
 
     this.submitting.set(true);
