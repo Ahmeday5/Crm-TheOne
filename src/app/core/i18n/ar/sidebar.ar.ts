@@ -47,6 +47,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       schedule: 'جدول المواعيد',
       // Performance
       goals: 'الأهداف والتحفيز',
+      leaderboard: 'لوحة المتصدرين',
       // Security
       mfa: 'التحقق متعدد العوامل',
     },

@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule } from 'ng-apexcharts';
 
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
+import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import {
   ExportColumn,
@@ -21,6 +22,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import {
+  AnalyticsPeriod,
   DeveloperAnalyticsAll,
   DeveloperStatRow,
 } from '../../../../shared/models';
@@ -28,17 +30,14 @@ import {
   DeveloperAnalyticsService,
 } from '../../services/developer-analytics.service';
 
-/**
- * Period values sent to the API — must match the backend `AnalyticsPeriod`
- * enum Description strings exactly (backend uses DescriptionEnumConverter).
- */
+/** Period values sent to the API — must match the backend `AnalyticsPeriod` numeric enum. */
 const PERIOD_OPTIONS = [
-  { value: '', i18nKey: 'dashboard.devAnalytics.filters.allTime' },
-  { value: 'الأسبوع الحالي', i18nKey: 'dashboard.devAnalytics.filters.thisWeek' },
-  { value: 'الشهر الحالي', i18nKey: 'dashboard.devAnalytics.filters.thisMonth' },
-  { value: 'الربع الحالي', i18nKey: 'dashboard.devAnalytics.filters.thisQuarter' },
-  { value: 'نصف السنة', i18nKey: 'dashboard.devAnalytics.filters.halfYear' },
-  { value: 'السنة الحالية', i18nKey: 'dashboard.devAnalytics.filters.thisYear' },
+  { value: null, i18nKey: 'dashboard.devAnalytics.filters.allTime' },
+  { value: AnalyticsPeriod.Week, i18nKey: 'dashboard.devAnalytics.filters.thisWeek' },
+  { value: AnalyticsPeriod.Month, i18nKey: 'dashboard.devAnalytics.filters.thisMonth' },
+  { value: AnalyticsPeriod.Quarter, i18nKey: 'dashboard.devAnalytics.filters.thisQuarter' },
+  { value: AnalyticsPeriod.HalfYear, i18nKey: 'dashboard.devAnalytics.filters.halfYear' },
+  { value: AnalyticsPeriod.Year, i18nKey: 'dashboard.devAnalytics.filters.thisYear' },
 ] as const;
 
 @Component({
@@ -60,7 +59,11 @@ export class DeveloperAnalyticsComponent implements OnInit {
   private readonly analytics = inject(DeveloperAnalyticsService);
   private readonly exporter = inject(TableExportService);
   private readonly toast = inject(ToastService);
+  private readonly auth = inject(AuthService);
   protected readonly language = inject(LanguageService);
+
+  /** Admin sees every developer's stats + a developer picker; a developer only ever sees their own. */
+  readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
 
   // ── raw server data (single endpoint) ──
   private readonly rawData = signal<DeveloperAnalyticsAll | null>(null);
@@ -72,8 +75,8 @@ export class DeveloperAnalyticsComponent implements OnInit {
   private readonly charts = computed(() => this.rawData()?.charts ?? null);
   private readonly bugs = computed(() => this.rawData()?.bugAnalytics ?? null);
 
-  // ── developer / project options — populated from the initial unfiltered load
-  //    and kept stable so the dropdowns don't shrink when filters are active ──
+  // ── developer options — populated from the initial unfiltered load and kept
+  //    stable so the dropdown doesn't shrink when filters are active (admin only) ──
   private optionsLoaded = false;
   private readonly devOptionsList = signal<{ id: string; name: string }[]>([]);
   private readonly projOptionsList = signal<{ id: number; name: string }[]>([]);
@@ -81,11 +84,11 @@ export class DeveloperAnalyticsComponent implements OnInit {
   readonly developerOptions = this.devOptionsList.asReadonly();
   readonly projectOptions = this.projOptionsList.asReadonly();
 
-  // ── period options (matches backend AnalyticsPeriod enum descriptions) ──
+  // ── period options (matches backend AnalyticsPeriod numeric enum) ──
   readonly periodOptions = PERIOD_OPTIONS;
 
   // ── server-side filter state ──
-  readonly period = signal<string>('');
+  readonly period = signal<AnalyticsPeriod | null>(null);
   readonly developerFilter = signal<string>('');
   readonly projectFilter = signal<number | null>(null);
 
@@ -188,14 +191,16 @@ export class DeveloperAnalyticsComponent implements OnInit {
 
   ngOnInit(): void {
     this.reload();
+    this.loadProjectOptions();
   }
 
   reload(): void {
     this.loading.set(true);
     this.analytics
       .all({
-        Period: this.period() || undefined,
-        DeveloperId: this.developerFilter() || undefined,
+        Period: this.period() ?? undefined,
+        // A developer's own id is applied server-side; only admins may scope by developer.
+        DeveloperId: this.isAdmin() ? this.developerFilter() || undefined : undefined,
         ProjectId: this.projectFilter() ?? undefined,
       })
       .subscribe({
@@ -203,17 +208,11 @@ export class DeveloperAnalyticsComponent implements OnInit {
           this.rawData.set(data);
           this.loading.set(false);
 
-          // Populate filter dropdowns from the first (unfiltered) response so they
-          // stay stable even after the user applies a filter.
-          if (!this.optionsLoaded) {
+          // Populate the developer dropdown from the first (unfiltered) response so
+          // it stays stable even after the user applies a filter.
+          if (!this.optionsLoaded && this.isAdmin()) {
             this.devOptionsList.set(
               (data.developerStats ?? []).map((s) => ({ id: s.developerId, name: s.fullName })),
-            );
-            this.projOptionsList.set(
-              (data.charts?.projectsProgress ?? []).map((p) => ({
-                id: p.projectId,
-                name: p.projectName,
-              })),
             );
             this.optionsLoaded = true;
           }
@@ -225,9 +224,18 @@ export class DeveloperAnalyticsComponent implements OnInit {
       });
   }
 
+  private loadProjectOptions(): void {
+    this.analytics
+      .projectOptions(this.isAdmin() ? this.developerFilter() || undefined : undefined)
+      .subscribe({
+        next: (opts) => this.projOptionsList.set(opts ?? []),
+        error: () => this.projOptionsList.set([]),
+      });
+  }
+
   // ── filter handlers ──
 
-  onPeriod(value: string): void {
+  onPeriod(value: AnalyticsPeriod | null): void {
     this.period.set(value);
     this.reload();
   }
@@ -235,6 +243,7 @@ export class DeveloperAnalyticsComponent implements OnInit {
   onDeveloper(value: string): void {
     this.developerFilter.set(value);
     this.reload();
+    this.loadProjectOptions();
   }
 
   onProject(value: number | null): void {
@@ -243,10 +252,11 @@ export class DeveloperAnalyticsComponent implements OnInit {
   }
 
   reset(): void {
-    this.period.set('');
+    this.period.set(null);
     this.developerFilter.set('');
     this.projectFilter.set(null);
     this.reload();
+    this.loadProjectOptions();
   }
 
   // ── export ──

@@ -243,6 +243,7 @@ const projects: TranslationFile<'projects'> = {
         actualHoursPlaceholder: 'e.g. 10',
         submit: 'Save',
         cancel: 'Cancel',
+        hint: 'This only reflects your own progress on the task. The task is marked "Completed" only once every assignee has finished their part.',
       },
       details: {
         title: 'Task details',

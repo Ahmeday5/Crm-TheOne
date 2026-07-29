@@ -17,19 +17,21 @@
           <label class="form-label small text-muted">{{ 'dashboard.devAnalytics.filters.period' | translate }}</label>
           <select class="form-select" [ngModel]="period()" (ngModelChange)="onPeriod($event)">
             @for (opt of periodOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.i18nKey | translate }}</option>
+              <option [ngValue]="opt.value">{{ opt.i18nKey | translate }}</option>
             }
           </select>
         </div>
-        <div class="col-12 col-md-3">
-          <label class="form-label small text-muted">{{ 'dashboard.devAnalytics.filters.developer' | translate }}</label>
-          <select class="form-select" [ngModel]="developerFilter()" (ngModelChange)="onDeveloper($event)">
-            <option value="">{{ 'dashboard.devAnalytics.filters.all' | translate }}</option>
-            @for (d of developerOptions(); track d.id) {
-              <option [value]="d.id">{{ d.name }}</option>
-            }
-          </select>
-        </div>
+        @if (isAdmin()) {
+          <div class="col-12 col-md-3">
+            <label class="form-label small text-muted">{{ 'dashboard.devAnalytics.filters.developer' | translate }}</label>
+            <select class="form-select" [ngModel]="developerFilter()" (ngModelChange)="onDeveloper($event)">
+              <option value="">{{ 'dashboard.devAnalytics.filters.all' | translate }}</option>
+              @for (d of developerOptions(); track d.id) {
+                <option [value]="d.id">{{ d.name }}</option>
+              }
+            </select>
+          </div>
+        }
         <div class="col-12 col-md-3">
           <label class="form-label small text-muted">{{ 'dashboard.devAnalytics.filters.project' | translate }}</label>
           <select class="form-select" [ngModel]="projectFilter()" (ngModelChange)="onProject($event)">

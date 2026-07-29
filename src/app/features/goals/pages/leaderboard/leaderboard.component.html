@@ -1,0 +1,148 @@
+<section class="lb-page">
+
+  <!-- Header -->
+  <header class="lb-header">
+    <div class="lb-header__left">
+      <div class="lb-header__icon">
+        <i class="fa-solid fa-ranking-star"></i>
+      </div>
+      <div>
+        <h1 class="lb-header__title">{{ 'goals.leaderboard.title' | translate }}</h1>
+        <p class="lb-header__sub">{{ 'goals.leaderboard.subtitle' | translate }}</p>
+      </div>
+    </div>
+    <button type="button" class="btn btn-light" [disabled]="loading()" (click)="load()">
+      <i class="fa-solid fa-rotate-right" [class.fa-spin]="loading()"></i>
+    </button>
+  </header>
+
+  <!-- Filters -->
+  <div class="lb-filters">
+    <div class="lb-type-group">
+      @for (tp of ['all','Individual','Team']; track tp) {
+        <button type="button"
+                class="lb-type-btn"
+                [class.active]="filterType() === tp"
+                (click)="setFilterType(tp)">
+          @if (tp === 'Individual') { <i class="fa-solid fa-user"></i> }
+          @else if (tp === 'Team') { <i class="fa-solid fa-users"></i> }
+          {{ (tp === 'all' ? 'goals.filter.all'
+            : tp === 'Individual' ? 'goals.filter.individual'
+            : 'goals.filter.team') | translate }}
+        </button>
+      }
+    </div>
+
+    @if (isAdmin()) {
+      <select class="form-select form-select-sm lb-select"
+              [ngModel]="filterUserId()"
+              (ngModelChange)="setFilterUserId($event)">
+        <option value="">{{ 'goals.leaderboard.allEmployees' | translate }}</option>
+        @for (p of salesPersons(); track p.userId) {
+          <option [value]="p.userId">{{ p.fullName }}</option>
+        }
+      </select>
+    }
+
+    <input type="date" class="form-control form-control-sm lb-date"
+           [ngModel]="filterFrom()" (ngModelChange)="setFilterFrom($event)"
+           [attr.aria-label]="'goals.stats.colFrom' | translate">
+    <input type="date" class="form-control form-control-sm lb-date"
+           [ngModel]="filterTo()" (ngModelChange)="setFilterTo($event)"
+           [attr.aria-label]="'goals.stats.colTo' | translate">
+
+    <button type="button" class="btn btn-light btn-sm" (click)="reset()">
+      <i class="fa-solid fa-filter-circle-xmark me-1"></i>{{ 'goals.filter.reset' | translate }}
+    </button>
+  </div>
+
+  <!-- Content -->
+  @if (loading()) {
+    <div class="lb-skeleton">
+      @for (i of [1,2,3,4,5]; track i) {
+        <div class="skel skel--row"></div>
+      }
+    </div>
+  } @else if (loadError()) {
+    <app-load-error [message]="loadError()!" (retry)="load()"></app-load-error>
+  } @else if (entries().length === 0) {
+    <app-empty-state
+      icon="fa-solid fa-ranking-star"
+      [title]="'goals.leaderboard.empty' | translate"
+      [message]="'goals.leaderboard.emptyHint' | translate">
+    </app-empty-state>
+  } @else {
+
+    <!-- Podium (top 1-3) -->
+    <div class="lb-podium">
+      @if (top3().length > 1) {
+        <div class="lb-podium__spot lb-podium__spot--2">
+          <div class="lb-podium__avatar lb-podium__avatar--silver">{{ initials(top3()[1].fullName) }}</div>
+          <span class="lb-podium__medal lb-podium__medal--silver"><i class="fa-solid fa-medal"></i></span>
+          <p class="lb-podium__name">{{ top3()[1].fullName }}</p>
+          <p class="lb-podium__pts"><i class="fa-solid fa-star"></i> {{ formatNumber(top3()[1].totalPoints) }}</p>
+          <div class="lb-podium__bar lb-podium__bar--2"></div>
+        </div>
+      }
+      <div class="lb-podium__spot lb-podium__spot--1">
+        <span class="lb-podium__crown"><i class="fa-solid fa-crown"></i></span>
+        <div class="lb-podium__avatar lb-podium__avatar--gold">{{ initials(top3()[0].fullName) }}</div>
+        <span class="lb-podium__medal lb-podium__medal--gold"><i class="fa-solid fa-crown"></i></span>
+        <p class="lb-podium__name">{{ top3()[0].fullName }}</p>
+        <p class="lb-podium__pts"><i class="fa-solid fa-star"></i> {{ formatNumber(top3()[0].totalPoints) }}</p>
+        <div class="lb-podium__bar lb-podium__bar--1"></div>
+      </div>
+      @if (top3().length > 2) {
+        <div class="lb-podium__spot lb-podium__spot--3">
+          <div class="lb-podium__avatar lb-podium__avatar--bronze">{{ initials(top3()[2].fullName) }}</div>
+          <span class="lb-podium__medal lb-podium__medal--bronze"><i class="fa-solid fa-award"></i></span>
+          <p class="lb-podium__name">{{ top3()[2].fullName }}</p>
+          <p class="lb-podium__pts"><i class="fa-solid fa-star"></i> {{ formatNumber(top3()[2].totalPoints) }}</p>
+          <div class="lb-podium__bar lb-podium__bar--3"></div>
+        </div>
+      }
+    </div>
+
+    <!-- Full ranked table -->
+    <div class="lb-table-card">
+      <div class="table-responsive">
+        <table class="lb-table">
+          <thead>
+            <tr>
+              <th>{{ 'goals.leaderboard.rank' | translate }}</th>
+              <th>{{ 'goals.stats.colUser' | translate }}</th>
+              <th class="text-end">{{ 'goals.leaderboard.goalsAchieved' | translate }}</th>
+              <th class="text-end">{{ 'goals.stats.colPoints' | translate }}</th>
+              <th class="text-end">{{ 'goals.stats.colReward' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of entries(); track entry.userId) {
+              <tr [class.lb-row--top]="entry.rank <= 3">
+                <td>
+                  <span class="lb-rank" [style.color]="rankMeta(entry.rank).color">
+                    <i [class]="rankMeta(entry.rank).icon"></i>
+                    {{ entry.rank }}
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="lb-avatar">{{ initials(entry.fullName) }}</span>
+                    <span class="fw-600">{{ entry.fullName }}</span>
+                  </div>
+                </td>
+                <td class="text-end">{{ formatNumber(entry.goalsAchieved) }}</td>
+                <td class="text-end">
+                  <span class="lb-pts"><i class="fa-solid fa-star"></i> {{ formatNumber(entry.totalPoints) }}</span>
+                </td>
+                <td class="text-end fw-semibold text-success">
+                  {{ formatNumber(entry.totalReward) }} {{ 'goals.card.currency' | translate }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</section>

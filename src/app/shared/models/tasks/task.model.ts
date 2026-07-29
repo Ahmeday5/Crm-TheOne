@@ -120,10 +120,19 @@ export function taskCategoryBadgeClass(
   }
 }
 
-/** Single assignee entry in the task response. */
+/**
+ * Single assignee entry in the task response. Each assignee now tracks their
+ * own status/hours independently (`TaskAssignee` table server-side) — the
+ * task-level `status`/`actualHours` reflect the aggregate (task is
+ * `Completed` once every assignee reports `Completed`).
+ */
 export interface TaskAssignee {
   userId: string;
   fullName: string;
+  status: TaskStatusName;
+  statusName: string;
+  actualHours: number | null;
+  completedAt: string | null;
 }
 
 /** A task as returned by the list endpoints and the by-id reads. */
@@ -136,6 +145,7 @@ export interface TaskListItem {
   assignees: TaskAssignee[];
   createdById: string;
   createdByName: string;
+  /** Aggregate status across every assignee. */
   status: TaskStatusName;
   statusName: string;
   priority: ProjectPriorityName;

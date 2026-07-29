@@ -1,8 +1,24 @@
 /**
  * Models for the `DeveloperAnalytics/*` endpoints that back the
- * "Development team analytics" page. None of these endpoints take query
- * params — the page-level filters are applied client-side.
+ * "Development team analytics" page. `GET /DeveloperAnalytics` takes
+ * `Period` (numeric `AnalyticsPeriod` enum), `ProjectId` and — admin only —
+ * `DeveloperId` as query params; the server applies the filters.
  */
+
+/** `AnalyticsPeriod` — numeric enum the backend expects for the `Period` query param. */
+export enum AnalyticsPeriod {
+  Week = 0,
+  Month = 1,
+  Quarter = 2,
+  HalfYear = 3,
+  Year = 4,
+}
+
+/** One project option for the `ProjectId` filter dropdown. */
+export interface DeveloperAnalyticsProjectOption {
+  id: number;
+  name: string;
+}
 
 /** A "best in class" highlight (most productive / fastest / top performer). */
 export interface AnalyticsHighlight {

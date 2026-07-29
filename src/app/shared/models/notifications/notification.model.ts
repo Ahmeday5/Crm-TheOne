@@ -16,6 +16,8 @@ export type NotificationType =
   | 'FollowUpReminder'
   | 'TaskAssigned'
   | 'ProjectAssigned'
+  | 'GoalAssigned'
+  | 'GoalAchieved'
   | (string & {});
 
 export interface AppNotification {

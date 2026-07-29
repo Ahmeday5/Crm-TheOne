@@ -19,6 +19,9 @@
       </div>
     </div>
     <div class="d-flex align-items-center gap-2">
+      <a routerLink="/goals/leaderboard" class="btn btn-light">
+        <i class="fa-solid fa-ranking-star me-1"></i>{{ 'goals.leaderboard.title' | translate }}
+      </a>
       <button type="button" class="btn btn-light" [disabled]="loading()"
               (click)="load(true)"
               [title]="'tableTools.refresh' | translate">
@@ -642,6 +645,78 @@
             </div>
           </div>
         </div>
+
+        <!-- Earned so far (prorated by progress) — individual goals only;
+             team goals show the per-member breakdown below instead. -->
+        @if (g.type === 'Individual') {
+          <div class="gd-earned">
+            <div class="gd-earned__head">
+              <i class="fa-solid fa-wallet"></i>
+              <span>{{ 'goals.detail.earnedSoFar' | translate }}</span>
+              <span class="gd-earned__pct">{{ g.progressPercent }}%</span>
+            </div>
+            <div class="gd-earned__body">
+              <div class="gd-earned__item">
+                <span class="gd-earned__icon gd-earned__icon--pts"><i class="fa-solid fa-star"></i></span>
+                <div>
+                  <span class="gd-earned__val">
+                    {{ formatNumber(g.earnedPoints) }}
+                    <small>/ {{ formatNumber(g.points) }} {{ 'goals.leaderboard.pointsUnit' | translate }}</small>
+                  </span>
+                  <span class="gd-earned__lbl">{{ 'goals.card.points' | translate }}</span>
+                </div>
+              </div>
+              <div class="gd-earned__divider"></div>
+              <div class="gd-earned__item">
+                <span class="gd-earned__icon gd-earned__icon--reward"><i class="fa-solid fa-coins"></i></span>
+                <div>
+                  <span class="gd-earned__val">
+                    {{ formatNumber(g.earnedReward) }}
+                    <small>/ {{ formatNumber(g.financialReward) }} {{ 'goals.card.currency' | translate }}</small>
+                  </span>
+                  <span class="gd-earned__lbl">{{ 'goals.card.reward' | translate }}</span>
+                </div>
+              </div>
+            </div>
+            <p class="gd-earned__hint">
+              <i class="fa-solid fa-circle-info"></i>
+              {{ 'goals.detail.earnedHint' | translate }}
+            </p>
+          </div>
+        }
+
+        <!-- Team contributors breakdown -->
+        @if (g.type === 'Team' && g.contributors.length > 0) {
+          <div class="gd-contributors">
+            <h6 class="gd-contributors__title">
+              <i class="fa-solid fa-users"></i>
+              {{ 'goals.detail.contributors' | translate }}
+            </h6>
+            <div class="gd-contributors__list">
+              @for (c of g.contributors; track c.userId) {
+                <div class="gd-contrib-row">
+                  <div class="gd-contrib-row__who">
+                    <span class="gd-contrib-row__av">{{ c.fullName.charAt(0).toUpperCase() }}</span>
+                    <div class="gd-contrib-row__info">
+                      <span class="gd-contrib-row__name">{{ c.fullName }}</span>
+                      <span class="gd-contrib-row__val">
+                        {{ formatNumber(c.contributionValue) }} {{ 'goals.detail.contributed' | translate }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="gd-contrib-row__track">
+                    <div class="gd-contrib-row__fill" [style.width.%]="c.contributionPercent"></div>
+                  </div>
+                  <div class="gd-contrib-row__stats">
+                    <span class="gd-contrib-row__pct">{{ c.contributionPercent }}%</span>
+                    <span class="gd-contrib-row__pts"><i class="fa-solid fa-star"></i> {{ formatNumber(c.earnedPoints) }}</span>
+                    <span class="gd-contrib-row__reward">{{ formatNumber(c.earnedReward) }} {{ 'goals.card.currency' | translate }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
 
         <!-- Timeline + people -->
         <div class="gd-meta-row">

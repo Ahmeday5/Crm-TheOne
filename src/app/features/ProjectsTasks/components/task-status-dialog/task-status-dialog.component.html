@@ -8,7 +8,10 @@
   [closeOnEsc]="!submitting()"
   (closed)="cancel.emit()">
 
-  <p class="fw-600 mb-3">{{ task.title }}</p>
+  <p class="fw-600 mb-2">{{ task.title }}</p>
+  <p class="text-muted small mb-3">
+    <i class="fa-solid fa-circle-info me-1"></i>{{ 'projects.tasksManage.statusDialog.hint' | translate }}
+  </p>
 
   <form [formGroup]="form" id="task-status-form" novalidate (ngSubmit)="submit()">
     <div class="mb-3">

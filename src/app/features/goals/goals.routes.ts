@@ -8,4 +8,11 @@ export const GOALS_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/goals/goals.component').then((m) => m.GoalsComponent),
   },
+  {
+    path: 'goals/leaderboard',
+    title: 'لوحة المتصدرين',
+    data: { roles: ['Admin', 'Sales'] },
+    loadComponent: () =>
+      import('./pages/leaderboard/leaderboard.component').then((m) => m.LeaderboardComponent),
+  },
 ];

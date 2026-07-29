@@ -154,7 +154,11 @@ export const API_ENDPOINTS = {
     controlPanel: 'ManagerTasks/GetControlPanel',
   },
   /** Developer-team analytics page — single unified endpoint. */
-  developerAnalytics: 'DeveloperAnalytics',
+  developerAnalytics: {
+    all: 'DeveloperAnalytics',
+    /** Project picker for the analytics filters — admin may pass `developerId` to scope it. */
+    projectOptions: 'DeveloperAnalytics/ProjectOptions',
+  },
   /** Developer-facing tasks — read-only scope + status/hours updates only. */
   developerTasks: {
     myTasks: 'DeveloperTasks/GetMyTasks',
@@ -197,6 +201,10 @@ export const API_ENDPOINTS = {
     progress: (id: number | string) => `Goals/${id}/progress`,
     /** GET: per-goal stats (full goal object — same shape as byId). */
     goalStats: (id: number | string) => `Goals/${id}/stats`,
+    /** GET: ranked leaderboard by points/reward — filterable by type, date range, user. */
+    leaderboard: 'Goals/Leaderboard',
+    /** GET: the caller's own currently-active goal(s) — auto-removed server-side once the goal's end date passes. */
+    active: 'Goals/active',
   },
   /** Per-user notification center + bell badge + FCM push registration. */
   notifications: {

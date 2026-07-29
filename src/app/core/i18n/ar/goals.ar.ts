@@ -156,14 +156,29 @@ const goals: TranslationFile<'goals'> = {
       achievedAll: 'الكل',
       achievedYes: 'محققة',
       achievedNo: 'قيد التنفيذ',
+      reset: 'إعادة تعيين',
     },
 
     leaderboard: {
       title: 'لوحة المتصدرين',
       subtitle: 'ترتيب الموظفين حسب النقاط المحققة',
       empty: 'لا توجد بيانات بعد',
+      emptyHint: 'لا توجد نقاط محققة بعد لهذه الفلاتر',
       goalsAchieved: 'هدف محقق',
       pointsUnit: 'نقطة',
+      rank: 'الترتيب',
+      allEmployees: 'كل الموظفين',
+      loadFailed: 'فشل تحميل لوحة المتصدرين، يرجى المحاولة مرة أخرى',
+    },
+
+    banner: {
+      eyebrow: 'هدفك النشط الآن',
+      pillLabel: 'هدف نشط',
+      urgent: 'الوقت يوشك على النفاد',
+      daysLeft: 'يوم متبقي',
+      more: 'أهداف أخرى',
+      cta: 'عرض التفاصيل',
+      dismiss: 'إخفاء',
     },
 
     detail: {
@@ -172,6 +187,10 @@ const goals: TranslationFile<'goals'> = {
       achievementRate: 'نسبة الإنجاز',
       assignedTo: 'مُعيَّن لـ',
       createdBy: 'أُنشئ بواسطة',
+      earnedSoFar: 'المُكتسب حتى الآن',
+      earnedHint: 'النقاط والمكافأة بتُحسب بنسبة ما تم إنجازه من الهدف، وتزيد تلقائياً كل ما زاد التقدم.',
+      contributors: 'مساهمة أعضاء الفريق',
+      contributed: 'مساهمة',
     },
   },
 };

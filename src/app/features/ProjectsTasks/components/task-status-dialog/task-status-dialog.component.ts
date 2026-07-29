@@ -12,6 +12,7 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
+import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
@@ -44,6 +45,7 @@ export class TaskStatusDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly tasks = inject(TasksService);
   private readonly toast = inject(ToastService);
+  private readonly auth = inject(AuthService);
   private readonly language = inject(LanguageService);
 
   readonly statuses = TASK_STATUSES;
@@ -59,9 +61,13 @@ export class TaskStatusDialogComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // Seed from the caller's own assignee row — the task-level `status`/`actualHours`
+    // are the aggregate across every assignee, not this developer's own progress.
+    const myUserId = this.auth.currentUser()?.userId;
+    const mine = this.task.assignees.find((a) => a.userId === myUserId);
     this.form.reset({
-      status: this.task.status,
-      actualHours: this.task.actualHours,
+      status: mine?.status ?? this.task.status,
+      actualHours: mine?.actualHours ?? this.task.actualHours,
     });
   }
 

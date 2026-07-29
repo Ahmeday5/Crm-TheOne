@@ -1,0 +1,86 @@
+@if (variant === 'pill') {
+  @if (hasActiveGoal() && primaryGoal(); as goal) {
+    <button type="button" class="agb-pill" [class.agb-pill--urgent]="isUrgent(goal)" (click)="viewGoal()">
+      <span class="agb-pill__pulse"></span>
+      <i class="fa-solid fa-bullseye agb-pill__icon"></i>
+      <span class="agb-pill__text">{{ 'goals.banner.pillLabel' | translate }}</span>
+      <span class="agb-pill__pct">{{ achievementPercent(goal) }}%</span>
+    </button>
+  }
+} @else {
+  @if (hasActiveGoal() && primaryGoal(); as goal) {
+    <div class="agb-banner" [class.agb-banner--urgent]="isUrgent(goal)">
+      <div class="agb-banner__pattern"></div>
+      <button type="button" class="agb-banner__close" (click)="dismiss()" [attr.aria-label]="'goals.banner.dismiss' | translate">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="agb-banner__content">
+        <div class="agb-banner__icon-wrap">
+          <i class="fa-solid fa-bullseye agb-banner__icon"></i>
+          <span class="agb-banner__icon-ring"></span>
+        </div>
+
+        <div class="agb-banner__body">
+          <div class="agb-banner__eyebrow">
+            <span class="agb-banner__dot"></span>
+            {{ 'goals.banner.eyebrow' | translate }}
+            @if (isUrgent(goal)) {
+              <span class="agb-banner__urgent-tag">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                {{ 'goals.banner.urgent' | translate }}
+              </span>
+            }
+          </div>
+          <h3 class="agb-banner__title">{{ goal.title }}</h3>
+          @if (goal.description) {
+            <p class="agb-banner__desc">{{ goal.description }}</p>
+          }
+
+          <div class="agb-banner__progress">
+            <div class="agb-banner__progress-track">
+              <div class="agb-banner__progress-fill" [style.width.%]="achievementPercent(goal)"></div>
+            </div>
+            <div class="agb-banner__progress-meta">
+              <span class="agb-banner__progress-nums">
+                <strong>{{ formatNumber(goal.currentProgress) }}</strong>
+                <small> / {{ formatNumber(goal.targetValue) }}</small>
+              </span>
+              <span class="agb-banner__progress-pct">{{ achievementPercent(goal) }}%</span>
+            </div>
+          </div>
+
+          <div class="agb-banner__stats">
+            <div class="agb-stat">
+              <i class="fa-solid fa-clock agb-stat__icon"></i>
+              <span class="agb-stat__val">{{ daysLeft(goal) }}</span>
+              <span class="agb-stat__lbl">{{ 'goals.banner.daysLeft' | translate }}</span>
+            </div>
+            <div class="agb-stat">
+              <i class="fa-solid fa-star agb-stat__icon agb-stat__icon--gold"></i>
+              <span class="agb-stat__val">{{ formatNumber(goal.points) }}</span>
+              <span class="agb-stat__lbl">{{ 'goals.card.points' | translate }}</span>
+            </div>
+            <div class="agb-stat">
+              <i class="fa-solid fa-coins agb-stat__icon agb-stat__icon--green"></i>
+              <span class="agb-stat__val">{{ formatNumber(goal.financialReward) }}</span>
+              <span class="agb-stat__lbl">{{ 'goals.card.currency' | translate }}</span>
+            </div>
+            @if (extraCount() > 0) {
+              <div class="agb-stat">
+                <i class="fa-solid fa-layer-group agb-stat__icon"></i>
+                <span class="agb-stat__val">+{{ extraCount() }}</span>
+                <span class="agb-stat__lbl">{{ 'goals.banner.more' | translate }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <button type="button" class="agb-banner__cta" (click)="viewGoal()">
+          <span>{{ 'goals.banner.cta' | translate }}</span>
+          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        </button>
+      </div>
+    </div>
+  }
+}

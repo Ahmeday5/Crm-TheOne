@@ -47,6 +47,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       schedule: 'Schedule',
       // Performance
       goals: 'Goals & motivation',
+      leaderboard: 'Leaderboard',
       // Security
       mfa: 'Multi-factor authentication',
     },

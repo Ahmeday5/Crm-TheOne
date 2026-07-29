@@ -12,6 +12,8 @@ import { ApiService } from '../../../core/services/api.service';
 import {
   CreateGoalRequest,
   Goal,
+  GoalLeaderboardEntry,
+  GoalLeaderboardQuery,
   GoalListQuery,
   GoalStats,
   SalesPerson,
@@ -84,6 +86,22 @@ export class GoalsService {
       { value },
       { context: withInlineHandling(withCacheInvalidate([...GOALS_CACHE_KEYS])) },
     );
+  }
+
+  /** GET /Goals/Leaderboard — ranked by points earned. */
+  leaderboard(query?: GoalLeaderboardQuery): Observable<GoalLeaderboardEntry[]> {
+    return this.api.get<GoalLeaderboardEntry[]>(API_ENDPOINTS.goals.leaderboard, {
+      params: query as Record<string, unknown> | undefined,
+      context: withCache({ ttlMs: CACHE_TTL.SHORT }),
+    });
+  }
+
+  /** GET /Goals/active — the caller's own active goal(s); disappears once the end date passes. */
+  getActive(force = false): Observable<Goal[]> {
+    const ctx = force
+      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
+      : withCache({ ttlMs: CACHE_TTL.SHORT });
+    return this.api.get<Goal[]>(API_ENDPOINTS.goals.active, { context: ctx });
   }
 
   getSalesPersons(): Observable<SalesPerson[]> {

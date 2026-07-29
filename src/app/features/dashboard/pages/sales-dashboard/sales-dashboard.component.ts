@@ -15,6 +15,7 @@ import { LanguageService } from '../../../../core/services/language.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { ActiveGoalBannerComponent } from '../../../goals/components/active-goal-banner/active-goal-banner.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import {
   CustomerListItem,
@@ -54,6 +55,7 @@ import { SalesService } from '../../services/sales.service';
     PageHeaderComponent,
     LoadErrorComponent,
     EmptyStateComponent,
+    ActiveGoalBannerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-dashboard.component.html',

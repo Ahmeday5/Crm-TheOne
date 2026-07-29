@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil, timer } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -48,6 +49,7 @@ interface LeaderboardEntry {
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     TranslatePipe,
     EmptyStateComponent,
     LoadErrorComponent,

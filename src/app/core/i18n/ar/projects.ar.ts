@@ -243,6 +243,7 @@ const projects: TranslationFile<'projects'> = {
         actualHoursPlaceholder: 'مثال: 10',
         submit: 'حفظ',
         cancel: 'إلغاء',
+        hint: 'هذه حالتك الشخصية في المهمة فقط. تُعتبر المهمة "مكتملة" عند الأدمن فقط بعد أن ينهيها كل الأعضاء المُعيَّنين لها.',
       },
       details: {
         title: 'تفاصيل المهمة',

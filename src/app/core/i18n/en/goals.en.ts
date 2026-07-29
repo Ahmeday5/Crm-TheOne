@@ -156,14 +156,29 @@ const goals: TranslationFile<'goals'> = {
       achievedAll: 'All',
       achievedYes: 'Achieved',
       achievedNo: 'In Progress',
+      reset: 'Reset',
     },
 
     leaderboard: {
       title: 'Leaderboard',
       subtitle: 'Employees ranked by earned points',
       empty: 'No data yet',
+      emptyHint: 'No points earned yet for these filters',
       goalsAchieved: 'goal(s) achieved',
       pointsUnit: 'pts',
+      rank: 'Rank',
+      allEmployees: 'All employees',
+      loadFailed: 'Failed to load the leaderboard, please try again',
+    },
+
+    banner: {
+      eyebrow: 'Your active goal',
+      pillLabel: 'Active goal',
+      urgent: 'Ending soon',
+      daysLeft: 'days left',
+      more: 'more goals',
+      cta: 'View details',
+      dismiss: 'Dismiss',
     },
 
     detail: {
@@ -172,6 +187,10 @@ const goals: TranslationFile<'goals'> = {
       achievementRate: 'Achievement Rate',
       assignedTo: 'Assigned to',
       createdBy: 'Created by',
+      earnedSoFar: 'Earned so far',
+      earnedHint: 'Points and reward are prorated by how much of the goal has been completed, and grow automatically as progress increases.',
+      contributors: 'Team Contributions',
+      contributed: 'contributed',
     },
   },
 };

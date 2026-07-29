@@ -52,23 +52,6 @@
         <p class="fw-600 mb-0">{{ details()!.projectName || '—' }}</p>
       </div>
       <div class="col-6 col-md-4">
-        <p class="text-muted small mb-1">{{ 'projects.tasksManage.details.assignee' | translate }}</p>
-        @if (details()!.assignees.length === 0) {
-          <p class="fw-600 mb-0">—</p>
-        } @else {
-          <div class="d-flex flex-column gap-1">
-            @for (a of details()!.assignees; track a.userId) {
-              <span class="fw-600 d-flex align-items-center gap-2">
-                <span style="width:22px;height:22px;border-radius:50%;background:var(--bs-primary,#0d6efd);color:#fff;font-size:.62rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">
-                  {{ a.fullName.charAt(0).toUpperCase() }}
-                </span>
-                {{ a.fullName }}
-              </span>
-            }
-          </div>
-        }
-      </div>
-      <div class="col-6 col-md-4">
         <p class="text-muted small mb-1">{{ 'projects.tasksManage.details.createdBy' | translate }}</p>
         <p class="fw-600 mb-0">{{ details()!.createdByName || '—' }}</p>
       </div>
@@ -99,6 +82,38 @@
         <p class="fw-600 mb-0">{{ details()!.tags || '—' }}</p>
       </div>
     </div>
+
+    <!-- Per-assignee status -->
+    <h6 class="fw-700 text-muted text-uppercase small mb-3 mt-4">
+      <i class="fa-solid fa-users me-1"></i>{{ 'projects.tasksManage.details.assignee' | translate }}
+    </h6>
+    @if (details()!.assignees.length === 0) {
+      <p class="fw-600 text-muted mb-0">—</p>
+    } @else {
+      <div class="d-flex flex-column gap-2">
+        @for (a of details()!.assignees; track a.userId) {
+          <div class="d-flex align-items-center justify-content-between gap-2 p-2 rounded"
+               style="background: var(--bs-tertiary-bg, #f8f9fa);">
+            <div class="d-flex align-items-center gap-2">
+              <span style="width:26px;height:26px;border-radius:50%;background:var(--bs-primary,#0d6efd);color:#fff;font-size:.68rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">
+                {{ a.fullName.charAt(0).toUpperCase() }}
+              </span>
+              <span class="fw-600">{{ a.fullName }}</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+              @if (a.actualHours !== null) {
+                <small class="text-muted">
+                  <i class="fa-regular fa-clock me-1"></i>{{ a.actualHours }} {{ 'projects.tasksManage.details.hours' | translate }}
+                </small>
+              }
+              <span class="badge {{ statusBadge(a.status) }}">
+                {{ 'projects.tasksManage.statuses.' + a.status | translate }}
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+    }
   }
 
   <ng-container modal-footer>

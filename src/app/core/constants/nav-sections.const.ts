@@ -208,6 +208,12 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: 'fa-solid fa-trophy',
         roles: ['Admin', 'Sales'],
       },
+      {
+        labelKey: 'sidebar.items.leaderboard',
+        path: '/goals/leaderboard',
+        icon: 'fa-solid fa-ranking-star',
+        roles: ['Admin', 'Sales'],
+      },
     ],
   },
  /* {

@@ -35,20 +35,22 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   );
 };
 
-/** FK / unique-constraint keywords in raw backend messages. */
-const FK_PATTERN = /FOREIGN KEY|foreign key|constraint|REFERENCE|conflicted/i;
-const DUPLICATE_PATTERN = /duplicate|already exists|unique.*constraint|constraint.*unique/i;
+/** Unique-constraint / duplicate-key keywords — checked first since "constraint"
+ *  alone is ambiguous and would otherwise be swallowed by FK_PATTERN below. */
+const DUPLICATE_PATTERN = /duplicate|already exists|unique.*constraint|constraint.*unique|unique.*index|unique.*key/i;
+/** Genuine FK-violation keywords in raw backend messages. */
+const FK_PATTERN = /FOREIGN KEY|foreign key|REFERENCE constraint|conflicted with the reference|conflicted with the foreign key/i;
 
 function friendlyMessage(raw: string, isAr: boolean): string | null {
-  if (FK_PATTERN.test(raw)) {
-    return isAr
-      ? 'البيانات تحتوي على إشارة لعنصر غير موجود (ربط غير صحيح)'
-      : 'The data references a record that does not exist (invalid relation)';
-  }
   if (DUPLICATE_PATTERN.test(raw)) {
     return isAr
       ? 'هذا السجل موجود مسبقاً، تحقق من البريد الإلكتروني أو رقم الهاتف'
       : 'This record already exists. Check the email or phone number';
+  }
+  if (FK_PATTERN.test(raw)) {
+    return isAr
+      ? 'البيانات تحتوي على إشارة لعنصر غير موجود (ربط غير صحيح)'
+      : 'The data references a record that does not exist (invalid relation)';
   }
   return null;
 }
