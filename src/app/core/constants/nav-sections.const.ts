@@ -123,6 +123,14 @@ export const NAV_SECTIONS: NavSection[] = [
         path: '/daily-reports',
         icon: 'fa-solid fa-file-lines',
       },
+      // Per-project daily reports — developers submit these from within a
+      // project's "My Progress" page; this is just their personal history.
+      {
+        labelKey: 'sidebar.items.myProjectReports',
+        path: '/my-reports',
+        icon: 'fa-solid fa-clipboard-check',
+        roles: ['Developer'],
+      },
     ],
   },
   {
@@ -286,4 +294,5 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   // action is gated inside the page, not by the route).
   goals: ['Admin', 'Sales'],
   security: ['Admin'],
+  'my-reports': ['Admin', 'Developer'],
 };

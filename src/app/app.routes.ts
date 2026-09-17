@@ -16,6 +16,7 @@ import { DAILY_REPORTS_ROUTES } from './features/daily-reports/dailyReports.rout
 import { WHATSAPP_ROUTES } from './features/whatsapp/whatsapp.routes';
 import { NOTIFICATIONS_ROUTES } from './features/notifications/notifications.routes';
 import { GOALS_ROUTES } from './features/goals/goals.routes';
+import { PROJECT_PROGRESS_ROUTES } from './features/project-progress/projectProgress.routes';
 
 
 export const routes: Routes = [
@@ -40,6 +41,7 @@ export const routes: Routes = [
 ...WHATSAPP_ROUTES,
       ...NOTIFICATIONS_ROUTES,
       ...GOALS_ROUTES,
+      ...PROJECT_PROGRESS_ROUTES,
       {
         path: 'sales-analysis',
         title: 'تحليل نتائج المبيعات',

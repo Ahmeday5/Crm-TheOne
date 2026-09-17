@@ -18,3 +18,4 @@ export * from './articles';
 export * from './dashboard';
 export * from './notifications';
 export * from './goals';
+export * from './project-progress';

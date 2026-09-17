@@ -230,4 +230,20 @@ export const API_ENDPOINTS = {
     projectOptions: 'Articles/ProjectOptions',
     customerOptions: 'Articles/CustomerOptions',
   },
+  /** Per-project team responsibility split, earned progress + daily reports. */
+  projectProgress: {
+    team: (projectId: number | string) => `ProjectProgress/${projectId}/team`,
+    summary: (projectId: number | string) => `ProjectProgress/${projectId}/summary`,
+    myProgress: (projectId: number | string) => `ProjectProgress/${projectId}/my-progress`,
+    adjust: (projectId: number | string, developerId: string) =>
+      `ProjectProgress/${projectId}/developers/${developerId}/adjust`,
+    history: (projectId: number | string) => `ProjectProgress/${projectId}/history`,
+    reports: {
+      create: 'ProjectProgress/reports',
+      byId: (reportId: number | string) => `ProjectProgress/reports/${reportId}`,
+      update: (reportId: number | string) => `ProjectProgress/reports/${reportId}`,
+      byProject: (projectId: number | string) => `ProjectProgress/${projectId}/reports`,
+      my: 'ProjectProgress/my-reports',
+    },
+  },
 } as const;

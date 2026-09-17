@@ -1,0 +1,37 @@
+@if (open()) {
+  <div class="app-panel-backdrop"
+       role="presentation"
+       (click)="onBackdropClick()">
+    <aside #panel
+           class="app-panel app-panel--{{ size() }}"
+           role="dialog"
+           aria-modal="true"
+           [attr.aria-label]="title() || null"
+           tabindex="-1"
+           (click)="$event.stopPropagation()">
+
+      <header class="app-panel-header">
+        <h5 class="app-panel-title">
+          @if (icon()) {
+            <span class="icon-tile tone-{{ iconTone() }}">
+              <i [class]="icon()"></i>
+            </span>
+          }
+          <span>{{ title() }}</span>
+        </h5>
+        @if (showClose()) {
+          <button type="button"
+                  class="app-panel-close"
+                  aria-label="close"
+                  (click)="close()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        }
+      </header>
+
+      <div class="app-panel-body">
+        <ng-content></ng-content>
+      </div>
+    </aside>
+  </div>
+}

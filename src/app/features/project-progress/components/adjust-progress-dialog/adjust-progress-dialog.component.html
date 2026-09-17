@@ -1,0 +1,88 @@
+<app-modal
+  [open]="true"
+  [title]="'projectProgress.adjustProgress.title' | translate"
+  icon="fa-solid fa-sliders"
+  iconTone="warning"
+  size="sm"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <span class="fw-600">{{ member.developerName || member.developerId }}</span>
+  </div>
+
+  <div class="row g-2 mb-3 text-center">
+    <div class="col-6">
+      <div class="border rounded-3 p-2">
+        <div class="text-muted small">{{ 'projectProgress.adjustProgress.currentLabel' | translate }}</div>
+        <div class="fw-700">{{ member.earnedProgressPercentage }}%</div>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="border rounded-3 p-2">
+        <div class="text-muted small">{{ 'projectProgress.adjustProgress.responsibilityLabel' | translate }}</div>
+        <div class="fw-700">{{ member.responsibilityPercentage }}%</div>
+      </div>
+    </div>
+  </div>
+
+  <form [formGroup]="form" id="adjust-progress-form" novalidate (ngSubmit)="submit()">
+    <div class="mb-3">
+      <label for="adjust-new-value" class="form-label fw-600">
+        {{ 'projectProgress.adjustProgress.newValue' | translate }} <span class="text-danger">*</span>
+      </label>
+      <input id="adjust-new-value"
+             type="number"
+             min="0"
+             max="100"
+             class="form-control"
+             formControlName="newProgressPercentage"
+             [class.is-invalid]="isInvalid('newProgressPercentage')" />
+      <app-form-error
+        [control]="form.controls.newProgressPercentage"
+        [label]="'projectProgress.adjustProgress.newValue' | translate" />
+      @if (exceedsResponsibility()) {
+        <div class="text-warning small mt-1">
+          <i class="fa-solid fa-triangle-exclamation me-1"></i>
+          {{ 'projectProgress.adjustProgress.exceedsWarning' | translate }}
+        </div>
+      }
+    </div>
+
+    <div class="mb-1">
+      <label for="adjust-reason" class="form-label fw-600">
+        {{ 'projectProgress.adjustProgress.reason' | translate }}
+      </label>
+      <textarea id="adjust-reason"
+                class="form-control"
+                rows="3"
+                formControlName="reason"
+                [placeholder]="'projectProgress.adjustProgress.reasonPh' | translate"></textarea>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="cancel.emit()">
+      {{ 'projectProgress.adjustProgress.cancel' | translate }}
+    </button>
+    <button type="submit"
+            form="adjust-progress-form"
+            class="btn btn-primary"
+            [disabled]="submitting() || form.invalid">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-floppy-disk me-1"></i>
+      }
+      {{ 'projectProgress.adjustProgress.save' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

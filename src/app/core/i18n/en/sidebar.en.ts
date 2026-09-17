@@ -32,6 +32,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       reports: 'Reports & analytics',
       chat: 'Internal chat',
       dailyReports: 'Daily reports',
+      myProjectReports: 'My Reports',
       whatsappSessions: 'WhatsApp sessions',
       // System administration
       settings: 'System settings',

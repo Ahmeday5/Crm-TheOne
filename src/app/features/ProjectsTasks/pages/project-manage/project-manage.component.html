@@ -247,6 +247,12 @@
             (click)="openDetails(row)">
       <i class="fa-solid fa-eye"></i>
     </button>
+    <a [routerLink]="['/ProjectManage', row.id, isAdmin() ? 'progress' : 'my-progress']"
+       class="btn btn-sm btn-light"
+       [attr.aria-label]="'projectProgress.entryButton' | translate"
+       [title]="'projectProgress.entryButton' | translate">
+      <i class="fa-solid fa-chart-line"></i>
+    </a>
     @if (isAdmin()) {
       <button type="button"
               class="btn btn-sm btn-light"

@@ -1,0 +1,120 @@
+<app-modal
+  [open]="true"
+  [title]="'projectProgress.assignTeam.title' | translate"
+  icon="fa-solid fa-users-gear"
+  iconTone="primary"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <form [formGroup]="form" id="assign-team-form" novalidate (ngSubmit)="submit()">
+    <div formArrayName="members" class="d-flex flex-column gap-3">
+      @for (member of members.controls; track member; let i = $index) {
+        <div [formGroupName]="i" class="assign-team-row border rounded-3 p-3 position-relative">
+          <div class="row g-3 align-items-start">
+            <div class="col-12 col-md-5">
+              <label class="form-label fw-600">
+                {{ 'projectProgress.assignTeam.developer' | translate }} <span class="text-danger">*</span>
+              </label>
+              <app-searchable-select
+                formControlName="developerId"
+                [options]="developerOptionsAsRecords()"
+                [externalLoading]="loadingDevelopers()"
+                labelKey="fullName"
+                valueKey="userId"
+                [placeholder]="'projectProgress.assignTeam.developerPh' | translate"
+                [isInvalid]="isDuplicate(i)" />
+              @if (isDuplicate(i)) {
+                <div class="invalid-feedback d-block">
+                  {{ 'projectProgress.assignTeam.duplicateDeveloper' | translate }}
+                </div>
+              }
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-600">
+                {{ 'projectProgress.assignTeam.role' | translate }}
+              </label>
+              <input
+                class="form-control"
+                formControlName="projectRole"
+                [placeholder]="'projectProgress.assignTeam.rolePh' | translate" />
+            </div>
+
+            <div class="col-9 col-md-2">
+              <label class="form-label fw-600">
+                {{ 'projectProgress.assignTeam.responsibility' | translate }}
+              </label>
+              <div class="input-group">
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  class="form-control"
+                  formControlName="responsibilityPercentage" />
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+
+            <div class="col-3 col-md-1 d-flex align-items-end justify-content-center h-100">
+              <button
+                type="button"
+                class="btn btn-sm btn-icon btn-danger-soft"
+                [disabled]="members.length === 1"
+                [attr.aria-label]="'projectProgress.assignTeam.removeMember' | translate"
+                [title]="'projectProgress.assignTeam.removeMember' | translate"
+                (click)="removeMember(i)">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <button type="button" class="btn btn-light mt-3" (click)="addMember()">
+      <i class="fa-solid fa-plus me-1"></i>{{ 'projectProgress.assignTeam.addMember' | translate }}
+    </button>
+
+    <!-- Live running total -->
+    <div class="assign-team-total mt-4 p-3 rounded-3 d-flex align-items-center justify-content-between"
+         [class.bg-success-subtle]="isValidTotal()"
+         [class.bg-danger-subtle]="!isValidTotal()">
+      <span class="fw-600" [class.text-success]="isValidTotal()" [class.text-danger]="!isValidTotal()">
+        <i class="fa-solid" [class.fa-circle-check]="isValidTotal()" [class.fa-circle-exclamation]="!isValidTotal()"></i>
+        {{ 'projectProgress.assignTeam.total' | translate }}: {{ total() }}%
+      </span>
+      <small class="text-muted">{{ 'projectProgress.assignTeam.totalHint' | translate }}</small>
+    </div>
+    @if (!isValidTotal()) {
+      <div class="text-danger small mt-2">
+        {{ 'projectProgress.assignTeam.totalMismatchPrefix' | translate }}: {{ total() }}%
+      </div>
+    }
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="cancel.emit()">
+      {{ 'projectProgress.assignTeam.cancel' | translate }}
+    </button>
+    <button type="submit"
+            form="assign-team-form"
+            class="btn btn-primary"
+            [disabled]="submitting() || form.invalid || !isValidTotal()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-floppy-disk me-1"></i>
+      }
+      {{ 'projectProgress.assignTeam.save' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

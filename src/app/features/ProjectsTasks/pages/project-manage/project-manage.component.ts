@@ -11,6 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import {
   Subject,
@@ -58,6 +59,7 @@ const DEFAULT_PAGE_SIZE = 10;
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     TranslatePipe,
     DataTableComponent,
     LoadErrorComponent,

@@ -1,0 +1,300 @@
+<section class="project-progress-admin">
+  <!-- Header -->
+  <header class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <span class="icon-tile xl tone-primary"><i class="fa-solid fa-chart-line"></i></span>
+      <div>
+        <h3 class="fw-700 mb-1">{{ summary()?.projectTitle || ('projectProgress.admin.title' | translate) }}</h3>
+        <p class="text-muted mb-0">{{ 'projectProgress.admin.title' | translate }}</p>
+      </div>
+    </div>
+    <a routerLink="/ProjectManage" class="btn btn-light">
+      <i class="fa-solid fa-arrow-right-to-bracket me-1"></i>{{ 'projectProgress.admin.back' | translate }}
+    </a>
+  </header>
+
+  @if (loadError()) {
+    <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
+  }
+
+  @if (loading() && !summary()) {
+    <div class="d-flex flex-column align-items-center justify-content-center py-5 text-muted">
+      <div class="spinner-border text-primary mb-2" role="status">
+        <span class="visually-hidden">{{ 'common.loading' | translate }}</span>
+      </div>
+      <span>{{ 'common.loading' | translate }}</span>
+    </div>
+  } @else if (summary()) {
+    @let s = summary()!;
+    <!-- Overall progress -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="fw-600">{{ 'projectProgress.admin.overallProgress' | translate }}</span>
+          <span class="fw-700 fs-5 text-primary">{{ s.overallProgressPercentage }}%</span>
+        </div>
+        <div class="progress" style="height: 10px;">
+          <div class="progress-bar bg-primary"
+               role="progressbar"
+               [style.width.%]="s.overallProgressPercentage"
+               [attr.aria-valuenow]="s.overallProgressPercentage"
+               aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-4">
+        <app-stat-card
+          [label]="'projectProgress.admin.stats.workingDays' | translate"
+          [value]="s.workingDays"
+          icon="fa-solid fa-calendar-days"
+          tone="primary">
+        </app-stat-card>
+      </div>
+      <div class="col-12 col-md-4">
+        <app-stat-card
+          [label]="'projectProgress.admin.stats.elapsedWorkingDays' | translate"
+          [value]="s.elapsedWorkingDays"
+          icon="fa-solid fa-hourglass-half"
+          tone="info">
+        </app-stat-card>
+      </div>
+      <div class="col-12 col-md-4">
+        <app-stat-card
+          [label]="'projectProgress.admin.stats.remainingWorkingDays' | translate"
+          [value]="s.remainingWorkingDays"
+          icon="fa-solid fa-hourglass-end"
+          tone="warning">
+        </app-stat-card>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="card">
+      <div class="card-header">
+        <div class="btn-group" role="group">
+          <button type="button"
+                  class="btn"
+                  [class.btn-primary]="activeTab() === 'overview'"
+                  [class.btn-light]="activeTab() !== 'overview'"
+                  (click)="selectTab('overview')">
+            <i class="fa-solid fa-gauge-high me-1"></i>{{ 'projectProgress.admin.tabs.overview' | translate }}
+          </button>
+          <button type="button"
+                  class="btn"
+                  [class.btn-primary]="activeTab() === 'team'"
+                  [class.btn-light]="activeTab() !== 'team'"
+                  (click)="selectTab('team')">
+            <i class="fa-solid fa-users me-1"></i>{{ 'projectProgress.admin.tabs.team' | translate }}
+          </button>
+          <button type="button"
+                  class="btn"
+                  [class.btn-primary]="activeTab() === 'reports'"
+                  [class.btn-light]="activeTab() !== 'reports'"
+                  (click)="selectTab('reports')">
+            <i class="fa-solid fa-file-lines me-1"></i>{{ 'projectProgress.admin.tabs.reports' | translate }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Overview / Team tabs share the same team table -->
+      @if (activeTab() === 'overview' || activeTab() === 'team') {
+        <div class="card-header d-flex align-items-center gap-2">
+          <h5 class="mb-0 flex-grow-1">
+            {{ (activeTab() === 'team' ? 'projectProgress.admin.team.title' : 'projectProgress.admin.overview.title') | translate }}
+          </h5>
+          <button type="button" class="btn btn-sm btn-light" (click)="openHistory()">
+            <i class="fa-solid fa-clock-rotate-left me-1"></i>{{ 'projectProgress.admin.historyBtn' | translate }}
+          </button>
+          @if (activeTab() === 'team') {
+            <button type="button" class="btn btn-sm btn-primary" (click)="openAssignTeam()">
+              <i class="fa-solid fa-users-gear me-1"></i>{{ 'projectProgress.admin.team.assignBtn' | translate }}
+            </button>
+          }
+        </div>
+
+        <div class="card-body p-0">
+          @if (s.teamMembers.length === 0) {
+            <div class="p-4">
+              <app-empty-state
+                icon="fa-solid fa-users"
+                [title]="'projectProgress.admin.team.empty' | translate"
+                [message]="'projectProgress.admin.team.emptyHint' | translate" />
+            </div>
+          } @else {
+            <app-data-table
+              [columns]="teamColumns()"
+              [data]="s.teamMembers"
+              trackByKey="developerId"
+              [hasActions]="true"
+              [actionsTemplate]="teamActionsCell">
+            </app-data-table>
+          }
+        </div>
+      }
+
+      <!-- Reports tab -->
+      @if (activeTab() === 'reports') {
+        <div class="card-body">
+          <div class="row g-3 align-items-end mb-3">
+            <div class="col-6 col-md-3">
+              <label class="form-label fw-600 small">{{ 'projectProgress.myReports.filterFrom' | translate }}</label>
+              <input type="date" class="form-control" [ngModel]="reportFrom()"
+                     (ngModelChange)="reportFrom.set($event); onReportFilterChange()" />
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label fw-600 small">{{ 'projectProgress.myReports.filterTo' | translate }}</label>
+              <input type="date" class="form-control" [ngModel]="reportTo()"
+                     (ngModelChange)="reportTo.set($event); onReportFilterChange()" />
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-600 small">{{ 'projectProgress.admin.reports.filterDeveloper' | translate }}</label>
+              <select class="form-select" [ngModel]="reportDeveloperId()"
+                      (ngModelChange)="reportDeveloperId.set($event); onReportFilterChange()">
+                <option value="">{{ 'projectProgress.admin.reports.allDevelopers' | translate }}</option>
+                @for (d of developerOptions(); track d.userId) {
+                  <option [value]="d.userId">{{ d.fullName }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          @if (reportsLoadError()) {
+            <app-load-error [message]="reportsLoadError()" [loading]="reportsLoading()" (retry)="loadReports()"></app-load-error>
+          }
+        </div>
+
+        <div class="card-body p-0">
+          @if (reportRows().length === 0 && !reportsLoading()) {
+            <div class="p-4">
+              <app-empty-state
+                icon="fa-solid fa-file-lines"
+                [message]="'projectProgress.admin.reports.empty' | translate" />
+            </div>
+          } @else {
+            <app-data-table
+              [columns]="reportColumns()"
+              [data]="reportRows()"
+              [loading]="reportsLoading()"
+              [rowClickable]="true"
+              trackByKey="id"
+              (rowClick)="openReport($event)">
+            </app-data-table>
+          }
+        </div>
+
+        @if (reportCount() > 0) {
+          <div class="card-footer">
+            <app-pagination
+              [pageIndex]="reportPageIndex()"
+              [pageSize]="reportPageSize()"
+              [count]="reportCount()"
+              [disabled]="reportsLoading()"
+              (pageChange)="onReportPageChange($event)"
+              (pageSizeChange)="onReportPageSizeChange($event)">
+            </app-pagination>
+          </div>
+        }
+      }
+    </div>
+  }
+</section>
+
+<!-- ── team table cell templates ── -->
+<ng-template #developerCell let-row>
+  <div class="d-flex flex-column">
+    <span class="fw-600">{{ row.developerName || row.developerId }}</span>
+    @if (row.projectRole) {
+      <small class="text-muted">{{ row.projectRole }}</small>
+    }
+  </div>
+</ng-template>
+
+<ng-template #responsibilityCell let-row>
+  <span class="badge bg-secondary-subtle text-secondary">{{ row.responsibilityPercentage }}%</span>
+</ng-template>
+
+<ng-template #earnedCell let-row>
+  <div class="d-flex align-items-center gap-2">
+    <div class="progress flex-grow-1" style="height: 8px;">
+      <div class="progress-bar bg-success"
+           role="progressbar"
+           [style.width.%]="row.responsibilityPercentage ? (row.earnedProgressPercentage / row.responsibilityPercentage * 100) : 0"
+           aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <span class="small text-muted">{{ row.earnedProgressPercentage }}%</span>
+  </div>
+</ng-template>
+
+<ng-template #todayStatusCell let-row>
+  @if (row.hasReportedToday) {
+    <span class="badge bg-success-subtle text-success">
+      <i class="fa-solid fa-circle-check me-1"></i>{{ 'projectProgress.admin.badges.reportedToday' | translate }}
+    </span>
+  } @else {
+    <span class="badge bg-warning-subtle text-warning">
+      <i class="fa-solid fa-circle-exclamation me-1"></i>{{ 'projectProgress.admin.badges.notReportedToday' | translate }}
+    </span>
+  }
+</ng-template>
+
+<ng-template #teamActionsCell let-row>
+  <div class="d-inline-flex gap-1">
+    <button type="button"
+            class="btn btn-sm btn-light"
+            [attr.aria-label]="'projectProgress.admin.adjustBtn' | translate"
+            [title]="'projectProgress.admin.adjustBtn' | translate"
+            (click)="openAdjust(row)">
+      <i class="fa-solid fa-sliders"></i>
+    </button>
+    <button type="button"
+            class="btn btn-sm btn-light"
+            [attr.aria-label]="'projectProgress.admin.historyBtn' | translate"
+            [title]="'projectProgress.admin.historyBtn' | translate"
+            (click)="openHistory(row.developerId)">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+    </button>
+  </div>
+</ng-template>
+
+<!-- ── reports table cell templates ── -->
+<ng-template #reportDateCell let-row>
+  {{ formatDate(row.reportDate) }}
+</ng-template>
+
+<ng-template #reportDeveloperCell let-row>
+  {{ row.developerName || row.developerId }}
+</ng-template>
+
+<ng-template #reportContributionCell let-row>
+  <span class="badge bg-primary-subtle text-primary">+{{ row.appliedProgressContribution }}%</span>
+</ng-template>
+
+<!-- ── dialogs / panels ── -->
+@if (showAssignTeam()) {
+  <app-assign-team-dialog
+    [projectId]="projectId"
+    [currentTeam]="summary()?.teamMembers ?? []"
+    (saved)="onTeamAssigned()"
+    (cancel)="closeAssignTeam()">
+  </app-assign-team-dialog>
+}
+
+@if (adjustingMember()) {
+  <app-adjust-progress-dialog
+    [projectId]="projectId"
+    [member]="adjustingMember()!"
+    (saved)="onAdjusted()"
+    (cancel)="closeAdjust()">
+  </app-adjust-progress-dialog>
+}
+
+@if (historyFor()) {
+  <app-progress-history-panel
+    [projectId]="projectId"
+    [developerId]="historyFor()!.developerId"
+    (cancel)="closeHistory()">
+  </app-progress-history-panel>
+}
