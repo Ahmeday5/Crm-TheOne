@@ -2,7 +2,6 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { Observable, tap } from 'rxjs';
-import { environment } from '../../../environments/environment';
 import { API_ENDPOINTS } from '../constants/api-endpoints.const';
 import { CACHE_TTL } from '../constants/cache-policy.const';
 import {
@@ -11,6 +10,7 @@ import {
   withInlineHandling,
 } from '../http/http-context.tokens';
 import { CompanySettings } from '../../shared/models';
+import { resolveAssetUrl } from '../utils/asset-url.util';
 import { ApiService } from './api.service';
 
 @Injectable({ providedIn: 'root' })
@@ -18,8 +18,6 @@ export class CompanySettingsService {
   private readonly api = inject(ApiService);
   private readonly document = inject(DOCUMENT);
   private readonly titleService = inject(Title);
-
-  private readonly assetOrigin = environment.apiUrl.replace(/\/api\/?$/i, '');
 
   private readonly _settings = signal<CompanySettings | null>(null);
   /** Raw settings (null until first load). */
@@ -89,9 +87,7 @@ export class CompanySettingsService {
 
   /** Resolve a server-relative image path to an absolute URL. */
   assetUrl(path: string | null | undefined): string | null {
-    if (!path) return null;
-    if (/^https?:\/\//i.test(path)) return path;
-    return `${this.assetOrigin}/${path.replace(/^\//, '')}`;
+    return resolveAssetUrl(path);
   }
 
   // ─────────── internals ───────────

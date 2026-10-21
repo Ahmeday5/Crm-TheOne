@@ -1,6 +1,7 @@
 <div class="appsupport-dashboard flex-grow-1">
   <app-page-header [title]="'dashboard.support.title' | translate" [subtitle]="'dashboard.support.subtitle' | translate"
     icon="fa-solid fa-headset">
+    <app-refresh-button [loading]="loading()" (refresh)="reload()" />
   </app-page-header>
 
   @if (loadError()) {
@@ -90,12 +91,12 @@
           <div class="d-flex flex-column gap-3">
             @for (c of assignedClients(); track trackByCustomerId($index, c)) {
             <div class="dash-entity-card">
-              <div class="d-flex justify-content-between align-items-start gap-3">
-                <div class="d-flex gap-3 min-w-0">
+              <div class="d-flex justify-content-between align-items-start gap-2 gap-sm-3">
+                <div class="d-flex gap-3 min-w-0 flex-grow-1">
                   <span class="dash-avatar">{{ initials(c.fullName) }}</span>
                   <div class="min-w-0">
                     <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                      <p class="fw-600 mb-0 text-truncate" [title]="c.fullName">{{ c.fullName }}</p>
+                      <p class="fw-600 mb-0 text-truncate min-w-0" [title]="c.fullName">{{ c.fullName }}</p>
                       <span class="badge cns-badge" [class.cns-badge--done]="c.isConsulted"
                         [class.cns-badge--pending]="!c.isConsulted">
                         <i class="fa-solid" [class.fa-circle-check]="c.isConsulted"
@@ -120,19 +121,19 @@
                 </div>
                 <span class="badge {{ statusBadgeClass(c.status) }} flex-shrink-0">{{ localizeStatus(c.status) }}</span>
               </div>
-              <div class="d-flex gap-2 flex-wrap mt-3">
+              <div class="btn-row mt-3">
                 @if (!c.isConsulted) {
                 <button type="button" class="btn btn-primary btn-sm" (click)="goToDesignatedClients()">
-                  <i class="fa-solid fa-comments me-1"></i>{{ 'customers.consultation.start' | translate }}
+                  <i class="fa-solid fa-comments"></i>{{ 'customers.consultation.start' | translate }}
                 </button>
                 }
                 @if (c.phone) {
                 <a class="btn btn-light border btn-sm" [href]="'tel:' + c.phone">
-                  <i class="fa-solid fa-phone me-1"></i>{{ 'dashboard.support.buttons.callClient' | translate }}
+                  <i class="fa-solid fa-phone"></i>{{ 'dashboard.support.buttons.callClient' | translate }}
                 </a>
                 }
                 <button type="button" class="btn btn-light border btn-sm" (click)="goToDesignatedClients()">
-                  <i class="fa-solid fa-eye me-1"></i>{{ 'dashboard.support.buttons.viewDetails' | translate }}
+                  <i class="fa-solid fa-eye"></i>{{ 'dashboard.support.buttons.viewDetails' | translate }}
                 </button>
               </div>
             </div>
@@ -142,7 +143,7 @@
         </div>
         <div class="card-footer">
           <button type="button" class="btn btn-outline-primary w-100" (click)="goToDesignatedClients()">
-            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>{{ 'dashboard.support.viewAllClients' | translate
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>{{ 'dashboard.support.viewAllClients' | translate
             }}
           </button>
         </div>
@@ -173,10 +174,11 @@
           <div class="d-flex flex-column gap-3">
             @for (t of tickets(); track trackByTicketId($index, t)) {
             <div class="dash-entity-card dash-ticket {{ ticketAccentClass(t.priority) }}">
-              <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
-                <div class="min-w-0">
+              <div class="d-flex justify-content-between align-items-start gap-2 gap-sm-3 mb-2">
+                <div class="min-w-0 flex-grow-1">
                   <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                    <p class="fw-600 mb-0 text-truncate dash-ticket-title">
+                    <p class="fw-600 mb-0 min-w-0 dash-ticket-title" appClampText="1"
+                      [clampTitle]="'#' + t.ticketNumber">
                       #{{ t.ticketNumber }} — {{ t.customerName }}@if (t.companyName) { <span class="text-muted"> — {{
                         t.companyName }}</span> }
                     </p>
@@ -185,8 +187,8 @@
                       t.priorityName) }}
                     </span>
                   </div>
-                  <p class="text-muted small mb-2 dash-clamp-2" [title]="t.title">{{ t.title }}</p>
-                  <div class="d-flex gap-3 small text-muted flex-wrap">
+                  <p class="text-muted small mb-2" appClampText [clampTitle]="'#' + t.ticketNumber">{{ t.title }}</p>
+                  <div class="d-flex column-gap-3 row-gap-1 small text-muted flex-wrap">
                     <span><i class="fa-regular fa-clock opacity-75 me-1"></i>{{ 'dashboard.support.created' | translate
                       }}: {{ formatRelative(t.createdAt) }}</span>
                     @if (t.updatedAt) {
@@ -209,17 +211,15 @@
                     [attr.aria-valuenow]="ticketProgress(t.status)" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
               </div>
-              <div class="d-flex gap-2 flex-wrap mt-3">
+              <div class="btn-row mt-3">
                 <button type="button" class="btn btn-primary btn-sm" (click)="goToTickets()">
-                  <i class="fa-solid fa-pen-to-square me-1"></i>{{ 'dashboard.support.buttons.updateStatus' | translate
-                  }}
+                  <i class="fa-solid fa-pen-to-square"></i>{{ 'dashboard.support.buttons.updateStatus' | translate }}
                 </button>
                 <button type="button" class="btn btn-light border btn-sm" (click)="goToTickets()">
-                  <i class="fa-solid fa-comment-dots me-1"></i>{{ 'dashboard.support.buttons.addNote' | translate }}
+                  <i class="fa-solid fa-comment-dots"></i>{{ 'dashboard.support.buttons.addNote' | translate }}
                 </button>
                 <button type="button" class="btn btn-light border btn-sm" (click)="goToTickets()">
-                  <i class="fa-solid fa-arrow-up-right-dots me-1"></i>{{ 'dashboard.support.buttons.escalate' |
-                  translate }}
+                  <i class="fa-solid fa-arrow-up-right-dots"></i>{{ 'dashboard.support.buttons.escalate' | translate }}
                 </button>
               </div>
             </div>
@@ -229,7 +229,7 @@
         </div>
         <div class="card-footer">
           <button type="button" class="btn btn-outline-primary w-100" (click)="goToTickets()">
-            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>{{ 'dashboard.support.viewAllTickets' | translate
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>{{ 'dashboard.support.viewAllTickets' | translate
             }}
           </button>
         </div>
@@ -245,34 +245,26 @@
     </div>
     <div class="card-body">
       <div class="row g-3">
-        <div class="col-6 col-md-4 col-lg col-xl">
-          <button type="button"
-            class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2 py-2"
-            (click)="goToDesignatedClients()">
+        <div class="col-6 col-lg-3">
+          <button type="button" class="btn btn-primary w-100 dash-quick-btn" (click)="goToDesignatedClients()">
             <i class="fa-solid fa-headset"></i>
             <span>{{ 'dashboard.support.actions.startSupport' | translate }}</span>
           </button>
         </div>
-        <div class="col-6 col-md-4 col-lg col-xl">
-          <button type="button"
-            class="btn btn-light border w-100 d-flex align-items-center justify-content-center gap-2 py-2"
-            (click)="goToTickets()">
+        <div class="col-6 col-lg-3">
+          <button type="button" class="btn btn-light border w-100 dash-quick-btn" (click)="goToTickets()">
             <i class="fa-solid fa-ticket text-warning"></i>
             <span>{{ 'dashboard.support.actions.createTicket' | translate }}</span>
           </button>
         </div>
-        <div class="col-6 col-md-4 col-lg col-xl">
-          <button type="button"
-            class="btn btn-light border w-100 d-flex align-items-center justify-content-center gap-2 py-2"
-            (click)="goToKnowledgeBase()">
+        <div class="col-6 col-lg-3">
+          <button type="button" class="btn btn-light border w-100 dash-quick-btn" (click)="goToKnowledgeBase()">
             <i class="fa-solid fa-book text-info"></i>
             <span>{{ 'dashboard.support.actions.knowledgeBase' | translate }}</span>
           </button>
         </div>
-        <div class="col-6 col-md-4 col-lg col-xl">
-          <button type="button"
-            class="btn btn-light border w-100 d-flex align-items-center justify-content-center gap-2 py-2"
-            (click)="goToDesignatedClients()">
+        <div class="col-6 col-lg-3">
+          <button type="button" class="btn btn-light border w-100 dash-quick-btn" (click)="goToDesignatedClients()">
             <i class="fa-solid fa-handshake text-success"></i>
             <span>{{ 'dashboard.support.actions.contactSales' | translate }}</span>
           </button>

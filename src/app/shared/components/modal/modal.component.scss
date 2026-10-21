@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host { display: contents; }
 
 .app-modal-backdrop {
@@ -87,6 +89,31 @@
   background: var(--surface-1);
 
   &:empty { display: none; }
+}
+
+/* ---------- Phones ----------
+ * Edge-to-edge with a small gutter, capped to the *visible* viewport, and
+ * footer actions sharing the row evenly so labels of different lengths
+ * still produce buttons of the same height. */
+@include bp.down(md) {
+  .app-modal-backdrop { padding: 0.5rem; }
+
+  .app-modal {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: var(--radius-lg);
+  }
+
+  .app-modal-header { padding: 0.85rem 1rem; }
+  .app-modal-title { font-size: var(--fs-md); min-width: 0; }
+  .app-modal-body { padding: 1rem; }
+
+  .app-modal-footer {
+    padding: 0.75rem 1rem;
+
+    ::ng-deep > .btn,
+    ::ng-deep > * > .btn { flex: 1 1 0; min-width: 0; }
+  }
 }
 
 @keyframes app-modal-fade { from { opacity: 0; } to { opacity: 1; } }

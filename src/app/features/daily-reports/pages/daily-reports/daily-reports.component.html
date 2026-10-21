@@ -7,14 +7,14 @@
 
   <!-- Page header -->
   <header class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
-    <div class="d-flex align-items-center gap-3">
+    <div class="d-flex align-items-center gap-3 min-w-0">
       <span class="icon-tile xl tone-primary"><i class="fa-solid fa-file-lines"></i></span>
-      <div>
+      <div class="min-w-0">
         <h3 class="fw-700 mb-1">{{ 'dailyReports.title' | translate }}</h3>
         <p class="text-muted mb-0">{{ 'dailyReports.subtitle' | translate }}</p>
       </div>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex flex-wrap align-items-center gap-2 header-actions">
       <app-table-tools
         [reportTitle]="'dailyReports.title' | translate"
         [columns]="exportColumns"
@@ -24,8 +24,8 @@
         [showRefresh]="true"
         (refresh)="reload(true)">
       </app-table-tools>
-      <button type="button" class="btn btn-primary" (click)="openCreate()">
-        <i class="fa-solid fa-plus me-1"></i>
+      <button type="button" class="btn btn-primary page-cta" (click)="openCreate()">
+        <i class="fa-solid fa-plus"></i>
         {{ 'dailyReports.new' | translate }}
       </button>
     </div>
@@ -33,7 +33,7 @@
 
   <!-- KPIs -->
   <div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-6 col-lg-3">
       <app-stat-card
         [label]="'dailyReports.kpi.total' | translate"
         [value]="formatNumber(kpis().total)"
@@ -41,7 +41,7 @@
         tone="primary">
       </app-stat-card>
     </div>
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-6 col-lg-3">
       <app-stat-card
         [label]="'dailyReports.kpi.submitted' | translate"
         [value]="formatNumber(kpis().submitted)"
@@ -49,7 +49,7 @@
         tone="info">
       </app-stat-card>
     </div>
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-6 col-lg-3">
       <app-stat-card
         [label]="'dailyReports.kpi.reviewed' | translate"
         [value]="formatNumber(kpis().reviewed)"
@@ -57,7 +57,7 @@
         tone="success">
       </app-stat-card>
     </div>
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-6 col-lg-3">
       <app-stat-card
         [label]="'dailyReports.kpi.avgHours' | translate"
         [value]="formatHours(kpis().avgHours)"
@@ -86,19 +86,19 @@
         @if (isAdmin()) {
           <div class="col-12 col-md-auto">
             <label class="form-label fw-600">{{ 'dailyReports.filters.scope' | translate }}</label>
-            <div class="btn-group w-100" role="group" [attr.aria-label]="'dailyReports.filters.scope' | translate">
+            <div class="btn-group scope-switch w-100" role="group" [attr.aria-label]="'dailyReports.filters.scope' | translate">
               <button type="button" class="btn"
                 [class.btn-primary]="scope() === 'all'"
                 [class.btn-light]="scope() !== 'all'"
                 (click)="onScopeChange('all')">
-                <i class="fa-solid fa-users me-1"></i>
+                <i class="fa-solid fa-users"></i>
                 {{ 'dailyReports.filters.allReports' | translate }}
               </button>
               <button type="button" class="btn"
                 [class.btn-primary]="scope() === 'mine'"
                 [class.btn-light]="scope() !== 'mine'"
                 (click)="onScopeChange('mine')">
-                <i class="fa-solid fa-user me-1"></i>
+                <i class="fa-solid fa-user"></i>
                 {{ 'dailyReports.filters.mine' | translate }}
               </button>
             </div>
@@ -108,7 +108,7 @@
         @if (hasActiveFilters()) {
           <div class="col-12 col-md-auto">
             <button type="button" class="btn btn-light w-100 text-danger" (click)="clearFilters()">
-              <i class="fa-solid fa-filter-circle-xmark me-1"></i>
+              <i class="fa-solid fa-filter-circle-xmark"></i>
               {{ 'dailyReports.filters.clear' | translate }}
             </button>
           </div>
@@ -133,7 +133,7 @@
             </button>
           }
         </div>
-        <span class="badge bg-primary-subtle text-primary ms-auto align-self-center">
+        <span class="badge bg-primary-subtle text-primary ms-auto align-self-center text-wrap text-start range-chip">
           <i class="fa-solid fa-clock-rotate-left me-1"></i>
           {{ 'dailyReports.filters.activeRange' | translate }}: {{ activeRangeLabel() }}
         </span>
@@ -189,7 +189,7 @@
         [loading]="loading()"
         (retry)="reload()">
         <button type="button" class="btn btn-primary" (click)="openCreate()">
-          <i class="fa-solid fa-plus me-1"></i>
+          <i class="fa-solid fa-plus"></i>
           {{ 'dailyReports.new' | translate }}
         </button>
       </app-empty-state>
@@ -201,8 +201,8 @@
           <div class="card report-card hover-rise h-100">
             <div class="card-body d-flex flex-column gap-3">
               <div class="d-flex align-items-start justify-content-between gap-3">
-                <div class="flex-grow-1">
-                  <h5 class="fw-700 mb-1">{{ r.userName }}</h5>
+                <div class="flex-grow-1 min-w-0">
+                  <h5 class="fw-700 mb-1 text-truncate" [title]="r.userName">{{ r.userName }}</h5>
                   <p class="text-muted mb-0 small">
                     <i class="fa-solid fa-calendar me-1"></i>
                     {{ formatDate(r.reportDate) }}
@@ -220,14 +220,14 @@
                   <i class="fa-solid fa-circle-check text-success me-1"></i>
                   {{ 'dailyReports.create.completedTasks' | translate }}
                 </p>
-                <p class="mb-0">{{ previewText(r.completedTasksPreview) }}</p>
+                <p class="mb-0" [appClampText]="3" [clampTitle]="r.userName">{{ previewText(r.completedTasksPreview) }}</p>
               </div>
 
-              <div class="d-flex gap-2 pt-3 border-top mt-auto">
-                <button type="button" class="btn btn-light btn-sm flex-grow-1"
+              <div class="d-flex gap-2 pt-3 border-top mt-auto card-actions">
+                <button type="button" class="btn btn-light flex-grow-1"
                         [disabled]="busyId() === r.id"
                         (click)="openDetails(r)">
-                  <i class="fa-solid fa-eye me-1"></i>
+                  <i class="fa-solid fa-eye"></i>
                   {{ 'dailyReports.card.details' | translate }}
                 </button>
                 <button type="button" class="btn btn-icon btn-primary-soft"

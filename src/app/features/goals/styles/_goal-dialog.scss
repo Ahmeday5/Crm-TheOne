@@ -1,0 +1,151 @@
+@use 'breakpoints' as bp;
+
+/*
+ * Form-dialog styles shared by the goal progress + entry-edit dialogs.
+ * Each dialog `@use`s this partial, so the rules are emitted per component
+ * and stay inside its style encapsulation.
+ */
+
+.gpd { display: flex; flex-direction: column; gap: 1rem; }
+
+.gpd-goal {
+  margin: 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  font-weight: var(--fw-700);
+  overflow-wrap: anywhere;
+}
+
+.gpd-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+
+  @include bp.down(sm) { grid-template-columns: 1fr 1fr; }
+}
+
+.gpd-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.65rem 0.5rem;
+  text-align: center;
+
+  & + & { border-inline-start: 1px solid var(--border); }
+
+  &__lbl { font-size: var(--fs-xs); color: var(--text-3); }
+  &__val {
+    font-size: var(--fs-md);
+    font-weight: var(--fw-700);
+    color: var(--text-1);
+    overflow-wrap: anywhere;
+  }
+  &__val--accent { color: var(--brand); }
+
+  @include bp.down(sm) {
+    &:last-child {
+      grid-column: 1 / -1;
+      border-inline-start: 0;
+      border-top: 1px solid var(--border);
+    }
+  }
+}
+
+.gpd-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-sm);
+
+  > i { margin-top: 0.15rem; }
+}
+
+.gpd-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+
+  > i { margin-top: 0.15rem; }
+}
+
+.gpd-field {
+  .form-label { font-weight: var(--fw-600); margin-bottom: 0.35rem; }
+
+  &__foot {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+
+    app-form-error { flex: 1; min-width: 0; }
+  }
+}
+
+.gpd-hint { display: block; margin-top: 0.3rem; color: var(--text-3); font-size: var(--fs-xs); }
+
+.gpd-counter {
+  margin-top: 0.25rem;
+  margin-inline-start: auto;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  &.is-near { color: var(--warning); font-weight: var(--fw-600); }
+}
+
+.gpd-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem 0.75rem;
+    font-size: var(--fs-sm);
+    color: var(--text-2);
+
+    strong { color: var(--text-1); }
+  }
+}
+
+.gpd-track {
+  position: relative;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+
+  &__now,
+  &__add {
+    position: absolute;
+    inset-block: 0;
+    transition: width 0.35s ease, inset-inline-start 0.35s ease;
+  }
+
+  &__now { inset-inline-start: 0; background: var(--brand); }
+  &__add { background: var(--success); opacity: 0.75; }
+}
+
+.gpd-achieve { color: var(--success); font-weight: var(--fw-700); }

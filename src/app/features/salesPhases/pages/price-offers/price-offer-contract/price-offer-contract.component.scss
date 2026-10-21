@@ -7,6 +7,8 @@
  * file only adds what is unique to the quotation: the addressee block and
  * the line-item table.
  */
+@use 'breakpoints' as bp;
+
 :host {
   display: block;
 }
@@ -128,5 +130,39 @@
   .c-sign-name {
     font-weight: 700;
     font-style: italic;
+  }
+}
+
+/* ─────────── on-screen phones ───────────
+ * The sheet keeps its document structure; only the screen preview adapts:
+ * slimmer page chrome, a wrapping addressee block and a line-item table
+ * that scrolls inside its own box instead of widening the page. Scoped to
+ * `screen` so printing is unaffected. */
+@media screen {
+  @include bp.down(md) {
+    .contract-toolbar > .btn { flex: 1 1 0; }
+
+    .contract-page {
+      padding: 18px 14px 56px;
+      min-height: 0;
+    }
+
+    .c-meta-row { flex-wrap: wrap; }
+    .c-value {
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+
+    .c-table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: 16px;
+
+      > .c-table {
+        min-width: 520px;
+        margin-bottom: 0;
+      }
+    }
   }
 }

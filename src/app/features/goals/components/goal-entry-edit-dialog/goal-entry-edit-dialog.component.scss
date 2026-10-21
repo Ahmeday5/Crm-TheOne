@@ -1,0 +1,12 @@
+@use '../../styles/goal-dialog';
+
+.ged-who {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+
+  &__name { display: block; font-weight: var(--fw-600); overflow-wrap: anywhere; }
+  &__date { display: block; color: var(--text-3); font-size: var(--fs-xs); }
+}

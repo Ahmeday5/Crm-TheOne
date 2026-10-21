@@ -121,18 +121,30 @@ export class AuthService {
         next: (profile) => {
           const latest = this.currentUserSignal();
           if (!latest || latest.userId !== profile.userId) return;
-          const merged: User = {
-            ...latest,
+          this.patchCurrentUser({
             fullName: profile.fullName ?? latest.fullName ?? null,
             phone: profile.phone ?? latest.phone ?? null,
-          };
-          this.storage.setJson(environment.userKey, merged);
-          this.currentUserSignal.set(merged);
+            // `imageUrl` is authoritative when present — `null` means "removed".
+            imageUrl: 'imageUrl' in profile ? profile.imageUrl ?? null : latest.imageUrl ?? null,
+          });
         },
         error: () => {
           /* silent — header gracefully falls back to email */
         },
       });
+  }
+
+  /**
+   * Merges profile fields (name, phone, image…) into the signed-in user,
+   * persists them and syncs other tabs. Identity fields are never touched.
+   */
+  patchCurrentUser(patch: Partial<Pick<User, 'fullName' | 'phone' | 'imageUrl'>>): void {
+    const current = this.currentUserSignal();
+    if (!current) return;
+    const next: User = { ...current, ...patch };
+    this.storage.setJson(environment.userKey, next);
+    this.currentUserSignal.set(next);
+    this.broadcast({ type: 'session-updated' });
   }
 
   logout(opts: LogoutOptions = {}): void {
@@ -224,6 +236,8 @@ export class AuthService {
       ...this.toUser(data),
       fullName: existing?.fullName ?? null,
       phone: existing?.phone ?? null,
+      // login / refresh-token carry `imageUrl`; keep the known one if omitted.
+      imageUrl: 'imageUrl' in data ? data.imageUrl ?? null : existing?.imageUrl ?? null,
     };
     this.storage.setJson(environment.userKey, user);
     this.currentUserSignal.set(user);

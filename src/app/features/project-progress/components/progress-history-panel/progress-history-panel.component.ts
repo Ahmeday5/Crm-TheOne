@@ -15,13 +15,21 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { SlidePanelComponent } from '../../../../shared/components/slide-panel/slide-panel.component';
 import { ProjectProgressHistoryDto } from '../../../../shared/models';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ProjectProgressService } from '../../services/project-progress.service';
 
 @Component({
   selector: 'app-progress-history-panel',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, SlidePanelComponent, LoadErrorComponent, EmptyStateComponent],
+  imports: [
+    CommonModule,
+    TranslatePipe,
+    ClampTextDirective,
+    SlidePanelComponent,
+    LoadErrorComponent,
+    EmptyStateComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './progress-history-panel.component.html',
 })

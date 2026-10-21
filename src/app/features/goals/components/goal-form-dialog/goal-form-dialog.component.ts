@@ -26,6 +26,7 @@ import {
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { GoalsService } from '../../services/goals.service';
+import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 
 function toLocalDatetimeValue(iso: string): string {
   if (!iso) return '';
@@ -38,7 +39,7 @@ function toLocalDatetimeValue(iso: string): string {
 @Component({
   selector: 'app-goal-form-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, ModalComponent],
+  imports: [UserAvatarComponent, CommonModule, FormsModule, TranslatePipe, ModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './goal-form-dialog.component.html',
   styleUrl: './goal-form-dialog.component.scss',
@@ -65,6 +66,8 @@ export class GoalFormDialogComponent implements OnInit {
   readonly startDate = signal('');
   readonly endDate = signal('');
   readonly assignedToId = signal<string | null>(null);
+  /** Optional 1–100 — minimum achievement % to earn commission. */
+  readonly commissionThreshold = signal<number | null>(null);
 
   readonly salesPersons = signal<SalesPerson[]>([]);
   readonly loadingSales = signal(false);
@@ -85,8 +88,15 @@ export class GoalFormDialogComponent implements OnInit {
       this.startDate().length > 0 &&
       this.endDate().length > 0 &&
       this.endDateValid() &&
-      (!this.showAssignedTo() || !!this.assignedToId()),
+      (!this.showAssignedTo() || !!this.assignedToId()) &&
+      this.commissionValid(),
   );
+
+  /** Empty is valid (no threshold); otherwise a whole number 1–100. */
+  readonly commissionValid = computed(() => {
+    const v = this.commissionThreshold();
+    return v === null || (Number.isInteger(v) && v >= 1 && v <= 100);
+  });
 
   readonly endDateValid = computed(() => {
     if (!this.startDate() || !this.endDate()) return true;
@@ -107,6 +117,7 @@ export class GoalFormDialogComponent implements OnInit {
       this.startDate.set(toLocalDatetimeValue(this.goal.startDate));
       this.endDate.set(toLocalDatetimeValue(this.goal.endDate));
       this.assignedToId.set(this.goal.assignedToId);
+      this.commissionThreshold.set(this.goal.commissionThresholdPercent ?? null);
     }
     this.loadSalesPersons();
   }
@@ -148,6 +159,7 @@ export class GoalFormDialogComponent implements OnInit {
         financialReward: this.financialReward()!,
         startDate: new Date(this.startDate()).toISOString(),
         endDate: new Date(this.endDate()).toISOString(),
+        commissionThresholdPercent: this.commissionThreshold(),
       };
       this.goalsService.update(this.goal.id, payload).subscribe({
         next: (res) => {
@@ -174,6 +186,7 @@ export class GoalFormDialogComponent implements OnInit {
         startDate: new Date(this.startDate()).toISOString(),
         endDate: new Date(this.endDate()).toISOString(),
         assignedToId: this.type() === 'Individual' ? this.assignedToId() : null,
+        commissionThresholdPercent: this.commissionThreshold(),
       };
       this.goalsService.create(payload).subscribe({
         next: (res) => {
@@ -189,6 +202,12 @@ export class GoalFormDialogComponent implements OnInit {
         },
       });
     }
+  }
+
+  /** `<input type="number">` yields `''`/`null` when cleared — normalise to `null`. */
+  onCommissionChange(raw: number | string | null): void {
+    const v = raw === '' || raw === null ? null : Number(raw);
+    this.commissionThreshold.set(v === null || Number.isNaN(v) ? null : v);
   }
 
   periodIcon(period: GoalPeriod): string {

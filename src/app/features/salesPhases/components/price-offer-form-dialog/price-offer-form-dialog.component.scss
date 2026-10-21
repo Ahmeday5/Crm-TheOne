@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 .form-section {
   padding-bottom: 1rem;
   margin-bottom: 1rem;
@@ -16,4 +18,23 @@
   gap: 0.5rem;
   font-weight: 700;
   margin-bottom: 0.85rem;
+}
+
+// "Add service" picker: grows to fill the row, wraps under on narrow dialogs.
+.po-extra-select {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+@include bp.down(sm) {
+  .po-extra-btn { width: 100%; }
+}
+
+// Line items in card mode: the editable cells keep full-width inputs and
+// touch-friendly heights next to their labels.
+@include bp.down(md) {
+  .po-items > tbody > tr > td .form-control {
+    width: 100%;
+    min-height: 2.5rem;
+  }
 }

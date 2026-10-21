@@ -1,7 +1,7 @@
 <div class="card company-profile h-100">
   <div class="card-body">
     <!-- Identity header -->
-    <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
+    <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom min-w-0">
       <img [src]="company.logoUrl() || fallbackLogo" class="cp-logo" alt="logo"
            (error)="onLogoError($event)" />
       <div class="min-w-0">
@@ -65,13 +65,13 @@
         @if (company.commercialRegistration()) {
           <div class="col-6">
             <p class="text-muted small mb-0">{{ 'settings.company.commercialRegistration' | translate }}</p>
-            <p class="fw-600 mb-0">{{ company.commercialRegistration() }}</p>
+            <p class="cp-legal-value fw-600 mb-0">{{ company.commercialRegistration() }}</p>
           </div>
         }
         @if (company.taxNumber()) {
           <div class="col-6">
             <p class="text-muted small mb-0">{{ 'settings.company.taxNumber' | translate }}</p>
-            <p class="fw-600 mb-0">{{ company.taxNumber() }}</p>
+            <p class="cp-legal-value fw-600 mb-0">{{ company.taxNumber() }}</p>
           </div>
         }
       </div>

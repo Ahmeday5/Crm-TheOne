@@ -29,6 +29,8 @@ export interface AuthResponseData {
   role: UserRole;
   userId: string;
   email: string;
+  /** Server-relative profile image path, `null` when the user has none. */
+  imageUrl?: string | null;
 }
 
 /** What the rest of the app reads from `AuthService.currentUser()`. */
@@ -38,6 +40,8 @@ export interface User {
   role: UserRole;
   fullName?: string | null;
   phone?: string | null;
+  /** Server-relative profile image path — resolve with `resolveAssetUrl`. */
+  imageUrl?: string | null;
 }
 
 /** Tokens returned by login / refresh — consumed by the auth interceptor. */

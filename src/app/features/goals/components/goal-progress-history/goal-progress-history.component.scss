@@ -1,0 +1,194 @@
+@use 'breakpoints' as bp;
+
+:host { display: block; }
+
+.gph {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-0);
+  overflow: hidden;
+}
+
+.gph-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border);
+
+  &__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-700);
+
+    > i { color: var(--brand); }
+  }
+
+  &__meta { color: var(--text-3); font-size: var(--fs-xs); }
+}
+
+.gph-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.25rem 1rem;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+
+  > i { font-size: 1.4rem; opacity: 0.6; }
+}
+
+.gph-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 340px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.gph-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+
+  & + & { border-top: 1px dashed var(--border); }
+
+  &__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+
+  &__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  &__amount {
+    color: var(--success);
+    font-weight: var(--fw-700);
+    font-size: var(--fs-md);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.35rem;
+  }
+
+  /* Phones: the delete button collapses to its icon to keep the row on one line. */
+  &__action-label {
+    @include bp.down(sm) { display: none; }
+  }
+
+  &.is-busy { opacity: 0.55; pointer-events: none; }
+
+  &__details {
+    margin: 0;
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+    line-height: 1.55;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem 0.75rem;
+    color: var(--text-3);
+    font-size: var(--fs-xs);
+  }
+
+  &__who {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    color: var(--text-2);
+    font-weight: var(--fw-600);
+  }
+
+  &__date { display: inline-flex; align-items: center; gap: 0.3rem; white-space: nowrap; }
+}
+
+.gph-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--surface-2);
+  cursor: zoom-in;
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  &__zoom {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(15, 23, 42, 0.45);
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  &:hover &__zoom,
+  &:focus-visible &__zoom { opacity: 1; }
+
+  &:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  @include bp.down(sm) { width: 3rem; height: 3rem; }
+}
+
+.gph-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.6rem 0.9rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+
+  > i { margin-top: 0.15rem; }
+}
+
+.gph-lightbox {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  img {
+    width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+  }
+
+  figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+  }
+}

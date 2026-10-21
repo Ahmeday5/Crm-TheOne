@@ -11,10 +11,14 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, timer } from 'rxjs';
+import { onCacheInvalidated } from '../../../../core/http/cache-invalidation.util';
 import { LanguageService } from '../../../../core/services/language.service';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { Goal } from '../../../../shared/models';
 import { GoalsService } from '../../services/goals.service';
+import { GoalCommissionGuideComponent } from '../goal-commission-guide/goal-commission-guide.component';
 
 /**
  * Personal "active goal" banner + header pill, backed by `GET /Goals/active`.
@@ -25,7 +29,7 @@ import { GoalsService } from '../../services/goals.service';
 @Component({
   selector: 'app-active-goal-banner',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, TranslatePipe, MoneyPipe, ClampTextDirective, GoalCommissionGuideComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './active-goal-banner.component.html',
   styleUrl: './active-goal-banner.component.scss',
@@ -49,6 +53,11 @@ export class ActiveGoalBannerComponent implements OnInit, OnDestroy {
   readonly primaryGoal = computed<Goal | null>(() => this.goals()[0] ?? null);
   readonly hasActiveGoal = computed(() => !this.dismissed() && this.goals().length > 0);
   readonly extraCount = computed(() => Math.max(0, this.goals().length - 1));
+
+  constructor() {
+    // Host page's "refresh data" (or a goal mutation) dropped our cache.
+    onCacheInvalidated('Goals', () => this.load(true));
+  }
 
   ngOnInit(): void {
     this.load();

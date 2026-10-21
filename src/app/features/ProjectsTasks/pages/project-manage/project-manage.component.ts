@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import {
   Subject,
@@ -43,6 +43,7 @@ import {
   projectPriorityBadgeClass,
   projectStatusBadgeClass,
 } from '../../../../shared/models';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ProjectDetailsDialogComponent } from '../../components/project-details-dialog/project-details-dialog.component';
 import { ProjectFormDialogComponent } from '../../components/project-form-dialog/project-form-dialog.component';
@@ -61,6 +62,7 @@ const DEFAULT_PAGE_SIZE = 10;
     FormsModule,
     RouterLink,
     TranslatePipe,
+    ClampTextDirective,
     DataTableComponent,
     LoadErrorComponent,
     PaginationComponent,
@@ -76,6 +78,7 @@ const DEFAULT_PAGE_SIZE = 10;
 })
 export class ProjectManageComponent implements OnInit, OnDestroy {
   private readonly service = inject(ProjectsService);
+  private readonly route = inject(ActivatedRoute);
   private readonly tasksService = inject(TasksService);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
@@ -117,6 +120,8 @@ export class ProjectManageComponent implements OnInit, OnDestroy {
   readonly priorityBadge = projectPriorityBadgeClass;
 
   // ── cell templates wired into the column defs ──
+  private readonly titleCell =
+    viewChild<TemplateRef<{ $implicit: ProjectListItem }>>('titleCell');
   private readonly customerCell =
     viewChild<TemplateRef<{ $implicit: ProjectListItem }>>('customerCell');
   private readonly priorityCell =
@@ -129,7 +134,12 @@ export class ProjectManageComponent implements OnInit, OnDestroy {
     viewChild<TemplateRef<{ $implicit: ProjectListItem }>>('teamCell');
 
   readonly columns = computed<ReadonlyArray<TableColumn<ProjectListItem>>>(() => [
-    { key: 'title', label: 'projects.manage.table.project', i18nLabel: true },
+    {
+      key: 'title',
+      label: 'projects.manage.table.project',
+      i18nLabel: true,
+      cellTemplate: this.titleCell(),
+    },
     {
       key: 'customerName',
       label: 'projects.manage.table.customer',
@@ -253,6 +263,8 @@ export class ProjectManageComponent implements OnInit, OnDestroy {
         this.pageIndex.set(1);
         this.reload();
       });
+    // Deep link from the admin dashboard: /ProjectManage?tab=active
+    if (this.route.snapshot.queryParamMap.get('tab') === 'active') this.activeTab.set('active');
     this.reload();
     this.loadStats();
   }

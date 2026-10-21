@@ -19,6 +19,7 @@ import {
 } from '../../../../shared/models';
 import { ProjectsService } from '../../../ProjectsTasks/services/projects.service';
 import { TasksService } from '../../../ProjectsTasks/services/tasks.service';
+import { RefreshButtonComponent } from '../../../../shared/components/refresh-button/refresh-button.component';
 
 /** How many of "my latest" tasks/projects to surface on the dashboard. */
 const RECENT_LIMIT = 5;
@@ -26,7 +27,8 @@ const RECENT_LIMIT = 5;
 @Component({
   selector: 'app-developer-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, NgApexchartsModule, TranslatePipe, PageHeaderComponent, EmptyStateComponent],
+  imports: [
+    RefreshButtonComponent,CommonModule, RouterLink, NgApexchartsModule, TranslatePipe, PageHeaderComponent, EmptyStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './developer-dashboard.component.html',
   styleUrl: './developer-dashboard.component.scss',
@@ -96,6 +98,10 @@ export class DeveloperDashboardComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.reload();
+  }
+
+  reload(): void {
     this.loading.set(true);
     const admin = this.isAdmin();
 

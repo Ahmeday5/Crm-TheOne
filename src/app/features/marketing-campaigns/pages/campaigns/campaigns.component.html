@@ -2,26 +2,27 @@
   <!-- Welcome strip -->
   <div class="mb-4">
     <h2 class="fw-700 mb-1">{{ 'campaigns.welcomeTitle' | translate }}</h2>
-    <p class="text-muted mb-0">{{ 'campaigns.welcomeSubtitle' | translate }}</p>
+    <p class="text-muted mb-0" appClampText>{{ 'campaigns.welcomeSubtitle' | translate }}</p>
   </div>
 
   <!-- Page header -->
   <header class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
-    <div class="d-flex align-items-center gap-3">
+    <div class="campaigns-heading d-flex align-items-center gap-3 min-w-0">
       <span class="icon-tile xl tone-primary"><i class="fa-solid fa-bullhorn"></i></span>
-      <div>
+      <div class="min-w-0">
         <h3 class="fw-700 mb-1">{{ 'campaigns.title' | translate }}</h3>
-        <p class="text-muted mb-0">{{ 'campaigns.subtitle' | translate }}</p>
+        <p class="text-muted mb-0" appClampText>{{ 'campaigns.subtitle' | translate }}</p>
       </div>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="campaigns-toolbar btn-row">
       <button type="button" class="btn btn-light" [disabled]="loading()"
               (click)="reload(true)"
-              [title]="'tableTools.refresh' | translate">
+              [title]="'tableTools.refresh' | translate"
+              [attr.aria-label]="'tableTools.refresh' | translate">
         <i class="fa-solid fa-rotate-right"></i>
       </button>
       <button type="button" class="btn btn-primary" (click)="openCreate()">
-        <i class="fa-solid fa-plus me-1"></i>
+        <i class="fa-solid fa-plus"></i>
         {{ 'campaigns.new' | translate }}
       </button>
     </div>
@@ -29,7 +30,7 @@
 
   <!-- KPI grid (5 cards from /Campaigns/StatisticsDashboard) -->
   <div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6 col-lg">
+    <div class="kpi-col col-6 col-lg">
       <app-stat-card
         [label]="'campaigns.kpi.totalCampaigns' | translate"
         [value]="formatNumber(kpis().totalCampaigns)"
@@ -37,7 +38,7 @@
         tone="info">
       </app-stat-card>
     </div>
-    <div class="col-12 col-sm-6 col-lg">
+    <div class="kpi-col col-6 col-lg">
       <app-stat-card
         [label]="'campaigns.kpi.active' | translate"
         [value]="formatNumber(kpis().activeCampaigns)"
@@ -46,7 +47,7 @@
         valueClass="text-purple">
       </app-stat-card>
     </div>
-    <div class="col-12 col-sm-6 col-lg">
+    <div class="kpi-col col-6 col-lg">
       <app-stat-card
         [label]="'campaigns.kpi.totalBudget' | translate"
         [value]="kpis().totalBudget | money"
@@ -54,7 +55,7 @@
         tone="primary">
       </app-stat-card>
     </div>
-    <div class="col-12 col-sm-6 col-lg">
+    <div class="kpi-col col-6 col-lg">
       <app-stat-card
         [label]="'campaigns.kpi.spent' | translate"
         [value]="kpis().totalSpent | money"
@@ -62,7 +63,7 @@
         tone="orange">
       </app-stat-card>
     </div>
-    <div class="col-12 col-sm-6 col-lg">
+    <div class="kpi-col col-6 col-lg">
       <app-stat-card
         [label]="'campaigns.kpi.conversions' | translate"
         [value]="formatNumber(kpis().totalConversions)"
@@ -85,7 +86,7 @@
                    (ngModelChange)="onSearchInput($event)" />
           </div>
         </div>
-        
+
         <div class="col-6 col-md-3 col-lg-2">
           <select class="form-select"
                   [ngModel]="statusFilter()"

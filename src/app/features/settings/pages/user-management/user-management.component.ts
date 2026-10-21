@@ -16,11 +16,15 @@ import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ExportColumn } from '../../../../core/services/table-export.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { UserDirectoryService } from '../../../../core/services/user-directory.service';
 import { UsersService } from '../../../../core/services/users.service';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { ClickOutsideDirective } from '../../../../shared/directives/click-outside.directive';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
+import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { UserFormDialogComponent } from './user-form-dialog/user-form-dialog.component';
 
@@ -38,6 +42,9 @@ type RoleFilter = 'all' | UserRole;
     ClickOutsideDirective,
     TableToolsComponent,
     EmptyStateComponent,
+    ClampTextDirective,
+    ResponsiveTableDirective,
+    UserAvatarComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-management.component.html',
@@ -45,6 +52,7 @@ type RoleFilter = 'all' | UserRole;
 })
 export class UserManagementComponent {
   private readonly users = inject(UsersService);
+  private readonly directory = inject(UserDirectoryService);
   private readonly toast = inject(ToastService);
   private readonly dialog = inject(DialogService);
   private readonly language = inject(LanguageService);
@@ -119,6 +127,7 @@ export class UserManagementComponent {
     this.users.list(force).subscribe({
       next: (rows) => {
         this.all.set(rows);
+        this.directory.register(rows);
         this.loading.set(false);
       },
       error: () => {
@@ -197,11 +206,6 @@ export class UserManagementComponent {
   }
 
   // ─────────── view helpers ───────────
-
-  initialOf(user: AppUser): string {
-    const source = user.fullName ?? user.email;
-    return source.trim().charAt(0).toUpperCase();
-  }
 
   displayName(user: AppUser): string {
     return user.fullName ?? user.email;

@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host {
   display: block;
 }
@@ -6,6 +8,17 @@
   font-size: clamp(1.5rem, 2.2vw, 2rem);
   font-weight: 800;
   color: var(--brand-700);
+}
+
+// Wide-table caps; card mode (below md) lets these cells use the full width.
+.apt-title-cell { max-width: 240px; }
+.apt-location-cell { max-width: 200px; }
+.apt-link { max-width: 160px; }
+
+@include bp.down(md) {
+  .apt-title-cell,
+  .apt-location-cell,
+  .apt-link { max-width: 100%; }
 }
 
 .calendar-placeholder-icon {

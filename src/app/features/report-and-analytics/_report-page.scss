@@ -1,0 +1,93 @@
+/*
+ * Shared layout for the report pages (panel, sales, marketing, projects,
+ * employees, support, custom). Each page's stylesheet does
+ *
+ *   @use '../../report-page' as report;
+ *   @include report.page;
+ *
+ * so the rules stay inside that component's encapsulation.
+ *
+ *   .report-header   icon tile + title / subtitle
+ *   .report-kpi      KPI tile — two per row on phones, icon stacked on top
+ *   .report-chart    card body hosting an <apx-chart>; never wider than its card
+ */
+
+@use 'breakpoints' as bp;
+
+@mixin page {
+  :host { display: block; }
+
+  /* ---------- Page header ---------- */
+  .report-header {
+    > div { min-width: 0; }
+
+    h2 { overflow-wrap: anywhere; }
+  }
+
+  /* ---------- Charts ----------
+   * ApexCharts sizes itself from its parent's width; a block host with
+   * `min-width: 0` lets it shrink with the column instead of keeping the
+   * width it was first rendered at. */
+  .report-chart {
+    min-width: 0;
+
+    apx-chart {
+      display: block;
+      width: 100%;
+      min-width: 0;
+    }
+  }
+
+  /* ---------- KPI tiles ---------- */
+  .report-kpi .kpi-value { overflow-wrap: anywhere; }
+
+  @include bp.down(lg) {
+    /* An odd last tile (5-KPI pages) spans the row instead of sitting alone
+     * at half width. */
+    .report-kpi-col:last-child:nth-child(odd) { width: 100%; }
+  }
+
+  @include bp.down(md) {
+    .report-header {
+      gap: 0.75rem !important;
+
+      .icon-tile.xl {
+        width: 48px;
+        height: 48px;
+        font-size: 1.15rem;
+      }
+    }
+
+    /* Two tiles per row leave ~150px each: stack the icon above the
+     * figures so the value gets the full tile width. */
+    .report-kpi .card-body {
+      flex-direction: column-reverse;
+      align-items: flex-start !important;
+      justify-content: flex-end !important;
+      gap: 0.6rem !important;
+      padding: 0.85rem;
+
+      > .min-w-0 { width: 100%; }
+    }
+
+    .report-kpi .icon-tile {
+      width: 36px;
+      height: 36px;
+      font-size: 0.95rem;
+      border-radius: var(--radius-md);
+    }
+
+    .report-kpi .kpi-label {
+      white-space: normal;
+      line-height: 1.35;
+    }
+
+    .report-kpi .kpi-value {
+      font-size: 1.3rem;
+
+      small { font-size: var(--fs-xs) !important; }
+    }
+
+    .report-kpi .badge { font-size: var(--fs-xs); }
+  }
+}

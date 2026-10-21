@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 
 interface SavedReport {
@@ -23,7 +25,7 @@ interface ReportTemplate {
 @Component({
   selector: 'app-custom-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, TranslatePipe, EmptyStateComponent, ClampTextDirective, ResponsiveTableDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './custom-reports.component.html',
   styleUrl: './custom-reports.component.scss',

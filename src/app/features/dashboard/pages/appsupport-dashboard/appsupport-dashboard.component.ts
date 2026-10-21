@@ -19,6 +19,7 @@ import {
   StatCardComponent,
   StatCardTone,
 } from '../../../../shared/components/stat-card/stat-card.component';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import {
   CustomerListItem,
@@ -33,6 +34,7 @@ import {
   customerStatusBadgeClass,
   resolveCustomerStatus,
 } from '../../../leads/utils/customer-status.util';
+import { RefreshButtonComponent } from '../../../../shared/components/refresh-button/refresh-button.component';
 
 /** View-model for one KPI tile in the strip. */
 interface KpiCard {
@@ -60,6 +62,7 @@ interface KpiCard {
   selector: 'app-appsupport-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     CommonModule,
     NgApexchartsModule,
     TranslatePipe,
@@ -67,6 +70,7 @@ interface KpiCard {
     LoadErrorComponent,
     EmptyStateComponent,
     StatCardComponent,
+    ClampTextDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './appsupport-dashboard.component.html',

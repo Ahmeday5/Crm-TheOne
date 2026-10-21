@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python \"C:/Users/HP/AppData/Local/Temp/claude/f--Dashboards-crm-crmTheOne/9d82625c-7b66-4e67-a028-7995e6467790/scratchpad/addimp.py\" src/app/features/appSupport/pages/designated-clients/designated-clients.component.ts ClampTextDirective,ResponsiveTableDirective)",
+      "Bash(python -)"
+    ]
+  }
+}

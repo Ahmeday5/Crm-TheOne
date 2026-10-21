@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 // ── Task title cell ───────────────────────────────────────────────────────────
 
 .task-title-cell {
@@ -5,21 +7,20 @@
   flex-direction: column;
   gap: 3px;
   max-width: 280px;
+  min-width: 0;
 
   .task-name {
-    font-weight: 600;
+    font-weight: var(--fw-600);
     font-size: 0.875rem;
     line-height: 1.4;
-    color: var(--text-primary, #1a1d23);
+    color: var(--text-1);
   }
 
+  // Clamped to one line by `appClampText`; tapping opens the full text.
   .task-desc {
     font-size: 0.72rem;
-    color: var(--text-muted, #6c757d);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 260px;
+    font-weight: var(--fw-400);
+    color: var(--text-muted);
   }
 
   .task-tags {
@@ -32,12 +33,12 @@
   .task-tag {
     display: inline-block;
     padding: 1px 7px;
-    border-radius: 100px;
+    border-radius: var(--radius-pill);
     font-size: 0.67rem;
-    font-weight: 500;
-    background: rgba(111, 66, 193, 0.08);
-    color: #6f42c1;
-    border: 1px solid rgba(111, 66, 193, 0.18);
+    font-weight: var(--fw-500);
+    background: var(--brand-soft);
+    color: var(--brand);
+    border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
     line-height: 1.6;
   }
 }
@@ -48,38 +49,27 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
+  min-width: 0;
 
   .assignee-chip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-  }
-
-  .assignee-avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--bs-primary, #0d6efd);
-    color: #fff;
-    font-size: 0.65rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 0 1px 3px rgba(13, 110, 253, 0.25);
+    min-width: 0;
   }
 
   .assignee-name {
     font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--text-primary, #1a1d23);
+    font-weight: var(--fw-500);
+    color: var(--text-1);
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .assignee-more {
     font-size: 0.75rem;
-    color: var(--text-muted, #6c757d);
-    font-weight: 600;
+    color: var(--text-muted);
+    font-weight: var(--fw-600);
     padding-inline-start: 4px;
   }
 }
@@ -89,36 +79,39 @@
 .due-cell {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 3px;
 
   .due-date {
     font-size: 0.82rem;
-    color: var(--text-secondary, #495057);
-    display: flex;
+    color: var(--text-2);
+    display: inline-flex;
     align-items: center;
+    gap: 0.25rem;
   }
 
   .overdue-pill {
     display: inline-block;
     padding: 1px 7px;
-    border-radius: 100px;
+    border-radius: var(--radius-pill);
     font-size: 0.67rem;
-    font-weight: 600;
-    background: rgba(220, 53, 69, 0.1);
-    color: var(--bs-danger, #dc3545);
-    border: 1px solid rgba(220, 53, 69, 0.2);
+    font-weight: var(--fw-600);
+    background: var(--danger-soft);
+    color: var(--danger);
+    border: 1px solid color-mix(in srgb, var(--danger) 20%, transparent);
     line-height: 1.6;
   }
 
   .completed-hint {
     font-size: 0.7rem;
-    color: var(--bs-success, #198754);
-    display: flex;
+    color: var(--success);
+    display: inline-flex;
     align-items: center;
+    gap: 0.25rem;
   }
 
   &.is-overdue .due-date {
-    color: var(--bs-danger, #dc3545);
+    color: var(--danger);
   }
 }
 
@@ -132,7 +125,7 @@
 
   .hours-label {
     font-size: 0.8rem;
-    font-weight: 500;
+    font-weight: var(--fw-500);
     white-space: nowrap;
   }
 
@@ -140,7 +133,7 @@
     width: 72px;
     height: 5px;
     border-radius: 3px;
-    background: var(--bs-border-color, rgba(0, 0, 0, 0.08));
+    background: var(--surface-3);
     overflow: hidden;
 
     .hours-fill {
@@ -148,9 +141,9 @@
       border-radius: 3px;
       transition: width 0.4s ease;
 
-      &.fill-info    { background: var(--bs-info, #0dcaf0); }
-      &.fill-warning { background: var(--bs-warning, #ffc107); }
-      &.fill-success { background: var(--bs-success, #198754); }
+      &.fill-info    { background: var(--info); }
+      &.fill-warning { background: var(--warning); }
+      &.fill-success { background: var(--success); }
     }
   }
 }
@@ -164,13 +157,13 @@
 
   .created-name {
     font-size: 0.82rem;
-    font-weight: 500;
-    color: var(--text-primary, #1a1d23);
+    font-weight: var(--fw-500);
+    color: var(--text-1);
   }
 
   .created-date {
     font-size: 0.7rem;
-    color: var(--text-muted, #6c757d);
+    color: var(--text-muted);
   }
 }
 
@@ -181,7 +174,30 @@
   inset-inline-start: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-muted, #6c757d);
+  color: var(--text-muted);
   pointer-events: none;
   font-size: 0.85rem;
+}
+
+// ── Phones: the data table renders as cards — let cells use the full width ───
+
+@include bp.down(md) {
+  .page-cta { width: 100%; }
+
+  .task-title-cell { max-width: none; }
+
+  // Card lines are start-aligned; keep the hours meter next to its label.
+  .hours-cell {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6rem;
+
+    .hours-bar { flex: 0 1 96px; }
+  }
+
+  .assignees-cell {
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: 0.75rem;
+  }
 }

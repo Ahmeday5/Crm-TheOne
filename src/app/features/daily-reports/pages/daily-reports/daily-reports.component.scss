@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host { display: block; }
 
 .daily-reports {
@@ -17,7 +19,7 @@
     transition: transform 0.12s ease, box-shadow 0.12s ease;
 
     &.btn-primary {
-      box-shadow: 0 2px 8px rgba(13, 110, 253, 0.28);
+      box-shadow: var(--shadow-sm);
     }
 
     &:hover {
@@ -43,6 +45,7 @@
     background: rgba(124, 58, 237, 0.1);
     color: #7c3aed;
     white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .preview-block {
@@ -54,7 +57,6 @@
     p:last-child {
       color: var(--text-2);
       line-height: 1.55;
-      word-break: break-word;
     }
   }
 }
@@ -78,11 +80,28 @@
 }
 .btn-primary-soft:hover,
 .btn-primary-soft:focus {
-  background: var(--primary-soft, rgba(13, 110, 253, 0.1));
+  background: var(--brand-soft);
   border-color: var(--brand);
   color: var(--brand);
 }
 
 .empty-state {
   i { color: var(--text-muted); }
+}
+
+/* ─── phones ─── */
+@include bp.down(md) {
+  // Export tools + "new report" share the full width under the title.
+  .header-actions {
+    width: 100%;
+
+    .page-cta { flex: 1 1 auto; }
+  }
+
+  .scope-switch > .btn { flex: 1 1 0; }
+
+  // The active-range chip drops under the presets instead of squeezing them.
+  .range-chip { margin-inline-start: 0 !important; }
+
+  .report-card .card-actions .btn { min-height: 38px; }
 }

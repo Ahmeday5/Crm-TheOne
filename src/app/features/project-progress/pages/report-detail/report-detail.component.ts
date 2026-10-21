@@ -15,6 +15,8 @@ import { ProjectProgressService } from '../../services/project-progress.service'
   imports: [CommonModule, RouterLink, TranslatePipe, LoadErrorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './report-detail.component.html',
+  // Free-text sections keep the author's line breaks and never widen the card.
+  styles: [`.report-text { white-space: pre-line; overflow-wrap: anywhere; }`],
 })
 export class ReportDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);

@@ -9,78 +9,68 @@
   }
 } @else {
   @if (hasActiveGoal() && primaryGoal(); as goal) {
-    <div class="agb-banner" [class.agb-banner--urgent]="isUrgent(goal)">
-      <div class="agb-banner__pattern"></div>
-      <button type="button" class="agb-banner__close" (click)="dismiss()" [attr.aria-label]="'goals.banner.dismiss' | translate">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+    <section class="agb" [class.agb--urgent]="isUrgent(goal)" [attr.aria-label]="'goals.banner.eyebrow' | translate">
+      <!-- Decorative layers: drifting glow + dotted texture -->
+      <span class="agb__aurora" aria-hidden="true"></span>
+      <span class="agb__texture" aria-hidden="true"></span>
 
-      <div class="agb-banner__content">
-        <div class="agb-banner__icon-wrap">
-          <i class="fa-solid fa-bullseye agb-banner__icon"></i>
-          <span class="agb-banner__icon-ring"></span>
-        </div>
+      <!-- Row 1: identity · key numbers · actions -->
+      <header class="agb__head">
+        <span class="agb__icon" aria-hidden="true">
+          <i class="fa-solid fa-bullseye"></i>
+          <span class="agb__icon-ring"></span>
+        </span>
 
-        <div class="agb-banner__body">
-          <div class="agb-banner__eyebrow">
-            <span class="agb-banner__dot"></span>
+        <div class="agb__heading">
+          <span class="agb__eyebrow">
+            <span class="agb__dot" aria-hidden="true"></span>
             {{ 'goals.banner.eyebrow' | translate }}
             @if (isUrgent(goal)) {
-              <span class="agb-banner__urgent-tag">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                {{ 'goals.banner.urgent' | translate }}
-              </span>
+              <span class="agb__urgent"><i class="fa-solid fa-triangle-exclamation"></i>{{ 'goals.banner.urgent' | translate }}</span>
             }
-          </div>
-          <h3 class="agb-banner__title">{{ goal.title }}</h3>
-          @if (goal.description) {
-            <p class="agb-banner__desc">{{ goal.description }}</p>
-          }
-
-          <div class="agb-banner__progress">
-            <div class="agb-banner__progress-track">
-              <div class="agb-banner__progress-fill" [style.width.%]="achievementPercent(goal)"></div>
-            </div>
-            <div class="agb-banner__progress-meta">
-              <span class="agb-banner__progress-nums">
-                <strong>{{ formatNumber(goal.currentProgress) }}</strong>
-                <small> / {{ formatNumber(goal.targetValue) }}</small>
-              </span>
-              <span class="agb-banner__progress-pct">{{ achievementPercent(goal) }}%</span>
-            </div>
-          </div>
-
-          <div class="agb-banner__stats">
-            <div class="agb-stat">
-              <i class="fa-solid fa-clock agb-stat__icon"></i>
-              <span class="agb-stat__val">{{ daysLeft(goal) }}</span>
-              <span class="agb-stat__lbl">{{ 'goals.banner.daysLeft' | translate }}</span>
-            </div>
-            <div class="agb-stat">
-              <i class="fa-solid fa-star agb-stat__icon agb-stat__icon--gold"></i>
-              <span class="agb-stat__val">{{ formatNumber(goal.points) }}</span>
-              <span class="agb-stat__lbl">{{ 'goals.card.points' | translate }}</span>
-            </div>
-            <div class="agb-stat">
-              <i class="fa-solid fa-coins agb-stat__icon agb-stat__icon--green"></i>
-              <span class="agb-stat__val">{{ formatNumber(goal.financialReward) }}</span>
-              <span class="agb-stat__lbl">{{ 'goals.card.currency' | translate }}</span>
-            </div>
             @if (extraCount() > 0) {
-              <div class="agb-stat">
-                <i class="fa-solid fa-layer-group agb-stat__icon"></i>
-                <span class="agb-stat__val">+{{ extraCount() }}</span>
-                <span class="agb-stat__lbl">{{ 'goals.banner.more' | translate }}</span>
-              </div>
+              <span class="agb__more">+{{ extraCount() }} {{ 'goals.banner.more' | translate }}</span>
             }
-          </div>
+          </span>
+          <h3 class="agb__title" appClampText="1" [clampTitle]="goal.title"
+              [clampText]="goal.description || goal.title">{{ goal.title }}</h3>
         </div>
 
-        <button type="button" class="agb-banner__cta" (click)="viewGoal()">
-          <span>{{ 'goals.banner.cta' | translate }}</span>
-          <i class="fa-solid fa-arrow-up-right-from-square"></i>
-        </button>
-      </div>
-    </div>
+        <dl class="agb__stats">
+          <div class="agb__stat agb__stat--progress">
+            <dt>{{ 'goals.card.currentProgress' | translate }}</dt>
+            <dd>
+              <strong>{{ achievementPercent(goal) }}%</strong>
+              <small>{{ goal.currentProgress | money }} / {{ goal.targetValue | money }}</small>
+            </dd>
+          </div>
+          <div class="agb__stat">
+            <dt><i class="fa-regular fa-clock"></i>{{ 'goals.banner.daysLeft' | translate }}</dt>
+            <dd><strong>{{ daysLeft(goal) }}</strong></dd>
+          </div>
+          <div class="agb__stat">
+            <dt><i class="fa-solid fa-star agb__icon-gold"></i>{{ 'goals.card.points' | translate }}</dt>
+            <dd><strong>{{ formatNumber(goal.points) }}</strong></dd>
+          </div>
+          <div class="agb__stat">
+            <dt><i class="fa-solid fa-coins agb__icon-green"></i>{{ 'goals.card.reward' | translate }}</dt>
+            <dd><strong>{{ goal.financialReward | money }}</strong></dd>
+          </div>
+        </dl>
+
+        <div class="agb__actions">
+          <button type="button" class="agb__cta" (click)="viewGoal()">
+            {{ 'goals.banner.cta' | translate }}<i class="fa-solid fa-arrow-left agb__cta-arrow" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="agb__close" (click)="dismiss()"
+                  [attr.aria-label]="'goals.banner.dismiss' | translate" [title]="'goals.banner.dismiss' | translate">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Row 2: progress + the three commission rules -->
+      <app-goal-commission-guide class="agb__guide" tone="inverse" [goal]="goal" />
+    </section>
   }
 }

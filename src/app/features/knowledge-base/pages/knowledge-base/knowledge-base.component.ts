@@ -30,6 +30,7 @@ import {
   articleStatusBadgeClass,
   articleTypeBadgeClass,
 } from '../../../../shared/models';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ArticleDetailsDialogComponent } from '../../components/article-details-dialog/article-details-dialog.component';
 import { ArticleFormDialogComponent } from '../../components/article-form-dialog/article-form-dialog.component';
@@ -58,6 +59,7 @@ const TYPE_ACCENT: Record<string, string> = {
     PaginationComponent,
     ArticleFormDialogComponent,
     ArticleDetailsDialogComponent,
+    ClampTextDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './knowledge-base.component.html',

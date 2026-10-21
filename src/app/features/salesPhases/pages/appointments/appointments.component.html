@@ -1,15 +1,15 @@
 <div class="d-flex flex-column gap-4">
 
   <!-- Header -->
-  <div class="d-flex flex-column flex-md-row md:align-items-center justify-content-between gap-3">
-    <div>
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+    <div class="min-w-0">
       <h1 class="schedule-title mb-1">{{ 'sales.appointments.title' | translate }}</h1>
       <p class="text-secondary mb-0">{{ 'sales.appointments.subtitle' | translate }}</p>
     </div>
     <button type="button"
-            class="btn btn-primary d-flex align-items-center gap-2 fw-500 align-self-start"
+            class="btn btn-primary fw-500 align-self-stretch align-self-md-center flex-shrink-0"
             (click)="openCreate()">
-      <i class="fa-solid fa-plus"></i> {{ 'sales.appointments.add' | translate }}
+      <i class="fa-solid fa-plus"></i>{{ 'sales.appointments.add' | translate }}
     </button>
   </div>
 
@@ -126,7 +126,7 @@
   } @else {
     <div class="card">
       <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="mb-0 d-flex align-items-center gap-2">
+        <h5 class="mb-0 d-flex align-items-center gap-2 min-w-0">
           <i class="fa-solid fa-calendar-days text-primary"></i>
           {{ 'sales.appointments.tableTitle' | translate }}
           <span class="badge bg-primary-subtle text-primary">{{ totalCount() }}</span>
@@ -143,7 +143,7 @@
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
+          <table class="table table-hover align-middle mb-0" appResponsiveTable [rtPrimaryCol]="1">
             <thead>
               <tr>
                 <th class="ps-3">#</th>
@@ -157,7 +157,7 @@
                 <th class="text-nowrap">{{ 'sales.appointments.table.end' | translate }}</th>
                 <th>{{ 'sales.appointments.table.location' | translate }}</th>
                 <th>{{ 'sales.appointments.table.meetingLink' | translate }}</th>
-                <th class="text-end pe-3" style="width:1%">
+                <th class="rt-actions text-end pe-3" style="width:1%">
                   {{ 'sales.appointments.table.actions' | translate }}
                 </th>
               </tr>
@@ -166,10 +166,11 @@
               @for (row of visibleRows(); track trackById($index, row)) {
                 <tr>
                   <td class="ps-3 fw-bold text-primary">#{{ row.id }}</td>
-                  <td class="min-w-0" style="max-width:240px">
-                    <div class="fw-600 text-truncate">{{ row.title || '—' }}</div>
+                  <td class="apt-title-cell">
+                    <div class="fw-600" appClampText="1">{{ row.title || '—' }}</div>
                     @if (row.description) {
-                      <small class="text-muted text-truncate d-block">{{ row.description }}</small>
+                      <small class="text-muted d-block fw-normal" appClampText="1"
+                             [clampTitle]="row.title">{{ row.description }}</small>
                     }
                   </td>
                   <td class="text-nowrap">{{ row.customerFullName || '—' }}</td>
@@ -202,15 +203,18 @@
                   <td class="text-nowrap">
                     <i class="fa-regular fa-calendar text-muted me-1"></i>{{ formatDateTime(row.endDate) }}
                   </td>
-                  <td class="text-nowrap">
+                  <td class="apt-location-cell">
                     @if (row.location) {
-                      <i class="fa-solid fa-location-dot text-muted me-1"></i>{{ row.location }}
+                      <span class="d-flex align-items-start gap-1">
+                        <i class="fa-solid fa-location-dot text-muted mt-1"></i>
+                        <span class="min-w-0" appClampText="1">{{ row.location }}</span>
+                      </span>
                     } @else { — }
                   </td>
                   <td>
                     @if (row.meetingLink) {
                       <a [href]="row.meetingLink" target="_blank" rel="noopener"
-                         class="text-decoration-none text-truncate d-inline-block" style="max-width:160px">
+                         class="apt-link text-decoration-none text-truncate d-inline-block">
                         <i class="fa-solid fa-video me-1"></i>{{ row.meetingLink }}
                       </a>
                     } @else { — }

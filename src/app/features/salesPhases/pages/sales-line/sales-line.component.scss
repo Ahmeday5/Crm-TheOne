@@ -1,1 +1,22 @@
-/* Styling driven entirely by global theme — see src/styles/_tokens.scss */
+@use 'breakpoints' as bp;
+
+// Pipeline stages: on phones the board scrolls sideways inside its own
+// strip (one stage per swipe, the next one peeking in) instead of squeezing
+// two narrow stages per row or widening the page.
+@include bp.down(md) {
+  .sl-board {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: calc(var(--bs-gutter-x) * 0.5);
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.5rem;
+
+    > [class*='col'] {
+      flex: 0 0 85%;
+      max-width: 85%;
+      scroll-snap-align: start;
+    }
+  }
+}

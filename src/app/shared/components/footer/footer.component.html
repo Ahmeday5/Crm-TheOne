@@ -7,7 +7,7 @@
     </span>
 
     <!-- Quick links -->
-    <div class="d-flex flex-wrap align-items-center gap-3 small">
+    <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-2 gap-md-3 small min-w-0">
       @if (company.websiteHref()) {
         <a class="app-footer__link" [href]="company.websiteHref()" target="_blank" rel="noopener">
           <i class="fa-solid fa-globe me-1"></i>{{ company.website() }}

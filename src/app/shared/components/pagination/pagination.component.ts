@@ -2,10 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
 /**
@@ -27,6 +29,10 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
  * The page-number window keeps the current page centered with up to 5
  * numeric buttons (e.g. `1 … 4 5 [6] 7 8 … 20`), with first/last anchors
  * and ellipses on either side when the range is wider than the window.
+ *
+ * On phones it switches to a compact, fixed-width layout that can never
+ * overflow the screen: `« ‹ 5 [6] 7 › »` — first/last become icon buttons
+ * and only the immediate neighbours of the current page are shown.
  */
 export interface PageWindowItem {
   page: number | null;
@@ -35,6 +41,7 @@ export interface PageWindowItem {
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 const WINDOW_SIZE = 5;
+const COMPACT_WINDOW_SIZE = 3;
 
 @Component({
   selector: 'app-pagination',
@@ -54,6 +61,8 @@ export class PaginationComponent {
 
   readonly pageChange = output<number>();
   readonly pageSizeChange = output<number>();
+
+  protected readonly compact = inject(BreakpointService).isMobile;
 
   protected readonly totalPages = computed(() => {
     const total = this.count();
@@ -79,6 +88,7 @@ export class PaginationComponent {
     const total = this.totalPages();
     const current = this.pageIndex();
     if (total <= 0) return [];
+    if (this.compact()) return compactWindow(current, total);
     if (total <= WINDOW_SIZE + 2) {
       return Array.from({ length: total }, (_, i) => ({
         page: i + 1,
@@ -101,6 +111,14 @@ export class PaginationComponent {
     items.push({ page: total, active: current === total });
     return items;
   });
+
+  protected first(): void {
+    this.goTo(1);
+  }
+
+  protected last(): void {
+    this.goTo(this.totalPages());
+  }
 
   protected goTo(page: number | null): void {
     if (page === null || this.disabled()) return;
@@ -125,4 +143,17 @@ export class PaginationComponent {
     if (size === this.pageSize()) return;
     this.pageSizeChange.emit(size);
   }
+}
+
+/** `‹ 5 [6] 7 ›` — current page plus its neighbours, clamped to the range. */
+function compactWindow(current: number, total: number): PageWindowItem[] {
+  const size = Math.min(COMPACT_WINDOW_SIZE, total);
+  const start = Math.min(
+    Math.max(1, current - Math.floor(size / 2)),
+    total - size + 1,
+  );
+  return Array.from({ length: size }, (_, i) => ({
+    page: start + i,
+    active: start + i === current,
+  }));
 }

@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host {
   display: block;
 }
@@ -51,11 +53,13 @@
 }
 
 .tkt-title-cell {
-  max-width: 16rem;
+  min-width: 12rem;
+  max-width: 18rem;
 }
 
-.min-w-0 {
-  min-width: 0;
+/* shrink-wrap the toolbar column on desktop */
+.tkt-actions-col {
+  width: 1%;
 }
 
 /* ── next-follow-up cell ──────────────────────────────────────── */
@@ -100,6 +104,19 @@
 
 :root[data-theme='dark'] .tkt-followup-cell.is-open {
   background: rgba(245, 158, 11, 0.14);
+}
+
+/* Card mode (phones): the cell chrome is reset by the responsive table,
+ * so keep the follow-up urgency on the badge itself. */
+@include bp.down(md) {
+  .tkt-title-cell {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .tkt-followup {
+    white-space: normal;
+  }
 }
 
 @keyframes tkt-followup-pulse {

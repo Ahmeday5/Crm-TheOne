@@ -4,6 +4,7 @@
     [subtitle]="'dashboard.sales.subtitle' | translate"
     icon="fa-solid fa-chart-line">
     <app-active-goal-banner variant="pill"></app-active-goal-banner>
+    <app-refresh-button [loading]="loading()" (refresh)="reload()" />
   </app-page-header>
 
   <app-active-goal-banner variant="banner"></app-active-goal-banner>

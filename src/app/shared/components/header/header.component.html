@@ -1,44 +1,82 @@
 <header class="app-header sticky-top border-bottom shadow-sm">
-  <div class="d-flex align-items-center justify-content-between gap-3 h-100 px-3 px-lg-4">
+  <div class="app-header__bar d-flex align-items-center justify-content-between h-100 px-2 px-sm-3 px-lg-4">
 
-    <!-- Left: brand + sidebar toggle -->
-    <div class="d-flex align-items-center gap-3">
-      <button class="btn-icon d-lg-none" type="button" data-sidebar-toggle (click)="toggleSidebar()" aria-label="menu">
-        <i class="fa-solid fa-bars fs-3"></i>
+    <!-- Start: sidebar toggle + brand (shrinks first so the controls never overflow) -->
+    <div class="app-header__brand d-flex align-items-center min-w-0">
+      <button class="btn-icon d-lg-none flex-shrink-0" type="button" data-sidebar-toggle (click)="toggleSidebar()" aria-label="menu">
+        <i class="fa-solid fa-bars fs-4"></i>
       </button>
 
-      <div class="d-flex align-items-center gap-3">
+      <div class="d-flex align-items-center gap-2 gap-sm-3 min-w-0">
         <img [src]="brandLogo() || fallbackLogo" class="brand-logo" alt="logo" (error)="onLogoError($event)">
-        <div class="d-none d-sm-block">
-          <h1 class="brand-title mb-0">{{ brandName() || ('header.app' | translate) }}</h1>
-          <small class="text-muted d-block">{{ 'header.tagline' | translate }}</small>
+        <div class="d-none d-sm-block min-w-0">
+          <h1 class="brand-title mb-0 text-truncate">{{ brandName() || ('header.app' | translate) }}</h1>
+          <small class="text-muted d-block text-truncate">{{ 'header.tagline' | translate }}</small>
         </div>
       </div>
     </div>
 
-    <!-- Right: language, theme, notifications, user -->
-    <div class="d-flex align-items-center gap-2">
-      <app-language-toggle></app-language-toggle>
+    <!-- End: language, theme, notifications, user -->
+    <div class="app-header__actions d-flex align-items-center flex-shrink-0">
+      <!-- On phones the language switch moves into the profile menu to save room. -->
+      <app-language-toggle class="d-none d-sm-block"></app-language-toggle>
       <app-theme-toggle></app-theme-toggle>
 
       <app-notifications-bell></app-notifications-bell>
 
       <div class="dropdown">
-        <button class="btn btn-light d-flex align-items-center gap-2 user-pill" type="button" data-bs-toggle="dropdown">
-          <span class="user-avatar"><i class="fa-solid fa-user"></i></span>
-          <span class="d-none d-md-inline-block text-start">
-            <span class="d-block fw-700 text-truncate" style="max-width: 180px;">{{ currentUser()?.fullName ||
+        <button class="btn btn-light d-flex align-items-center gap-2 user-pill" type="button" data-bs-toggle="dropdown"
+          [attr.aria-label]="'header.profile' | translate">
+          <app-user-avatar class="header-avatar" [name]="displayName()" [imageUrl]="currentUser()?.imageUrl" />
+          <span class="d-none d-md-inline-block text-start min-w-0">
+            <span class="user-pill__name d-block fw-700 text-truncate">{{ currentUser()?.fullName ||
               currentUser()?.email || ('header.profile' | translate) }}</span>
             <small class="text-muted">{{ currentRoleLabel() }}</small>
           </span>
         </button>
 
         <ul class="dropdown-menu dropdown-menu-end">
+          <!-- Identity summary — the pill only shows the avatar below md. -->
+          <li class="d-md-none px-3 pt-1 pb-2">
+            <span class="d-block fw-700 text-truncate">{{ currentUser()?.fullName ||
+              currentUser()?.email || ('header.profile' | translate) }}</span>
+            <small class="text-muted">{{ currentRoleLabel() }}</small>
+          </li>
+          <li class="d-md-none">
+            <hr class="dropdown-divider">
+          </li>
+
+          <!-- Language (phones only — the toolbar toggle is hidden there). -->
+          <li class="d-sm-none">
+            <h6 class="dropdown-header">{{ 'header.language' | translate }}</h6>
+          </li>
+          @for (l of langs; track l.key) {
+            <li class="d-sm-none">
+              <button type="button" class="dropdown-item d-flex align-items-center justify-content-between"
+                [class.active]="lang() === l.key" (click)="setLang(l.key)">
+                <span>{{ l.label }}</span>
+                @if (lang() === l.key) {
+                  <i class="fa-solid fa-check"></i>
+                }
+              </button>
+            </li>
+          }
+          <li class="d-sm-none">
+            <hr class="dropdown-divider">
+          </li>
+
+          <li>
+            <a routerLink="/account" class="dropdown-item">
+              <i class="fa-solid fa-circle-user me-2"></i>{{ 'header.myAccount' | translate }}
+            </a>
+          </li>
+          @if (isAdmin()) {
           <li>
             <a routerLink="/settings/users" class="dropdown-item">
               <i class="fa-solid fa-gear me-2"></i>{{ 'header.settings' | translate }}
             </a>
           </li>
+          }
           <li>
             <hr class="dropdown-divider">
           </li>

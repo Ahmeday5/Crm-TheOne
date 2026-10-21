@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host { display: contents; }
 
 .app-panel-backdrop {
@@ -37,6 +39,8 @@
   padding: 1.05rem 1.25rem;
   border-bottom: 1px solid var(--border);
   flex: 0 0 auto;
+
+  @include bp.down(sm) { padding: 0.85rem 1rem; }
 }
 
 .app-panel-title {
@@ -47,11 +51,16 @@
   margin: 0;
   font-size: var(--fs-lg);
   color: var(--text-1);
+  min-width: 0;
+
+  > span:last-child { overflow-wrap: anywhere; }
+  .icon-tile { flex-shrink: 0; }
 }
 
 .app-panel-close {
   width: 36px;
   height: 36px;
+  flex-shrink: 0;
   border: 0;
   background: transparent;
   border-radius: var(--radius-md);
@@ -71,7 +80,14 @@
 .app-panel-body {
   padding: 1.25rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
   flex: 1 1 auto;
+  min-height: 0;
+
+  @include bp.down(sm) {
+    padding: 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 @keyframes app-panel-fade { from { opacity: 0; } to { opacity: 1; } }
@@ -80,9 +96,11 @@
   to   { transform: translateX(0); }
 }
 
-[dir="rtl"] {
-  @keyframes app-panel-slide-in {
-    from { transform: translateX(-100%); }
-    to   { transform: translateX(0); }
-  }
+/* RTL: the panel docks on the left, so it slides in from the left. (A
+   keyframes block nested under [dir] is hoisted globally by Sass and would
+   override the LTR one, hence a separately named animation.) */
+@keyframes app-panel-slide-in-rtl {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
 }
+:host-context([dir='rtl']) .app-panel { animation-name: app-panel-slide-in-rtl; }

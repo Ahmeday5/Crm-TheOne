@@ -1,1 +1,52 @@
+@use 'breakpoints' as bp;
+
 /* Styling driven entirely by global theme — see src/styles/_tokens.scss */
+
+// ── Project title cell (title + one-line description) ─────────────────────────
+
+.project-title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 320px;
+
+  .project-name {
+    font-weight: var(--fw-600);
+    line-height: 1.4;
+    color: var(--text-1);
+  }
+
+  .project-desc {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-400);
+    color: var(--text-muted);
+  }
+}
+
+.progress-thin { height: 8px; }
+
+// ── Search icon alignment ─────────────────────────────────────────────────────
+
+.search-icon {
+  position: absolute;
+  inset-inline-start: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  font-size: 0.85rem;
+}
+
+@include bp.down(md) {
+  .page-cta { width: 100%; }
+
+  // All / Active switch spans the card as two equal segments.
+  .tab-switch {
+    display: flex;
+    width: 100%;
+
+    > .btn { flex: 1 1 0; }
+  }
+
+  .project-title-cell { max-width: none; }
+}

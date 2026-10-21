@@ -39,6 +39,17 @@ function workingDayValidator(): ValidatorFn {
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe, LoadErrorComponent, FormErrorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './my-project-progress.component.html',
+  styles: [
+    `
+      @use 'breakpoints' as bp;
+
+      .progress-lg { height: 10px; }
+
+      @include bp.down(md) {
+        .submit-btn { width: 100%; }
+      }
+    `,
+  ],
 })
 export class MyProjectProgressComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);

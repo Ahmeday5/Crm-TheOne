@@ -1,14 +1,22 @@
 .sidebar {
   width: var(--sidebar-w);
   height: calc(100vh - var(--header-h));
+  height: calc(100dvh - var(--header-h));
   background: var(--surface-0);
   border-inline-end: 1px solid var(--border);
   padding: 0.75rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
   transition:
     width 0.25s ease,
     transform 0.3s ease;
   flex-shrink: 0;
+}
+
+/* Breathing room under the last link (and the iOS home indicator) so the
+ * final item can always be scrolled fully into view. */
+.sidebar-nav {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* Brand block (tenant logo + trade name) */
@@ -179,14 +187,18 @@
 }
 
 /* ---------- Mobile drawer ----------
- * Pin to the appropriate edge with explicit `right`/`left`,
- * then slide in/out with translate3d (consistent across browsers).
+ * Anchored top *and* bottom instead of using a `100vh` height: on mobile
+ * browsers `100vh` includes the area behind the URL bar, which pushed the
+ * last menu items (e.g. the leaderboard) below the visible screen where
+ * they could never be scrolled to. Slides in/out with translate3d.
  */
 @media (max-width: 992px) {
   .sidebar {
     position: fixed;
     top: var(--header-h);
-    height: calc(100vh - var(--header-h));
+    bottom: 0;
+    inset-inline-start: 0;
+    height: auto;
     z-index: 1040;
     box-shadow: var(--shadow-lg);
     width: min(86vw, 320px);
@@ -196,8 +208,7 @@
     opacity: 0;
     pointer-events: none;
 
-    /* 👇 أهم سطر */
-    transition: transform 0.4s ease, opacity 0.4s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
   }
 
   [dir="ltr"] .sidebar {

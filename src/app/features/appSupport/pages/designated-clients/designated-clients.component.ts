@@ -49,6 +49,8 @@ import {
 } from '../../../leads/utils/customer-status.util';
 import { ChannelSourcesService } from '../../../marketing-campaigns/services/channel-sources.service';
 import { ConsultationDialogComponent } from '../../components/consultation-dialog/consultation-dialog.component';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -87,6 +89,8 @@ interface SourceItem {
     CustomerDetailsDialogComponent,
     CustomerNoteDialogComponent,
     ConsultationDialogComponent,
+    ClampTextDirective,
+    ResponsiveTableDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './designated-clients.component.html',

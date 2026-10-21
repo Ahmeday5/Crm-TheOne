@@ -1,4 +1,20 @@
-:host { display: block; }
+@use 'breakpoints' as bp;
+@use '../../report-page' as report;
+
+@include report.page;
+
+/* Segmented format picker — equal segments that shrink with the column. */
+.format-switch > .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-inline: 0.5rem;
+}
+
+/* Run (fills) + icon-only reset / save — all the same height. */
+.builder-actions > .btn:not(.flex-grow-1) {
+  flex: 0 0 auto;
+  min-width: 2.5rem;
+}
 
 .custom-preview {
   min-height: 220px;
@@ -6,4 +22,9 @@
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
+
+  @include bp.down(md) {
+    min-height: 160px;
+    padding: 1rem;
+  }
 }

@@ -1,9 +1,11 @@
-<div class="app-pagination" [attr.aria-busy]="disabled() ? 'true' : null">
+<div class="app-pagination"
+     [class.is-compact]="compact()"
+     [attr.aria-busy]="disabled() ? 'true' : null">
   <div class="app-pagination-info">
     @if (count() === 0) {
       <span class="text-muted">{{ 'common.no_results' | translate }}</span>
     } @else {
-      <span class="text-muted">
+      <span class="app-pagination-range text-muted">
         {{ 'common.showing' | translate }}
         <strong>{{ fromIndex() }}</strong>
         –
@@ -29,7 +31,17 @@
   </div>
 
   @if (totalPages() > 1) {
-    <nav class="app-pagination-nav" aria-label="pagination">
+    <nav class="app-pagination-nav" [attr.aria-label]="'common.page' | translate">
+      @if (compact()) {
+        <button type="button"
+                class="page-btn page-step"
+                [disabled]="!canPrev() || disabled()"
+                [attr.aria-label]="'common.first_page' | translate"
+                (click)="first()">
+          <i class="fa-solid fa-angles-right"></i>
+        </button>
+      }
+
       <button type="button"
               class="page-btn page-step"
               [disabled]="!canPrev() || disabled()"
@@ -60,6 +72,16 @@
               (click)="next()">
         <i class="fa-solid fa-chevron-left"></i>
       </button>
+
+      @if (compact()) {
+        <button type="button"
+                class="page-btn page-step"
+                [disabled]="!canNext() || disabled()"
+                [attr.aria-label]="'common.last_page' | translate"
+                (click)="last()">
+          <i class="fa-solid fa-angles-left"></i>
+        </button>
+      }
     </nav>
   }
 </div>

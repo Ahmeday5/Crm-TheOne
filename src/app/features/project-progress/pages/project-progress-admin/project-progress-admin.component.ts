@@ -29,6 +29,7 @@ import {
   ProjectProgressSummaryDto,
   ProjectTeamMemberResponseDto,
 } from '../../../../shared/models';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ProjectsService } from '../../../ProjectsTasks/services/projects.service';
 import { AdjustProgressDialogComponent } from '../../components/adjust-progress-dialog/adjust-progress-dialog.component';
@@ -48,6 +49,7 @@ const DEFAULT_PAGE_SIZE = 10;
     FormsModule,
     RouterLink,
     TranslatePipe,
+    ClampTextDirective,
     DataTableComponent,
     EmptyStateComponent,
     LoadErrorComponent,
@@ -59,6 +61,7 @@ const DEFAULT_PAGE_SIZE = 10;
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './project-progress-admin.component.html',
+  styleUrl: './project-progress-admin.component.scss',
 })
 export class ProjectProgressAdminComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -135,6 +138,8 @@ export class ProjectProgressAdminComponent implements OnInit {
     viewChild<TemplateRef<{ $implicit: ProjectDailyReportListDto }>>('reportDateCell');
   private readonly reportDeveloperCell =
     viewChild<TemplateRef<{ $implicit: ProjectDailyReportListDto }>>('reportDeveloperCell');
+  private readonly reportPreviewCell =
+    viewChild<TemplateRef<{ $implicit: ProjectDailyReportListDto }>>('reportPreviewCell');
   private readonly reportContributionCell =
     viewChild<TemplateRef<{ $implicit: ProjectDailyReportListDto }>>('reportContributionCell');
 
@@ -155,6 +160,7 @@ export class ProjectProgressAdminComponent implements OnInit {
       key: 'completedWorkPreview',
       label: 'projectProgress.admin.table.preview',
       i18nLabel: true,
+      cellTemplate: this.reportPreviewCell(),
     },
     {
       key: 'appliedProgressContribution',

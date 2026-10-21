@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host { display: block; }
 
 .search-icon {
@@ -7,4 +9,23 @@
   transform: translateY(-50%);
   color: var(--text-3);
   pointer-events: none;
+}
+
+@include bp.down(lg) {
+  /* Five KPI tiles two-per-row: the odd last one spans the row. */
+  .kpi-col:last-child:nth-child(odd) { width: 100%; }
+}
+
+@include bp.down(md) {
+  .campaigns-heading .icon-tile.xl {
+    width: 48px;
+    height: 48px;
+    font-size: 1.15rem;
+  }
+
+  /* Full-width toolbar: square refresh + the primary action. */
+  .campaigns-toolbar {
+    width: 100%;
+    grid-template-columns: 2.75rem 1fr;
+  }
 }

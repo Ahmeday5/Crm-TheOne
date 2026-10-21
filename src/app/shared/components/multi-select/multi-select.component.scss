@@ -1,4 +1,6 @@
-:host { display: block; position: relative; }
+@use 'breakpoints' as bp;
+
+:host { display: block; position: relative; min-width: 0; }
 
 /* ─────────── Wrapper ─────────── */
 .ms-wrapper {
@@ -78,6 +80,7 @@
   font-weight: 600;
   line-height: 1.4;
   max-width: 16ch;
+  min-width: 0;
 }
 
 .ms-chip-text {
@@ -315,3 +318,14 @@
   border-radius: 999px;
 }
 .ms-list::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* ─────────── Phones ─────────── */
+/* Bigger touch targets, a list that leaves room for the on-screen keyboard,
+   and a 16px search font so iOS Safari doesn't zoom the page on focus. */
+@include bp.down(md) {
+  .ms-search-input { font-size: 16px; }
+  .ms-search-clear { width: 28px; height: 28px; }
+  .ms-list { max-height: min(260px, 40dvh); }
+  .ms-option { min-height: 42px; }
+  .ms-chip-remove { width: 20px; height: 20px; }
+}

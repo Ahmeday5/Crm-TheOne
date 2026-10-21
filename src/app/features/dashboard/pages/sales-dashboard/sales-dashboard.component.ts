@@ -28,6 +28,7 @@ import {
   resolveCustomerStatus,
 } from '../../../leads/utils/customer-status.util';
 import { SalesService } from '../../services/sales.service';
+import { RefreshButtonComponent } from '../../../../shared/components/refresh-button/refresh-button.component';
 
 /**
  * Sales rep / admin dashboard.
@@ -49,6 +50,7 @@ import { SalesService } from '../../services/sales.service';
   selector: 'app-sales-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     CommonModule,
     NgApexchartsModule,
     TranslatePipe,
@@ -84,6 +86,10 @@ export class SalesDashboardComponent implements OnInit {
   readonly loadingStats = signal(true);
   readonly loadingPipeline = signal(true);
   readonly loadingLeads = signal(true);
+  /** Any section still loading — drives the refresh button. */
+  readonly loading = computed(
+    () => this.loadingStats() || this.loadingPipeline() || this.loadingLeads(),
+  );
   readonly loadError = signal<string | null>(null);
 
   /** Empty-safe view-model for the KPI strip. */

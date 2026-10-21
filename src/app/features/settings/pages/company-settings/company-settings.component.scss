@@ -1,4 +1,10 @@
 .company-settings {
+  .identity-hint {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
   .cs-preview {
     flex-shrink: 0;
     border: 1px solid var(--border, #e5e7eb);

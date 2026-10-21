@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
+import { onCacheInvalidated } from '../../../../core/http/cache-invalidation.util';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -33,6 +34,8 @@ import {
   AppointmentStatus,
   AppointmentType,
 } from '../../../../shared/models';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { AppointmentFormDialogComponent } from '../../components/appointment-form-dialog/appointment-form-dialog.component';
 import { AppointmentsService } from '../../services/appointments.service';
@@ -53,6 +56,8 @@ const DEFAULT_PAGE_SIZE = 10;
     TableToolsComponent,
     ModalComponent,
     AppointmentFormDialogComponent,
+    ResponsiveTableDirective,
+    ClampTextDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './appointments.component.html',
@@ -109,6 +114,15 @@ export class AppointmentsComponent implements OnInit {
       return (t === 'all' || rt === t) && (s === 'all' || rs === s);
     });
   });
+
+  constructor() {
+    // Appointments created elsewhere (e.g. "transfer to support" on the leads
+    // page, or another tab) appear without a manual refresh. Own mutations
+    // already reload, so skip while a load is in flight.
+    onCacheInvalidated('Appointments', () => {
+      if (!this.loading()) this.reload(true);
+    });
+  }
 
   ngOnInit(): void {
     this.loadCustomers();

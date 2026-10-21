@@ -9,23 +9,25 @@
         <i class="fa-solid fa-trophy"></i>
         <span class="gp-header__icon-pulse"></span>
       </div>
-      <div>
+      <div class="min-w-0">
         <h1 class="gp-header__title">
           {{ (isAdmin() ? 'goals.title' : 'goals.myTitle') | translate }}
         </h1>
-        <p class="gp-header__sub">
+        <p class="gp-header__sub" appClampText="2"
+           [clampTitle]="(isAdmin() ? 'goals.title' : 'goals.myTitle') | translate">
           {{ (isAdmin() ? 'goals.subtitle' : 'goals.mySubtitle') | translate }}
         </p>
       </div>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <a routerLink="/goals/leaderboard" class="btn btn-light">
-        <i class="fa-solid fa-ranking-star me-1"></i>{{ 'goals.leaderboard.title' | translate }}
+    <div class="gp-header__actions">
+      <a routerLink="/goals/leaderboard" class="btn btn-light gp-header__lb">
+        <i class="fa-solid fa-ranking-star"></i>{{ 'goals.leaderboard.title' | translate }}
       </a>
-      <button type="button" class="btn btn-light" [disabled]="loading()"
+      <button type="button" class="btn btn-light gp-header__refresh" [disabled]="loading()"
               (click)="load(true)"
-              [title]="'tableTools.refresh' | translate">
-        <i class="fa-solid fa-rotate-right"></i>
+              [title]="'tableTools.refresh' | translate"
+              [attr.aria-label]="'tableTools.refresh' | translate">
+        <i class="fa-solid fa-rotate-right" [class.fa-spin]="loading()"></i>
       </button>
       @if (isAdmin()) {
         <button type="button" class="gp-add-btn" (click)="openCreate()">
@@ -49,7 +51,7 @@
     @if (stats(); as s) {
       <div class="gs-grid">
 
-        <div class="gs-card gs-card--indigo" (click)="null">
+        <div class="gs-card gs-card--indigo">
           <div class="gs-card__bg-icon"><i class="fa-solid fa-bullseye"></i></div>
           <div class="gs-card__icon"><i class="fa-solid fa-bullseye"></i></div>
           <div class="gs-card__body">
@@ -116,7 +118,7 @@
           <div class="glb-section__head">
             <div class="glb-section__title-wrap">
               <span class="glb-trophy-icon">🏆</span>
-              <div>
+              <div class="min-w-0">
                 <h2 class="glb-title">{{ 'goals.leaderboard.title' | translate }}</h2>
                 <p class="glb-subtitle">{{ 'goals.leaderboard.subtitle' | translate }}</p>
               </div>
@@ -227,7 +229,7 @@
           @if (breakdownExpanded()) {
             <div class="gbd-body">
               <div class="table-responsive">
-                <table class="gbd-table">
+                <table class="gbd-table" appResponsiveTable>
                   <thead>
                     <tr>
                       <th>{{ 'goals.stats.colGoal' | translate }}</th>
@@ -244,7 +246,7 @@
                   <tbody>
                     @for (row of s.pointsBreakdown; track row.goalId) {
                       <tr>
-                        <td class="fw-semibold">{{ row.goalTitle }}</td>
+                        <td class="fw-semibold"><span appClampText="2" [clampTitle]="'goals.stats.colGoal' | translate">{{ row.goalTitle }}</span></td>
                         <td>
                           <span class="gbd-type"
                                 [class.gbd-type--ind]="row.goalType === 'Individual'"
@@ -267,12 +269,12 @@
                             {{ formatNumber(row.pointsEarned) }}
                           </span>
                         </td>
-                        <td class="text-end fw-semibold" style="color:#16a34a">
+                        <td class="text-end fw-semibold gbd-reward">
                           {{ formatNumber(row.rewardEarned) }}
                         </td>
-                        <td class="text-nowrap">
+                        <td>
                           <div class="gbd-user">
-                            <span class="gbd-user__av">{{ (row.userName||'?').charAt(0).toUpperCase() }}</span>
+                            <app-user-avatar [name]="row.userName" size="xs" />
                             {{ row.userName || '—' }}
                           </div>
                         </td>
@@ -398,12 +400,12 @@
               </span>
             </div>
             <!-- Title inside header -->
-            <h3 class="goal-card__header-title">{{ goal.title }}</h3>
+            <h3 class="goal-card__header-title" appClampText="2">{{ goal.title }}</h3>
             <!-- Assignee in header -->
             @if (goal.type === 'Individual' && goal.assignedToName) {
               <div class="goal-card__header-assignee">
-                <span class="gc-av">{{ goal.assignedToName.charAt(0).toUpperCase() }}</span>
-                <span>{{ goal.assignedToName }}</span>
+                <app-user-avatar class="gc-av-photo" [name]="goal.assignedToName" [userId]="goal.assignedToId" size="xs" />
+                <span class="text-truncate">{{ goal.assignedToName }}</span>
               </div>
             } @else if (goal.type === 'Team') {
               <div class="goal-card__header-assignee">
@@ -417,7 +419,7 @@
           <div class="goal-card__body">
 
             @if (goal.description) {
-              <p class="goal-card__desc">{{ goal.description }}</p>
+              <p class="goal-card__desc" appClampText="2" [clampTitle]="goal.title">{{ goal.description }}</p>
             }
 
             <!-- Progress section -->
@@ -436,6 +438,10 @@
                      [style.width.%]="achievementPercent(goal)"
                      [style.background]="achievementColor(achievementPercent(goal))">
                 </div>
+                @if (goal.commissionThresholdPercent; as threshold) {
+                  <span class="g-commission-mark" [style.inset-inline-start.%]="threshold"
+                        [title]="('goals.commission.marker' | translate) + ' ' + threshold + '%'"></span>
+                }
               </div>
               <div class="gcp-numbers">
                 <span>
@@ -449,6 +455,9 @@
                   </span>
                 }
               </div>
+              @if (goal.commissionThresholdPercent != null) {
+                <app-goal-commission class="gcp-commission" [goal]="goal" />
+              }
             </div>
 
             <!-- Metrics -->
@@ -529,15 +538,20 @@
               <div class="goal-card__actions">
                 <button type="button" class="gc-btn gc-btn--info"
                         [title]="'goals.detail.viewStats' | translate"
+                        [attr.aria-label]="'goals.detail.viewStats' | translate"
                         (click)="openGoalDetail(goal)">
                   <i class="fa-solid fa-chart-bar"></i>
                 </button>
                 @if (isAdmin()) {
                   <button type="button" class="gc-btn gc-btn--edit"
+                          [title]="'goals.form.editTitle' | translate"
+                          [attr.aria-label]="'goals.form.editTitle' | translate"
                           (click)="openEdit(goal)">
                     <i class="fa-solid fa-pen-to-square"></i>
                   </button>
                   <button type="button" class="gc-btn gc-btn--delete"
+                          [title]="'goals.confirm.deleteTitle' | translate"
+                          [attr.aria-label]="'goals.confirm.deleteTitle' | translate"
                           (click)="openDelete(goal)">
                     <i class="fa-solid fa-trash"></i>
                   </button>
@@ -566,7 +580,7 @@
 </section>
 
 <!-- ══════════════════════════════════════════════
-     GOAL DETAIL MODAL  (/Goals/{id}/stats)
+     GOAL DETAIL MODAL  (GET /Goals/{id})
 ══════════════════════════════════════════════ -->
 @if (goalDetailDialog(); as g) {
   <app-modal
@@ -577,170 +591,203 @@
     size="md"
     (closed)="closeGoalDetail()">
 
-    @if (goalDetailLoading()) {
-      <div class="d-flex align-items-center justify-content-center py-5">
-        <span class="spinner-border text-primary me-2"></span>
-      </div>
-    } @else {
-      <div class="gd-modal">
-        <!-- Banner -->
-        <div class="gd-banner" [class]="cardHeaderClass(g)">
-          <div class="gd-banner__pattern"></div>
-          <div class="gd-banner__badges">
-            <span class="gc-badge gc-badge--type">
-              <i [class]="g.type === 'Individual' ? 'fa-solid fa-user' : 'fa-solid fa-users'"></i>
-              {{ ('goals.type.' + g.type) | translate }}
-            </span>
-            <span class="gc-badge gc-badge--period">
-              <i [class]="periodIcon(g.period)"></i>
-              {{ ('goals.period.' + g.period) | translate }}
-            </span>
-          </div>
-          <h3 class="gd-banner__title">{{ g.title }}</h3>
-          @if (g.description) { <p class="gd-banner__desc">{{ g.description }}</p> }
+    <div class="gd-modal">
+      <!-- Banner -->
+      <div class="gd-banner" [class]="cardHeaderClass(g)">
+        <div class="gd-banner__pattern"></div>
+        <div class="gd-banner__badges">
+          <span class="gc-badge gc-badge--type">
+            <i [class]="g.type === 'Individual' ? 'fa-solid fa-user' : 'fa-solid fa-users'"></i>
+            {{ ('goals.type.' + g.type) | translate }}
+          </span>
+          <span class="gc-badge gc-badge--period">
+            <i [class]="periodIcon(g.period)"></i>
+            {{ ('goals.period.' + g.period) | translate }}
+          </span>
         </div>
+        <h3 class="gd-banner__title">{{ g.title }}</h3>
+        @if (g.description) { <p class="gd-banner__desc">{{ g.description }}</p> }
+      </div>
 
-        <!-- Stats grid -->
-        <div class="gd-stats">
+      <!-- Stats grid -->
+      <div class="gd-stats">
+        <div class="gd-stat">
+          <span class="gd-stat__label">{{ 'goals.card.currentProgress' | translate }}</span>
+          <span class="gd-stat__val gd-stat__val--accent">{{ formatNumber(g.currentProgress) }}</span>
+        </div>
+        <div class="gd-stat">
+          <span class="gd-stat__label">{{ 'goals.card.target' | translate }}</span>
+          <span class="gd-stat__val">{{ formatNumber(g.targetValue) }}</span>
+        </div>
+        <div class="gd-stat">
+          <span class="gd-stat__label">{{ 'goals.detail.achievementRate' | translate }}</span>
+          <span class="gd-stat__val"
+                [style.color]="achievementColor(achievementPercent(g))">
+            {{ achievementPercent(g) }}%
+          </span>
+        </div>
+        <div class="gd-stat">
+          <span class="gd-stat__label">{{ 'goals.card.points' | translate }}</span>
+          <span class="gd-stat__val gd-stat__val--gold">
+            <i class="fa-solid fa-star gd-stat__icon"></i>
+            {{ formatNumber(g.points) }}
+          </span>
+        </div>
+        <div class="gd-stat">
+          <span class="gd-stat__label">{{ 'goals.card.reward' | translate }}</span>
+          <span class="gd-stat__val gd-stat__val--green">{{ formatNumber(g.financialReward) }} {{ 'goals.card.currency' | translate }}</span>
+        </div>
+        @if (g.isAchieved && g.achievedAt) {
           <div class="gd-stat">
-            <span class="gd-stat__label">{{ 'goals.card.currentProgress' | translate }}</span>
-            <span class="gd-stat__val gd-stat__val--accent">{{ formatNumber(g.currentProgress) }}</span>
+            <span class="gd-stat__label">{{ 'goals.card.achievedOn' | translate }}</span>
+            <span class="gd-stat__val gd-stat__val--green">{{ formatDate(g.achievedAt) }}</span>
           </div>
-          <div class="gd-stat">
-            <span class="gd-stat__label">{{ 'goals.card.target' | translate }}</span>
-            <span class="gd-stat__val">{{ formatNumber(g.targetValue) }}</span>
+        }
+      </div>
+
+      <!-- Progress bar (+ commission threshold marker) -->
+      <div class="gd-progress">
+        <div class="gd-progress__track">
+          <div class="gd-progress__fill"
+               [style.width.%]="achievementPercent(g)"
+               [style.background]="achievementColor(achievementPercent(g))">
           </div>
-          <div class="gd-stat">
-            <span class="gd-stat__label">{{ 'goals.detail.achievementRate' | translate }}</span>
-            <span class="gd-stat__val"
-                  [style.color]="achievementColor(achievementPercent(g))">
-              {{ achievementPercent(g) }}%
-            </span>
-          </div>
-          <div class="gd-stat">
-            <span class="gd-stat__label">{{ 'goals.card.points' | translate }}</span>
-            <span class="gd-stat__val gd-stat__val--gold">
-              <i class="fa-solid fa-star" style="font-size:.75em"></i>
-              {{ formatNumber(g.points) }}
-            </span>
-          </div>
-          <div class="gd-stat">
-            <span class="gd-stat__label">{{ 'goals.card.reward' | translate }}</span>
-            <span class="gd-stat__val gd-stat__val--green">{{ formatNumber(g.financialReward) }} {{ 'goals.card.currency' | translate }}</span>
-          </div>
-          @if (g.isAchieved && g.achievedAt) {
-            <div class="gd-stat">
-              <span class="gd-stat__label">{{ 'goals.card.achievedOn' | translate }}</span>
-              <span class="gd-stat__val gd-stat__val--green">{{ formatDate(g.achievedAt) }}</span>
-            </div>
+          @if (g.commissionThresholdPercent; as threshold) {
+            <span class="g-commission-mark" [style.inset-inline-start.%]="threshold"
+                  [title]="('goals.commission.marker' | translate) + ' ' + threshold + '%'"></span>
           }
         </div>
+        @if (g.commissionThresholdPercent != null) {
+          <app-goal-commission class="gd-commission" [goal]="g" />
+        }
+      </div>
 
-        <!-- Progress bar -->
-        <div class="gd-progress">
-          <div class="gd-progress__track">
-            <div class="gd-progress__fill"
-                 [style.width.%]="achievementPercent(g)"
-                 [style.background]="achievementColor(achievementPercent(g))">
+      <!-- Earned so far (prorated by progress) — individual goals only;
+           team goals show the per-member breakdown below instead. -->
+      @if (g.type === 'Individual') {
+        <div class="gd-earned">
+          <div class="gd-earned__head">
+            <i class="fa-solid fa-wallet"></i>
+            <span>{{ 'goals.detail.earnedSoFar' | translate }}</span>
+            <span class="gd-earned__pct">{{ g.progressPercent }}%</span>
+          </div>
+          <div class="gd-earned__body">
+            <div class="gd-earned__item">
+              <span class="gd-earned__icon gd-earned__icon--pts"><i class="fa-solid fa-star"></i></span>
+              <div>
+                <span class="gd-earned__val">
+                  {{ formatNumber(g.earnedPoints) }}
+                  <small>/ {{ formatNumber(g.points) }} {{ 'goals.leaderboard.pointsUnit' | translate }}</small>
+                </span>
+                <span class="gd-earned__lbl">{{ 'goals.card.points' | translate }}</span>
+              </div>
             </div>
+            <div class="gd-earned__divider"></div>
+            <div class="gd-earned__item">
+              <span class="gd-earned__icon gd-earned__icon--reward"><i class="fa-solid fa-coins"></i></span>
+              <div>
+                <span class="gd-earned__val">
+                  {{ formatNumber(g.earnedReward) }}
+                  <small>/ {{ formatNumber(g.financialReward) }} {{ 'goals.card.currency' | translate }}</small>
+                </span>
+                <span class="gd-earned__lbl">{{ 'goals.card.reward' | translate }}</span>
+              </div>
+            </div>
+          </div>
+          <p class="gd-earned__hint">
+            <i class="fa-solid fa-circle-info"></i>
+            {{ 'goals.detail.earnedHint' | translate }}
+          </p>
+        </div>
+      }
+
+      <!-- Team contributors breakdown -->
+      @if (g.type === 'Team' && g.contributors.length > 0) {
+        <div class="gd-contributors">
+          <h6 class="gd-contributors__title">
+            <i class="fa-solid fa-users"></i>
+            {{ 'goals.detail.contributors' | translate }}
+          </h6>
+          <div class="gd-contributors__list">
+            @for (c of g.contributors; track c.userId) {
+              <div class="gd-contrib-row">
+                <div class="gd-contrib-row__who">
+                  <app-user-avatar [name]="c.fullName" [userId]="c.userId" size="sm" />
+                  <div class="gd-contrib-row__info">
+                    <span class="gd-contrib-row__name">{{ c.fullName }}</span>
+                    <span class="gd-contrib-row__val">
+                      {{ formatNumber(c.contributionValue) }} {{ 'goals.detail.contributed' | translate }}
+                    </span>
+                  </div>
+                </div>
+                <div class="gd-contrib-row__track">
+                  <div class="gd-contrib-row__fill" [style.width.%]="c.contributionPercent"></div>
+                </div>
+                <div class="gd-contrib-row__stats">
+                  <span class="gd-contrib-row__pct">{{ c.contributionPercent }}%</span>
+                  <span class="gd-contrib-row__pts"><i class="fa-solid fa-star"></i> {{ formatNumber(c.earnedPoints) }}</span>
+                  <span class="gd-contrib-row__reward">{{ formatNumber(c.earnedReward) }} {{ 'goals.card.currency' | translate }}</span>
+                </div>
+              </div>
+            }
           </div>
         </div>
+      }
 
-        <!-- Earned so far (prorated by progress) — individual goals only;
-             team goals show the per-member breakdown below instead. -->
-        @if (g.type === 'Individual') {
-          <div class="gd-earned">
-            <div class="gd-earned__head">
-              <i class="fa-solid fa-wallet"></i>
-              <span>{{ 'goals.detail.earnedSoFar' | translate }}</span>
-              <span class="gd-earned__pct">{{ g.progressPercent }}%</span>
-            </div>
-            <div class="gd-earned__body">
-              <div class="gd-earned__item">
-                <span class="gd-earned__icon gd-earned__icon--pts"><i class="fa-solid fa-star"></i></span>
-                <div>
-                  <span class="gd-earned__val">
-                    {{ formatNumber(g.earnedPoints) }}
-                    <small>/ {{ formatNumber(g.points) }} {{ 'goals.leaderboard.pointsUnit' | translate }}</small>
-                  </span>
-                  <span class="gd-earned__lbl">{{ 'goals.card.points' | translate }}</span>
-                </div>
-              </div>
-              <div class="gd-earned__divider"></div>
-              <div class="gd-earned__item">
-                <span class="gd-earned__icon gd-earned__icon--reward"><i class="fa-solid fa-coins"></i></span>
-                <div>
-                  <span class="gd-earned__val">
-                    {{ formatNumber(g.earnedReward) }}
-                    <small>/ {{ formatNumber(g.financialReward) }} {{ 'goals.card.currency' | translate }}</small>
-                  </span>
-                  <span class="gd-earned__lbl">{{ 'goals.card.reward' | translate }}</span>
-                </div>
-              </div>
-            </div>
-            <p class="gd-earned__hint">
-              <i class="fa-solid fa-circle-info"></i>
-              {{ 'goals.detail.earnedHint' | translate }}
-            </p>
-          </div>
-        }
+      <!-- Amounts log -->
+      @if (goalDetailLoading() && !g.progressEntries) {
+        <div class="gd-log-state">
+          <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+          <span>{{ 'common.loading' | translate }}</span>
+        </div>
+      } @else if (goalDetailError()) {
+        <div class="gd-log-state gd-log-state--error">
+          <span><i class="fa-solid fa-triangle-exclamation"></i> {{ goalDetailError() }}</span>
+          <button type="button" class="btn btn-sm btn-light" (click)="loadGoalDetail(g.id)">
+            <i class="fa-solid fa-rotate-right"></i>{{ 'common.retry' | translate }}
+          </button>
+        </div>
+      } @else {
+        <app-goal-progress-history
+          class="gd-log"
+          [entries]="g.progressEntries"
+          [canEdit]="isAdmin()"
+          [busyEntryId]="deletingEntryId()"
+          (edit)="openEntryEdit($event)"
+          (remove)="deleteEntry($event)" />
+      }
 
-        <!-- Team contributors breakdown -->
-        @if (g.type === 'Team' && g.contributors.length > 0) {
-          <div class="gd-contributors">
-            <h6 class="gd-contributors__title">
-              <i class="fa-solid fa-users"></i>
-              {{ 'goals.detail.contributors' | translate }}
-            </h6>
-            <div class="gd-contributors__list">
-              @for (c of g.contributors; track c.userId) {
-                <div class="gd-contrib-row">
-                  <div class="gd-contrib-row__who">
-                    <span class="gd-contrib-row__av">{{ c.fullName.charAt(0).toUpperCase() }}</span>
-                    <div class="gd-contrib-row__info">
-                      <span class="gd-contrib-row__name">{{ c.fullName }}</span>
-                      <span class="gd-contrib-row__val">
-                        {{ formatNumber(c.contributionValue) }} {{ 'goals.detail.contributed' | translate }}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="gd-contrib-row__track">
-                    <div class="gd-contrib-row__fill" [style.width.%]="c.contributionPercent"></div>
-                  </div>
-                  <div class="gd-contrib-row__stats">
-                    <span class="gd-contrib-row__pct">{{ c.contributionPercent }}%</span>
-                    <span class="gd-contrib-row__pts"><i class="fa-solid fa-star"></i> {{ formatNumber(c.earnedPoints) }}</span>
-                    <span class="gd-contrib-row__reward">{{ formatNumber(c.earnedReward) }} {{ 'goals.card.currency' | translate }}</span>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Timeline + people -->
-        <div class="gd-meta-row">
+      <!-- Timeline + people -->
+      <div class="gd-meta-row">
+        <div class="gd-meta-item">
+          <i class="fa-regular fa-calendar"></i>
+          <span>{{ formatDate(g.startDate) }} — {{ formatDate(g.endDate) }}</span>
+        </div>
+        @if (g.assignedToName) {
           <div class="gd-meta-item">
-            <i class="fa-regular fa-calendar"></i>
-            <span>{{ formatDate(g.startDate) }} — {{ formatDate(g.endDate) }}</span>
+            <app-user-avatar [name]="g.assignedToName" [userId]="g.assignedToId" size="xs" />
+            <span>{{ g.assignedToName }}</span>
           </div>
-          @if (g.assignedToName) {
-            <div class="gd-meta-item">
-              <i class="fa-solid fa-user-tie"></i>
-              <span>{{ g.assignedToName }}</span>
-            </div>
-          }
-          @if (g.createdByName) {
-            <div class="gd-meta-item">
-              <i class="fa-solid fa-user-pen"></i>
-              <span>{{ g.createdByName }}</span>
-            </div>
-          }
-        </div>
+        }
+        @if (g.createdByName) {
+          <div class="gd-meta-item">
+            <i class="fa-solid fa-user-pen"></i>
+            <span>{{ g.createdByName }}</span>
+          </div>
+        }
       </div>
-    }
+    </div>
 
   </app-modal>
+}
+
+<!-- Admin: edit one logged amount (opens above the detail modal) -->
+@if (editingEntry(); as entry) {
+  <app-goal-entry-edit-dialog
+    [entry]="entry"
+    [goalAchieved]="goalDetailDialog()?.isAchieved ?? false"
+    (saved)="onEntrySaved($event)"
+    (closed)="closeEntryEdit()" />
 }
 
 <!-- ══════════════════════════════════════════════
@@ -758,85 +805,13 @@
 }
 
 <!-- ══════════════════════════════════════════════
-     PROGRESS MODAL
+     LOG AN AMOUNT (Sales)
 ══════════════════════════════════════════════ -->
 @if (progressGoal(); as g) {
-  <app-modal
-    [open]="true"
-    [title]="'goals.progress.title' | translate"
-    icon="fa-solid fa-chart-line"
-    iconTone="primary"
-    size="sm"
-    [closeOnBackdrop]="!progressUpdating()"
-    [closeOnEsc]="!progressUpdating()"
-    (closed)="closeProgress()">
-
-    <div class="gpm-body">
-      <p class="gpm-goal-title">{{ g.title }}</p>
-      <div class="gpm-current">
-        <div class="gpm-stat">
-          <span class="gpm-stat__lbl">{{ 'goals.progress.currentLabel' | translate }}</span>
-          <span class="gpm-stat__val gpm-stat__val--accent">{{ formatNumber(g.currentProgress) }}</span>
-        </div>
-        <div class="gpm-divider"></div>
-        <div class="gpm-stat">
-          <span class="gpm-stat__lbl">{{ 'goals.progress.targetLabel' | translate }}</span>
-          <span class="gpm-stat__val">{{ formatNumber(g.targetValue) }}</span>
-        </div>
-        <div class="gpm-divider"></div>
-        <div class="gpm-stat">
-          <span class="gpm-stat__lbl">النسبة</span>
-          <span class="gpm-stat__val" [style.color]="achievementColor(achievementPercent(g))">
-            {{ achievementPercent(g) }}%
-          </span>
-        </div>
-      </div>
-      <div class="gpm-track mb-3">
-        <div class="gpm-fill"
-             [style.width.%]="achievementPercent(g)"
-             [style.background]="achievementColor(achievementPercent(g))">
-        </div>
-      </div>
-      <label class="form-label fw-semibold">{{ 'goals.progress.newValueLabel' | translate }}</label>
-      <input type="number" class="form-control"
-             [placeholder]="'goals.progress.newValuePh' | translate"
-             [ngModel]="progressInput()"
-             (ngModelChange)="progressInput.set(+$event)"
-             min="0" [max]="g.targetValue">
-      @if (progressInput() !== g.currentProgress) {
-        <div class="gpm-preview mt-3">
-          <div class="gpm-track mb-1">
-            <div class="gpm-fill gpm-fill--preview"
-                 [style.width.%]="previewPercent(g)"
-                 [style.background]="achievementColor(previewPercent(g))">
-            </div>
-          </div>
-          <div class="d-flex align-items-center justify-content-between">
-            <small class="text-muted">
-              {{ 'goals.progress.previewLabel' | translate }}:
-              <strong [style.color]="achievementColor(previewPercent(g))">{{ previewPercent(g) }}%</strong>
-            </small>
-            @if (progressInput() >= g.targetValue) {
-              <small class="gpm-will-achieve">🏆 {{ 'goals.progress.willAchieve' | translate }}</small>
-            }
-          </div>
-        </div>
-      }
-    </div>
-
-    <ng-container modal-footer>
-      <button type="button" class="btn btn-light" [disabled]="progressUpdating()" (click)="closeProgress()">
-        {{ 'goals.progress.cancel' | translate }}
-      </button>
-      <button type="button" class="btn btn-primary d-flex align-items-center gap-2"
-              [disabled]="progressUpdating() || progressInput() < 0"
-              (click)="submitProgress()">
-        @if (progressUpdating()) { <span class="spinner-border spinner-border-sm"></span> }
-        @else { <i class="fa-solid fa-chart-line"></i> }
-        {{ 'goals.progress.update' | translate }}
-      </button>
-    </ng-container>
-  </app-modal>
+  <app-goal-progress-dialog
+    [goal]="g"
+    (saved)="onProgressSaved($event)"
+    (closed)="closeProgress()" />
 }
 
 <!-- ══════════════════════════════════════════════
@@ -867,7 +842,7 @@
       <button type="button" class="btn btn-light" (click)="closeDelete()" [disabled]="deleting()">
         {{ 'goals.confirm.deleteCancel' | translate }}
       </button>
-      <button type="button" class="btn btn-danger d-flex align-items-center gap-2"
+      <button type="button" class="btn btn-danger"
               [disabled]="deleting()" (click)="confirmDelete()">
         @if (deleting()) { <span class="spinner-border spinner-border-sm"></span> }
         @else { <i class="fa-solid fa-trash"></i> }

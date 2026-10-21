@@ -1,0 +1,41 @@
+/*
+ * Responsive breakpoints — single source of truth.
+ *
+ * Mirrors Bootstrap 5's grid so `col-md-*` and our own rules flip at the
+ * same width. Emits no CSS on its own, so it is safe to `@use` from any
+ * component stylesheet (`src/styles` is on the SCSS include path):
+ *
+ *   @use 'breakpoints' as bp;
+ *
+ *   .toolbar {
+ *     display: flex;
+ *     @include bp.down(md) { flex-direction: column; }
+ *   }
+ *
+ * The TypeScript twin lives in `core/services/breakpoint.service.ts` — keep
+ * the two maps in sync.
+ */
+
+@use "sass:map";
+
+$breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px,
+);
+
+/* Viewport is narrower than `$name` (e.g. `down(md)` = phones). */
+@mixin down($name) {
+  @media (max-width: #{map.get($breakpoints, $name) - 0.02px}) {
+    @content;
+  }
+}
+
+/* Viewport is at least `$name` wide. */
+@mixin up($name) {
+  @media (min-width: map.get($breakpoints, $name)) {
+    @content;
+  }
+}

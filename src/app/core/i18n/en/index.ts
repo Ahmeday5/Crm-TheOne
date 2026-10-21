@@ -22,6 +22,7 @@ import whatsapp from './whatsapp.en';
 import notifications from './notifications.en';
 import goals from './goals.en';
 import projectProgress from './projectProgress.en';
+import account from './account.en';
 
 const en: Translations = {
   ...common,
@@ -47,6 +48,7 @@ const en: Translations = {
   ...notifications,
   ...goals,
   ...projectProgress,
+  ...account,
 };
 
 export default en;

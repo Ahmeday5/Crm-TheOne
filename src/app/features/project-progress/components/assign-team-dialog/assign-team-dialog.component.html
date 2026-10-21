@@ -74,11 +74,11 @@
     </div>
 
     <button type="button" class="btn btn-light mt-3" (click)="addMember()">
-      <i class="fa-solid fa-plus me-1"></i>{{ 'projectProgress.assignTeam.addMember' | translate }}
+      <i class="fa-solid fa-plus"></i>{{ 'projectProgress.assignTeam.addMember' | translate }}
     </button>
 
     <!-- Live running total -->
-    <div class="assign-team-total mt-4 p-3 rounded-3 d-flex align-items-center justify-content-between"
+    <div class="assign-team-total mt-4 p-3 rounded-3 d-flex flex-wrap align-items-center justify-content-between gap-2"
          [class.bg-success-subtle]="isValidTotal()"
          [class.bg-danger-subtle]="!isValidTotal()">
       <span class="fw-600" [class.text-success]="isValidTotal()" [class.text-danger]="!isValidTotal()">

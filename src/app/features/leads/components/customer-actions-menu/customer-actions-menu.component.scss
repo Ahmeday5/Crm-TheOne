@@ -1,0 +1,16 @@
+/* The toolbar skin is shared via `_customers-table.scss`; this file only
+ * adapts it for touch. */
+@use 'breakpoints' as bp;
+
+@include bp.down(md) {
+  /* In card mode the toolbar is the card footer — larger, easier targets. */
+  .crm-actions {
+    gap: 0.4rem;
+  }
+
+  .crm-action-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 0.9rem;
+  }
+}

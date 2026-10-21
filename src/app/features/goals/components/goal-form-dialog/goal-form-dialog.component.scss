@@ -2,6 +2,8 @@
 // Goal Form Dialog — professional CRM design
 // ═══════════════════════════════════════════════════════════
 
+@use 'breakpoints' as bp;
+
 $r: 10px;
 $r-sm: 6px;
 $t: .18s ease;
@@ -56,6 +58,7 @@ $t: .18s ease;
   }
 
   &__title {
+    min-width: 0;
     font-size: .82rem;
     font-weight: 600;
     color: var(--bs-emphasis-color, #0f172a);
@@ -116,21 +119,23 @@ $t: .18s ease;
 }
 
 // ── Grid layouts ───────────────────────────────────────────
+// `minmax(0, 1fr)` lets a column shrink below its content's intrinsic width
+// (date inputs, picker labels) instead of pushing the dialog sideways.
 .gform-row-2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: .75rem;
 
-  @media (max-width: 540px) { grid-template-columns: 1fr; }
+  @include bp.down(sm) { grid-template-columns: minmax(0, 1fr); }
 }
 
 .gform-row-3 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: .75rem;
 
-  @media (max-width: 640px) { grid-template-columns: 1fr 1fr; }
-  @media (max-width: 400px) { grid-template-columns: 1fr; }
+  @include bp.down(md) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @include bp.down(sm) { grid-template-columns: minmax(0, 1fr); }
 }
 
 // ── Type picker ────────────────────────────────────────────
@@ -175,6 +180,7 @@ $t: .18s ease;
 
   &__label {
     display: block;
+    overflow-wrap: anywhere;
     font-size: .85rem;
     font-weight: 600;
     color: var(--bs-emphasis-color, #0f172a);
@@ -203,8 +209,10 @@ $t: .18s ease;
 // ── Period picker ──────────────────────────────────────────
 .gform-period-picker {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: .4rem;
+
+  @include bp.down(sm) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .gform-period-btn {
@@ -220,7 +228,8 @@ $t: .18s ease;
   font-size: .75rem;
   color: var(--bs-body-color, #374151);
   transition: border-color $t, background $t, color $t;
-  white-space: nowrap;
+  text-align: center;
+  overflow-wrap: anywhere;
 
   i { font-size: .9rem; color: #94a3b8; transition: color $t; }
 
@@ -275,20 +284,6 @@ $t: .18s ease;
   }
 }
 
-.gform-emp-av {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
-  font-size: .8rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
 .gform-emp-name {
   flex: 1;
   font-size: .85rem;
@@ -328,4 +323,23 @@ $t: .18s ease;
   }
 
   &:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+}
+
+// ── Phones ─────────────────────────────────────────────────
+@include bp.down(md) {
+  .gform-section {
+    &__header { padding: .6rem .85rem; }
+    &__body { padding: .8rem .85rem; }
+  }
+
+  .gform-type-btn { padding: .65rem .8rem; }
+  .gform-employee-list { max-height: 40vh; }
+
+  // Shares the footer row evenly with the `.btn` cancel button (see app-modal).
+  .gform-submit-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    padding-inline: .9rem;
+  }
 }

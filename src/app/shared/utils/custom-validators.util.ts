@@ -42,3 +42,31 @@ export function minSelected(min = 1): ValidatorFn {
     return length >= min ? null : { atLeastOne: { required: min, actual: length } };
   };
 }
+
+/**
+ * Group validator: the `end` control must be strictly after `start`.
+ * Sets `{ endBeforeStart: true }` on the *end control* (so `<app-form-error>`
+ * on that field shows it) and clears it again once the range is valid.
+ * Empty values are left to `Validators.required`.
+ *
+ *   this.fb.group({ startDate: [''], endDate: [''] }, { validators: dateRangeValidator('startDate', 'endDate') })
+ */
+export function dateRangeValidator(startKey: string, endKey: string): ValidatorFn {
+  return (group: AbstractControl): ValidationErrors | null => {
+    const start = group.get(startKey);
+    const end = group.get(endKey);
+    if (!start || !end) return null;
+
+    const startMs = start.value ? new Date(start.value).getTime() : NaN;
+    const endMs = end.value ? new Date(end.value).getTime() : NaN;
+    const invalid = !Number.isNaN(startMs) && !Number.isNaN(endMs) && endMs <= startMs;
+
+    const { endBeforeStart: _, ...rest } = end.errors ?? {};
+    if (invalid) {
+      end.setErrors({ ...rest, endBeforeStart: true });
+    } else if (end.hasError('endBeforeStart')) {
+      end.setErrors(Object.keys(rest).length ? rest : null);
+    }
+    return invalid ? { endBeforeStart: true } : null;
+  };
+}

@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { LanguageService } from './core/services/language.service';
 import { ThemeService } from './core/services/theme.service';
 import { ConfirmDialogComponent } from './shared/components/confirm-dialog/confirm-dialog.component';
+import { TextPreviewDialogComponent } from './shared/components/text-preview-dialog/text-preview-dialog.component';
 import { LoaderOverlayComponent } from './shared/components/loader-overlay/loader-overlay.component';
 import { ToastContainerComponent } from './shared/components/toast/toast-container.component';
 
@@ -14,6 +15,7 @@ import { ToastContainerComponent } from './shared/components/toast/toast-contain
     ToastContainerComponent,
     LoaderOverlayComponent,
     ConfirmDialogComponent,
+    TextPreviewDialogComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',

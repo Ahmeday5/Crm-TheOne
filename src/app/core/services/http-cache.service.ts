@@ -19,11 +19,16 @@ const SWEEP_INTERVAL_MS = 60_000;
 
 type CrossTabMessage =
   | { type: 'set'; key: string }
-  | { type: 'invalidate'; pattern: string }
+  | { type: 'invalidate'; patterns: readonly string[] }
   | { type: 'clear' };
 
+/**
+ * One invalidation pass. A single mutation may drop several URL patterns at
+ * once; they travel together so listeners (which only see the latest event)
+ * never miss one.
+ */
 export interface InvalidationEvent {
-  pattern: string;
+  patterns: readonly string[];
   ts: number;
 }
 
@@ -45,7 +50,7 @@ export class HttpCacheService {
   private channel: BroadcastChannel | null = null;
 
   private readonly invalidationSignal = signal<InvalidationEvent>({
-    pattern: '',
+    patterns: [],
     ts: 0,
   });
   /**
@@ -86,21 +91,27 @@ export class HttpCacheService {
   }
 
   invalidate(pattern: string): void {
-    if (!pattern) return;
-    for (const key of [...this.mem.keys()]) {
-      if (key.includes(pattern)) this.evict(key);
-    }
-    this.broadcast({ type: 'invalidate', pattern });
-    this.invalidationSignal.set({ pattern, ts: Date.now() });
+    this.invalidateMany([pattern]);
   }
 
+  /** Drops every cached URL containing any pattern — emitted as one event. */
   invalidateMany(patterns: readonly string[]): void {
-    for (const p of patterns) this.invalidate(p);
+    const list = patterns.filter(Boolean);
+    if (!list.length) return;
+    this.dropMatching(list);
+    this.broadcast({ type: 'invalidate', patterns: list });
+    this.invalidationSignal.set({ patterns: list, ts: Date.now() });
   }
 
   clear(): void {
     for (const key of [...this.mem.keys()]) this.evict(key);
     this.broadcast({ type: 'clear' });
+  }
+
+  private dropMatching(patterns: readonly string[]): void {
+    for (const key of [...this.mem.keys()]) {
+      if (patterns.some((p) => key.includes(p))) this.evict(key);
+    }
   }
 
   // ─────────────── persistence ───────────────
@@ -204,13 +215,17 @@ export class HttpCacheService {
     }
 
     if (msg.type === 'invalidate') {
+      // Tolerates the pre-batching `{ pattern }` shape from an older open tab.
+      const legacy = (msg as unknown as { pattern?: string }).pattern;
+      const patterns = Array.isArray(msg.patterns) ? msg.patterns : legacy ? [legacy] : [];
+      if (!patterns.length) return;
       for (const key of [...this.mem.keys()]) {
-        if (key.includes(msg.pattern)) {
+        if (patterns.some((p) => key.includes(p))) {
           this.mem.delete(key);
           this.storage.remove(STORAGE_PREFIX + key);
         }
       }
-      this.invalidationSignal.set({ pattern: msg.pattern, ts: Date.now() });
+      this.invalidationSignal.set({ patterns, ts: Date.now() });
       return;
     }
 

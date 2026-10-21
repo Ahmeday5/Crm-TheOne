@@ -32,10 +32,10 @@
 
         <div class="col-md-6">
           <label for="campaign-channel"
-            class="form-label fw-600 d-flex align-items-center justify-content-between gap-2">
+            class="form-label fw-600 d-flex flex-wrap align-items-center justify-content-between gap-2">
             <span>{{ 'campaigns.create.platform' | translate }} <span class="text-danger">*</span></span>
             <button type="button" class="btn btn-link p-0 small fw-600" (click)="openChannelSourceDialog()">
-              <i class="fa-solid fa-plus me-1"></i>
+              <i class="fa-solid fa-plus"></i>
               {{ 'campaigns.create.addChannelSource' | translate }}
             </button>
           </label>
@@ -111,7 +111,7 @@
         </div>
 
         <div class="col-12">
-          <small class="text-muted d-flex align-items-center gap-2">
+          <small class="text-muted d-flex flex-wrap align-items-center gap-2">
             <i class="fa-solid fa-clock"></i>
             {{ 'campaigns.create.durationHint' | translate }}
             @if (durationDays() > 0) {
@@ -203,7 +203,7 @@
     @if (errorMessage()) {
     <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0" role="alert">
       <i class="fa-solid fa-circle-exclamation"></i>
-      <span>{{ errorMessage() }}</span>
+      <span class="min-w-0">{{ errorMessage() }}</span>
     </div>
     }
   </form>
@@ -214,9 +214,9 @@
     </button>
     <button type="submit" form="campaign-form" class="btn btn-primary" [disabled]="submitting() || form.invalid">
       @if (submitting()) {
-      <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
       } @else {
-      <i [class]="isEditMode ? 'fa-solid fa-floppy-disk me-1' : 'fa-solid fa-bullseye me-1'"></i>
+      <i [class]="isEditMode ? 'fa-solid fa-floppy-disk' : 'fa-solid fa-bullseye'"></i>
       }
       {{ (isEditMode ? 'campaigns.create.editSubmit' : 'campaigns.create.submit') | translate }}
     </button>

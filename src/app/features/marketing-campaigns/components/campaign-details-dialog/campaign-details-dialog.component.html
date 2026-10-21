@@ -27,9 +27,9 @@
       <!-- Header card -->
       <div class="details-header">
         <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
-          <div>
+          <div class="min-w-0">
             <h4 class="fw-700 mb-1">{{ details()!.name }}</h4>
-            <p class="text-muted mb-0">{{ details()!.description }}</p>
+            <p class="details-desc text-muted mb-0">{{ details()!.description }}</p>
           </div>
           <span class="badge status-badge status-{{ details()!.status.toLowerCase() }}">
             {{ 'campaigns.status.' + details()!.status.toLowerCase() | translate }}
@@ -37,7 +37,7 @@
         </div>
 
         <div class="d-flex flex-wrap gap-3 mt-3 text-muted small">
-          <span class="d-inline-flex align-items-center gap-1">
+          <span class="d-inline-flex align-items-center gap-1 min-w-0 text-break">
             <i class="fa-solid fa-tower-broadcast"></i>
             {{ details()!.channelSource || ('campaigns.details.platformUnknown' | translate) }}
           </span>
@@ -67,25 +67,25 @@
         <div class="row g-3">
           <div class="col-6 col-md-3">
             <p class="text-muted small mb-1">{{ 'campaigns.card.totalBudget' | translate }}</p>
-            <p class="fw-700 mb-0">
+            <p class="fw-700 mb-0 text-break">
               {{ details()!.budget | money }}
             </p>
           </div>
           <div class="col-6 col-md-3">
             <p class="text-muted small mb-1">{{ 'campaigns.card.dailyBudget' | translate }}</p>
-            <p class="fw-700 mb-0">
+            <p class="fw-700 mb-0 text-break">
               {{ details()!.dailyBudget | money }}
             </p>
           </div>
           <div class="col-6 col-md-3">
             <p class="text-muted small mb-1">{{ 'campaigns.kpi.spent' | translate }}</p>
-            <p class="fw-700 mb-0 text-success">
+            <p class="fw-700 mb-0 text-success text-break">
               {{ details()!.spent | money }}
             </p>
           </div>
           <div class="col-6 col-md-3">
             <p class="text-muted small mb-1">{{ 'campaigns.details.remaining' | translate }}</p>
-            <p class="fw-700 mb-0">
+            <p class="fw-700 mb-0 text-break">
               {{ details()!.remaining | money }}
             </p>
           </div>
@@ -95,7 +95,7 @@
               <span class="text-muted">{{ 'campaigns.details.spentProgress' | translate }}</span>
               <span class="fw-600">{{ spentPercent() }}%</span>
             </div>
-            <div class="progress" style="height: 8px;">
+            <div class="progress spent-progress">
               <div class="progress-bar bg-success"
                    role="progressbar"
                    [style.width.%]="spentPercent()"
@@ -150,7 +150,7 @@
             {{ 'campaigns.create.genders.' + details()!.gender.toLowerCase() | translate }}
           </span>
           @for (c of details()!.countries; track c.countryId) {
-            <span class="badge blue">{{ c.countryName }}</span>
+            <span class="badge blue text-truncate mw-100">{{ c.countryName }}</span>
           }
         </div>
       </div>
@@ -160,7 +160,7 @@
   <ng-container modal-footer>
     @if (details()) {
       <button type="button" class="btn btn-light" (click)="refresh()">
-        <i class="fa-solid fa-rotate me-1"></i>
+        <i class="fa-solid fa-rotate"></i>
         {{ 'common.refresh' | translate }}
       </button>
     }

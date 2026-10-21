@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 .confirm-backdrop {
   position: fixed;
   inset: 0;
@@ -21,7 +23,16 @@
   width: 100%;
   max-width: 420px;
   padding: 1.5rem;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
   animation: pop-in 0.18s ease-out;
+
+  @include bp.down(sm) { padding: 1.25rem 1.1rem; }
+}
+
+/* Long messages (names, URLs) wrap instead of widening the card. */
+.confirm-message {
+  overflow-wrap: anywhere;
 }
 
 .confirm-card.tone-danger  { --tone-accent: var(--danger); }

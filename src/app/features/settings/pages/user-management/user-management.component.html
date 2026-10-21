@@ -1,32 +1,32 @@
 <section class="user-management">
   <!-- Section header -->
-  <header class="d-flex align-items-center gap-3 mb-4">
+  <header class="section-header d-flex align-items-center gap-3 mb-4">
     <span class="icon-tile xl tone-primary"><i class="fa-solid fa-users"></i></span>
-    <div>
+    <div class="min-w-0">
       <h2 class="fw-700 mb-1">{{ 'settings.users.title' | translate }}</h2>
-      <p class="text-muted mb-0">{{ 'settings.users.subtitle' | translate }}</p>
+      <p class="text-muted mb-0" appClampText>{{ 'settings.users.subtitle' | translate }}</p>
     </div>
   </header>
 
   <!-- KPI grid -->
   <div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-6 col-lg-3">
       <div class="card kpi-card">
         <div class="card-body d-flex align-items-center justify-content-between gap-3">
-          <div>
-            <p class="text-muted small mb-1">{{ 'settings.users.kpi.total' | translate }}</p>
+          <div class="min-w-0">
+            <p class="kpi-label text-muted small mb-1">{{ 'settings.users.kpi.total' | translate }}</p>
             <h3 class="fw-700 mb-0 kpi-value">{{ kpis().total }}</h3>
           </div>
           <span class="icon-tile xl tone-primary"><i class="fa-solid fa-users"></i></span>
         </div>
       </div>
     </div>
-    
-    <div class="col-12 col-sm-6 col-lg-3">
+
+    <div class="col-6 col-lg-3">
       <div class="card kpi-card">
         <div class="card-body d-flex align-items-center justify-content-between gap-3">
-          <div>
-            <p class="text-muted small mb-1">{{ 'settings.users.kpi.active' | translate }}</p>
+          <div class="min-w-0">
+            <p class="kpi-label text-muted small mb-1">{{ 'settings.users.kpi.active' | translate }}</p>
             <h3 class="fw-700 mb-0 kpi-value text-success">{{ kpis().active }}</h3>
           </div>
           <span class="icon-tile xl tone-success"><i class="fa-solid fa-power-off"></i></span>
@@ -34,11 +34,11 @@
       </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-6 col-lg-3">
       <div class="card kpi-card">
         <div class="card-body d-flex align-items-center justify-content-between gap-3">
-          <div>
-            <p class="text-muted small mb-1">{{ 'settings.users.kpi.inactive' | translate }}</p>
+          <div class="min-w-0">
+            <p class="kpi-label text-muted small mb-1">{{ 'settings.users.kpi.inactive' | translate }}</p>
             <h3 class="fw-700 mb-0 kpi-value text-muted">{{ kpis().inactive }}</h3>
           </div>
           <span class="icon-tile xl tone-gray"><i class="fa-solid fa-power-off"></i></span>
@@ -46,11 +46,11 @@
       </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-lg-3">
+    <div class="col-6 col-lg-3">
       <div class="card kpi-card">
         <div class="card-body d-flex align-items-center justify-content-between gap-3">
-          <div>
-            <p class="text-muted small mb-1">{{ 'settings.users.kpi.roles' | translate }}</p>
+          <div class="min-w-0">
+            <p class="kpi-label text-muted small mb-1">{{ 'settings.users.kpi.roles' | translate }}</p>
             <h3 class="fw-700 mb-0 kpi-value text-purple">{{ kpis().rolesCount }}</h3>
           </div>
           <span class="icon-tile xl tone-purple"><i class="fa-solid fa-user-shield"></i></span>
@@ -92,7 +92,7 @@
 
         <div class="col-12 col-md-auto">
           <button type="button" class="btn btn-primary w-100 w-md-auto" (click)="openAdd()">
-            <i class="fa-solid fa-plus me-1"></i>
+            <i class="fa-solid fa-plus"></i>
             {{ 'settings.users.add' | translate }}
           </button>
         </div>
@@ -135,7 +135,7 @@
           (retry)="reload()" />
       } @else {
         <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
+          <table class="table table-hover align-middle mb-0" appResponsiveTable>
             <thead>
               <tr>
                 <th>{{ 'settings.users.list.col.name' | translate }}</th>
@@ -144,22 +144,22 @@
                 <th>{{ 'settings.users.list.col.role' | translate }}</th>
                 <th>{{ 'settings.users.list.col.specialty' | translate }}</th>
                 <th>{{ 'settings.users.list.col.status' | translate }}</th>
-                <th class="text-end">{{ 'settings.users.list.col.actions' | translate }}</th>
+                <th class="text-end rt-actions">{{ 'settings.users.list.col.actions' | translate }}</th>
               </tr>
             </thead>
             <tbody>
               @for (u of visible(); track trackById($index, u)) {
                 <tr>
                   <td>
-                    <div class="d-flex align-items-center gap-3">
-                      <span class="user-avatar">{{ initialOf(u) }}</span>
-                      <span class="fw-600 text-truncate">{{ displayName(u) }}</span>
+                    <div class="d-flex align-items-center gap-3 min-w-0">
+                      <app-user-avatar [name]="displayName(u)" [imageUrl]="u.imageUrl" />
+                      <span class="fw-600 text-truncate min-w-0">{{ displayName(u) }}</span>
                     </div>
                   </td>
                   <td>
-                    <div class="d-flex align-items-center gap-2 text-truncate">
+                    <div class="d-flex align-items-center gap-2 min-w-0">
                       <i class="fa-solid fa-envelope text-muted"></i>
-                      <span class="small" dir="ltr">{{ u.email }}</span>
+                      <span class="small text-truncate min-w-0" dir="ltr">{{ u.email }}</span>
                     </div>
                   </td>
                   <td>
@@ -176,7 +176,7 @@
                     }
                   </td>
                   <td>
-                    <span class="small text-muted">{{ u.specialty || '—' }}</span>
+                    <span class="small text-muted" appClampText="1">{{ u.specialty || '—' }}</span>
                   </td>
                   <td>
                     <span class="badge success">
@@ -184,7 +184,20 @@
                     </span>
                   </td>
                   <td class="text-end">
-                    <div class="position-relative d-inline-block"
+                    <!-- Phones: the row is a card, so show the actions directly
+                         (a pop-over menu would be clipped by the card). -->
+                    <div class="btn-row d-md-none">
+                      <button type="button" class="btn btn-sm btn-light" (click)="openEdit(u)">
+                        <i class="fa-solid fa-pen"></i>
+                        {{ 'settings.users.edit' | translate }}
+                      </button>
+                      <button type="button" class="btn btn-sm btn-light text-danger" (click)="confirmDelete(u)">
+                        <i class="fa-solid fa-trash"></i>
+                        {{ 'settings.users.delete' | translate }}
+                      </button>
+                    </div>
+
+                    <div class="position-relative d-none d-md-inline-block"
                          (appClickOutside)="openMenuId() === u.userId && closeMenus()">
                       <button type="button" class="btn btn-icon"
                               (click)="toggleMenu(u.userId)"

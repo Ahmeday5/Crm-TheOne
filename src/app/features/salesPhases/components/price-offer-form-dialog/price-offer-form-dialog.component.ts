@@ -32,6 +32,7 @@ import {
   CustomerDropdownItem,
   PriceQuotationRequest,
 } from '../../../../shared/models';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ServicesService } from '../../../services/services/services.service';
@@ -64,6 +65,7 @@ interface ItemSeed {
     MoneyPipe,
     ModalComponent,
     SearchableSelectComponent,
+    ResponsiveTableDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './price-offer-form-dialog.component.html',

@@ -1,4 +1,39 @@
+@use 'breakpoints' as bp;
+
 :host { display: block; }
+
+/* Phones: KPI tiles sit two per row (~150px each), so the icon stacks above
+ * the figures and the header icon shrinks to leave room for the title. */
+@include bp.down(md) {
+  .section-header {
+    gap: 0.75rem !important;
+
+    .icon-tile.xl {
+      width: 48px;
+      height: 48px;
+      font-size: 1.15rem;
+    }
+  }
+
+  .kpi-card .card-body {
+    flex-direction: column-reverse;
+    align-items: flex-start !important;
+    gap: 0.6rem !important;
+    padding: 0.85rem;
+
+    > .min-w-0 { width: 100%; }
+  }
+
+  .kpi-card .icon-tile.xl {
+    width: 36px;
+    height: 36px;
+    font-size: 0.95rem;
+    border-radius: var(--radius-md);
+  }
+
+  .kpi-card .kpi-label { line-height: 1.35; }
+  .kpi-card .kpi-value { font-size: 1.3rem; }
+}
 
 .search-icon {
   position: absolute;
@@ -11,19 +46,6 @@
 /* When the input is in LTR (placeholder is RTL but icon should be on the right
  * inline-end side regardless), we anchor the icon at the inline-end edge and
  * pad the start. Bootstrap's `ps-5` adds the start padding. */
-
-.user-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--brand-soft);
-  color: var(--brand);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: var(--fw-700);
-  flex-shrink: 0;
-}
 
 .row-menu {
   position: absolute;

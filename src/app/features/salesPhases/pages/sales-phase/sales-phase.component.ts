@@ -5,12 +5,13 @@ import {
   TabbedNavCardComponent,
   TabbedNavItem,
 } from '../../../../shared/components/tabbed-nav-card/tabbed-nav-card.component';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-sales-phase',
   standalone: true,
-  imports: [RouterOutlet, TranslatePipe, PageHeaderComponent, TabbedNavCardComponent],
+  imports: [RouterOutlet, TranslatePipe, PageHeaderComponent, TabbedNavCardComponent, ClampTextDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-phase.component.html',
   styleUrl: './sales-phase.component.scss',

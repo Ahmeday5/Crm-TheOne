@@ -160,6 +160,8 @@ export interface ProjectListItem {
   /** ISO date-time. */
   end: string;
   progress: number;
+  /** Weighted completion across the team (0–100) — returned by `GetActiveProjects`. */
+  overallProgressPercentage?: number;
   engineers: ProjectEngineerRef[];
   teamMembersCount: number;
   createdAt: string;

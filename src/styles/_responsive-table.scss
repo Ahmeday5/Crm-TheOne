@@ -1,0 +1,179 @@
+/*
+ * Responsive tables — card mode for phones.
+ *
+ * Paired with `ResponsiveTableDirective` (`<table appResponsiveTable>`),
+ * which stamps `data-label` / `.rt-*` hooks on the cells. Above `md` the
+ * table renders exactly as before; below it every row becomes a card:
+ *
+ *   ┌──────────────────────────────┐
+ *   │ Ahmed Ali              (.rt-primary — card title)
+ *   ├──────────────────────────────┤
+ *   │ Status        ● New          │  ← data-label │ cell content
+ *   │ Source        Facebook       │
+ *   ├──────────────────────────────┤
+ *   │            [👁] [✎] [⋮]      │  (.rt-actions — card footer)
+ *   └──────────────────────────────┘
+ *
+ * Lives globally because the table markup belongs to many feature
+ * components and Angular's style encapsulation would otherwise stop
+ * a shared rule from reaching it.
+ */
+
+@use "breakpoints" as bp;
+
+$label-w: 38%;
+
+@include bp.down(md) {
+  /* The scroll wrappers only existed for wide tables — cards fit the screen. */
+  .table-responsive:has(> table.rt-table),
+  .crm-table-scroll:has(> table.rt-table) {
+    overflow: visible;
+  }
+
+  table.rt-table {
+    display: block;
+    width: 100%;
+    border: 0;
+    background: transparent;
+
+    > thead {
+      /* Visually hidden but still announced by screen readers. */
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    > tbody,
+    > tfoot {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: 0.75rem;
+    }
+
+    > tbody > tr,
+    > tfoot > tr {
+      /* Column flow so the title / actions cells can be re-ordered to the
+       * top / bottom of the card wherever they sit in the markup. */
+      display: flex;
+      flex-direction: column;
+      background: var(--surface-0);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    > tbody > tr > td,
+    > tfoot > tr > td,
+    > tfoot > tr > th {
+      position: relative;
+      display: block;
+      width: auto !important;
+      min-width: 0;
+      max-width: none;
+      padding: 0.6rem 0.9rem !important;
+      padding-inline-start: calc(#{$label-w} + 1.4rem) !important;
+      border: 0 !important;
+      border-bottom: 1px dashed var(--border) !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      text-align: start !important;
+      white-space: normal !important;
+      overflow-wrap: anywhere;
+      font-size: var(--fs-sm);
+
+      &::before {
+        content: attr(data-label);
+        position: absolute;
+        inset-inline-start: 0.9rem;
+        inset-block-start: 0.6rem;
+        width: $label-w;
+        color: var(--text-3);
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-600);
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+      }
+
+      &:last-child { border-bottom: 0 !important; }
+
+      /* Cells without a header label use the full card width. */
+      &:not([data-label])::before,
+      &[data-label=""]::before { content: none; }
+      &:not([data-label]),
+      &[data-label=""] { padding-inline-start: 0.9rem !important; }
+
+      /* Nested flex rows keep their layout but are allowed to wrap. */
+      > .d-flex,
+      > div { max-width: 100%; }
+    }
+
+    /* Card title */
+    td.rt-primary {
+      order: -2;
+      padding: 0.85rem 0.9rem !important;
+      background: var(--surface-1) !important;
+      border-bottom: 1px solid var(--border) !important;
+      font-size: var(--fs-md);
+      font-weight: var(--fw-600);
+
+      &::before { content: none; }
+    }
+
+    /* Card footer — row actions */
+    td.rt-actions {
+      order: 99;
+      position: static !important;
+      padding: 0.6rem 0.9rem !important;
+      background: var(--surface-1) !important;
+      border-top: 1px solid var(--border) !important;
+      border-bottom: 0 !important;
+
+      &::before { content: none; }
+
+      /* Lay out whatever toolbar the page renders as a right-aligned,
+       * wrapping row of equally sized controls. */
+      > *,
+      > * > .crm-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.4rem;
+      }
+
+      .btn { flex: 0 0 auto; }
+    }
+
+    /* Loading / empty rows */
+    td.rt-full {
+      padding: 0 !important;
+      text-align: center !important;
+      border: 0 !important;
+
+      &::before { content: none; }
+    }
+
+    .rt-hide-mobile { display: none !important; }
+
+    /* Things that only made sense in a wide table. */
+    .crm-name,
+    .crm-person-name,
+    .campaign-clip { max-width: 100%; }
+    .crm-identity,
+    .crm-assignment,
+    .crm-followup { min-width: 0; }
+    .crm-notes-cell { max-width: none; }
+  }
+
+  /* Tables rendered inside a card body without padding should not
+   * double up the outer chrome. */
+  .card > .card-body.p-0 table.rt-table > tbody,
+  .card > .table-responsive table.rt-table > tbody {
+    background: var(--surface-1);
+  }
+}

@@ -1,0 +1,173 @@
+/*
+ * Responsive foundations — app-wide rules that keep every page inside the
+ * viewport and readable on phones. Page-specific tweaks belong in the
+ * component's own stylesheet (`@use 'breakpoints' as bp;`).
+ *
+ * Owns:
+ *   .min-w-0          let flex/grid children shrink (enables text-truncate)
+ *   .clamp-text       N-line clamp driven by ClampTextDirective
+ *   .btn              icon + label alignment, equal-height button rows
+ *   .btn-row          wrapping toolbar → equal-size button grid on phones
+ *   .card-header      wraps instead of overflowing
+ *   .nav-tabs/pills   swipeable strip instead of breaking the layout
+ *   mobile spacing    tighter page gutters, headings and modals
+ */
+
+@use "breakpoints" as bp;
+
+/* ---------- Overflow guards ---------- */
+
+/* Flex/grid items default to `min-width: auto`, so a long unbroken string
+ * (name, e-mail, URL) inside them widens the whole page. Templates already
+ * use this class next to `.text-truncate`; it just was never defined. */
+.min-w-0 { min-width: 0 !important; }
+
+body { overflow-wrap: break-word; }
+
+img,
+video,
+canvas { max-width: 100%; }
+
+.apexcharts-canvas,
+.apexcharts-svg { max-width: 100%; }
+
+/* ---------- Clamped text (ClampTextDirective) ---------- */
+.clamp-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--clamp-lines, 2);
+  line-clamp: var(--clamp-lines, 2);
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal;
+
+  &.is-clamped {
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s ease, background-color 0.15s ease;
+
+    &:hover { color: var(--brand); }
+    &:focus-visible {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+    }
+  }
+}
+
+/* ---------- Buttons ----------
+ * Icon and label are flex items separated by `gap`, so spacing is correct
+ * in both RTL and LTR (the physical `me-1` on icons was on the wrong side
+ * in Arabic) and multi-line labels stay vertically centred. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  line-height: 1.3;
+  text-align: center;
+
+  > i,
+  > .spinner-border,
+  > .spinner-grow {
+    flex-shrink: 0;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
+/* Buttons that fill a grid column take the column's full height, so a row
+ * of them is as tall as its longest label instead of being ragged. */
+.row > [class*="col"] > .btn.w-100 { height: 100%; }
+
+/*
+ * `.btn-row` — a toolbar of buttons.
+ *   desktop: wrapping inline row
+ *   phones : grid of equal-width, equal-height buttons (2 per row,
+ *            or 1 per row when the labels are long)
+ */
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+/* ---------- Cards & headers ---------- */
+.card-header.d-flex,
+.card-header > .d-flex {
+  flex-wrap: wrap;
+  row-gap: 0.5rem;
+}
+
+.card-header h5,
+.card-header .card-title { min-width: 0; }
+
+/* ---------- Tabs ---------- */
+.nav-tabs,
+.nav-pills {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar { display: none; }
+
+  .nav-link { white-space: nowrap; }
+}
+
+/* ---------- Tablets & phones ---------- */
+@include bp.down(lg) {
+  :root { --content-pad: 1rem; }
+
+  .container-fluid { padding-inline: 1rem; }
+}
+
+@include bp.down(md) {
+  :root {
+    --h1: 1.5rem;
+    --h2: 1.3rem;
+    --h3: 1.125rem;
+  }
+
+  .container-fluid { padding-inline: 0.75rem; }
+
+  .card-header,
+  .card-footer { padding: 0.75rem 0.9rem; }
+  .card-body { padding: 0.9rem; }
+
+  .btn { white-space: normal; }
+
+  .btn-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    grid-auto-rows: 1fr;
+
+    > .btn,
+    > a.btn {
+      width: 100%;
+      font-size: var(--fs-sm);
+      padding: 0.55rem 0.7rem;
+    }
+  }
+
+  /* Bootstrap's `.modal` dialogs (the app-modal shell has its own rules). */
+  .modal-dialog { margin: 0.5rem; }
+
+  /* Long dropdown menus stay on screen. */
+  .dropdown-menu {
+    max-width: calc(100vw - 1.5rem);
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+}
+
+/* Small phones: a fixed two-up button grid; an odd last button takes the
+ * full row instead of sitting alone at half width. */
+@include bp.down(sm) {
+  .btn-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    > .btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  }
+}

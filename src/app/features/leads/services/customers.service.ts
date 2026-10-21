@@ -13,6 +13,7 @@ import { ApiService } from '../../../core/services/api.service';
 import {
   AssignCustomerRequest,
   AssignSupportRequest,
+  AssignSupportResponse,
   ChangeCustomerStatusRequest,
   CreateCustomerRequest,
   CustomerDetails,
@@ -188,14 +189,24 @@ export class CustomersService {
     );
   }
 
+  /**
+   * Hands a lead to a support person and books the follow-up appointment in
+   * one call. Resolves to `{ customer, appointment }` (the envelope's
+   * `data`). Invalidates appointment caches too, so open/cached schedule
+   * views pick up the new appointment.
+   */
   assignSupport(
     customerId: number,
     payload: AssignSupportRequest,
-  ): Observable<unknown> {
-    return this.api.post<unknown>(
+  ): Observable<AssignSupportResponse> {
+    return this.api.post<AssignSupportResponse>(
       API_ENDPOINTS.customers.assignSupport(customerId),
       payload,
-      { context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)) },
+      {
+        context: withInlineHandling(
+          withCacheInvalidate([...CUSTOMER_CACHE_KEYS, 'Appointments']),
+        ),
+      },
     );
   }
 

@@ -20,6 +20,8 @@ import {
 import { ToastService } from '../../../../core/services/toast.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import {
   AnalyticsPeriod,
@@ -29,6 +31,7 @@ import {
 import {
   DeveloperAnalyticsService,
 } from '../../services/developer-analytics.service';
+import { RefreshButtonComponent } from '../../../../shared/components/refresh-button/refresh-button.component';
 
 /** Period values sent to the API — must match the backend `AnalyticsPeriod` numeric enum. */
 const PERIOD_OPTIONS = [
@@ -44,12 +47,15 @@ const PERIOD_OPTIONS = [
   selector: 'app-developer-analytics',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     CommonModule,
     FormsModule,
     NgApexchartsModule,
     TranslatePipe,
     PageHeaderComponent,
     EmptyStateComponent,
+    UserAvatarComponent,
+    ResponsiveTableDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './developer-analytics.component.html',
@@ -222,6 +228,12 @@ export class DeveloperAnalyticsComponent implements OnInit {
           this.loading.set(false);
         },
       });
+  }
+
+  /** Refresh button: the stats and the project filter options. */
+  refreshAll(): void {
+    this.reload();
+    this.loadProjectOptions();
   }
 
   private loadProjectOptions(): void {

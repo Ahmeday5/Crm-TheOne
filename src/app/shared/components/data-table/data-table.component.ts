@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { LanguageService } from '../../../core/services/language.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
+import { ResponsiveTableDirective } from '../../directives/responsive-table.directive';
 import { EmptyStateComponent } from '../empty-state/empty-state.component';
 
 export interface TableColumn<T = unknown> {
@@ -25,7 +26,7 @@ export interface TableColumn<T = unknown> {
 @Component({
   selector: 'app-data-table',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, EmptyStateComponent],
+  imports: [CommonModule, TranslatePipe, EmptyStateComponent, ResponsiveTableDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './data-table.component.html',
   styleUrl: './data-table.component.scss',
@@ -38,6 +39,8 @@ export class DataTableComponent<T extends object = object> {
   readonly hasActions = input<boolean>(false);
   readonly rowClickable = input<boolean>(false);
   readonly loading = input<boolean>(false);
+  /** Column shown as the card title on phones (`-1` = none). */
+  readonly primaryCol = input<number>(0);
   
   readonly actionsTemplate = input<TemplateRef<{ $implicit: T }> | null>(null);
   readonly emptyMessage = input<string>('');

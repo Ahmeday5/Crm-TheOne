@@ -1,1 +1,29 @@
-/* Styling driven entirely by global theme — see src/styles/_tokens.scss */
+/* Base styling is driven by the global theme — see src/styles/_tokens.scss */
+@use 'breakpoints' as bp;
+
+/* Long titles stay on one line in the table (tap to read in full). */
+.dash-title-cell {
+  max-width: 260px;
+  min-width: 0;
+
+  @include bp.down(md) { max-width: none; }
+}
+
+.dash-progress-col { min-width: 180px; }
+
+.dash-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+
+  .progress { height: 8px; border-radius: var(--radius-pill); }
+
+  &__pct {
+    min-width: 2.75rem;
+    font-weight: var(--fw-700);
+    font-size: var(--fs-sm);
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+  }
+}

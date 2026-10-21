@@ -78,6 +78,38 @@ export const APPOINTMENT_PRIORITIES: ReadonlyArray<
   { code: AppointmentPriority.Urgent, ar: 'عاجلة', en: 'Urgent' },
 ];
 
+/** Enum member names as the backend accepts them in string form. */
+export type AppointmentTypeName = keyof typeof AppointmentType;
+export type AppointmentPriorityName = keyof typeof AppointmentPriority;
+
+/**
+ * Types offered when a lead is handed to support — the subset the
+ * `AssignToSupportPerson` endpoint accepts (no `Support` / `Other`).
+ */
+export const SUPPORT_HANDOFF_APPOINTMENT_TYPES: ReadonlyArray<AppointmentOption<AppointmentType>> =
+  APPOINTMENT_TYPES.filter(
+    (t) => t.code !== AppointmentType.Support && t.code !== AppointmentType.Other,
+  );
+
+/**
+ * The appointment created together with a support hand-off. The customer
+ * comes from the URL and the assignee is the chosen support person, so
+ * neither is sent. Defaults server-side: `type` Meeting, `priority` Low.
+ */
+export interface SupportHandoffAppointment {
+  title: string;
+  /** ISO date-time. */
+  startDate: string;
+  /** ISO date-time — must be after `startDate`. */
+  endDate: string;
+  type?: AppointmentTypeName;
+  priority?: AppointmentPriorityName;
+  location?: string;
+  meetingLink?: string;
+  description?: string;
+  notes?: string;
+}
+
 /** Body for `POST /Appointments/CreateAppointment` and the update endpoint. */
 export interface AppointmentRequest {
   title: string;

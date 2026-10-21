@@ -26,6 +26,8 @@ import {
   PriceQuotationListItem,
 } from '../../../../shared/models';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { PriceOfferFormDialogComponent } from '../../components/price-offer-form-dialog/price-offer-form-dialog.component';
 import { PriceQuotationsService } from '../../services/price-quotations.service';
@@ -55,6 +57,8 @@ const DEFAULT_PAGE_SIZE = 10;
     PaginationComponent,
     TableToolsComponent,
     PriceOfferFormDialogComponent,
+    ResponsiveTableDirective,
+    ClampTextDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './price-offers.component.html',

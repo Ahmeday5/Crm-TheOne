@@ -1,10 +1,18 @@
 .app-shell {
   display: flex;
+  /* `dvh` tracks the visible viewport on mobile (URL bar shown/hidden);
+   * `vh` is the fallback for browsers without dynamic units. */
   height: calc(100vh - var(--header-h));
+  height: calc(100dvh - var(--header-h));
   overflow: hidden;
 }
 .app-main {
   flex: 1;
+  /* Lets the flex child shrink below its content's intrinsic width, so a
+   * wide descendant can never push the whole page into horizontal scroll. */
+  min-width: 0;
+  overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   background: var(--surface-2);
 }

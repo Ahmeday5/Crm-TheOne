@@ -1,5 +1,6 @@
 @if (open()) {
   <div class="app-modal-backdrop"
+       [style.z-index]="zIndex()"
        role="presentation"
        (click)="onBackdropClick()">
     <div #dialog

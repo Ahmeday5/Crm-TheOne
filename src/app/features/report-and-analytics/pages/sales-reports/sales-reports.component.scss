@@ -1,4 +1,7 @@
-:host { display: block; }
+@use 'breakpoints' as bp;
+@use '../../report-page' as report;
+
+@include report.page;
 
 .sales-analysis {
   /* ─────────── Search field icon (RTL/LTR aware) ─────────── */
@@ -56,15 +59,6 @@
     strong { color: var(--brand-dark, #4f46e5); margin-inline-end: 0.4rem; }
   }
 
-  /* ─────────── KPI cards ─────────── */
-  .kpi-card {
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md, 0 6px 16px rgba(0, 0, 0, 0.08));
-    }
-  }
-
   /* ─────────── Customer cards ─────────── */
   .customer-card {
     background: var(--surface-0);
@@ -72,6 +66,8 @@
     border-radius: var(--radius-md, 0.5rem);
     padding: 1rem 1.25rem;
     transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+
+    @include bp.down(md) { padding: 0.85rem 0.9rem; }
 
     &:hover {
       box-shadow: var(--shadow-md, 0 4px 14px rgba(0, 0, 0, 0.08));

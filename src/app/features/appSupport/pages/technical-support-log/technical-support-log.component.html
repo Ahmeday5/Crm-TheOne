@@ -48,7 +48,7 @@
       <div class="row g-3">
 
         <!-- بحث -->
-        <div class="col-md-3">
+        <div class="col-12 col-md-3">
           <div class="position-relative">
             <input 
               type="text" 
@@ -81,7 +81,7 @@
         </div>
 
         <!-- حالة -->
-        <div class="col-6 col-md-3">
+        <div class="col-12 col-md-3">
           <select class="form-select">
             <option selected>جميع الحالات</option>
             <option>محلولة</option>
@@ -110,7 +110,7 @@
         </div>
 
         <div class="col-12 col-md-2 col-lg-4">
-          <div class="d-flex gap-2">
+          <div class="btn-row">
             <button class="btn btn-view flex-fill">مسح الفلاتر</button>
             <button class="btn btn-view flex-fill">
               <i class="fa-solid fa-download"></i>
@@ -124,9 +124,9 @@
 
   <!-- الجدول الرئيسي -->
   <div class="card shadow-sm border-0">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-      <h5 class="mb-0">سجلات الدعم: 3</h5>
-      <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+    <div class="card-header d-flex justify-content-between align-items-center gap-2 py-3">
+      <h5 class="mb-0 min-w-0">سجلات الدعم: 3</h5>
+      <button class="btn btn-outline-secondary btn-sm">
         <i class="fa-solid fa-filter"></i>
         فلتر متقدم
       </button>
@@ -134,7 +134,7 @@
 
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover mb-0" appResponsiveTable [rtPrimaryCol]="1">
           <thead>
             <tr>
               <th>رقم التذكرة</th>
@@ -145,7 +145,7 @@
               <th>موظف الدعم</th>
               <th>التاريخ</th>
               <th>المدة</th>
-              <th>الإجراء</th>
+              <th class="rt-actions">الإجراء</th>
             </tr>
           </thead>
           <tbody>
@@ -163,9 +163,7 @@
                 <span class="badge bg-secondary-subtle text-secondary">منصة تجارة إلكترونية</span>
               </td>
               <td>
-                <div class="text-truncate" style="max-width: 220px;">
-                  استشارة تكامل بوابة الدفع
-                </div>
+                <div class="log-summary" appClampText>استشارة تكامل بوابة الدفع</div>
               </td>
               <td><span class="badge bg-success-subtle text-success">محلولة</span></td>
               <td>المستخدم الحالي</td>
@@ -177,7 +175,7 @@
               </td>
               <td>150 دقيقة</td>
               <td>
-                <button class="btn btn-view btn-sm">
+                <button class="btn btn-view btn-sm" aria-label="عرض">
                   <i class="fa-regular fa-eye"></i>
                 </button>
               </td>
@@ -196,9 +194,7 @@
                 <span class="badge bg-secondary-subtle text-secondary">موقع إلكتروني</span>
               </td>
               <td>
-                <div class="text-truncate" style="max-width: 220px;">
-                  تحسين محركات البحث ومشاكل الأداء
-                </div>
+                <div class="log-summary" appClampText>تحسين محركات البحث ومشاكل الأداء</div>
               </td>
               <td><span class="badge bg-success-subtle text-success">محلولة</span></td>
               <td>المستخدم الحالي</td>
@@ -210,7 +206,7 @@
               </td>
               <td>105 دقيقة</td>
               <td>
-                <button class="btn btn-view btn-sm">
+                <button class="btn btn-view btn-sm" aria-label="عرض">
                   <i class="fa-regular fa-eye"></i>
                 </button>
               </td>
@@ -229,9 +225,7 @@
                 <span class="badge bg-secondary-subtle text-secondary">نظام إدارة العملاء</span>
               </td>
               <td>
-                <div class="text-truncate" style="max-width: 220px;">
-                  مشكلة في مزامنة البيانات مع التطبيق الجوال
-                </div>
+                <div class="log-summary" appClampText>مشكلة في مزامنة البيانات مع التطبيق الجوال</div>
               </td>
               <td><span class="badge bg-secondary">مغلقة</span></td>
               <td>فهد سعد</td>
@@ -243,7 +237,7 @@
               </td>
               <td>120 دقيقة</td>
               <td>
-                <button class="btn btn-view btn-sm">
+                <button class="btn btn-view btn-sm" aria-label="عرض">
                   <i class="fa-regular fa-eye"></i>
                 </button>
               </td>

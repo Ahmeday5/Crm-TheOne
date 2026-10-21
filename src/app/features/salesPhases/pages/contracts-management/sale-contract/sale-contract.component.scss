@@ -7,6 +7,8 @@
  * unique to the contract: the two-party blocks, the numbered clause
  * headings, the hand-fill / price slots and the signature grid.
  */
+@use 'breakpoints' as bp;
+
 :host {
   display: block;
 }
@@ -88,5 +90,32 @@
   .c-sign-line {
     margin-top: 28px !important;
     font-weight: 700;
+  }
+}
+
+/* ─────────── on-screen phones ───────────
+ * Screen preview only (print keeps the A4 layout): slimmer page chrome,
+ * fill / price slots that never exceed the line, stacked signatures. */
+@media screen {
+  @include bp.down(md) {
+    .contract-toolbar > .btn { flex: 1 1 0; }
+
+    .contract-page {
+      padding: 18px 14px 56px;
+      min-height: 0;
+    }
+
+    .c-fill,
+    .c-price {
+      min-width: min(100%, 140px);
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+
+    .c-signatures {
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 28px;
+    }
   }
 }

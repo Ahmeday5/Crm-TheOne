@@ -1,1 +1,13 @@
 /* Styling driven entirely by global theme — see src/styles/_tokens.scss */
+@use 'breakpoints' as bp;
+
+/* Problem summary — two clamped lines, tap for the full text. */
+.log-summary {
+  min-width: 10rem;
+  max-width: 16rem;
+
+  @include bp.down(md) {
+    min-width: 0;
+    max-width: none;
+  }
+}

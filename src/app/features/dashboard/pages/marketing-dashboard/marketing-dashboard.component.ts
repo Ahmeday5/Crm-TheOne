@@ -27,11 +27,13 @@ import {
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { MarketingService } from '../../services/marketing.service';
+import { RefreshButtonComponent } from '../../../../shared/components/refresh-button/refresh-button.component';
 
 @Component({
   selector: 'app-marketing-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     CommonModule,
     NgApexchartsModule,
     TranslatePipe,

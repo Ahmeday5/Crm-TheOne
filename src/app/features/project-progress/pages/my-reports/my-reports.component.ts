@@ -21,6 +21,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { ProjectDailyReportListDto } from '../../../../shared/models';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ProjectProgressService } from '../../services/project-progress.service';
 
@@ -33,6 +34,7 @@ const DEFAULT_PAGE_SIZE = 10;
     CommonModule,
     FormsModule,
     TranslatePipe,
+    ClampTextDirective,
     DataTableComponent,
     EmptyStateComponent,
     LoadErrorComponent,
@@ -40,6 +42,8 @@ const DEFAULT_PAGE_SIZE = 10;
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './my-reports.component.html',
+  // Keeps the free-text preview column from dominating the desktop table.
+  styles: [`.preview-cell { max-width: 420px; }`],
 })
 export class MyReportsComponent implements OnInit {
   private readonly service = inject(ProjectProgressService);
@@ -58,6 +62,7 @@ export class MyReportsComponent implements OnInit {
 
   private readonly dateCell = viewChild<TemplateRef<{ $implicit: ProjectDailyReportListDto }>>('dateCell');
   private readonly projectCell = viewChild<TemplateRef<{ $implicit: ProjectDailyReportListDto }>>('projectCell');
+  private readonly previewCell = viewChild<TemplateRef<{ $implicit: ProjectDailyReportListDto }>>('previewCell');
   private readonly contributionCell =
     viewChild<TemplateRef<{ $implicit: ProjectDailyReportListDto }>>('contributionCell');
 
@@ -78,6 +83,7 @@ export class MyReportsComponent implements OnInit {
       key: 'completedWorkPreview',
       label: 'projectProgress.admin.table.preview',
       i18nLabel: true,
+      cellTemplate: this.previewCell(),
     },
     {
       key: 'appliedProgressContribution',

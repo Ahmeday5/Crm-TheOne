@@ -72,7 +72,7 @@
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover align-middle mb-0" appResponsiveTable>
           <thead class="table-light">
             <tr>
               <th>اسم العميل</th>
@@ -82,13 +82,13 @@
               <th>الوقت</th>
               <th>موظف المبيعات</th>
               <th>الحالة</th>
-              <th class="text-end">الإجراءات</th>
+              <th class="rt-actions text-end">الإجراءات</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>
-                <div>
+                <div class="min-w-0">
                   <div class="fw-medium">أحمد محمد</div>
                   <small class="text-muted">شركة الحلول التقنية</small>
                 </div>
@@ -99,15 +99,17 @@
               <td>10:00</td>
               <td>عمر حسن</td>
               <td><span class="badge bg-warning-subtle text-warning">⏳ قيد الانتظار</span></td>
-              <td class="text-end d-flex gap-2 justify-content-start">
-                <button class="btn btn-view"><i class="fa-solid fa-phone"></i></button>
-                <button class="btn btn-view"><i class="fa-solid fa-calendar-day"></i></button>
-                <button class="btn btn-view"><i class="fa-regular fa-circle-check"></i></button>
+              <td class="text-end">
+                <div class="d-inline-flex gap-2">
+                  <button type="button" class="btn btn-view"><i class="fa-solid fa-phone"></i></button>
+                  <button type="button" class="btn btn-view"><i class="fa-solid fa-calendar-day"></i></button>
+                  <button type="button" class="btn btn-view"><i class="fa-regular fa-circle-check"></i></button>
+                </div>
               </td>
             </tr>
             <tr>
               <td>
-                <div>
+                <div class="min-w-0">
                   <div class="fw-medium">سارة علي</div>
                   <small class="text-muted">وكالة التسويق الرقمي</small>
                 </div>
@@ -118,10 +120,12 @@
               <td>14:00</td>
               <td>فاطمة علي</td>
               <td><span class="badge bg-warning-subtle text-warning">⏳ قيد الانتظار</span></td>
-              <td class="text-end d-flex gap-2 justify-content-start">
-                <button class="btn btn-view"><i class="fa-solid fa-phone"></i></button>
-                <button class="btn btn-view"><i class="fa-solid fa-calendar-day"></i></button>
-                <button class="btn btn-view"><i class="fa-regular fa-circle-check"></i></button>
+              <td class="text-end">
+                <div class="d-inline-flex gap-2">
+                  <button type="button" class="btn btn-view"><i class="fa-solid fa-phone"></i></button>
+                  <button type="button" class="btn btn-view"><i class="fa-solid fa-calendar-day"></i></button>
+                  <button type="button" class="btn btn-view"><i class="fa-regular fa-circle-check"></i></button>
+                </div>
               </td>
             </tr>
           </tbody>

@@ -1,7 +1,9 @@
 <div class="flex-grow-1">
   <app-page-header [title]="'dashboard.developer.title' | translate"
                    [subtitle]="'dashboard.developer.subtitle' | translate"
-                   icon="fa-solid fa-code"></app-page-header>
+                   icon="fa-solid fa-code">
+    <app-refresh-button [loading]="loading()" (refresh)="reload()" />
+  </app-page-header>
 
   <!-- KPIs -->
   <div class="row g-3">

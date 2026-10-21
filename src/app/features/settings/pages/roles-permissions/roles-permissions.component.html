@@ -13,12 +13,12 @@
         <div class="card role-card h-100">
           <div class="card-body">
             <div class="d-flex align-items-center gap-3 mb-3">
-              <span class="icon-tile tone-{{ card.tone }}"><i [class]="card.icon"></i></span>
-              <div>
-                <h6 class="fw-700 mb-0">{{ card.label }}</h6>
-                <small class="text-muted">{{ card.name }}</small>
+              <span class="icon-tile flex-shrink-0 tone-{{ card.tone }}"><i [class]="card.icon"></i></span>
+              <div class="min-w-0">
+                <h6 class="fw-700 mb-0 text-truncate">{{ card.label }}</h6>
+                <small class="text-muted d-block text-truncate">{{ card.name }}</small>
               </div>
-              <span class="badge bg-light text-muted ms-auto">
+              <span class="badge bg-light text-muted ms-auto flex-shrink-0">
                 {{ card.moduleKeys.length }} {{ 'settings.roles.modules' | translate }}
               </span>
             </div>

@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 .details-grid {
   display: flex;
   flex-direction: column;
@@ -16,6 +18,16 @@
   border-radius: var(--radius-lg);
   padding: 1rem 1.1rem;
 }
+
+@include bp.down(md) {
+  .details-header,
+  .details-section { padding: 0.85rem 0.9rem; }
+}
+
+/* The dialog exists to show the full text — keep the author's line breaks. */
+.details-desc { white-space: pre-line; }
+
+.spent-progress { height: 8px; }
 
 .section-title {
   font-weight: var(--fw-700);

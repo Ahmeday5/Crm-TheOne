@@ -21,11 +21,12 @@ import {
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ProjectsService } from '../../services/projects.service';
+import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 
 @Component({
   selector: 'app-project-details-dialog',
   standalone: true,
-  imports: [
+  imports: [UserAvatarComponent, 
     CommonModule,
     TranslatePipe,
     MoneyPipe,

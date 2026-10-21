@@ -15,6 +15,9 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
+import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import {
   GoalLeaderboardEntry,
   GoalLeaderboardQuery,
@@ -26,10 +29,29 @@ import { GoalsService } from '../../services/goals.service';
 
 type FilterType = 'all' | GoalType;
 
+/** `<input type="date">` gives `YYYY-MM-DD` in local time; send the day's bounds. */
+function startOfDay(value: string): string {
+  return new Date(`${value}T00:00:00`).toISOString();
+}
+
+/** Inclusive "to": the whole selected day counts, not just its first instant. */
+function endOfDay(value: string): string {
+  return new Date(`${value}T23:59:59.999`).toISOString();
+}
+
 @Component({
   selector: 'app-goals-leaderboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, EmptyStateComponent, LoadErrorComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    MoneyPipe,
+    EmptyStateComponent,
+    LoadErrorComponent,
+    UserAvatarComponent,
+    ResponsiveTableDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './leaderboard.component.html',
   styleUrl: './leaderboard.component.scss',
@@ -67,7 +89,8 @@ export class LeaderboardComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  load(): void {
+  /** `force` bypasses the HTTP cache — used by the refresh button. */
+  load(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
 
@@ -75,10 +98,10 @@ export class LeaderboardComponent implements OnInit, OnDestroy {
     const t = this.filterType();
     if (t !== 'all') query.GoalType = t;
     if (this.isAdmin() && this.filterUserId()) query.UserId = this.filterUserId();
-    if (this.filterFrom()) query.From = new Date(this.filterFrom()).toISOString();
-    if (this.filterTo()) query.To = new Date(this.filterTo()).toISOString();
+    if (this.filterFrom()) query.From = startOfDay(this.filterFrom());
+    if (this.filterTo()) query.To = endOfDay(this.filterTo());
 
-    this.goalsService.leaderboard(query).pipe(takeUntil(this.destroy$)).subscribe({
+    this.goalsService.leaderboard(query, force).pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.entries.set(data ?? []);
         this.loading.set(false);
@@ -123,14 +146,6 @@ export class LeaderboardComponent implements OnInit, OnDestroy {
     this.filterFrom.set('');
     this.filterTo.set('');
     this.load();
-  }
-
-  initials(name: string): string {
-    return name
-      .split(' ')
-      .map((w) => w[0]?.toUpperCase() ?? '')
-      .slice(0, 2)
-      .join('');
   }
 
   rankMeta(rank: number): { icon: string; color: string } {

@@ -28,6 +28,8 @@ import {
   ContractStatusCode,
 } from '../../../../shared/models';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ContractFormDialogComponent } from '../../components/contract-form-dialog/contract-form-dialog.component';
 import { ContractsService } from '../../services/contracts.service';
@@ -53,6 +55,8 @@ const EXPIRING_WINDOW_DAYS = 90;
     LoadErrorComponent,
     TableToolsComponent,
     ContractFormDialogComponent,
+    ResponsiveTableDirective,
+    ClampTextDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './contracts-management.component.html',

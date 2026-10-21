@@ -15,6 +15,8 @@
     color: var(--text-2);
     text-decoration: none;
     font-size: var(--fs-sm);
+    min-width: 0;
+    overflow-wrap: anywhere;
 
     > i {
       width: 1rem;
@@ -23,6 +25,8 @@
       flex-shrink: 0;
     }
   }
+
+  .cp-legal-value { overflow-wrap: anywhere; }
 
   a.cp-row:hover {
     color: var(--brand);

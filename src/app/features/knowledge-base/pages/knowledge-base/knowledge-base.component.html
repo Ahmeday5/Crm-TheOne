@@ -2,26 +2,27 @@
   <!-- Welcome strip -->
   <div class="mb-4">
     <h2 class="fw-700 mb-1">{{ 'kb.welcomeTitle' | translate }}</h2>
-    <p class="text-muted mb-0">{{ 'kb.welcomeSubtitle' | translate }}</p>
+    <p class="text-muted mb-0" appClampText>{{ 'kb.welcomeSubtitle' | translate }}</p>
   </div>
 
   <!-- Header + actions -->
   <header class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
-    <div class="d-flex align-items-center gap-3">
+    <div class="kb-heading d-flex align-items-center gap-3 min-w-0">
       <span class="icon-tile xl tone-primary"><i class="fa-solid fa-book"></i></span>
-      <div>
+      <div class="min-w-0">
         <h3 class="fw-700 mb-1">{{ 'kb.title' | translate }}</h3>
-        <p class="text-muted mb-0">{{ 'kb.subtitle' | translate }}</p>
+        <p class="text-muted mb-0" appClampText>{{ 'kb.subtitle' | translate }}</p>
       </div>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="kb-toolbar btn-row">
       <button type="button" class="btn btn-light" [disabled]="loading()"
               (click)="reload(true)"
-              [title]="'tableTools.refresh' | translate">
+              [title]="'tableTools.refresh' | translate"
+              [attr.aria-label]="'tableTools.refresh' | translate">
         <i class="fa-solid fa-rotate-right"></i>
       </button>
       <button type="button" class="btn btn-primary" (click)="openAdd()">
-        <i class="fa-solid fa-plus me-1"></i>{{ 'kb.addArticle' | translate }}
+        <i class="fa-solid fa-plus"></i>{{ 'kb.addArticle' | translate }}
       </button>
     </div>
   </header>
@@ -29,9 +30,9 @@
   <!-- KPI strip -->
   <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
-      <div class="card h-100">
-        <div class="card-body d-flex align-items-center justify-content-between">
-          <div>
+      <div class="card kb-kpi h-100">
+        <div class="card-body d-flex align-items-center justify-content-between gap-2">
+          <div class="min-w-0">
             <p class="text-muted small mb-1">{{ 'kb.kpi.articles' | translate }}</p>
             <h3 class="fw-700 mb-0">{{ kpiTotal() }}</h3>
           </div>
@@ -40,9 +41,9 @@
       </div>
     </div>
     <div class="col-6 col-lg-3">
-      <div class="card h-100">
-        <div class="card-body d-flex align-items-center justify-content-between">
-          <div>
+      <div class="card kb-kpi h-100">
+        <div class="card-body d-flex align-items-center justify-content-between gap-2">
+          <div class="min-w-0">
             <p class="text-muted small mb-1">{{ 'kb.kpi.published' | translate }}</p>
             <h3 class="fw-700 mb-0 text-success">{{ kpiPublished() }}</h3>
           </div>
@@ -51,9 +52,9 @@
       </div>
     </div>
     <div class="col-6 col-lg-3">
-      <div class="card h-100">
-        <div class="card-body d-flex align-items-center justify-content-between">
-          <div>
+      <div class="card kb-kpi h-100">
+        <div class="card-body d-flex align-items-center justify-content-between gap-2">
+          <div class="min-w-0">
             <p class="text-muted small mb-1">{{ 'kb.kpi.drafts' | translate }}</p>
             <h3 class="fw-700 mb-0" style="color: #ca8a04;">{{ kpiDrafts() }}</h3>
           </div>
@@ -62,9 +63,9 @@
       </div>
     </div>
     <div class="col-6 col-lg-3">
-      <div class="card h-100">
-        <div class="card-body d-flex align-items-center justify-content-between">
-          <div>
+      <div class="card kb-kpi h-100">
+        <div class="card-body d-flex align-items-center justify-content-between gap-2">
+          <div class="min-w-0">
             <p class="text-muted small mb-1">{{ 'kb.kpi.withAttachments' | translate }}</p>
             <h3 class="fw-700 mb-0" style="color: #7c3aed;">{{ kpiWithAttachments() }}</h3>
           </div>
@@ -99,7 +100,7 @@
         </div>
         <div class="col-4 col-md-auto">
           <button type="button" class="btn btn-light w-100" [disabled]="!hasActiveFilters()" (click)="resetFilters()">
-            <i class="fa-solid fa-filter-circle-xmark me-1"></i>{{ 'kb.filters.reset' | translate }}
+            <i class="fa-solid fa-filter-circle-xmark"></i>{{ 'kb.filters.reset' | translate }}
           </button>
         </div>
       </div>
@@ -128,7 +129,7 @@
           <div class="card h-100 kb-card" [style.borderInlineStartColor]="typeAccent(a.type)">
             <div class="card-body d-flex flex-column">
               <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
-                <h5 class="fw-700 mb-0 kb-card__title">{{ a.title }}</h5>
+                <h5 class="fw-700 mb-0 kb-card__title flex-grow-1 min-w-0" appClampText [clampText]="a.title">{{ a.title }}</h5>
 
                 @if (confirmDeleteId() === a.id) {
                   <!-- Inline delete confirmation -->
@@ -181,19 +182,19 @@
               </div>
 
               @if (a.summary) {
-                <p class="text-muted kb-card__desc mb-3">{{ a.summary }}</p>
+                <p class="text-muted kb-card__desc mb-3" appClampText [clampTitle]="a.title">{{ a.summary }}</p>
               }
 
               @if (keywordList(a.keywords).length) {
                 <div class="d-flex flex-wrap gap-2 mb-3">
                   @for (kw of keywordList(a.keywords); track kw) {
-                    <span class="badge rounded-pill bg-primary-subtle text-primary">#{{ kw }}</span>
+                    <span class="badge rounded-pill bg-primary-subtle text-primary text-truncate mw-100">#{{ kw }}</span>
                   }
                 </div>
               }
 
               <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-3 border-top small text-muted mt-auto">
-                <span><i class="fa-solid fa-user me-1"></i>{{ a.createdByName || '—' }}</span>
+                <span class="text-truncate min-w-0"><i class="fa-solid fa-user me-1"></i>{{ a.createdByName || '—' }}</span>
                 <div class="d-flex align-items-center gap-3">
                   @if (a.attachments.length) {
                     <span><i class="fa-solid fa-paperclip me-1"></i>{{ a.attachments.length }}</span>

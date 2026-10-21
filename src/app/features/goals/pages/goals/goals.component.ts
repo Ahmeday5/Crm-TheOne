@@ -12,22 +12,34 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil, timer } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
+import { ApiError } from '../../../../core/models/api-response.model';
 import { AuthService } from '../../../../core/services/auth.service';
+import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 import {
   Goal,
   GoalListQuery,
   GoalPeriod,
+  GoalProgressEntry,
   GoalStats,
   GoalType,
 } from '../../../../shared/models';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { GoalCommissionComponent } from '../../components/goal-commission/goal-commission.component';
+import { GoalEntryEditDialogComponent } from '../../components/goal-entry-edit-dialog/goal-entry-edit-dialog.component';
 import { GoalFormDialogComponent } from '../../components/goal-form-dialog/goal-form-dialog.component';
+import { GoalProgressDialogComponent } from '../../components/goal-progress-dialog/goal-progress-dialog.component';
+import { GoalProgressHistoryComponent } from '../../components/goal-progress-history/goal-progress-history.component';
 import { GoalsService } from '../../services/goals.service';
+import { achievementPercent } from '../../utils/goal-progress.util';
 
 type GoalStatus = 'active' | 'upcoming' | 'expired';
 type FilterStatus = 'all' | GoalStatus;
@@ -55,6 +67,14 @@ interface LeaderboardEntry {
     LoadErrorComponent,
     GoalFormDialogComponent,
     ModalComponent,
+    ClampTextDirective,
+    ResponsiveTableDirective,
+    MoneyPipe,
+    UserAvatarComponent,
+    GoalCommissionComponent,
+    GoalProgressDialogComponent,
+    GoalProgressHistoryComponent,
+    GoalEntryEditDialogComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './goals.component.html',
@@ -65,6 +85,7 @@ export class GoalsComponent implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly language = inject(LanguageService);
   private readonly toast = inject(ToastService);
+  private readonly dialog = inject(DialogService);
   private readonly destroy$ = new Subject<void>();
   private readonly searchSubject = new Subject<string>();
 
@@ -94,17 +115,20 @@ export class GoalsComponent implements OnInit, OnDestroy {
   readonly deleteDialog = signal<Goal | null>(null);
   readonly deleting = signal(false);
 
-  // ── progress update ──
+  // ── log an amount (Sales) ──
   readonly progressGoal = signal<Goal | null>(null);
-  readonly progressInput = signal(0);
-  readonly progressUpdating = signal(false);
 
   // ── celebration ──
   readonly celebratingTitle = signal<string | null>(null);
 
-  // ── goal detail (uses /Goals/{id}/stats) ──
+  // ── goal detail (GET /Goals/{id} — includes the amounts log) ──
   readonly goalDetailDialog = signal<Goal | null>(null);
   readonly goalDetailLoading = signal(false);
+  readonly goalDetailError = signal<string | null>(null);
+
+  // ── edit / delete a logged amount (Admin) ──
+  readonly editingEntry = signal<GoalProgressEntry | null>(null);
+  readonly deletingEntryId = signal<number | null>(null);
 
   // ── computed ──
   readonly editGoal = computed<Goal | null>(() => {
@@ -266,48 +290,84 @@ export class GoalsComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─────────── progress update ───────────
+  // ─────────── log an amount (Sales) ───────────
 
-  openProgress(goal: Goal): void {
-    this.progressGoal.set(goal);
-    this.progressInput.set(goal.currentProgress);
+  openProgress(goal: Goal): void { this.progressGoal.set(goal); }
+  closeProgress(): void { this.progressGoal.set(null); }
+
+  onProgressSaved(updated: Goal): void {
+    const wasAchieved = this.progressGoal()?.isAchieved ?? false;
+    this.applyUpdatedGoal(updated);
+    this.closeProgress();
+    this.loadStats();
+
+    if (!wasAchieved && updated.isAchieved) {
+      this.celebratingTitle.set(updated.title);
+      timer(4500).pipe(takeUntil(this.destroy$)).subscribe(() => {
+        this.celebratingTitle.set(null);
+      });
+    }
   }
 
-  closeProgress(): void {
-    this.progressGoal.set(null);
-    this.progressInput.set(0);
+  // ─────────── edit a logged amount (Admin) ───────────
+
+  openEntryEdit(entry: GoalProgressEntry): void { this.editingEntry.set(entry); }
+  closeEntryEdit(): void { this.editingEntry.set(null); }
+
+  onEntrySaved(updated: Goal): void {
+    this.applyUpdatedGoal(updated);
+    this.closeEntryEdit();
+    this.loadStats();
   }
 
-  submitProgress(): void {
-    const g = this.progressGoal();
-    const val = this.progressInput();
-    if (!g || val < 0) return;
+  async deleteEntry(entry: GoalProgressEntry): Promise<void> {
+    const goal = this.goalDetailDialog();
+    if (!goal || this.deletingEntryId() !== null) return;
 
-    const wasAchieved = g.isAchieved;
-    this.progressUpdating.set(true);
+    const ok = await this.dialog.confirm({
+      title: this.t('goals.history.confirmDeleteTitle'),
+      message: this.t('goals.history.confirmDeleteMessage'),
+      confirmText: this.t('goals.history.delete'),
+      cancelText: this.t('common.cancel'),
+      type: 'danger',
+    });
+    if (!ok) return;
 
-    this.goalsService.updateProgress(g.id, val).pipe(takeUntil(this.destroy$)).subscribe({
+    this.deletingEntryId.set(entry.id);
+    this.goalsService.deleteProgressEntry(entry.id, goal.id).pipe(takeUntil(this.destroy$)).subscribe({
       next: (updated) => {
-        this.goals.update(list => list.map(goal => goal.id === updated.id ? updated : goal));
-        this.progressUpdating.set(false);
-        this.closeProgress();
-        this.toast.success(this.t('goals.messages.progressUpdated'));
-
-        if (!wasAchieved && updated.isAchieved) {
-          this.celebratingTitle.set(updated.title);
-          this.loadStats();
-          timer(4500).pipe(takeUntil(this.destroy$)).subscribe(() => {
-            this.celebratingTitle.set(null);
-          });
-        } else {
-          this.loadStats();
-        }
+        this.deletingEntryId.set(null);
+        // Drop the row even if the server omitted the log in its response.
+        this.applyUpdatedGoal({
+          ...updated,
+          progressEntries: (updated.progressEntries ?? goal.progressEntries ?? [])
+            .filter(e => e.id !== entry.id),
+        });
+        this.loadStats();
+        this.toast.success(this.t('goals.messages.entryDeleted'));
       },
-      error: () => {
-        this.progressUpdating.set(false);
-        this.toast.error(this.t('goals.messages.progressFailed'));
+      error: (err: ApiError) => {
+        this.deletingEntryId.set(null);
+        this.toast.error(err?.message?.trim() || this.t('goals.messages.entryDeleteFailed'));
       },
     });
+  }
+
+  /**
+   * Writes a server-returned goal into the grid and, if open, the detail
+   * modal — no refetch. List rows don't carry `progressEntries`, so the log
+   * already on screen is kept when a response omits it.
+   */
+  private applyUpdatedGoal(updated: Goal): void {
+    this.goals.update(list => list.map(g => g.id === updated.id ? { ...g, ...updated } : g));
+    const open = this.goalDetailDialog();
+    if (open?.id === updated.id) {
+      this.goalDetailDialog.set({
+        ...open,
+        ...updated,
+        progressEntries: updated.progressEntries ?? open.progressEntries,
+      });
+    }
   }
 
   // ─────────── helpers ───────────
@@ -333,14 +393,7 @@ export class GoalsComponent implements OnInit, OnDestroy {
 
   /** Achievement percentage: currentProgress / targetValue × 100. */
   achievementPercent(goal: Goal): number {
-    if (!goal.targetValue) return 0;
-    return Math.min(100, Math.round((goal.currentProgress / goal.targetValue) * 100));
-  }
-
-  /** Preview percent for the progress modal. */
-  previewPercent(goal: Goal): number {
-    if (!goal.targetValue) return 0;
-    return Math.min(100, Math.round((this.progressInput() / goal.targetValue) * 100));
+    return achievementPercent(goal.currentProgress, goal.targetValue);
   }
 
   goalDaysLabel(goal: Goal): string {
@@ -393,21 +446,33 @@ export class GoalsComponent implements OnInit, OnDestroy {
     return n.toLocaleString(this.language.lang() === 'ar' ? 'ar-EG' : 'en-US');
   }
 
-  // ─────────── goal detail (/Goals/{id}/stats) ───────────
+  // ─────────── goal detail (GET /Goals/{id}) ───────────
 
   openGoalDetail(goal: Goal): void {
     this.goalDetailDialog.set(goal);
+    this.loadGoalDetail(goal.id);
+  }
+
+  loadGoalDetail(id: number): void {
     this.goalDetailLoading.set(true);
-    this.goalsService.getGoalStats(goal.id).pipe(takeUntil(this.destroy$)).subscribe({
+    this.goalDetailError.set(null);
+    this.goalsService.getById(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: (fresh) => {
+        if (this.goalDetailDialog()?.id !== id) return; // closed / switched meanwhile
         this.goalDetailDialog.set(fresh);
         this.goalDetailLoading.set(false);
       },
-      error: () => { this.goalDetailLoading.set(false); },
+      error: () => {
+        this.goalDetailLoading.set(false);
+        this.goalDetailError.set(this.t('goals.messages.detailLoadFailed'));
+      },
     });
   }
 
-  closeGoalDetail(): void { this.goalDetailDialog.set(null); }
+  closeGoalDetail(): void {
+    this.goalDetailDialog.set(null);
+    this.goalDetailError.set(null);
+  }
 
   // ─────────── card helpers ───────────
 

@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 .contract-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -54,11 +56,36 @@
     white-space: nowrap;
   }
 
-  .min-w-0 {
-    min-width: 0;
-  }
-
   .contract-title-cell {
     max-width: 240px;
   }
+}
+
+.contracts-search {
+  flex: 1 1 16rem;
+  max-width: 420px;
+  min-width: 0;
+}
+
+@include bp.down(md) {
+  // Tabs become a swipeable strip instead of wrapping into a ragged block.
+  .contract-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+
+    &::-webkit-scrollbar { display: none; }
+  }
+
+  .contract-tab {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+
+  .contracts-search { max-width: none; flex-basis: 100%; }
+  .contracts-add { width: 100%; }
+
+  .contracts-table .contract-title-cell { max-width: none; }
 }

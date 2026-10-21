@@ -9,6 +9,8 @@
     border: 1px solid var(--border);
     color: var(--text-1);
     font-size: var(--fs-sm);
+    max-width: 100%;
+    overflow-wrap: anywhere;
 
     i { color: var(--brand); }
 

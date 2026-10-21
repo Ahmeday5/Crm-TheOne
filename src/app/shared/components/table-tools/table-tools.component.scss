@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 .table-tools {
   position: relative;
   display: inline-block;
@@ -8,10 +10,22 @@
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
+  min-height: 38px;
 
   &.is-open {
-    background: var(--bs-secondary-bg, #e9ecef);
+    background: var(--surface-2);
   }
+}
+
+/* Phones: icon-only buttons (labels stay as aria-labels) so the toolbar
+   never crowds the card header. */
+@include bp.down(sm) {
+  .table-tools-btn {
+    min-width: 38px;
+    justify-content: center;
+    padding-inline: 0.6rem;
+  }
+  .table-tools-label { display: none; }
 }
 
 .table-tools-caret {
@@ -29,12 +43,27 @@
   top: calc(100% + 0.35rem);
   z-index: 1050;
   min-width: 16rem;
+  max-width: calc(100vw - 1rem);
   padding: 0.4rem;
-  background: var(--bs-body-bg, #fff);
-  border: 1px solid var(--bs-border-color, #dee2e6);
-  border-radius: 0.6rem;
-  box-shadow: 0 0.75rem 1.75rem rgba(15, 23, 42, 0.16);
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
   animation: table-tools-pop 0.12s ease-out;
+
+  /* Phones: the trigger can sit anywhere in the row, so anchoring to it can
+     push the menu off-screen — present it as a bottom sheet instead. */
+  @include bp.down(sm) {
+    position: fixed;
+    top: auto;
+    inset-inline: 0.5rem;
+    bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    min-width: 0;
+    max-width: none;
+    z-index: 1085;
+    padding: 0.5rem;
+    border-radius: var(--radius-lg);
+  }
 }
 
 @keyframes table-tools-pop {
@@ -48,7 +77,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--bs-secondary-color, #6c757d);
+  color: var(--text-muted);
 }
 
 .table-tools-item {
@@ -57,17 +86,18 @@
   text-align: start;
   padding: 0.5rem 0.6rem;
   border: 0;
-  border-radius: 0.4rem;
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--bs-body-color, #212529);
+  color: var(--text-1);
   font-size: 0.9rem;
+  min-height: 40px;
   cursor: pointer;
   transition: background 0.1s ease;
 
   &:hover,
   &:focus-visible {
-    background: var(--bs-primary-bg-subtle, #e7f1ff);
-    color: var(--bs-primary, #0d6efd);
+    background: var(--brand-soft);
+    color: var(--brand);
     outline: none;
   }
 }
@@ -75,5 +105,5 @@
 .table-tools-divider {
   height: 1px;
   margin: 0.35rem 0.3rem;
-  background: var(--bs-border-color, #dee2e6);
+  background: var(--border);
 }

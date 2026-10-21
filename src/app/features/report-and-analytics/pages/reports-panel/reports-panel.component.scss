@@ -1,1 +1,3 @@
-:host { display: block; }
+@use '../../report-page' as report;
+
+@include report.page;

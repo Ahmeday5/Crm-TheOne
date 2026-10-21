@@ -7,15 +7,15 @@
 
   <!-- Header + export -->
   <header class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
-    <div class="d-flex align-items-center gap-3">
+    <div class="d-flex align-items-center gap-3 min-w-0">
       <span class="icon-tile xl tone-primary"><i class="fa-solid fa-users-gear"></i></span>
-      <div>
+      <div class="min-w-0">
         <h3 class="fw-700 mb-1">{{ 'resources.title' | translate }}</h3>
         <p class="text-muted mb-0">{{ 'resources.subtitle' | translate }}</p>
       </div>
     </div>
-    <button type="button" class="btn btn-primary" (click)="exportReport()" [disabled]="loading() || developers().length === 0">
-      <i class="fa-solid fa-download me-1"></i>{{ 'resources.export' | translate }}
+    <button type="button" class="btn btn-primary page-cta" (click)="exportReport()" [disabled]="loading() || developers().length === 0">
+      <i class="fa-solid fa-download"></i>{{ 'resources.export' | translate }}
     </button>
   </header>
 
@@ -29,8 +29,8 @@
   <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
       <div class="card h-100">
-        <div class="card-body d-flex align-items-center justify-content-between">
-          <div>
+        <div class="card-body d-flex align-items-center justify-content-between gap-2">
+          <div class="min-w-0">
             <p class="text-muted small mb-1">{{ 'resources.kpi.totalDevelopers' | translate }}</p>
             <h3 class="fw-700 mb-0">{{ workload()?.totalDevelopers ?? 0 }}</h3>
           </div>
@@ -40,8 +40,8 @@
     </div>
     <div class="col-6 col-lg-3">
       <div class="card h-100">
-        <div class="card-body d-flex align-items-center justify-content-between">
-          <div>
+        <div class="card-body d-flex align-items-center justify-content-between gap-2">
+          <div class="min-w-0">
             <p class="text-muted small mb-1">{{ 'resources.kpi.avgWorkload' | translate }}</p>
             <h3 class="fw-700 mb-0" style="color: #ea580c;">{{ workload()?.averageWorkload ?? 0 }}%</h3>
           </div>
@@ -51,8 +51,8 @@
     </div>
     <div class="col-6 col-lg-3">
       <div class="card h-100">
-        <div class="card-body d-flex align-items-center justify-content-between">
-          <div>
+        <div class="card-body d-flex align-items-center justify-content-between gap-2">
+          <div class="min-w-0">
             <p class="text-muted small mb-1">{{ 'resources.kpi.overloaded' | translate }}</p>
             <h3 class="fw-700 mb-0 text-danger">{{ workload()?.overloadedDevelopers ?? 0 }}</h3>
           </div>
@@ -62,8 +62,8 @@
     </div>
     <div class="col-6 col-lg-3">
       <div class="card h-100">
-        <div class="card-body d-flex align-items-center justify-content-between">
-          <div>
+        <div class="card-body d-flex align-items-center justify-content-between gap-2">
+          <div class="min-w-0">
             <p class="text-muted small mb-1">{{ 'resources.kpi.available' | translate }}</p>
             <h3 class="fw-700 mb-0 text-success">{{ workload()?.availableDevelopers ?? 0 }}</h3>
           </div>
@@ -87,7 +87,7 @@
                    (ngModelChange)="onSearchInput($event)" />
           </div>
         </div>
-        <div class="col-6 col-md-2">
+        <div class="col-12 col-sm-6 col-md-2">
           <label class="form-label small text-muted">{{ 'resources.filters.project' | translate }}</label>
           <select class="form-select" [ngModel]="projectFilter()" (ngModelChange)="onProjectFilter($event)">
             <option [ngValue]="null">{{ 'resources.filters.allProjects' | translate }}</option>
@@ -113,9 +113,9 @@
             }
           </select>
         </div>
-        <div class="col-6 col-md-auto">
+        <div class="col-12 col-sm-6 col-md-auto">
           <button type="button" class="btn btn-light w-100" (click)="resetFilters()">
-            <i class="fa-solid fa-filter-circle-xmark me-1"></i>{{ 'resources.filters.reset' | translate }}
+            <i class="fa-solid fa-filter-circle-xmark"></i>{{ 'resources.filters.reset' | translate }}
           </button>
         </div>
       </div>
@@ -160,13 +160,13 @@
                       </div>
                     </div>
                   </div>
-                  <div class="d-flex align-items-center gap-3">
+                  <div class="rm-head-meta d-flex align-items-center gap-3">
                     <div class="rm-bar">
                       <div class="d-flex align-items-center justify-content-between mb-1">
                         <span class="small text-muted">{{ 'resources.team.workload' | translate }}</span>
                         <span class="small fw-700" [style.color]="workloadColor(d.workloadPercent)">{{ d.workloadPercent }}%</span>
                       </div>
-                      <div class="progress" style="height: 8px;">
+                      <div class="progress rm-progress">
                         <div class="progress-bar"
                              role="progressbar"
                              [style.width.%]="d.workloadPercent"
@@ -227,11 +227,11 @@
       } @else {
         <div class="d-flex flex-column gap-3">
           @for (d of distribution(); track d.developerId) {
-            <div class="d-flex align-items-center gap-3">
-              <div class="rm-dist-name fw-600 text-truncate">{{ d.fullName }}</div>
-              <div class="flex-grow-1">
+            <div class="rm-dist-row d-flex align-items-center gap-3">
+              <div class="rm-dist-name fw-600 text-truncate" [title]="d.fullName">{{ d.fullName }}</div>
+              <div class="flex-grow-1 min-w-0">
                 <div class="d-flex align-items-center gap-2">
-                  <div class="rm-dist-track flex-grow-1">
+                  <div class="rm-dist-track flex-grow-1 min-w-0">
                     <div class="rm-dist-fill"
                          [style.width.%]="d.workloadPercent"
                          [style.background]="workloadTint(d.workloadPercent)">

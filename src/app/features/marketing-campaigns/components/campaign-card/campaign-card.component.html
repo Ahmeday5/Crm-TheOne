@@ -2,9 +2,11 @@
   <div class="card-body d-flex flex-column gap-3">
     <!-- Title -->
     <div class="d-flex align-items-start justify-content-between gap-3">
-      <div class="flex-grow-1">
-        <h4 class="fw-700 mb-1">{{ campaign.name }}</h4>
-        <p class="text-muted mb-0 small">{{ campaign.description }}</p>
+      <div class="flex-grow-1 min-w-0">
+        <h4 class="campaign-card__title fw-700 mb-1" appClampText>{{ campaign.name }}</h4>
+        @if (campaign.description) {
+          <p class="text-muted mb-0 small" appClampText [clampTitle]="campaign.name">{{ campaign.description }}</p>
+        }
       </div>
       <span class="status-badge {{ statusBadgeClass(campaign.status) }}">
         <i [class]="statusIcon(campaign.status)"></i>
@@ -14,7 +16,7 @@
 
     <!-- Meta -->
     <div class="d-flex flex-wrap align-items-center gap-3 text-muted small">
-      <span class="d-inline-flex align-items-center gap-2">
+      <span class="d-inline-flex align-items-center gap-2 min-w-0 text-break">
         <i class="fa-solid fa-tower-broadcast"></i>
         {{ campaign.channelSource || ('campaigns.details.platformUnknown' | translate) }}
       </span>
@@ -32,18 +34,18 @@
     <div class="budget-panel row g-3">
       <div class="col-6">
         <p class="text-muted mb-1 small">{{ 'campaigns.card.totalBudget' | translate }}</p>
-        <p class="fw-700 mb-0">
+        <p class="fw-700 mb-0 text-break">
           {{ campaign.budget | money }}
         </p>
       </div>
       <div class="col-6">
         <p class="text-muted mb-1 small">{{ 'campaigns.card.dailyBudget' | translate }}</p>
-        <p class="fw-700 mb-0">
+        <p class="fw-700 mb-0 text-break">
           {{ campaign.dailyBudget | money }}
         </p>
       </div>
     </div>
-    
+
     <!-- Audience -->
     <div>
       <p class="fw-600 mb-2 d-flex align-items-center gap-2">
@@ -58,18 +60,18 @@
           {{ 'campaigns.create.genders.' + campaign.gender.toLowerCase() | translate }}
         </span>
         @for (c of campaign.countries; track c.countryId) {
-          <span class="badge blue">{{ c.countryName }}</span>
+          <span class="badge blue text-truncate mw-100">{{ c.countryName }}</span>
         }
       </div>
     </div>
 
     <!-- Actions -->
-    <div class="d-flex gap-2 pt-3 border-top mt-auto">
+    <div class="campaign-card__actions d-flex gap-2 pt-3 border-top mt-auto">
       <button type="button"
               class="btn btn-light btn-sm flex-grow-1"
               [disabled]="busy"
               (click)="view.emit(campaign)">
-        <i class="fa-solid fa-eye me-1"></i>
+        <i class="fa-solid fa-eye"></i>
         {{ 'campaigns.card.details' | translate }}
       </button>
 
@@ -78,7 +80,7 @@
               [disabled]="busy"
               (click)="toggle.emit(campaign)">
         <i [class]="toggleIcon(campaign.status)"></i>
-        <span class="ms-1">{{ toggleKey(campaign.status) | translate }}</span>
+        <span>{{ toggleKey(campaign.status) | translate }}</span>
       </button>
 
       <button type="button"

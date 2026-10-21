@@ -61,6 +61,7 @@ export interface CustomerActionsConfig {
   imports: [CommonModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-actions-menu.component.html',
+  styleUrl: './customer-actions-menu.component.scss',
 })
 export class CustomerActionsMenuComponent {
   private readonly language = inject(LanguageService);

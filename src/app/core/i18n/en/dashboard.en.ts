@@ -76,6 +76,16 @@ const dashboard: TranslationFile<'dashboard'> = {
       unnamedCustomer: 'Unnamed customer',
       revenueSeries: 'Revenue',
       buyersSeries: 'Buyers',
+      activeProjects: 'Active projects',
+      activeProjectsHint: 'Projects in progress — newest first',
+      activeProjectsFailed: 'Could not load active projects',
+      viewAllProjects: 'View all projects',
+      projectCol: 'Project',
+      customerCol: 'Customer',
+      progressCol: 'Progress',
+      endCol: 'Due date',
+      teamCol: 'Team',
+      members: 'members',
     },
 
     leadStatuses: {

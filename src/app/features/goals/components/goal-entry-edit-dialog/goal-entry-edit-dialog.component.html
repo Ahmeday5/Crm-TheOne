@@ -1,0 +1,99 @@
+<app-modal
+  [open]="true"
+  [title]="'goals.entryEdit.title' | translate"
+  icon="fa-solid fa-pen-to-square"
+  iconTone="primary"
+  size="md"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="close()">
+
+  <form class="gpd" [formGroup]="form" (ngSubmit)="submit()" novalidate autocomplete="off">
+    <!-- Who / when -->
+    <div class="ged-who">
+      <app-user-avatar [name]="entry().fullName" [userId]="entry().userId" size="sm" />
+      <div class="min-w-0">
+        <span class="ged-who__name">{{ entry().fullName }}</span>
+        <span class="ged-who__date">{{ entry().contributedAt | cairoDate }}</span>
+      </div>
+    </div>
+
+    @if (serverError(); as err) {
+      <div class="gpd-alert" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i><span>{{ err }}</span>
+      </div>
+    }
+
+    <!-- Amount -->
+    <div class="gpd-field">
+      <label class="form-label" for="ged-value">
+        {{ 'goals.progress.amountLabel' | translate }}
+        @if (!goalAchieved()) { <span class="text-danger">*</span> }
+      </label>
+      <div class="input-group">
+        <span class="input-group-text">
+          <i [class]="goalAchieved() ? 'fa-solid fa-lock' : 'fa-solid fa-coins'"></i>
+        </span>
+        <input id="ged-value" type="number" inputmode="numeric" min="1" step="1"
+               class="form-control" formControlName="value"
+               [class.is-invalid]="fieldInvalid('value')"
+               [attr.aria-describedby]="goalAchieved() ? 'ged-value-locked' : null">
+      </div>
+      @if (goalAchieved()) {
+        <p id="ged-value-locked" class="gpd-info mt-2 mb-0">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>{{ 'goals.entryEdit.valueLocked' | translate }}</span>
+        </p>
+      } @else {
+        <app-form-error [control]="form.controls.value"
+                        [label]="'goals.progress.amountLabel' | translate"
+                        [custom]="amountMessages" />
+      }
+    </div>
+
+    <!-- Details -->
+    <div class="gpd-field">
+      <label class="form-label" for="ged-details">
+        {{ 'goals.progress.detailsLabel' | translate }} <span class="text-danger">*</span>
+      </label>
+      <textarea id="ged-details" rows="3" class="form-control" formControlName="details"
+                [attr.maxlength]="detailsMax"
+                [class.is-invalid]="fieldInvalid('details')"></textarea>
+      <div class="gpd-field__foot">
+        <app-form-error [control]="form.controls.details"
+                        [label]="'goals.progress.detailsLabel' | translate" />
+        <small class="gpd-counter" [class.is-near]="detailsLength() > detailsMax * 0.9">
+          {{ detailsLength() }} / {{ detailsMax }}
+        </small>
+      </div>
+    </div>
+
+    <!-- Proof of payment -->
+    <div class="gpd-field">
+      <span class="form-label d-block">
+        {{ 'goals.progress.attachmentLabel' | translate }}
+        <small class="text-muted">({{ 'goals.progress.optional' | translate }})</small>
+      </span>
+      <app-image-picker [currentUrl]="entry().attachmentUrl" [disabled]="submitting()"
+                        (changed)="onImage($event)" />
+    </div>
+
+    <button type="submit" class="visually-hidden" tabindex="-1" aria-hidden="true"></button>
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="close()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button type="button" class="btn btn-primary" [disabled]="submitting() || !hasChanges()"
+            [title]="hasChanges() ? '' : ('goals.entryEdit.noChanges' | translate)"
+            (click)="submit()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-check"></i>
+      }
+      {{ 'goals.entryEdit.save' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

@@ -1,0 +1,103 @@
+<section class="gph" [attr.aria-label]="'goals.history.title' | translate">
+  <header class="gph-head">
+    <h6 class="gph-head__title">
+      <i class="fa-solid fa-receipt"></i>{{ 'goals.history.title' | translate }}
+    </h6>
+    @if (rows().length) {
+      <span class="gph-head__meta">
+        {{ rows().length }} {{ 'goals.history.entries' | translate }}
+        · {{ 'goals.history.total' | translate }}: <strong>{{ total() | money }}</strong>
+      </span>
+    }
+  </header>
+
+  @if (rows().length === 0) {
+    <div class="gph-empty">
+      <i class="fa-solid fa-inbox"></i>
+      <span>{{ 'goals.history.empty' | translate }}</span>
+    </div>
+  } @else {
+    <ol class="gph-list">
+      @for (entry of rows(); track entry.id) {
+        <li class="gph-item" [class.is-busy]="busyEntryId() === entry.id">
+          <div class="gph-item__main">
+            <div class="gph-item__top">
+              <span class="gph-item__amount">+ {{ entry.value | money }}</span>
+              @if (canEdit()) {
+                <div class="gph-item__actions">
+                  <button type="button" class="btn btn-sm btn-light"
+                          [disabled]="busyEntryId() !== null"
+                          (click)="edit.emit(entry)">
+                    <i class="fa-solid fa-pen-to-square"></i>{{ 'goals.history.edit' | translate }}
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger"
+                          [disabled]="busyEntryId() !== null"
+                          [attr.aria-label]="'goals.history.delete' | translate"
+                          [title]="'goals.history.delete' | translate"
+                          (click)="remove.emit(entry)">
+                    @if (busyEntryId() === entry.id) {
+                      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                    } @else {
+                      <i class="fa-solid fa-trash"></i>
+                    }
+                    <span class="gph-item__action-label">{{ 'goals.history.delete' | translate }}</span>
+                  </button>
+                </div>
+              }
+            </div>
+
+            @if (entry.details) {
+              <p class="gph-item__details" appClampText="2"
+                 [clampTitle]="'goals.progress.detailsLabel' | translate">{{ entry.details }}</p>
+            }
+
+            <div class="gph-item__meta">
+              <span class="gph-item__who">
+                <app-user-avatar [name]="entry.fullName" [userId]="entry.userId" size="xs" />
+                <span class="text-truncate">{{ entry.fullName }}</span>
+              </span>
+              <time class="gph-item__date" [attr.datetime]="entry.contributedAt">
+                <i class="fa-regular fa-clock"></i>{{ entry.contributedAt | cairoDate }}
+              </time>
+            </div>
+          </div>
+
+          @if (entry.attachmentUrl | assetUrl; as src) {
+            <button type="button" class="gph-thumb" (click)="preview.set(entry)"
+                    [attr.aria-label]="'common.image.open' | translate"
+                    [title]="'goals.history.attachment' | translate">
+              <img [src]="src" alt="" loading="lazy" decoding="async" />
+              <span class="gph-thumb__zoom"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
+            </button>
+          }
+        </li>
+      }
+    </ol>
+    <p class="gph-note">
+      <i class="fa-solid fa-circle-info"></i>{{ 'goals.history.legacyHint' | translate }}
+    </p>
+  }
+</section>
+
+<!-- Lightbox -->
+@if (preview(); as p) {
+  <app-modal
+    [open]="true"
+    [title]="'goals.history.attachment' | translate"
+    icon="fa-solid fa-image"
+    size="lg"
+    [showFooter]="false"
+    (closed)="preview.set(null)">
+    @if (p.attachmentUrl | assetUrl; as src) {
+      <figure class="gph-lightbox">
+        <img [src]="src" [alt]="'goals.history.attachment' | translate" />
+        <figcaption>
+          <span>{{ p.fullName }} · {{ p.value | money }} · {{ p.contributedAt | cairoDate }}</span>
+          <a [href]="src" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-light">
+            <i class="fa-solid fa-up-right-from-square"></i>{{ 'common.image.openNewTab' | translate }}
+          </a>
+        </figcaption>
+      </figure>
+    }
+  </app-modal>
+}

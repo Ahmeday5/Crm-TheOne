@@ -20,11 +20,12 @@ import {
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { TasksService } from '../../services/tasks.service';
+import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 
 @Component({
   selector: 'app-task-details-dialog',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, ModalComponent, LoadErrorComponent],
+  imports: [UserAvatarComponent, CommonModule, TranslatePipe, ModalComponent, LoadErrorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './task-details-dialog.component.html',
 })

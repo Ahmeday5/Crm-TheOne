@@ -55,7 +55,7 @@
         <div class="col-12 col-md-4">
           <div class="position-relative">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
-            <input class="form-control ps-5"
+            <input class="form-control search-input"
                    [placeholder]="'customers.filters.searchPlaceholder' | translate"
                    [ngModel]="searchTerm"
                    (ngModelChange)="onSearchInput($event)" />
@@ -89,7 +89,7 @@
   <div class="card crm-table">
     <div class="card-header d-flex align-items-center gap-2">
       <i class="fa-solid fa-user-check text-primary"></i>
-      <h5 class="mb-0">
+      <h5 class="mb-0 min-w-0">
         {{ 'customers.support.title' | translate }}
         <span class="text-muted small">({{ count() }})</span>
       </h5>
@@ -127,7 +127,7 @@
           (retry)="reload()" />
       } @else {
         <div class="crm-table-scroll">
-          <table class="table table-hover align-middle">
+          <table class="table table-hover align-middle" appResponsiveTable>
             <thead>
               <tr>
                 <th>{{ 'customers.table.fullName' | translate }}</th>
@@ -151,7 +151,8 @@
                         <div class="crm-name" [title]="row.fullName">{{ row.fullName }}</div>
                         <div class="crm-phone">{{ row.phone || '—' }}</div>
                         @if (row.address) {
-                          <div class="crm-phone text-truncate" style="max-width: 12rem;" [title]="row.address">
+                          <div class="crm-address" appClampText="1" [clampTitle]="row.fullName"
+                            [clampText]="row.address">
                             <i class="fa-solid fa-location-dot me-1 opacity-75"></i>{{ row.address }}
                           </div>
                         }
@@ -258,8 +259,7 @@
                   <td class="crm-actions-col">
                     <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
                       @if (!row.isConsulted) {
-                        <button type="button"
-                          class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2 text-nowrap cns-start-btn"
+                        <button type="button" class="btn btn-primary btn-sm text-nowrap cns-start-btn"
                           (click)="openConsult(row)">
                           <i class="fa-solid fa-comments"></i>
                           <span>{{ 'customers.consultation.start' | translate }}</span>

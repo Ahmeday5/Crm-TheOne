@@ -1,14 +1,14 @@
 <div class="d-flex flex-column gap-4">
 
-  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-    <div>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div class="min-w-0">
       <h2 class="h4 fw-bold mb-1">{{ 'sales.priceOffers.title' | translate }}</h2>
       <p class="text-secondary mb-0">{{ 'sales.priceOffers.subtitle' | translate }}</p>
     </div>
     <button type="button"
-            class="btn btn-primary d-flex align-items-center gap-2 fw-500"
+            class="btn btn-primary fw-500 flex-shrink-0"
             (click)="openCreate()">
-      <i class="fa-solid fa-plus"></i> {{ 'sales.priceOffers.add' | translate }}
+      <i class="fa-solid fa-plus"></i>{{ 'sales.priceOffers.add' | translate }}
     </button>
   </div>
 
@@ -87,7 +87,7 @@
   } @else {
     <div class="card">
       <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="mb-0 d-flex align-items-center gap-2">
+        <h5 class="mb-0 d-flex align-items-center gap-2 min-w-0">
           <i class="fa-regular fa-file-lines text-primary"></i>
           {{ 'sales.priceOffers.title' | translate }}
           <span class="badge bg-primary-subtle text-primary">{{ formatMoney(totalCount()) }}</span>
@@ -104,7 +104,7 @@
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0 po-table">
+          <table class="table table-hover align-middle mb-0 po-table" appResponsiveTable [rtPrimaryCol]="1">
             <thead>
               <tr>
                 <th class="ps-3">{{ 'sales.priceOffers.table.number' | translate }}</th>
@@ -113,7 +113,7 @@
                 <th>{{ 'sales.priceOffers.table.subTotal' | translate }}</th>
                 <th>{{ 'sales.priceOffers.table.discount' | translate }}</th>
                 <th>{{ 'sales.priceOffers.table.netTotal' | translate }}</th>
-                <th class="text-end pe-3" style="width:1%">
+                <th class="rt-actions text-end pe-3" style="width:1%">
                   {{ 'sales.priceOffers.table.actions' | translate }}
                 </th>
               </tr>
@@ -125,10 +125,10 @@
                     <span class="po-id">#{{ row.id }}</span>
                   </td>
                   <td>
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2 min-w-0">
                       <span class="po-avatar">{{ row.customerName.charAt(0) }}</span>
                       <div class="min-w-0">
-                        <div class="fw-600 text-truncate">{{ row.customerName }}</div>
+                        <div class="fw-600" appClampText="1">{{ row.customerName }}</div>
                         @if (row.campanyName) {
                           <small class="text-muted text-truncate d-block">{{ row.campanyName }}</small>
                         }
@@ -146,11 +146,11 @@
                   <td class="text-end pe-3">
                     <div class="d-inline-flex gap-2 flex-nowrap">
                       <button type="button"
-                              class="btn btn-sm btn-primary d-inline-flex align-items-center gap-2 text-nowrap"
+                              class="btn btn-sm btn-primary text-nowrap"
                               [disabled]="busyId() === row.id"
                               (click)="openContract(row)">
                         <i class="fa-solid fa-file-contract"></i>
-                        <span class="d-none d-md-inline">{{ 'sales.priceOffers.table.contract' | translate }}</span>
+                        <span>{{ 'sales.priceOffers.table.contract' | translate }}</span>
                       </button>
                       <button type="button"
                               class="btn btn-sm btn-light"

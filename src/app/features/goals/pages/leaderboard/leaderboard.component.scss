@@ -2,6 +2,8 @@
 // Leaderboard — mirrors goals.component.scss design tokens
 // ═══════════════════════════════════════════════════════════
 
+@use 'breakpoints' as bp;
+
 :host { display: block; }
 
 $r-card: 16px;
@@ -30,7 +32,7 @@ $t: .2s ease;
   gap: 1rem;
   margin-bottom: 1.5rem;
 
-  &__left { display: flex; align-items: center; gap: 1rem; }
+  &__left { display: flex; align-items: center; gap: 1rem; min-width: 0; flex: 1; }
 
   &__icon {
     width: 56px;
@@ -161,20 +163,15 @@ $t: .2s ease;
 }
 
 .lb-podium__avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  font-weight: 800;
+  /* <app-user-avatar>: size via its custom property; the medal-coloured
+   * ring + gradient (initial fallback) come from here. */
+  --avatar-size: 56px;
   color: #fff;
   border: 3px solid rgba(255,255,255,.8);
   box-shadow: 0 4px 12px rgba(0,0,0,.2);
 
-  &--gold   { background: linear-gradient(135deg, #f59e0b, #d97706);
-               width: 68px; height: 68px; font-size: 1.3rem;
+  &--gold   { --avatar-size: 68px;
+               background: linear-gradient(135deg, #f59e0b, #d97706);
                box-shadow: 0 6px 18px rgba(245,158,11,.5); }
   &--silver { background: linear-gradient(135deg, #94a3b8, #64748b); }
   &--bronze { background: linear-gradient(135deg, #cd7c3b, #92400e); }
@@ -275,20 +272,6 @@ $t: .2s ease;
   font-weight: 700;
 }
 
-.lb-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
-  font-size: .74rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
 .lb-pts {
   font-weight: 700;
   color: #f59e0b;
@@ -299,7 +282,26 @@ $t: .2s ease;
   i { font-size: .7em; }
 }
 
-@media (max-width: 576px) {
-  .lb-filters { flex-direction: column; align-items: stretch; }
-  .lb-select, .lb-date { width: 100%; }
+@include bp.down(md) {
+  .lb-header {
+    flex-wrap: nowrap;
+    &__icon { width: 44px; height: 44px; border-radius: 12px; font-size: 1.1rem; }
+    &__title { font-size: 1.2rem; }
+  }
+
+  /* Phones: type switch and employee picker full width, the two dates
+   * side by side, reset underneath — no ragged wrapping. */
+  .lb-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+  .lb-type-group,
+  .lb-select,
+  .lb-filters > .btn { grid-column: 1 / -1; }
+  .lb-type-group { width: 100%; }
+  .lb-type-btn { flex: 1; justify-content: center; }
+  .lb-select, .lb-date { width: 100%; min-width: 0; }
+
+  .lb-podium { gap: .5rem; }
 }

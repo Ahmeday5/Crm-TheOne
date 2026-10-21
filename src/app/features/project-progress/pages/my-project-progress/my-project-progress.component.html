@@ -2,8 +2,8 @@
   <!-- Header -->
   <header class="d-flex align-items-center gap-3 mb-4">
     <span class="icon-tile xl tone-primary"><i class="fa-solid fa-chart-line"></i></span>
-    <div>
-      <h3 class="fw-700 mb-1">{{ project()?.title || ('projectProgress.my.title' | translate) }}</h3>
+    <div class="min-w-0">
+      <h3 class="fw-700 mb-1 text-break">{{ project()?.title || ('projectProgress.my.title' | translate) }}</h3>
       <p class="text-muted mb-0">{{ 'projectProgress.my.title' | translate }}</p>
     </div>
   </header>
@@ -25,11 +25,11 @@
     <div class="card mb-4">
       <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
         @if (mp.hasReportedToday) {
-          <span class="badge bg-success-subtle text-success fs-6 px-3 py-2">
+          <span class="badge bg-success-subtle text-success fs-6 px-3 py-2 text-wrap text-start">
             <i class="fa-solid fa-circle-check me-1"></i>{{ 'projectProgress.my.reportedTodayBadge' | translate }}
           </span>
         } @else {
-          <span class="badge bg-warning-subtle text-warning fs-6 px-3 py-2">
+          <span class="badge bg-warning-subtle text-warning fs-6 px-3 py-2 text-wrap text-start">
             <i class="fa-solid fa-circle-exclamation me-1"></i>{{ 'projectProgress.my.notReportedTodayBadge' | translate }}
           </span>
         }
@@ -76,11 +76,11 @@
     @if (summary(); as s) {
       <div class="card mb-4">
         <div class="card-body">
-          <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
             <span class="fw-600">{{ 'projectProgress.my.projectProgress' | translate }}</span>
             <span class="fw-700 text-primary">{{ s.overallProgressPercentage }}%</span>
           </div>
-          <div class="progress" style="height: 10px;">
+          <div class="progress progress-lg">
             <div class="progress-bar bg-primary"
                  role="progressbar"
                  [style.width.%]="s.overallProgressPercentage"
@@ -204,8 +204,8 @@
               @if (previewNames().length > 0) {
                 <div class="d-flex flex-wrap gap-2 mt-2">
                   @for (name of previewNames(); track name; let i = $index) {
-                    <span class="badge bg-secondary-subtle text-secondary d-inline-flex align-items-center gap-2 px-2 py-2">
-                      <i class="fa-solid fa-paperclip"></i>{{ name }}
+                    <span class="badge bg-secondary-subtle text-secondary d-inline-flex align-items-center gap-2 px-2 py-2 attachment-chip mw-100">
+                      <i class="fa-solid fa-paperclip"></i><span class="min-w-0 text-truncate">{{ name }}</span>
                       <button type="button" class="btn-close btn-close-sm" [attr.aria-label]="'common.close' | translate" (click)="removeAttachment(i)"></button>
                     </span>
                   }
@@ -223,12 +223,12 @@
 
           <div class="d-flex justify-content-end mt-4">
             <button type="submit"
-                    class="btn btn-primary btn-lg"
+                    class="btn btn-primary btn-lg submit-btn"
                     [disabled]="submitting() || form.invalid || !canSubmit()">
               @if (submitting()) {
-                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
               } @else {
-                <i class="fa-solid fa-paper-plane me-1"></i>
+                <i class="fa-solid fa-paper-plane"></i>
               }
               {{ 'projectProgress.form.submit' | translate }}
             </button>

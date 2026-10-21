@@ -13,23 +13,29 @@ import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
 import { CustomersService } from '../../../leads/services/customers.service';
 import { ContractsService } from '../../../salesPhases/services/contracts.service';
+import { ProjectsService } from '../../../ProjectsTasks/services/projects.service';
 import { SupportTicketsService } from '../../../appSupport/services/support-tickets.service';
 import { MarketingService } from '../../services/marketing.service';
 import { AdminDashboardService } from '../../services/admin-dashboard.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
+import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import {
   AdminDashboardData,
   ContractListItem,
   CustomerListItem,
+  ProjectListItem,
   SourcePerformanceItem,
   SupportTicket,
   SUPPORT_TICKET_PRIORITY_MAP,
   SUPPORT_TICKET_STATUS_MAP,
 } from '../../../../shared/models';
+import { RefreshButtonComponent } from '../../../../shared/components/refresh-button/refresh-button.component';
 
 /** Ordered month keys — backend `month` (1–12) indexes into this for i18n. */
 const MONTH_KEYS = [
@@ -41,6 +47,7 @@ const MONTH_KEYS = [
   selector: 'app-dashboard',
   standalone: true,
   imports: [
+    RefreshButtonComponent,
     CommonModule,
     NgApexchartsModule,
     TranslatePipe,
@@ -48,6 +55,9 @@ const MONTH_KEYS = [
     PageHeaderComponent,
     LoadErrorComponent,
     EmptyStateComponent,
+    ResponsiveTableDirective,
+    ClampTextDirective,
+    CairoDatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.component.html',
@@ -60,6 +70,7 @@ export class DashboardComponent {
   private readonly customers = inject(CustomersService);
   private readonly contracts = inject(ContractsService);
   private readonly tickets = inject(SupportTicketsService);
+  private readonly projects = inject(ProjectsService);
   private readonly router = inject(Router);
 
   // ─────────── state ───────────
@@ -71,6 +82,11 @@ export class DashboardComponent {
 
   readonly loading = signal(true);
   readonly loadError = signal<string | null>(null);
+
+  /** Loaded on its own so a failure here never blanks the whole dashboard. */
+  readonly activeProjects = signal<ProjectListItem[]>([]);
+  readonly activeProjectsLoading = signal(true);
+  readonly activeProjectsError = signal<string | null>(null);
 
   // ─────────── charts (rebuilt when language or data changes) ───────────
 
@@ -191,6 +207,7 @@ export class DashboardComponent {
   }
 
   reload(): void {
+    this.loadActiveProjects();
     this.loading.set(true);
     this.loadError.set(null);
 
@@ -214,6 +231,34 @@ export class DashboardComponent {
         this.loadError.set(this.t('dashboard.admin.loadFailed'));
       },
     });
+  }
+
+  /** GET /ManagerProjects/GetActiveProjects — "in progress" only, newest first (server-ordered). */
+  loadActiveProjects(): void {
+    this.activeProjectsLoading.set(true);
+    this.activeProjectsError.set(null);
+    this.projects.activeList({ PageIndex: 1, PageSize: 5 }).subscribe({
+      next: (page) => {
+        this.activeProjects.set(page?.data ?? []);
+        this.activeProjectsLoading.set(false);
+      },
+      error: () => {
+        this.activeProjectsLoading.set(false);
+        this.activeProjectsError.set(this.t('dashboard.admin.activeProjectsFailed'));
+      },
+    });
+  }
+
+  /** Overall completion, clamped 0–100 (falls back to the legacy `progress`). */
+  projectProgress(p: ProjectListItem): number {
+    const raw = Number(p.overallProgressPercentage ?? p.progress ?? 0);
+    return Number.isFinite(raw) ? Math.min(100, Math.max(0, Math.round(raw))) : 0;
+  }
+
+  projectProgressTone(pct: number): string {
+    if (pct >= 75) return 'bg-success';
+    if (pct >= 40) return 'bg-primary';
+    return 'bg-warning';
   }
 
   // ─────────── ticket badges ───────────
@@ -307,5 +352,9 @@ export class DashboardComponent {
 
   goToTickets(): void {
     this.router.navigate(['/SupportTickets']);
+  }
+
+  goToProjects(): void {
+    this.router.navigate(['/ProjectManage'], { queryParams: { tab: 'active' } });
   }
 }

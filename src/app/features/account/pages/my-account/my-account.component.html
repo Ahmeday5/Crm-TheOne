@@ -1,0 +1,93 @@
+<app-page-header [title]="'account.title' | translate"
+                 [subtitle]="'account.subtitle' | translate"
+                 icon="fa-solid fa-user-gear"></app-page-header>
+
+<div class="acc-grid">
+  <!-- Photo -->
+  <section class="card acc-photo">
+    <div class="card-body">
+      <h5 class="acc-title">{{ 'account.photo.title' | translate }}</h5>
+
+      <div class="acc-photo__stage">
+        @if (pendingPreview(); as preview) {
+          <img class="acc-photo__preview" [src]="preview" alt="" />
+        } @else {
+          <app-user-avatar size="xl" [name]="displayName()" [imageUrl]="user()?.imageUrl" />
+        }
+        @if (busy()) {
+          <span class="acc-photo__busy"><span class="spinner-border" role="status"></span></span>
+        }
+      </div>
+
+      <p class="acc-name">{{ displayName() }}</p>
+      <span class="badge bg-primary-subtle text-primary">{{ roleName() }}</span>
+
+      @if (pendingFile()) {
+        <p class="acc-notice"><i class="fa-solid fa-eye"></i>{{ 'account.photo.previewNotice' | translate }}</p>
+        <div class="btn-row acc-actions">
+          <button type="button" class="btn btn-primary" [disabled]="!!busy()" (click)="upload()">
+            @if (busy() === 'upload') {
+              <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            } @else {
+              <i class="fa-solid fa-check"></i>
+            }
+            {{ 'account.photo.save' | translate }}
+          </button>
+          <button type="button" class="btn btn-light" [disabled]="!!busy()" (click)="cancelPending()">
+            {{ 'account.photo.cancel' | translate }}
+          </button>
+        </div>
+      } @else {
+        <div class="btn-row acc-actions">
+          <button type="button" class="btn btn-primary" [disabled]="!!busy()" (click)="browse()">
+            <i class="fa-solid fa-camera"></i>
+            {{ (hasPhoto() ? 'account.photo.change' : 'account.photo.upload') | translate }}
+          </button>
+          @if (hasPhoto()) {
+            <button type="button" class="btn btn-outline-danger" [disabled]="!!busy()" (click)="remove()">
+              @if (busy() === 'remove') {
+                <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+              } @else {
+                <i class="fa-solid fa-trash"></i>
+              }
+              {{ 'account.photo.remove' | translate }}
+            </button>
+          }
+        </div>
+      }
+
+      <p class="acc-hint">
+        {{ 'account.photo.hint' | translate }}<br />
+        {{ 'account.photo.rules' | translate }} {{ maxLabel }}
+      </p>
+
+      <input #fileInput type="file" accept="image/*" class="visually-hidden" tabindex="-1"
+             (change)="onPicked($event)">
+    </div>
+  </section>
+
+  <!-- Details -->
+  <section class="card">
+    <div class="card-body">
+      <h5 class="acc-title">{{ 'account.info.title' | translate }}</h5>
+      <dl class="acc-info">
+        <div class="acc-info__row">
+          <dt><i class="fa-solid fa-user"></i>{{ 'account.info.fullName' | translate }}</dt>
+          <dd>{{ user()?.fullName || '—' }}</dd>
+        </div>
+        <div class="acc-info__row">
+          <dt><i class="fa-solid fa-envelope"></i>{{ 'account.info.email' | translate }}</dt>
+          <dd><bdi>{{ user()?.email || "—" }}</bdi></dd>
+        </div>
+        <div class="acc-info__row">
+          <dt><i class="fa-solid fa-phone"></i>{{ 'account.info.phone' | translate }}</dt>
+          <dd><bdi dir="ltr">{{ user()?.phone || "—" }}</bdi></dd>
+        </div>
+        <div class="acc-info__row">
+          <dt><i class="fa-solid fa-shield-halved"></i>{{ 'account.info.role' | translate }}</dt>
+          <dd>{{ roleName() || '—' }}</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+</div>

@@ -5,6 +5,7 @@ import {
   computed,
   input,
 } from '@angular/core';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 
 /**
@@ -14,6 +15,8 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
  *
  * Pure presentation — emits no events. Action wiring (edit/save) lives in
  * `<app-customer-note-dialog>` invoked from the row's actions column.
+ * Each note is clamped to two lines; tapping a clamped note opens the full
+ * text (ClampTextDirective) without triggering anything on the row.
  *
  * Styles travel in [_customers-table.scss](../../styles/_customers-table.scss)
  * — kept here as a generic visual block so the three tables share the look
@@ -22,7 +25,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 @Component({
   selector: 'app-customer-notes-cell',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, TranslatePipe, ClampTextDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="crm-notes-cell">
@@ -33,9 +36,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
         </span>
       } @else {
         @for (slot of slots(); track slot.role) {
-          <div class="note-chip"
-               [class]="'note-chip role-' + slot.cls"
-               [title]="slot.text">
+          <div [class]="'note-chip role-' + slot.cls">
             <span class="note-chip-icon">
               <i [class]="slot.icon"></i>
             </span>
@@ -43,12 +44,21 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
               <div class="note-chip-head">
                 <span>{{ slot.labelKey | translate }}</span>
               </div>
-              <div class="note-chip-text">{{ slot.text }}</div>
+              <div class="note-chip-text"
+                   appClampText
+                   [clampTitle]="slot.labelKey | translate">{{ slot.text }}</div>
             </div>
           </div>
         }
       }
     </div>
+  `,
+  // The shared chip skin truncates to one line; the clamp allows two.
+  styles: `
+    .note-chip-text.clamp-text {
+      white-space: normal;
+      text-overflow: clip;
+    }
   `,
 })
 export class CustomerNotesCellComponent {

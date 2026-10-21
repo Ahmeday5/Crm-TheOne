@@ -1,0 +1,22 @@
+@use 'breakpoints' as bp;
+
+.progress-lg   { height: 10px; }
+.progress-thin { height: 8px; }
+
+// Keeps the free-text preview column from dominating the desktop table.
+.preview-cell { max-width: 420px; }
+
+@include bp.down(md) {
+  .page-cta { width: 100%; }
+
+  // Tab switch spans the card header as equal segments.
+  .tab-switch {
+    display: flex;
+    width: 100%;
+
+    > .btn { flex: 1 1 0; min-width: 0; }
+  }
+
+  // Section title on its own line, the toolbar below it.
+  .header-actions { width: 100%; }
+}

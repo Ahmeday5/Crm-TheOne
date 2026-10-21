@@ -2,6 +2,7 @@ import { HttpEvent, HttpInterceptorFn, HttpResponse } from '@angular/common/http
 import { inject } from '@angular/core';
 import { Observable, of, tap } from 'rxjs';
 import { HttpCacheService } from '../services/http-cache.service';
+import { PageCacheService } from '../services/page-cache.service';
 import {
   CACHEABLE,
   CACHE_BYPASS,
@@ -16,12 +17,15 @@ import {
  *   - GET + `CACHEABLE` + cache miss → forward, store the body on success
  *   - POST/PUT/PATCH/DELETE + `CACHE_INVALIDATE` → forward, then drop matching
  *     cached entries on success
+ *   - every cacheable GET is recorded against the current page
+ *     (`PageCacheService`) for the per-page refresh button
  *
  * Place EARLY in the interceptor chain so a cache hit short-circuits the
  * loader/auth/error chain entirely.
  */
 export const cacheInterceptor: HttpInterceptorFn = (req, next) => {
   const cache = inject(HttpCacheService);
+  const pageCache = inject(PageCacheService);
 
   if (req.method === 'GET') {
     const isCacheable = req.context.get(CACHEABLE);
@@ -29,6 +33,8 @@ export const cacheInterceptor: HttpInterceptorFn = (req, next) => {
     if (!isCacheable) return next(req);
 
     const key = cacheKey(req.urlWithParams);
+    // Lets the page's refresh button evict exactly what it loaded.
+    pageCache.track(key);
 
     if (!bypass) {
       const hit = cache.get<unknown>(key);

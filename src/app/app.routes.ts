@@ -43,6 +43,15 @@ export const routes: Routes = [
       ...GOALS_ROUTES,
       ...PROJECT_PROGRESS_ROUTES,
       {
+        // Every signed-in role manages their own profile here.
+        path: 'account',
+        title: 'حسابي',
+        loadComponent: () =>
+          import('./features/account/pages/my-account/my-account.component').then(
+            (m) => m.MyAccountComponent,
+          ),
+      },
+      {
         path: 'sales-analysis',
         title: 'تحليل نتائج المبيعات',
         data: { roles: ['Admin', 'Marketing'] },

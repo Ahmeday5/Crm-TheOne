@@ -36,6 +36,7 @@ import {
   DailyReportListQuery,
   PagedResult,
 } from '../../../../shared/models';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DailyReportDetailsDialogComponent } from '../../components/daily-report-details-dialog/daily-report-details-dialog.component';
 import { DailyReportFormDialogComponent } from '../../components/daily-report-form-dialog/daily-report-form-dialog.component';
@@ -81,6 +82,7 @@ const PRESET_ORDER: readonly RangePreset[] = [
     CommonModule,
     FormsModule,
     TranslatePipe,
+    ClampTextDirective,
     EmptyStateComponent,
     LoadErrorComponent,
     StatCardComponent,
@@ -443,14 +445,12 @@ export class DailyReportsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Card preview text — trims long descriptions so the grid stays uniform.
-   * The full body is loaded lazily in the details modal.
+   * Card preview text. Length is no longer cut here: the card clamps it to a
+   * few lines (`appClampText`) and opens the full preview on tap, so the
+   * grid stays uniform. The full report body lives in the details modal.
    */
-  previewText(value: string | null | undefined, max = 140): string {
-    if (!value) return '-';
-    const trimmed = value.trim();
-    if (trimmed.length <= max) return trimmed;
-    return trimmed.slice(0, max).trimEnd() + '…';
+  previewText(value: string | null | undefined): string {
+    return value?.trim() || '-';
   }
 
   // ─────────── export / print ───────────

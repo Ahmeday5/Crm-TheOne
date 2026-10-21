@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 
 interface KpiCard {
@@ -18,7 +19,7 @@ interface KpiCard {
 @Component({
   selector: 'app-employee-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgApexchartsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, NgApexchartsModule, TranslatePipe, ClampTextDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './employee-reports.component.html',
   styleUrl: './employee-reports.component.scss',

@@ -52,6 +52,8 @@ import {
   customerStatusBadgeClass,
   resolveCustomerStatus,
 } from '../../utils/customer-status.util';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -87,6 +89,8 @@ interface SourceItem {
     CustomerNoteDialogComponent,
     CustomerNotesCellComponent,
     CustomerActionsMenuComponent,
+    ClampTextDirective,
+    ResponsiveTableDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './marketing-leads.component.html',

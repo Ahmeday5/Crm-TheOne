@@ -6,14 +6,12 @@
   ></app-page-header>
 
   <div class="alert alert-warning d-flex gap-3 mb-4 align-items-start" role="alert">
-    <i class="fa-solid fa-circle-exclamation fs-4 mt-1"></i>
-    <div class="flex-grow-1">
+    <i class="fa-solid fa-circle-exclamation fs-4 mt-1 flex-shrink-0"></i>
+    <div class="flex-grow-1 min-w-0">
       <h5 class="fw-700 mb-2 d-flex align-items-center gap-2">
         {{ 'sales.lostBanner.title' | translate }}
       </h5>
-      <p class="mb-3">
-        {{ 'sales.lostBanner.desc' | translate }}
-      </p>
+      <p class="mb-3" appClampText [clampTitle]="'sales.lostBanner.title' | translate">{{ 'sales.lostBanner.desc' | translate }}</p>
       <div class="bg-surface-1 p-3 rounded">
         <strong class="d-block mb-2">{{ 'sales.lostBanner.analysisTitle' | translate }}</strong>
         <ul class="mb-0 ps-3">

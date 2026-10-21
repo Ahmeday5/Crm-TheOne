@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host { display: block; }
 
 .appsupport-dashboard {
@@ -19,6 +21,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     padding: 1rem 1.1rem;
+    min-width: 0;
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
     animation: dash-fade-in 0.35s ease both;
 
@@ -62,13 +65,40 @@
   }
   .dash-dot { margin: 0 0.35rem; opacity: 0.6; }
 
-  /* two-line clamp for ticket titles */
-  .dash-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  /* Charts size themselves from their container — let it shrink. */
+  apx-chart {
+    display: block;
+    min-width: 0;
+  }
+
+  /* quick-action tiles: icon beside the label on desktop, stacked on phones
+   * so long Arabic labels never make one tile taller than its neighbours */
+  .dash-quick-btn {
+    min-height: 2.75rem;
+    padding-block: 0.6rem;
+
+    @include bp.down(md) {
+      flex-direction: column;
+      gap: 0.35rem;
+      min-height: 4.5rem;
+      font-size: var(--fs-sm);
+
+      i { font-size: 1.1rem; }
+    }
+  }
+
+  @include bp.down(md) {
+    .dash-entity-card {
+      padding: 0.85rem;
+
+      /* no lift on touch — it only causes jank while scrolling */
+      &:hover { transform: none; }
+    }
+
+    .dash-avatar {
+      width: 2.25rem;
+      height: 2.25rem;
+    }
   }
 
   /* stagger the entity-card entrance for a polished feel */

@@ -76,6 +76,16 @@ const dashboard: TranslationFile<'dashboard'> = {
       unnamedCustomer: 'عميل غير محدد',
       revenueSeries: 'الإيرادات',
       buyersSeries: 'المشترون',
+      activeProjects: 'المشاريع الجارية',
+      activeProjectsHint: 'المشاريع قيد التنفيذ — الأحدث أولاً',
+      activeProjectsFailed: 'تعذر تحميل المشاريع الجارية',
+      viewAllProjects: 'عرض كل المشاريع',
+      projectCol: 'المشروع',
+      customerCol: 'العميل',
+      progressCol: 'نسبة الإنجاز',
+      endCol: 'تاريخ الانتهاء',
+      teamCol: 'الفريق',
+      members: 'عضو',
     },
 
     leadStatuses: {

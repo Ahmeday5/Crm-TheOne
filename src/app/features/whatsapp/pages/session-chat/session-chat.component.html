@@ -5,7 +5,7 @@
     @if (store.activeConversation(); as c) {
       <header class="thread-head">
         <button type="button" class="ic d-lg-none" (click)="backToList()" title="رجوع">
-          <i class="fa-solid fa-arrow-right"></i>
+          <i class="fa-solid fa-arrow-right flip-ltr"></i>
         </button>
         <span class="avatar" [style.background]="c.avatarColor">{{ c.initials }}</span>
         <div class="thread-head__id">
@@ -41,7 +41,7 @@
           @if (isNewDay(i)) {
             <div class="day-sep"><span>{{ daySeparator(m.createdAt) }}</span></div>
           }
-          <div class="row" [class.out]="m.direction === 'out'">
+          <div class="msg-row" [class.out]="m.direction === 'out'">
             <div class="bubble" [class.out]="m.direction === 'out'" [class.failed]="m.failed">
               @if (m.mediaPlaceholder) {
                 <p class="b-text"><i class="fa-solid fa-paperclip me-1"></i>{{ 'whatsapp.chat.media' | translate }}</p>
@@ -60,16 +60,16 @@
                     @else { <p class="b-text"><i class="fa-solid fa-microphone me-1"></i>{{ 'whatsapp.chat.types.audio' | translate }}</p> }
                   }
                   @case ('document') {
-                    <div class="b-doc"><i class="fa-solid fa-file-lines"></i><span class="text-truncate">{{ m.mediaName || m.text }}</span></div>
+                    <div class="b-doc"><i class="fa-solid fa-file-lines"></i><span class="text-truncate min-w-0">{{ m.mediaName || m.text }}</span></div>
                   }
                   @case ('location') {
                     <div class="b-loc"><i class="fa-solid fa-location-dot"></i>
-                      <div>@if (m.text) { <div class="fw-600">{{ m.text }}</div> }<small dir="ltr">{{ m.latitude }}, {{ m.longitude }}</small></div>
+                      <div class="min-w-0">@if (m.text) { <div class="fw-600">{{ m.text }}</div> }<small dir="ltr">{{ m.latitude }}, {{ m.longitude }}</small></div>
                     </div>
                   }
                   @case ('contact') {
                     <div class="b-contact"><i class="fa-solid fa-address-card"></i>
-                      <div><div class="fw-600">{{ m.contactName }}</div><small dir="ltr">{{ m.contactPhone }}</small></div>
+                      <div class="min-w-0"><div class="fw-600">{{ m.contactName }}</div><small dir="ltr">{{ m.contactPhone }}</small></div>
                     </div>
                   }
                   @default { <p class="b-text">{{ m.text }}</p> }
@@ -118,17 +118,21 @@
   <!-- ════════ CONVERSATION LIST (right in RTL) ════════ -->
   <aside class="wa__list">
     <header class="list-head">
-      <div class="d-flex align-items-center justify-content-between mb-2">
-        <div>
-          <h5 class="fw-700 mb-0">{{ 'whatsapp.chat.conversations' | translate }}</h5>
+      <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+        <div class="min-w-0">
+          <h5 class="fw-700 mb-0 text-truncate">{{ 'whatsapp.chat.conversations' | translate }}</h5>
           <small class="text-success"><i class="fa-solid fa-circle me-1 live-dot"></i>{{ 'whatsapp.chat.live' | translate }}</small>
         </div>
-        <div class="d-flex gap-1">
+        <div class="d-flex gap-1 flex-shrink-0">
           <button type="button" class="ic" (click)="store.refreshList()" [title]="'whatsapp.chat.refreshList' | translate">
             <i class="fa-solid fa-rotate" [class.fa-spin]="store.listLoading()"></i>
           </button>
           <button type="button" class="ic" (click)="openNewChat()" [title]="'whatsapp.chat.newChat' | translate">
             <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+          <!-- Stands in for the nav rail, which is hidden on phones. -->
+          <button type="button" class="ic d-md-none" (click)="back()" title="رجوع">
+            <i class="fa-solid fa-arrow-right flip-ltr"></i>
           </button>
         </div>
       </div>
@@ -197,7 +201,7 @@
     <button type="button" class="rail-ic" (click)="openNewChat()" [title]="'whatsapp.chat.newChat' | translate"><i class="fa-solid fa-pen-to-square"></i></button>
     <span class="flex-grow-1"></span>
     <button type="button" class="rail-ic" (click)="store.refreshList()" [title]="'whatsapp.chat.refreshList' | translate"><i class="fa-solid fa-rotate"></i></button>
-    <button type="button" class="rail-ic" (click)="back()" title="رجوع"><i class="fa-solid fa-arrow-right"></i></button>
+    <button type="button" class="rail-ic" (click)="back()" title="رجوع"><i class="fa-solid fa-arrow-right flip-ltr"></i></button>
   </nav>
 </div>
 
@@ -214,10 +218,10 @@
       <label class="form-label fw-600">{{ 'whatsapp.chat.newChatNumber' | translate }}</label>
       <input type="tel" class="form-control mb-3" dir="ltr" [placeholder]="'whatsapp.chat.recipientPlaceholder' | translate"
              [ngModel]="newChatNumber()" (ngModelChange)="newChatNumber.set($event)" (keydown.enter)="confirmNewChat()" autofocus />
-      <div class="d-flex justify-content-end gap-2">
+      <div class="btn-row justify-content-end">
         <button type="button" class="btn btn-light" (click)="newChatOpen.set(false)">{{ 'whatsapp.chat.compose.cancel' | translate }}</button>
         <button type="button" class="btn btn-success" [disabled]="!newChatNumber().trim()" (click)="confirmNewChat()">
-          <i class="fa-solid fa-comment me-1"></i>{{ 'whatsapp.chat.start' | translate }}
+          <i class="fa-solid fa-comment"></i>{{ 'whatsapp.chat.start' | translate }}
         </button>
       </div>
     </div>

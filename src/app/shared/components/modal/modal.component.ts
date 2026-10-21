@@ -9,6 +9,7 @@ import {
   input,
   output,
   Renderer2,
+  signal,
   viewChild,
 } from '@angular/core';
 
@@ -22,7 +23,15 @@ export type ModalTone =
   | 'purple'
   | 'orange';
 
-let openCount = 0;
+/**
+ * Open modals, bottom → top. A modal opened from inside another (e.g. an
+ * image lightbox over a details dialog) stacks above it, and only the
+ * top-most one reacts to Esc. The body stays locked while any is open.
+ */
+const openStack: ModalComponent[] = [];
+
+/** Base layer — above Bootstrap dropdowns/popovers; each nested modal adds a step. */
+const BASE_Z_INDEX = 1075;
 
 /**
  * Reusable modal shell.
@@ -44,8 +53,9 @@ let openCount = 0;
  *   </app-modal>
  *
  * Handles:
- *   - body scroll lock (multi-modal aware via shared open counter)
- *   - Esc to close (when `closeOnEsc`)
+ *   - body scroll lock (multi-modal aware via a shared open stack)
+ *   - stacking: nested modals render above their opener
+ *   - Esc to close the top-most modal (when `closeOnEsc`)
  *   - backdrop click to close (when `closeOnBackdrop`)
  *   - autofocus on open
  *   - emits `closed` on every dismissal pathway
@@ -92,6 +102,9 @@ export class ModalComponent {
    */
   private hasLockedBody = false;
 
+  /** z-index for this instance's backdrop, raised for nested modals. */
+  protected readonly zIndex = signal(BASE_Z_INDEX);
+
   constructor() {
     // Keep body scroll-lock state in sync with `open`.
     effect(() => {
@@ -101,7 +114,7 @@ export class ModalComponent {
       } else if (!isOpen && this.hasLockedBody) {
         this.unlockBody();
       }
-    });
+    }, { allowSignalWrites: true }); // lockBody() sets the stacking z-index
 
     // Autofocus the dialog after it appears so Esc and tab work immediately.
     effect(() => {
@@ -117,6 +130,7 @@ export class ModalComponent {
   @HostListener('document:keydown.escape')
   protected onEsc(): void {
     if (!this.open() || !this.closeOnEsc()) return;
+    if (openStack[openStack.length - 1] !== this) return;
     this.close();
   }
 
@@ -130,16 +144,18 @@ export class ModalComponent {
   }
 
   private lockBody(): void {
-    openCount += 1;
-    if (openCount === 1) {
+    openStack.push(this);
+    this.zIndex.set(BASE_Z_INDEX + (openStack.length - 1) * 5);
+    if (openStack.length === 1) {
       this.renderer.addClass(document.body, 'app-modal-open');
     }
     this.hasLockedBody = true;
   }
 
   private unlockBody(): void {
-    openCount = Math.max(0, openCount - 1);
-    if (openCount === 0) {
+    const index = openStack.indexOf(this);
+    if (index !== -1) openStack.splice(index, 1);
+    if (openStack.length === 0) {
       this.renderer.removeClass(document.body, 'app-modal-open');
     }
     this.hasLockedBody = false;

@@ -7,6 +7,7 @@ const header: TranslationFile<'header'> = {
     theme: 'Theme',
     language: 'Language',
     profile: 'Profile',
+    myAccount: 'My account',
     settings: 'Settings',
     logout: 'Logout',
     notifications: 'Notifications',

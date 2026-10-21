@@ -212,6 +212,12 @@ const customers: TranslationFile<'customers'> = {
       noTeam: 'No support agents available right now.',
       success: 'Customer assigned to support team ✓',
       failed: 'Could not assign customer — please try again.',
+      successWithAppointment: 'Customer assigned and a follow-up appointment was booked ✓',
+      stepPerson: 'Support agent',
+      stepAppointment: 'Follow-up appointment',
+      appointmentHint: 'A new appointment will be added to the schedule for the selected agent, linked to this customer.',
+      defaultTitle: 'Customer follow-up',
+      completeRequired: 'Pick a support agent and fill in the appointment title, start and end to enable the transfer.',
     },
 
     statusModal: {

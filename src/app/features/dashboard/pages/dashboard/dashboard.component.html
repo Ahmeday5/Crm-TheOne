@@ -1,6 +1,8 @@
 <app-page-header [title]="'dashboard.title' | translate"
                  [subtitle]="'dashboard.admin.subtitle' | translate"
-                 icon="fa-solid fa-gauge-high"></app-page-header>
+                 icon="fa-solid fa-gauge-high">
+  <app-refresh-button [loading]="loading() || activeProjectsLoading()" (refresh)="reload()" />
+</app-page-header>
 
 @if (loadError()) {
 <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
@@ -273,7 +275,7 @@
       [message]="'dashboard.admin.noData' | translate"></app-empty-state>
     } @else {
     <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
+      <table class="table table-hover align-middle mb-0" appResponsiveTable>
         <thead>
           <tr>
             <th>{{ 'sales.contractsMgmt.table.customer' | translate }}</th>
@@ -291,7 +293,7 @@
               <small class="text-muted d-block">{{ d.companyName }}</small>
               }
             </td>
-            <td class="text-truncate" style="max-width:220px;">{{ d.title }}</td>
+            <td class="dash-title-cell"><span appClampText="1" [clampTitle]="'sales.contractsMgmt.table.contractTitle' | translate">{{ d.title }}</span></td>
             <td class="fw-600 text-success">{{ d.price | money }}</td>
             <td class="text-nowrap text-muted small">{{ formatDate(d.createdAt) }}</td>
           </tr>
@@ -304,6 +306,82 @@
   <div class="card-footer">
     <button type="button" class="btn btn-outline-primary w-100" (click)="goToDeals()">
       {{ 'dashboard.admin.viewAllDeals' | translate }}
+    </button>
+  </div>
+</div>
+
+<!-- Active projects (independent request — see loadActiveProjects) -->
+<div class="card mt-3">
+  <div class="card-header d-flex align-items-center gap-2">
+    <i class="fa-solid fa-diagram-project text-primary"></i>
+    <div class="flex-grow-1 min-w-0">
+      <h5 class="mb-0">{{ 'dashboard.admin.activeProjects' | translate }}</h5>
+      <small class="text-muted">{{ 'dashboard.admin.activeProjectsHint' | translate }}</small>
+    </div>
+    @if (!activeProjectsLoading() && !activeProjectsError()) {
+    <span class="badge bg-light text-muted">{{ activeProjects().length }}</span>
+    }
+  </div>
+  <div class="card-body p-0">
+    @if (activeProjectsLoading()) {
+    <div class="text-center py-5"><span class="spinner-border text-primary" role="status"></span></div>
+    } @else if (activeProjectsError()) {
+    <app-load-error [message]="activeProjectsError()" (retry)="loadActiveProjects()"></app-load-error>
+    } @else if (activeProjects().length === 0) {
+    <app-empty-state [compact]="true" icon="fa-solid fa-diagram-project"
+      [message]="'dashboard.admin.noData' | translate"></app-empty-state>
+    } @else {
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" appResponsiveTable>
+        <thead>
+          <tr>
+            <th>{{ 'dashboard.admin.projectCol' | translate }}</th>
+            <th>{{ 'dashboard.admin.customerCol' | translate }}</th>
+            <th class="dash-progress-col">{{ 'dashboard.admin.progressCol' | translate }}</th>
+            <th>{{ 'dashboard.admin.endCol' | translate }}</th>
+            <th>{{ 'dashboard.admin.teamCol' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of activeProjects(); track p.id) {
+          <tr>
+            <td class="dash-title-cell">
+              <span class="fw-600" appClampText="1" [clampTitle]="'dashboard.admin.projectCol' | translate">{{ p.title }}</span>
+              @if (p.priorityName) {
+              <small class="text-muted d-block">{{ p.priorityName }}</small>
+              }
+            </td>
+            <td>
+              <span class="fw-600">{{ p.customerName || ('dashboard.admin.unnamedCustomer' | translate) }}</span>
+              @if (p.companyName) {
+              <small class="text-muted d-block">{{ p.companyName }}</small>
+              }
+            </td>
+            <td>
+              <div class="dash-progress">
+                <div class="progress flex-grow-1" role="progressbar" [attr.aria-valuenow]="projectProgress(p)"
+                  aria-valuemin="0" aria-valuemax="100">
+                  <div class="progress-bar" [class]="projectProgressTone(projectProgress(p))"
+                    [style.width.%]="projectProgress(p)"></div>
+                </div>
+                <span class="dash-progress__pct">{{ projectProgress(p) }}%</span>
+              </div>
+            </td>
+            <td class="text-nowrap text-muted small">{{ p.end | cairoDate:'date' }}</td>
+            <td class="text-nowrap">
+              <i class="fa-solid fa-users text-muted"></i>
+              {{ p.teamMembersCount }} {{ 'dashboard.admin.members' | translate }}
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+  </div>
+  <div class="card-footer">
+    <button type="button" class="btn btn-outline-primary w-100" (click)="goToProjects()">
+      {{ 'dashboard.admin.viewAllProjects' | translate }}
     </button>
   </div>
 </div>
@@ -325,7 +403,7 @@
       [message]="'dashboard.admin.noData' | translate"></app-empty-state>
     } @else {
     <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
+      <table class="table table-hover align-middle mb-0" appResponsiveTable>
         <thead>
           <tr>
             <th>{{ 'dashboard.ticketTable.number' | translate }}</th>
@@ -345,7 +423,7 @@
               <small class="text-muted d-block">{{ t.companyName }}</small>
               }
             </td>
-            <td class="text-truncate" style="max-width:220px;">{{ t.title }}</td>
+            <td class="dash-title-cell"><span appClampText="1" [clampTitle]="'dashboard.ticketTable.issue' | translate">{{ t.title }}</span></td>
             <td><span class="badge {{ ticketPriorityBadge(t.priority) }}">{{ ticketPriorityLabel(t.priority) }}</span></td>
             <td><span class="badge {{ ticketStatusBadge(t.status) }}">{{ ticketStatusLabel(t.status) }}</span></td>
           </tr>

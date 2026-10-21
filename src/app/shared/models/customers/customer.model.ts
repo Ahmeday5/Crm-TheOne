@@ -1,3 +1,5 @@
+import { Appointment, SupportHandoffAppointment } from '../appointments/appointment.model';
+
 /**
  * Row shape returned by `GET /Customers/getLeadCustomer`.
  *
@@ -188,9 +190,19 @@ export interface AssignCustomerRequest {
   salesPersonId: string;
 }
 
-/** Body for `POST /Customers/{id}/AssignToSupportPerson`. */
+/**
+ * Body for `POST /Customers/{id}/AssignToSupportPerson`. The hand-off always
+ * books a follow-up appointment for the chosen support person.
+ */
 export interface AssignSupportRequest {
   supportPersonId: string;
+  appointment: SupportHandoffAppointment;
+}
+
+/** `data` of a successful hand-off: the updated customer + the booked appointment. */
+export interface AssignSupportResponse {
+  customer: CustomerListItem;
+  appointment: Appointment;
 }
 
 /**
@@ -281,6 +293,7 @@ export interface SalesPerson {
   fullName: string;
   role: string;
   address: string | null;
+  imageUrl?: string | null;
 }
 
 /** Support team member returned by `GET /Auth/support`. Same shape as SalesPerson. */
@@ -291,6 +304,7 @@ export interface SupportPerson {
   fullName: string;
   role: string;
   address: string | null;
+  imageUrl?: string | null;
 }
 
 /** Query params accepted by `GET /Customers/getLeadCustomer`. */

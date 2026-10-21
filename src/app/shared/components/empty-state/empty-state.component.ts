@@ -32,13 +32,13 @@ export type EmptyStateTone =
       <h6 class="fw-700 mb-1">
         {{ title || ('common.emptyState.title' | translate) }}
       </h6>
-      <p class="text-muted mb-0">
+      <p class="empty-state__message text-muted mb-0">
         {{ message || ('common.emptyState.hint' | translate) }}
       </p>
 
       @if (retry.observed || hasActions) {
         <div
-          class="d-flex flex-wrap align-items-center justify-content-center gap-2 mt-3"
+          class="btn-row justify-content-center mt-3"
         >
           @if (retry.observed) {
             <button
@@ -58,11 +58,27 @@ export type EmptyStateTone =
   `,
   styles: [
     `
+      @use 'breakpoints' as bp;
+
       .empty-state {
         padding: 3rem 1.5rem;
       }
       .empty-state.compact {
         padding: 1.75rem 1rem;
+      }
+      .empty-state__message {
+        max-width: 36rem;
+        overflow-wrap: anywhere;
+      }
+      @include bp.down(md) {
+        .empty-state {
+          padding: 2rem 1rem;
+        }
+        .empty-state .icon-tile.xl {
+          width: 52px;
+          height: 52px;
+          font-size: 1.25rem;
+        }
       }
     `,
   ],

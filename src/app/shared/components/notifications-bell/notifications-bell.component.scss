@@ -1,6 +1,8 @@
+@use 'breakpoints' as bp;
+
 .nb { position: relative; display: inline-flex; }
 
-.btn-icon.active { background: var(--surface-1, rgba(0, 0, 0, 0.05)); }
+.btn-icon.active { background: var(--surface-2); }
 
 .nb-badge {
   position: absolute;
@@ -10,27 +12,36 @@
   height: 18px;
   padding: 0 5px;
   border-radius: 999px;
-  background: var(--danger, #ef4444);
+  background: var(--danger);
   color: #fff;
   font-size: 0.66rem;
   font-weight: 700;
   line-height: 18px;
   text-align: center;
-  box-shadow: 0 0 0 2px var(--surface, #fff);
+  box-shadow: 0 0 0 2px var(--surface-0);
 }
 
 .nb-panel {
   position: absolute;
   top: calc(100% + 10px);
   inset-inline-end: 0;
-  width: min(380px, calc(100vw - 2rem));
-  background: var(--surface, #fff);
+  width: min(380px, calc(100vw - 1rem));
+  background: var(--surface-0);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.16);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   z-index: 1080;
   overflow: hidden;
   animation: nb-pop 0.14s ease;
+
+  /* On phones the bell sits mid-toolbar, so anchoring to it would push the
+     panel off the start edge — pin it to the viewport under the header. */
+  @include bp.down(sm) {
+    position: fixed;
+    top: calc(var(--header-h) + 0.25rem);
+    inset-inline: 0.5rem;
+    width: auto;
+  }
 }
 @keyframes nb-pop {
   from { opacity: 0; transform: translateY(-6px); }
@@ -41,21 +52,27 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
   padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--border);
 }
 .nb-link {
   border: none;
   background: transparent;
-  color: var(--brand, #0066cc);
+  color: var(--brand);
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
+  min-height: 36px;
+  padding: 0 0.25rem;
   &:hover { text-decoration: underline; }
 }
 
 .nb-list {
   max-height: min(60vh, 440px);
+
+  @include bp.down(sm) { max-height: calc(100dvh - var(--header-h) - 8.5rem); }
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -81,8 +98,8 @@
   cursor: pointer;
   transition: background 0.15s ease;
 
-  &:hover { background: var(--surface-1, rgba(0, 0, 0, 0.03)); }
-  &.unread { background: var(--primary-soft, rgba(13, 110, 253, 0.06)); }
+  &:hover { background: var(--surface-1); }
+  &.unread { background: var(--brand-soft); }
 }
 .nb-ic {
   flex-shrink: 0;
@@ -91,7 +108,7 @@
   font-size: 1rem;
 }
 .nb-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
-.nb-title { font-weight: 700; font-size: 0.9rem; color: var(--text-1, #1a1a1a); }
+.nb-title { font-weight: 700; font-size: 0.9rem; color: var(--text-1); }
 .nb-msg {
   font-size: 0.83rem;
   color: var(--text-muted);
@@ -106,7 +123,7 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--brand, #0066cc);
+  background: var(--brand);
   margin-top: 0.4rem;
 }
 

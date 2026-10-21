@@ -14,8 +14,8 @@
       {{ 'common.loading' | translate }}
     </div>
   } @else if (loadError()) {
-    <div class="alert alert-danger d-flex align-items-center justify-content-between gap-2 mb-0">
-      <span><i class="fa-solid fa-circle-exclamation me-2"></i>{{ loadError() }}</span>
+    <div class="alert alert-danger d-flex flex-wrap align-items-center justify-content-between gap-2 mb-0">
+      <span class="min-w-0"><i class="fa-solid fa-circle-exclamation me-2"></i>{{ loadError() }}</span>
       <button type="button" class="btn btn-sm btn-light" (click)="retryLoad()">
         {{ 'common.retry' | translate }}
       </button>
@@ -86,7 +86,7 @@
           [label]="'sales.contractsMgmt.form.price' | translate" />
       </div>
 
-      <div class="col-md-3">
+      <div class="col-sm-6 col-md-3">
         <label class="form-label fw-600">
           {{ 'sales.contractsMgmt.form.startDate' | translate }}
           <span class="text-danger">*</span>
@@ -97,7 +97,7 @@
           [label]="'sales.contractsMgmt.form.startDate' | translate" />
       </div>
 
-      <div class="col-md-3">
+      <div class="col-sm-6 col-md-3">
         <label class="form-label fw-600">
           {{ 'sales.contractsMgmt.form.endDate' | translate }}
           <span class="text-danger">*</span>

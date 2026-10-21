@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
@@ -31,18 +31,38 @@ import {
  *
  * `create()` invalidates every cached `Contracts` URL so the list refetches.
  */
+/**
+ * Field names the list DTO has used for the contract amount. The row's
+ * value rendered as 0 for every contract because the list payload did not
+ * carry it as `price`; reading the first numeric alias keeps the UI correct
+ * whichever name the server serializes.
+ */
+const PRICE_KEYS = ['price', 'totalPrice', 'contractPrice', 'contractValue', 'value', 'amount', 'totalAmount'] as const;
+
+function normalizeContractRow(row: ContractListItem): ContractListItem {
+  const raw = row as unknown as Record<string, unknown>;
+  for (const key of PRICE_KEYS) {
+    const n = typeof raw[key] === 'string' ? Number(raw[key]) : raw[key];
+    if (typeof n === 'number' && Number.isFinite(n) && n !== 0) return { ...row, price: n };
+  }
+  return { ...row, price: Number(row.price) || 0 };
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContractsService {
   private readonly api = inject(ApiService);
 
+  /** Newest first (server-ordered) — callers must not re-sort. */
   list(query: ContractListQuery = {}, force = false): Observable<PagedResult<ContractListItem>> {
     const ctx = force
       ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
       : withCache({ ttlMs: CACHE_TTL.SHORT });
-    return this.api.get<PagedResult<ContractListItem>>(
-      API_ENDPOINTS.contracts.list,
-      { params: query as Record<string, unknown>, context: ctx },
-    );
+    return this.api
+      .get<PagedResult<ContractListItem>>(API_ENDPOINTS.contracts.list, {
+        params: query as Record<string, unknown>,
+        context: ctx,
+      })
+      .pipe(map((page) => ({ ...page, data: (page?.data ?? []).map(normalizeContractRow) })));
   }
 
   getById(id: number): Observable<ContractDetail> {

@@ -26,6 +26,7 @@ import {
   ChannelSource,
 } from '../../../../shared/models';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { CampaignCardComponent } from '../../components/campaign-card/campaign-card.component';
 import { CampaignDetailsDialogComponent } from '../../components/campaign-details-dialog/campaign-details-dialog.component';
@@ -53,6 +54,7 @@ const DEFAULT_PAGE_SIZE = 10;
     CampaignFormDialogComponent,
     CampaignDetailsDialogComponent,
     PaginationComponent,
+    ClampTextDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './campaigns.component.html',

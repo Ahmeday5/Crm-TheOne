@@ -1,5 +1,7 @@
 <app-page-header [title]="'dashboard.marketing.title' | translate"
-  [subtitle]="'dashboard.marketing.subtitle' | translate" icon="fa-solid fa-bullhorn"></app-page-header>
+  [subtitle]="'dashboard.marketing.subtitle' | translate" icon="fa-solid fa-bullhorn">
+  <app-refresh-button [loading]="loading()" (refresh)="reload()" />
+</app-page-header>
 
 @if (loadError()) {
 <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>

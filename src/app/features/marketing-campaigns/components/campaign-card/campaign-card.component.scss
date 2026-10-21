@@ -1,5 +1,16 @@
 :host { display: block; height: 100%; }
 
+.campaign-card__title { line-height: 1.35; }
+
+/* Two labelled buttons share the row; icon-only edit / delete keep their
+ * size. Buttons stretch so a wrapped label never leaves a ragged row. */
+.campaign-card__actions {
+  align-items: stretch;
+
+  > .flex-grow-1 { flex-basis: 0; min-width: 0; }
+  > .btn-icon { flex-shrink: 0; }
+}
+
 .campaign-card .budget-panel {
   background: var(--surface-1);
   border: 1px solid var(--border);

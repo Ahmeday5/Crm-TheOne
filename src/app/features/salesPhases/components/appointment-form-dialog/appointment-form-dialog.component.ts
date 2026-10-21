@@ -27,6 +27,7 @@ import {
   AppointmentType,
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { dateRangeValidator } from '../../../../shared/utils/custom-validators.util';
 import { AppointmentsService } from '../../services/appointments.service';
 
 /**
@@ -103,7 +104,11 @@ export class AppointmentFormDialogComponent implements OnInit {
     location: [''],
     meetingLink: [''],
     notes: [''],
-  });
+  }, { validators: dateRangeValidator('startDate', 'endDate') });
+
+  protected readonly rangeMessages = {
+    endBeforeStart: () => this.t('common.validation.endBeforeStart'),
+  };
 
   get isEditMode(): boolean {
     return this.appointmentId !== null;

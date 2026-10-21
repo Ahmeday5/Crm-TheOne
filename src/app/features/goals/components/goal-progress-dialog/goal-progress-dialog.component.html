@@ -1,0 +1,119 @@
+<app-modal
+  [open]="true"
+  [title]="'goals.progress.title' | translate"
+  icon="fa-solid fa-sack-dollar"
+  iconTone="primary"
+  size="md"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="close()">
+
+  <form class="gpd" [formGroup]="form" (ngSubmit)="submit()" novalidate autocomplete="off">
+    <p class="gpd-goal">{{ goal().title }}</p>
+
+    <!-- Current standing -->
+    <div class="gpd-stats">
+      <div class="gpd-stat">
+        <span class="gpd-stat__lbl">{{ 'goals.progress.currentLabel' | translate }}</span>
+        <span class="gpd-stat__val gpd-stat__val--accent">{{ goal().currentProgress | money }}</span>
+      </div>
+      <div class="gpd-stat">
+        <span class="gpd-stat__lbl">{{ 'goals.progress.targetLabel' | translate }}</span>
+        <span class="gpd-stat__val">{{ goal().targetValue | money }}</span>
+      </div>
+      <div class="gpd-stat">
+        <span class="gpd-stat__lbl">{{ 'goals.detail.achievementRate' | translate }}</span>
+        <span class="gpd-stat__val">{{ currentPercent() }}%</span>
+      </div>
+    </div>
+
+    @if (serverError(); as err) {
+      <div class="gpd-alert" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i><span>{{ err }}</span>
+      </div>
+    }
+
+    <!-- Amount -->
+    <div class="gpd-field">
+      <label class="form-label" for="gpd-value">
+        {{ 'goals.progress.amountLabel' | translate }} <span class="text-danger">*</span>
+      </label>
+      <div class="input-group">
+        <span class="input-group-text"><i class="fa-solid fa-coins"></i></span>
+        <input id="gpd-value" type="number" inputmode="numeric" min="1" step="1"
+               class="form-control" formControlName="value"
+               [class.is-invalid]="fieldInvalid('value')"
+               [placeholder]="'goals.progress.amountPh' | translate">
+      </div>
+      <app-form-error [control]="form.controls.value"
+                      [label]="'goals.progress.amountLabel' | translate"
+                      [custom]="amountMessages" />
+      <small class="gpd-hint">{{ 'goals.progress.amountHint' | translate }}</small>
+    </div>
+
+    <!-- Live preview -->
+    @if (amount() > 0) {
+      <div class="gpd-preview">
+        <div class="gpd-preview__row">
+          <span>{{ 'goals.progress.newTotal' | translate }}</span>
+          <strong>{{ newTotal() | money }}</strong>
+        </div>
+        <div class="gpd-track" role="progressbar" [attr.aria-valuenow]="newPercent()" aria-valuemin="0" aria-valuemax="100">
+          <div class="gpd-track__now" [style.width.%]="currentPercent()"></div>
+          <div class="gpd-track__add" [style.inset-inline-start.%]="currentPercent()"
+               [style.width.%]="newPercent() - currentPercent()"></div>
+        </div>
+        <div class="gpd-preview__row">
+          <small>{{ 'goals.progress.previewLabel' | translate }}: <strong>{{ newPercent() }}%</strong></small>
+          @if (willAchieve()) {
+            <small class="gpd-achieve">{{ 'goals.progress.willAchieve' | translate }}</small>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Details -->
+    <div class="gpd-field">
+      <label class="form-label" for="gpd-details">
+        {{ 'goals.progress.detailsLabel' | translate }} <span class="text-danger">*</span>
+      </label>
+      <textarea id="gpd-details" rows="3" class="form-control" formControlName="details"
+                [attr.maxlength]="detailsMax"
+                [class.is-invalid]="fieldInvalid('details')"
+                [placeholder]="'goals.progress.detailsPh' | translate"></textarea>
+      <div class="gpd-field__foot">
+        <app-form-error [control]="form.controls.details"
+                        [label]="'goals.progress.detailsLabel' | translate" />
+        <small class="gpd-counter" [class.is-near]="detailsLength() > detailsMax * 0.9">
+          {{ detailsLength() }} / {{ detailsMax }}
+        </small>
+      </div>
+    </div>
+
+    <!-- Proof of payment -->
+    <div class="gpd-field">
+      <span class="form-label d-block">
+        {{ 'goals.progress.attachmentLabel' | translate }}
+        <small class="text-muted">({{ 'goals.progress.optional' | translate }})</small>
+      </span>
+      <app-image-picker [disabled]="submitting()" (changed)="onImage($event)" />
+    </div>
+
+    <!-- Lets Enter submit; the visible actions live in the modal footer. -->
+    <button type="submit" class="visually-hidden" tabindex="-1" aria-hidden="true"></button>
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="close()">
+      {{ 'goals.progress.cancel' | translate }}
+    </button>
+    <button type="button" class="btn btn-primary" [disabled]="submitting()" (click)="submit()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-check"></i>
+      }
+      {{ 'goals.progress.update' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

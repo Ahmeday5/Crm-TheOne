@@ -1,14 +1,14 @@
 <!-- Toolbar (hidden when printing) -->
 <div class="contract-toolbar no-print">
   <button type="button" class="btn btn-light" (click)="goBack()">
-    <i class="fa-solid fa-arrow-right me-2"></i>
+    <i class="fa-solid fa-arrow-right"></i>
     {{ 'sales.priceOffers.contract.back' | translate }}
   </button>
   <button type="button"
           class="btn btn-primary"
           [disabled]="!quote()"
           (click)="print()">
-    <i class="fa-solid fa-print me-2"></i>
+    <i class="fa-solid fa-print"></i>
     {{ 'sales.priceOffers.contract.print' | translate }}
   </button>
 </div>
@@ -58,6 +58,8 @@
         ينال أعجابكم ....
       </p>
 
+      <!-- Scrolls inside its own box on phones; prints at full width. -->
+      <div class="c-table-scroll">
       <table class="c-table">
         <thead>
           <tr>
@@ -92,6 +94,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
 
       @if (quote()!.notes) {
         <p class="c-note-line"><strong>ملاحظة العميل:</strong> {{ quote()!.notes }}</p>

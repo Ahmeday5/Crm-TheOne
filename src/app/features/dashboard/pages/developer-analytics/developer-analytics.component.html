@@ -5,9 +5,12 @@
                      [subtitle]="'dashboard.devAnalytics.subtitle' | translate"
                      icon="fa-solid fa-chart-line"
                      class="flex-grow-1"></app-page-header>
-    <button type="button" class="btn btn-primary" (click)="exportReport()">
-      <i class="fa-solid fa-download me-1"></i>{{ 'dashboard.devAnalytics.export' | translate }}
-    </button>
+    <div class="btn-row">
+      <app-refresh-button [loading]="loading()" (refresh)="refreshAll()" />
+      <button type="button" class="btn btn-primary" (click)="exportReport()">
+        <i class="fa-solid fa-download"></i>{{ 'dashboard.devAnalytics.export' | translate }}
+      </button>
+    </div>
   </div>
   <!-- Filters -->
   <div class="card mb-4">
@@ -221,7 +224,7 @@
     <div class="card-header"><h5 class="mb-0">{{ 'dashboard.devAnalytics.table.title' | translate }}</h5></div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0" appResponsiveTable>
           <thead>
             <tr>
               <th>{{ 'dashboard.devAnalytics.table.developer' | translate }}</th>
@@ -247,7 +250,12 @@
             } @else {
               @for (row of stats(); track row.developerId) {
                 <tr>
-                  <td class="fw-600">{{ row.fullName }}</td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2 min-w-0">
+                      <app-user-avatar [name]="row.fullName" [userId]="row.developerId" size="sm" />
+                      <span class="fw-600 text-truncate">{{ row.fullName }}</span>
+                    </div>
+                  </td>
                   <td class="text-center">{{ row.completedTasks }}</td>
                   <td class="text-center">{{ row.avgCompletionTimeHours }}</td>
                   <td class="text-center">{{ row.resolvedBugs }}</td>

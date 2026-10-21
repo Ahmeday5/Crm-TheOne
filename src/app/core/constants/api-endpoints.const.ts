@@ -9,6 +9,8 @@ export const API_ENDPOINTS = {
     refresh: 'Auth/refresh-token',
     logout: 'Auth/logout',
     me: 'Auth/me',
+    /** PUT (multipart `image`) uploads/replaces, DELETE removes — any signed-in user. */
+    profileImage: 'Auth/profile-image',
     sales: 'Auth/sales',
     support: 'Auth/support',
     developers: 'Auth/developers',
@@ -197,8 +199,10 @@ export const API_ENDPOINTS = {
     delete: (id: number | string) => `Goals/${id}`,
     /** Aggregate stats — admin sees all, employee sees own. */
     stats: 'Goals/stats',
-    /** PATCH: update currentProgress for a goal. Body: { value: number } */
+    /** PATCH (Sales, multipart): log an amount — `Value`, `Details`, optional `attachment`. */
     progress: (id: number | string) => `Goals/${id}/progress`,
+    /** PUT (Admin, multipart) edits / DELETE (Admin) removes one logged amount — `entryId` is a `progressEntries[].id`. */
+    progressEntry: (entryId: number | string) => `Goals/progress-entries/${entryId}`,
     /** GET: per-goal stats (full goal object — same shape as byId). */
     goalStats: (id: number | string) => `Goals/${id}/stats`,
     /** GET: ranked leaderboard by points/reward — filterable by type, date range, user. */

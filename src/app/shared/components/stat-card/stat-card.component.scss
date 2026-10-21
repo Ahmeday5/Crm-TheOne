@@ -1,3 +1,50 @@
-:host { display: block; height: 100%; }
+@use 'breakpoints' as bp;
+
+:host { display: block; height: 100%; min-width: 0; }
 
 .stat-card { height: 100%; }
+
+.stat-card__body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+
+  @include bp.down(sm) {
+    gap: 0.5rem;
+    padding: 0.85rem;
+    /* Icon rides the top corner so the text gets the full card width below it. */
+    align-items: flex-start;
+  }
+}
+
+/* The text column takes whatever the icon leaves and never forces the card wider. */
+.stat-card__text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.stat-card__label {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+/* Long currency / large counts shrink with the viewport, then wrap as a last resort. */
+.stat-card__value {
+  font-size: clamp(1.05rem, 0.8rem + 1.1vw, 1.75rem);
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+
+.stat-card__sub { overflow-wrap: anywhere; }
+
+.stat-card__icon {
+  flex-shrink: 0;
+
+  @include bp.down(md) { width: 48px; height: 48px; font-size: 1.15rem; }
+  @include bp.down(sm) { width: 36px; height: 36px; font-size: 0.95rem; }
+}

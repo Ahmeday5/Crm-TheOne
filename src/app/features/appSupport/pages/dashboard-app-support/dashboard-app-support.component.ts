@@ -1,5 +1,6 @@
 import { Component, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
 
@@ -25,6 +26,7 @@ interface TicketStatus {
 @Component({
   selector: 'app-dashboard-app-support',
   standalone: true,
+  imports: [ResponsiveTableDirective],
   templateUrl: './dashboard-app-support.component.html',
   styleUrls: ['./dashboard-app-support.component.scss'],
 })

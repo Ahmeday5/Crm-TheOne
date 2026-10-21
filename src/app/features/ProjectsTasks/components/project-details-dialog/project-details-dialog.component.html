@@ -25,9 +25,9 @@
   } @else if (details()) {
     <!-- Header -->
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
-      <div>
-        <h4 class="fw-700 mb-1">{{ details()!.title }}</h4>
-        <p class="text-muted mb-0">{{ details()!.description || '—' }}</p>
+      <div class="flex-grow-1 min-w-0">
+        <h4 class="fw-700 mb-1 text-break">{{ details()!.title }}</h4>
+        <p class="text-muted mb-0 text-break" style="white-space: pre-line;">{{ details()!.description || '—' }}</p>
       </div>
       <div class="d-flex flex-column align-items-end gap-2">
         <span class="badge {{ statusBadge(details()!.status) }} px-3 py-2">
@@ -61,35 +61,35 @@
     <div class="row g-3 mb-2">
       <div class="col-6 col-md-4">
         <p class="text-muted small mb-1">{{ 'projects.manage.details.customer' | translate }}</p>
-        <p class="fw-600 mb-0">{{ details()!.customerName || '—' }}</p>
+        <p class="fw-600 mb-0 text-break">{{ details()!.customerName || '—' }}</p>
       </div>
       <div class="col-6 col-md-4">
         <p class="text-muted small mb-1">{{ 'projects.manage.details.company' | translate }}</p>
-        <p class="fw-600 mb-0">{{ details()!.companyName || '—' }}</p>
+        <p class="fw-600 mb-0 text-break">{{ details()!.companyName || '—' }}</p>
       </div>
       <div class="col-6 col-md-4">
         <p class="text-muted small mb-1">{{ 'projects.manage.details.manager' | translate }}</p>
-        <p class="fw-600 mb-0">{{ details()!.projectManagerName || '—' }}</p>
+        <p class="fw-600 mb-0 text-break">{{ details()!.projectManagerName || '—' }}</p>
       </div>
       <div class="col-6 col-md-4">
         <p class="text-muted small mb-1">{{ 'projects.manage.details.price' | translate }}</p>
-        <p class="fw-600 mb-0">{{ details()!.price | money }}</p>
+        <p class="fw-600 mb-0 text-break">{{ details()!.price | money }}</p>
       </div>
       <div class="col-6 col-md-4">
         <p class="text-muted small mb-1">{{ 'projects.manage.details.start' | translate }}</p>
-        <p class="fw-600 mb-0">{{ formatDate(details()!.start) }}</p>
+        <p class="fw-600 mb-0 text-break">{{ formatDate(details()!.start) }}</p>
       </div>
       <div class="col-6 col-md-4">
         <p class="text-muted small mb-1">{{ 'projects.manage.details.end' | translate }}</p>
-        <p class="fw-600 mb-0">{{ formatDate(details()!.end) }}</p>
+        <p class="fw-600 mb-0 text-break">{{ formatDate(details()!.end) }}</p>
       </div>
       <div class="col-6 col-md-4">
         <p class="text-muted small mb-1">{{ 'projects.manage.details.createdBy' | translate }}</p>
-        <p class="fw-600 mb-0">{{ details()!.createdByName || '—' }}</p>
+        <p class="fw-600 mb-0 text-break">{{ details()!.createdByName || '—' }}</p>
       </div>
       <div class="col-6 col-md-4">
         <p class="text-muted small mb-1">{{ 'projects.manage.details.createdAt' | translate }}</p>
-        <p class="fw-600 mb-0">{{ formatDate(details()!.createdAt) }}</p>
+        <p class="fw-600 mb-0 text-break">{{ formatDate(details()!.createdAt) }}</p>
       </div>
     </div>
 
@@ -108,8 +108,8 @@
     } @else {
       <div class="d-flex flex-wrap gap-2">
         @for (e of details()!.engineers; track e.engineerId) {
-          <span class="badge bg-primary-subtle text-primary px-3 py-2">
-            <i class="fa-solid fa-user me-1"></i>{{ e.fullName }}
+          <span class="badge bg-primary-subtle text-primary ps-1 pe-3 py-1 text-wrap text-start d-inline-flex align-items-center gap-2">
+            <app-user-avatar [name]="e.fullName" [userId]="e.engineerId" size="xs" />{{ e.fullName }}
           </span>
         }
       </div>

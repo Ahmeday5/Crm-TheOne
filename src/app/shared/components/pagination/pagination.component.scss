@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host { display: block; }
 
 .app-pagination {
@@ -73,9 +75,42 @@
   }
 
   &.page-step {
-    font-size: var(--fs-md);
+    font-size: var(--fs-sm);
     line-height: 1;
   }
+}
+
+/* ---------- Phones ----------
+ * Navigation on top, centred and full width; range + page size below.
+ * Buttons share the row evenly and get a 40px touch target. */
+.app-pagination.is-compact {
+  flex-direction: column-reverse;
+  align-items: stretch;
+  gap: 0.65rem;
+
+  .app-pagination-nav {
+    display: flex;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+
+  .page-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 48px;
+    height: 40px;
+    padding: 0 0.25rem;
+  }
+
+  .app-pagination-info {
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+}
+
+@include bp.down(sm) {
+  .app-pagination-size select { min-width: 68px; }
+  .app-pagination-range { font-size: var(--fs-xs); }
 }
 
 /* Chevrons follow the page direction. In RTL the layout already mirrors,

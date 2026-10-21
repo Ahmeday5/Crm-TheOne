@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { LanguageService } from '../../../../core/services/language.service';
 import { Campaign, CampaignStatus } from '../../../../shared/models';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 
@@ -23,7 +24,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 @Component({
   selector: 'app-campaign-card',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, MoneyPipe],
+  imports: [CommonModule, TranslatePipe, MoneyPipe, ClampTextDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './campaign-card.component.html',
   styleUrl: './campaign-card.component.scss',

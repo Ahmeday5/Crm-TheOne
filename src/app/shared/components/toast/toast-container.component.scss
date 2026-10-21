@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host { display: contents; }
 
 .toast-stack {
@@ -168,6 +170,21 @@
 @keyframes toast-countdown {
   from { width: 100%; }
   to   { width: 0%; }
+}
+
+/* Phones: full width with a small gutter, whatever the configured corner. */
+@include bp.down(sm) {
+  .toast-stack[class*='pos-'] {
+    left: 0.5rem;
+    right: 0.5rem;
+    width: auto;
+    max-width: none;
+    transform: none;
+  }
+  .toast-stack[class*='pos-top'] { top: calc(var(--header-h) + 0.5rem); }
+  .toast-stack[class*='pos-bottom'] { bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)); }
+  .toast-card { padding: 0.75rem 0.85rem; gap: 0.6rem; }
+  .btn-close-toast { width: 32px; height: 32px; }
 }
 
 /* Reduced-motion: disable bounce + countdown animations */

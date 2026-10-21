@@ -43,6 +43,8 @@ import {
   SupportTicketStatusMeta,
   SupportTicketStatusName,
 } from '../../../../shared/models';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { SupportTicketDetailsDialogComponent } from '../../components/support-ticket-details-dialog/support-ticket-details-dialog.component';
 import { SupportTicketFormDialogComponent } from '../../components/support-ticket-form-dialog/support-ticket-form-dialog.component';
@@ -65,6 +67,8 @@ const DEFAULT_PAGE_SIZE = 10;
     TableToolsComponent,
     SupportTicketFormDialogComponent,
     SupportTicketDetailsDialogComponent,
+    ClampTextDirective,
+    ResponsiveTableDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './support-tickets.component.html',

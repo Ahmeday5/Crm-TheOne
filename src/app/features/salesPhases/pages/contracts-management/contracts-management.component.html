@@ -34,7 +34,7 @@
 <div class="card">
   <div class="card-header d-flex align-items-center gap-2">
     <i class="fa-solid fa-file-contract text-primary"></i>
-    <h5 class="mb-0">{{ 'sales.contractsMgmt.tableTitle' | translate }}</h5>
+    <h5 class="mb-0 min-w-0">{{ 'sales.contractsMgmt.tableTitle' | translate }}</h5>
     <app-table-tools
       class="ms-auto"
       [reportTitle]="'sales.contractsMgmt.tableTitle' | translate"
@@ -61,12 +61,12 @@
 
     <!-- Search + add -->
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-      <div class="position-relative flex-grow-1" style="max-width:420px">
+      <div class="position-relative contracts-search">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
         <input class="form-control ps-5" [placeholder]="'sales.contractsMgmt.searchPlaceholder' | translate"
           [ngModel]="search()" (ngModelChange)="onSearch($event)">
       </div>
-      <button type="button" class="btn btn-primary d-flex align-items-center gap-2 ms-auto" (click)="openCreate()">
+      <button type="button" class="btn btn-primary ms-auto contracts-add" (click)="openCreate()">
         <i class="fa-solid fa-plus"></i>
         {{ 'sales.contractsMgmt.add' | translate }}
       </button>
@@ -88,7 +88,7 @@
       (retry)="reload()" />
     } @else {
     <div class="table-responsive border rounded">
-      <table class="table table-hover align-middle mb-0 contracts-table">
+      <table class="table table-hover align-middle mb-0 contracts-table" appResponsiveTable [rtPrimaryCol]="2">
         <thead>
           <tr>
             <th class="ps-3">{{ 'sales.contractsMgmt.table.number' | translate }}</th>
@@ -101,7 +101,7 @@
             <th>{{ 'sales.contractsMgmt.table.createdByName' | translate }}</th>
             <th>{{ 'sales.contractsMgmt.table.daysLeft' | translate }}</th>
             <th>{{ 'sales.contractsMgmt.table.value' | translate }}</th>
-            <th class="text-end pe-3" style="width:1%">
+            <th class="rt-actions text-end pe-3" style="width:1%">
               {{ 'sales.contractsMgmt.table.actions' | translate }}
             </th>
           </tr>
@@ -111,24 +111,26 @@
           <tr>
             <td class="ps-3 fw-bold text-primary">CNT-{{ row.id }}</td>
             <td>
-              <div class="d-flex align-items-center gap-2">
-                <i class="fa-solid fa-user text-muted"></i>
+              <div class="d-flex align-items-center gap-2 min-w-0">
+                <i class="fa-solid fa-user text-muted flex-shrink-0"></i>
                 <div class="min-w-0">
-                  <div class="fw-600 text-truncate">{{ row.customerName }}</div>
+                  <div class="fw-600" appClampText="1">{{ row.customerName }}</div>
                   <small class="text-muted text-truncate d-block">
                     @if (row.companyName) { {{ row.companyName }} }
                     @if (row.phone) { · {{ row.phone }} }
                   </small>
                   @if (row.address) {
-                    <small class="text-muted text-truncate d-block">
-                      <i class="fa-solid fa-location-dot me-1 opacity-75"></i>{{ row.address }}
+                    <small class="text-muted d-flex align-items-start gap-1">
+                      <i class="fa-solid fa-location-dot opacity-75 mt-1"></i>
+                      <span class="min-w-0" appClampText="1"
+                            [clampTitle]="row.customerName">{{ row.address }}</span>
                     </small>
                   }
                 </div>
               </div>
             </td>
             <td class="contract-title-cell">
-              <span class="text-truncate d-block">{{ row.title }}</span>
+              <span class="d-block" appClampText="1">{{ row.title }}</span>
             </td>
             <td>
               @if (isExpiringSoon(row)) {
@@ -166,11 +168,11 @@
             <td class="text-end pe-3">
               <div class="d-inline-flex gap-2 flex-nowrap">
                 <button type="button"
-                        class="btn btn-sm btn-primary d-inline-flex align-items-center gap-2 text-nowrap"
+                        class="btn btn-sm btn-primary text-nowrap"
                         [disabled]="busyId() === row.id"
                         (click)="openContract(row)">
                   <i class="fa-solid fa-file-contract"></i>
-                  <span class="d-none d-md-inline">{{ 'sales.contractsMgmt.table.contract' | translate }}</span>
+                  <span>{{ 'sales.contractsMgmt.table.contract' | translate }}</span>
                 </button>
                 <button type="button"
                         class="btn btn-sm btn-light"

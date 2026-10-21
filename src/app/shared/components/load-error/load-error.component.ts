@@ -8,10 +8,10 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
   imports: [CommonModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3" role="alert">
-      <i class="fa-solid fa-circle-exclamation"></i>
-      <span class="flex-grow-1">{{ message || ('common.loadFailed' | translate) }}</span>
-      <button type="button" class="btn btn-sm btn-light" (click)="retry.emit()" [disabled]="loading">
+    <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2 mb-3" role="alert">
+      <i class="fa-solid fa-circle-exclamation flex-shrink-0"></i>
+      <span class="flex-grow-1 min-w-0">{{ message || ('common.loadFailed' | translate) }}</span>
+      <button type="button" class="btn btn-sm btn-light flex-shrink-0 ms-auto" (click)="retry.emit()" [disabled]="loading">
         <i class="fa-solid fa-rotate me-1" [class.fa-spin]="loading"></i>{{ 'common.retry' | translate }}
       </button>
     </div>

@@ -4,9 +4,12 @@
 //  modes, brand colours, and RTL layout are all handled automatically.
 // ═══════════════════════════════════════════════════════════════
 
+@use 'breakpoints' as bp;
+
 :host {
   display: block;
   position: relative;
+  min-width: 0;
 }
 
 // ─── Wrapper ───────────────────────────────────────────────────
@@ -413,4 +416,14 @@
 .ss-host.is-disabled {
   pointer-events: none;
   opacity: 0.65;
+}
+
+// ─── Phones ───────────────────────────────────────────────────
+// Bigger touch targets, a list that leaves room for the on-screen keyboard,
+// and a 16px search font so iOS Safari doesn't zoom the page on focus.
+@include bp.down(md) {
+  .ss-search-input { font-size: 16px; }
+  .ss-search-clear { width: 28px; height: 28px; }
+  .ss-list { max-height: min(280px, 40dvh); }
+  .ss-option { min-height: 42px; }
 }

@@ -1,0 +1,58 @@
+<section class="gcg" [class]="'gcg gcg--' + stage()" [attr.aria-label]="'goals.commissionGuide.title' | translate">
+  <!-- Status + what's next, on one line -->
+  <div class="gcg-top">
+    <span class="gcg-status" role="status">
+      <i [class]="stage() === 'below' ? 'fa-solid fa-circle-exclamation' : stage() === 'eligible' ? 'fa-solid fa-circle-check' : 'fa-solid fa-trophy'"></i>
+      {{ stageKey() | translate }}
+    </span>
+    @if (stage() !== 'achieved') {
+      <span class="gcg-next">
+        <i class="fa-solid fa-flag-checkered"></i>
+        @if (stage() === 'below' && threshold() !== null && toThreshold() > 0) {
+          {{ 'goals.commissionGuide.remaining' | translate }} <strong>{{ toThreshold() | money }}</strong>
+          {{ 'goals.commissionGuide.toCommission' | translate }}
+        } @else {
+          {{ 'goals.commissionGuide.remaining' | translate }} <strong>{{ toFull() | money }}</strong>
+          {{ 'goals.commissionGuide.toFull' | translate }}
+        }
+      </span>
+    }
+  </div>
+
+  <!-- Segmented meter: the tier zones *are* the progress bar -->
+  <div class="gcg-meter" role="progressbar" [attr.aria-valuenow]="barPercent()" aria-valuemin="0" aria-valuemax="100"
+       [attr.aria-label]="'goals.commissionGuide.youAreAt' | translate">
+    <div class="gcg-meter__zones" aria-hidden="true">
+      <span class="gcg-zone gcg-zone--below" [style.flex-basis.%]="threshold() ?? 0"></span>
+      <span class="gcg-zone gcg-zone--eligible"></span>
+    </div>
+    <div class="gcg-meter__fill" [style.width.%]="barPercent()">
+      <span class="gcg-meter__shine" aria-hidden="true"></span>
+    </div>
+    @if (threshold(); as t) {
+      <span class="gcg-meter__tick" [style.inset-inline-start.%]="t" [title]="('goals.commission.marker' | translate) + ' ' + t + '%'"></span>
+    }
+    <span class="gcg-meter__goal" [class.is-reached]="stage() === 'achieved'" aria-hidden="true">
+      <i class="fa-solid fa-trophy"></i>
+    </span>
+  </div>
+
+  <!-- Legend: the three pay-out rules, current one highlighted -->
+  <ol class="gcg-legend">
+    @for (tier of tiers(); track tier.stage) {
+      <li class="gcg-legend__item gcg-legend__item--{{ tier.stage }}" [class.is-current]="tier.stage === stage()"
+          [attr.aria-current]="tier.stage === stage() ? 'step' : null">
+        <span class="gcg-legend__dot" aria-hidden="true"></span>
+        <span class="gcg-legend__range">
+          {{ tier.rangeKey | translate }}@if (tier.rangePct !== null) { {{ tier.rangePct }}%}
+        </span>
+        <span class="gcg-legend__result">
+          {{ tier.resultKey | translate }}
+          @if (tier.stage === 'achieved') {
+            <span class="gcg-legend__reward">({{ goal().financialReward | money }} · {{ goal().points }} {{ 'goals.commissionGuide.pointsUnit' | translate }})</span>
+          }
+        </span>
+      </li>
+    }
+  </ol>
+</section>

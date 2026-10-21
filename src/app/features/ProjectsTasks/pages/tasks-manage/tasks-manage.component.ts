@@ -44,12 +44,14 @@ import {
   taskCategoryBadgeClass,
   taskStatusBadgeClass,
 } from '../../../../shared/models';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { TaskDetailsDialogComponent } from '../../components/task-details-dialog/task-details-dialog.component';
 import { TaskFormDialogComponent } from '../../components/task-form-dialog/task-form-dialog.component';
 import { TaskStatusDialogComponent } from '../../components/task-status-dialog/task-status-dialog.component';
 import { ProjectsService } from '../../services/projects.service';
 import { TasksService } from '../../services/tasks.service';
+import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 
 interface ProjectFilterOption {
   id: number;
@@ -62,9 +64,11 @@ const DEFAULT_PAGE_SIZE = 10;
   selector: 'app-tasks-manage',
   standalone: true,
   imports: [
+    UserAvatarComponent,
     CommonModule,
     FormsModule,
     TranslatePipe,
+    ClampTextDirective,
     DataTableComponent,
     LoadErrorComponent,
     PaginationComponent,

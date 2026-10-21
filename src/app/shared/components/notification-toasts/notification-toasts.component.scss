@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 .nt-stack {
   position: fixed;
   inset-block-end: 1.5rem;
@@ -17,10 +19,10 @@
   align-items: flex-start;
   gap: 0.7rem;
   padding: 0.85rem 0.95rem 0.95rem;
-  background: var(--surface, #fff);
+  background: var(--surface-0);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   cursor: pointer;
   overflow: hidden;
   animation: nt-in 0.28s cubic-bezier(0.16, 1, 0.3, 1);
@@ -41,20 +43,20 @@
 
 .nt-body { flex: 1; min-width: 0; }
 .nt-top { display: flex; align-items: center; gap: 0.5rem; }
-.nt-title { flex: 1; font-weight: 700; color: var(--text-1, #1a1a1a); }
+.nt-title { flex: 1; font-weight: 700; color: var(--text-1); }
 .nt-close {
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: transparent;
   color: var(--text-muted);
   border-radius: 50%;
   cursor: pointer;
-  &:hover { background: var(--surface-1, rgba(0, 0, 0, 0.06)); }
+  &:hover { background: var(--surface-2); }
 }
 .nt-msg {
-  color: var(--text-2, #475569);
+  color: var(--text-2);
   font-size: 0.87rem;
   line-height: 1.5;
   margin-top: 0.1rem;
@@ -68,7 +70,7 @@
   margin-top: 0.4rem;
   font-size: 0.74rem;
   font-weight: 600;
-  color: var(--brand, #0066cc);
+  color: var(--brand);
 }
 
 /* auto-dismiss progress bar (matches the 35s service timer) */
@@ -78,7 +80,7 @@
   inset-inline-start: 0;
   height: 3px;
   width: 100%;
-  background: var(--brand, #0066cc);
+  background: var(--brand);
   transform-origin: inline-end;
   animation: nt-progress 35s linear forwards;
 }
@@ -87,6 +89,13 @@
   to { transform: scaleX(0); }
 }
 
-@media (max-width: 575.98px) {
-  .nt-stack { right: 1rem; left: 1rem; width: auto; }
+/* Phones: span the screen with a small gutter and clear the iOS home bar. */
+@include bp.down(sm) {
+  .nt-stack {
+    inset-inline: 0.5rem;
+    inset-block-end: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    width: auto;
+  }
+  .nt { padding: 0.75rem 0.8rem 0.85rem; }
+  .nt-ic { width: 38px; height: 38px; font-size: 0.95rem; }
 }

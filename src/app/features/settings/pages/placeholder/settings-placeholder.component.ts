@@ -13,7 +13,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
   imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="card p-5 text-center">
+    <div class="card p-4 p-md-5 text-center">
       <span class="icon-tile xl tone-primary mx-auto mb-3"><i [class]="icon"></i></span>
       <h4 class="fw-700 mb-2">{{ titleKey | translate }}</h4>
       <p class="text-muted mb-0">{{ 'settings.placeholder.comingSoon' | translate }}</p>

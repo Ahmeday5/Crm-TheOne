@@ -29,6 +29,7 @@ import { TableToolsComponent } from '../../../../shared/components/table-tools/t
 import { TipDirective } from '../../../../shared/directives/tip.directive';
 import {
   CustomerFollowUpResponse,
+  AssignSupportResponse,
   CustomerListItem,
   CustomerNoteResponse,
   CustomerStatus,
@@ -52,6 +53,8 @@ import {
   customerStatusBadgeClass,
   resolveCustomerStatus,
 } from '../../utils/customer-status.util';
+import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
+import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -90,6 +93,8 @@ interface JourneyStep {
     CustomerNoteDialogComponent,
     CustomerNotesCellComponent,
     CustomerActionsMenuComponent,
+    ClampTextDirective,
+    ResponsiveTableDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-leads.component.html',
@@ -288,9 +293,17 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     this.assignSupportDialog.set(null);
   }
 
-  onSupportAssigned(): void {
+  /** Patch the row from `data.customer` — no full reload for a one-row change. */
+  onSupportAssigned(res: AssignSupportResponse): void {
     this.closeAssignSupport();
-    this.reload();
+    const updated = res?.customer;
+    if (!updated?.id) {
+      this.reload();
+      return;
+    }
+    this.rows.update((list) =>
+      list.map((row) => (row.id === updated.id ? { ...row, ...updated } : row)),
+    );
   }
 
   openChangeStatus(row: CustomerListItem): void {

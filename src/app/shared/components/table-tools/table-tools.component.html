@@ -1,4 +1,4 @@
-<div class="d-inline-flex align-items-center gap-2">
+<div class="table-tools-bar d-inline-flex align-items-center gap-2">
 
 @if (showRefresh()) {
   <button type="button"
@@ -16,6 +16,8 @@
           class="btn btn-light table-tools-btn"
           [disabled]="disabled() || busy()"
           [class.is-open]="open()"
+          [attr.aria-label]="'tableTools.label' | translate"
+          [attr.aria-expanded]="open()"
           (click)="toggle()">
     @if (busy()) {
       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -27,7 +29,7 @@
   </button>
 
   @if (open()) {
-    <div class="table-tools-menu">
+    <div class="table-tools-menu" role="menu">
       <div class="table-tools-group-label">
         <i class="fa-solid fa-file-excel text-success me-2"></i>{{ 'tableTools.excel' | translate }}
       </div>

@@ -3,88 +3,165 @@
   [title]="'customers.supportModal.title' | translate"
   icon="fa-solid fa-headset"
   iconTone="info"
-  size="md"
+  size="lg"
   [closeOnBackdrop]="!submitting()"
   [closeOnEsc]="!submitting()"
-  (closed)="cancel.emit()">
+  (closed)="close()">
 
-  <div class="mb-3">
-    <p class="text-muted mb-2">{{ 'customers.supportModal.hint' | translate }}</p>
+  <form id="assign-support-form" class="asd" [formGroup]="form" (ngSubmit)="submit()" novalidate autocomplete="off">
+    <p class="text-muted mb-0">{{ 'customers.supportModal.hint' | translate }}</p>
 
     @if (customerName) {
-      <div class="card bg-light p-3">
-        <p class="fw-600 mb-0">
-          <i class="fa-solid fa-user me-2 text-primary"></i>{{ customerName }}
-        </p>
+      <div class="asd-customer">
+        <i class="fa-solid fa-user text-primary"></i>
+        <span class="fw-600 text-truncate">{{ customerName }}</span>
       </div>
     }
-  </div>
 
-  @if (loading()) {
-    <div class="text-center py-4">
-      <span class="spinner-border text-primary" role="status"></span>
-    </div>
-  } @else {
-    <div class="mb-3">
-      <label class="form-label fw-600">
-        {{ 'customers.supportModal.pickPerson' | translate }}
-        <span class="text-danger">*</span>
-      </label>
-      @if (supportTeam().length === 0) {
+    <!-- ── Step 1: support agent ── -->
+    <section class="asd-step">
+      <h6 class="asd-step__title">
+        <span class="asd-step__num">1</span>
+        {{ 'customers.supportModal.stepPerson' | translate }} <span class="text-danger">*</span>
+      </h6>
+
+      @if (loading()) {
+        <div class="text-center py-4">
+          <span class="spinner-border text-primary" role="status"></span>
+        </div>
+      } @else if (supportTeam().length === 0) {
         <app-empty-state
           [compact]="true"
           icon="fa-solid fa-circle-info"
-          [message]="'customers.supportModal.noTeam' | translate"
-          [loading]="loading()" />
+          [message]="'customers.supportModal.noTeam' | translate" />
       } @else {
-        <div class="list-group">
+        <div class="asd-people" role="radiogroup" [attr.aria-label]="'customers.supportModal.pickPerson' | translate">
           @for (person of supportTeam(); track person.userId) {
-            <label class="list-group-item list-group-item-action d-flex align-items-center gap-3"
-                   [class.active]="selectedId() === person.userId"
-                   style="cursor: pointer;"
-                   (click)="onSelect(person.userId)">
-              <input type="radio"
-                     class="form-check-input mt-0"
-                     name="supportPerson"
+            <label class="asd-person" [class.is-selected]="form.controls.supportPersonId.value === person.userId">
+              <input type="radio" class="visually-hidden" name="supportPerson"
                      [value]="person.userId"
-                     [checked]="selectedId() === person.userId"
-                     (change)="onSelect(person.userId)" />
-              <div class="flex-1">
-                <span class="fw-600 d-block">{{ person.fullName }}</span>
-                <small class="text-muted">{{ person.email }}</small>
-                @if (person.phone) {
-                  <small class="text-muted d-block">{{ person.phone }}</small>
-                }
-              </div>
+                     [checked]="form.controls.supportPersonId.value === person.userId"
+                     [disabled]="submitting()"
+                     (change)="selectPerson(person.userId)" />
+              <app-user-avatar [name]="person.fullName" [imageUrl]="person.imageUrl" size="sm" />
+              <span class="asd-person__info">
+                <span class="asd-person__name">{{ person.fullName }}</span>
+                <small class="asd-person__meta"><bdi>{{ person.email }}</bdi></small>
+              </span>
+              <i class="fa-solid fa-circle-check asd-person__check" aria-hidden="true"></i>
             </label>
           }
         </div>
       }
-    </div>
-  }
+    </section>
 
-  @if (errorMessage()) {
-    <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
-      <i class="fa-solid fa-circle-exclamation"></i>
-      <span>{{ errorMessage() }}</span>
-    </div>
-  }
+    <!-- ── Step 2: follow-up appointment (same fields as "new appointment") ── -->
+    <section class="asd-step" formGroupName="appointment">
+      <h6 class="asd-step__title">
+        <span class="asd-step__num">2</span>
+        {{ 'customers.supportModal.stepAppointment' | translate }}
+      </h6>
+      <p class="asd-step__hint">
+        <i class="fa-solid fa-calendar-plus"></i>{{ 'customers.supportModal.appointmentHint' | translate }}
+      </p>
+
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label fw-600" for="asd-title">
+            {{ 'sales.appointments.form.title' | translate }} <span class="text-danger">*</span>
+          </label>
+          <input id="asd-title" class="form-control" formControlName="title"
+                 [class.is-invalid]="isInvalid('title')"
+                 [placeholder]="'sales.appointments.form.titlePlaceholder' | translate">
+          <app-form-error [control]="appt.title" [label]="'sales.appointments.form.title' | translate" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-600" for="asd-type">{{ 'sales.appointments.form.type' | translate }}</label>
+          <select id="asd-type" class="form-select" formControlName="type">
+            @for (t of types; track t.code) {
+              <option [ngValue]="t.code">{{ optionLabel(t) }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-600" for="asd-priority">{{ 'sales.appointments.form.priority' | translate }}</label>
+          <select id="asd-priority" class="form-select" formControlName="priority">
+            @for (p of priorities; track p.code) {
+              <option [ngValue]="p.code">{{ optionLabel(p) }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-600" for="asd-start">
+            {{ 'sales.appointments.form.startDate' | translate }} <span class="text-danger">*</span>
+          </label>
+          <input id="asd-start" type="datetime-local" class="form-control" formControlName="startDate"
+                 [min]="minStart"
+                 [class.is-invalid]="isInvalid('startDate')">
+          <app-form-error [control]="appt.startDate" [label]="'sales.appointments.form.startDate' | translate" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-600" for="asd-end">
+            {{ 'sales.appointments.form.endDate' | translate }} <span class="text-danger">*</span>
+          </label>
+          <input id="asd-end" type="datetime-local" class="form-control" formControlName="endDate"
+                 [min]="appt.startDate.value || minStart"
+                 [class.is-invalid]="isInvalid('endDate')">
+          <app-form-error [control]="appt.endDate" [label]="'sales.appointments.form.endDate' | translate"
+                          [custom]="rangeMessages" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-600" for="asd-location">{{ 'sales.appointments.form.location' | translate }}</label>
+          <input id="asd-location" class="form-control" formControlName="location"
+                 [placeholder]="'sales.appointments.form.locationPlaceholder' | translate">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-600" for="asd-link">{{ 'sales.appointments.form.meetingLink' | translate }}</label>
+          <input id="asd-link" type="url" inputmode="url" class="form-control" formControlName="meetingLink" dir="ltr"
+                 placeholder="https://meet.google.com/...">
+        </div>
+
+        <div class="col-12">
+          <label class="form-label fw-600" for="asd-desc">{{ 'sales.appointments.form.description' | translate }}</label>
+          <textarea id="asd-desc" class="form-control" rows="2" formControlName="description"
+                    [placeholder]="'sales.appointments.form.descriptionPlaceholder' | translate"></textarea>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label fw-600" for="asd-notes">{{ 'sales.appointments.form.notes' | translate }}</label>
+          <textarea id="asd-notes" class="form-control" rows="2" formControlName="notes"
+                    [placeholder]="'sales.appointments.form.notesPlaceholder' | translate"></textarea>
+        </div>
+      </div>
+    </section>
+
+    @if (errorMessage(); as err) {
+      <div class="alert alert-danger d-flex align-items-start gap-2 py-2 mb-0" role="alert">
+        <i class="fa-solid fa-circle-exclamation mt-1"></i>
+        <span>{{ err }}</span>
+      </div>
+    }
+  </form>
 
   <ng-container modal-footer>
-    <button type="button"
-            class="btn btn-light"
-            [disabled]="submitting()"
-            (click)="cancel.emit()">
+    @if (!isValid() && !submitting()) {
+      <small class="asd-footer-hint">{{ 'customers.supportModal.completeRequired' | translate }}</small>
+    }
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="close()">
       {{ 'common.cancel' | translate }}
     </button>
-    <button type="button"
-            class="btn btn-info text-white"
-            [disabled]="!canSubmit()"
-            (click)="submit()">
+    <button type="submit" form="assign-support-form" class="btn btn-info text-white"
+            [disabled]="!isValid() || submitting()">
       @if (submitting()) {
-        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
       } @else {
-        <i class="fa-solid fa-headset me-1"></i>
+        <i class="fa-solid fa-headset"></i>
       }
       {{ 'customers.supportModal.submit' | translate }}
     </button>

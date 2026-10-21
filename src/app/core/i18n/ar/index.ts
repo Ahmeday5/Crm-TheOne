@@ -22,6 +22,7 @@ import whatsapp from './whatsapp.ar';
 import notifications from './notifications.ar';
 import goals from './goals.ar';
 import projectProgress from './projectProgress.ar';
+import account from './account.ar';
 
 const ar: Translations = {
   ...common,
@@ -47,6 +48,7 @@ const ar: Translations = {
   ...notifications,
   ...goals,
   ...projectProgress,
+  ...account,
 };
 
 export default ar;

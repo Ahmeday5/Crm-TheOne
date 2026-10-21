@@ -9,6 +9,8 @@ export interface AppUser {
   role: UserRole | string | null;
   address: string | null;
   specialty: string | null;
+  /** Server-relative profile image path, `null` when none was uploaded. */
+  imageUrl?: string | null;
 }
 
 /** Body for `POST /Auth/AddApplicationUser`. */
