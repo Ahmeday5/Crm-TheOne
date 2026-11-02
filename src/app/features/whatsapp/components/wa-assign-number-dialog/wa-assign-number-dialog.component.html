@@ -1,0 +1,85 @@
+<app-modal
+  [open]="true"
+  size="md"
+  icon="fa-brands fa-whatsapp"
+  iconTone="success"
+  [title]="(isChange() ? 'whatsapp.numbers.assignDialog.changeTitle' : 'whatsapp.numbers.assignDialog.title') | translate"
+  [closeOnBackdrop]="!saving()"
+  [closeOnEsc]="!saving()"
+  (closed)="cancelled.emit()">
+
+  <div class="mb-3">
+    <span class="form-label d-block">{{ 'whatsapp.numbers.assignDialog.number' | translate }}</span>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <span class="fw-700" dir="ltr">{{ phone() || ('whatsapp.numbers.noPhone' | translate) }}</span>
+      @if (instance().isDefault) {
+        <span class="badge blue">{{ 'whatsapp.numbers.companyBadge' | translate }}</span>
+      }
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="wa-assign-employee">{{ 'whatsapp.numbers.assignDialog.employee' | translate }}</label>
+    @if (loadFailed() && !loadingEmployees()) {
+      <div class="alert alert-warning d-flex align-items-center justify-content-between gap-2 mb-0 py-2">
+        <span>{{ 'whatsapp.numbers.assignDialog.loadFailed' | translate }}</span>
+        <button type="button" class="btn btn-sm btn-light" (click)="loadEmployees()">
+          {{ 'whatsapp.retry' | translate }}
+        </button>
+      </div>
+    } @else {
+      <app-searchable-select
+        id="wa-assign-employee"
+        [options]="options()"
+        [externalLoading]="loadingEmployees()"
+        labelKey="fullName"
+        valueKey="userId"
+        subLabelKey="sub"
+        [allowClear]="false"
+        [placeholder]="'whatsapp.numbers.assignDialog.pick' | translate"
+        [searchPlaceholder]="'whatsapp.numbers.assignDialog.search' | translate"
+        [emptyText]="'whatsapp.numbers.assignDialog.empty' | translate"
+        [loadingText]="'whatsapp.numbers.assignDialog.loading' | translate"
+        [ngModel]="selectedUserId()"
+        (ngModelChange)="onPick($event)" />
+    }
+  </div>
+
+  @if (replaceNotice(); as notice) {
+    <p class="alert alert-info d-flex gap-2 py-2 mb-2">
+      <i class="fa-solid fa-circle-info mt-1"></i><span>{{ notice }}</span>
+    </p>
+  }
+  @if (moveNotice(); as notice) {
+    <p class="alert alert-info d-flex gap-2 py-2 mb-2">
+      <i class="fa-solid fa-right-left mt-1"></i><span>{{ notice }}</span>
+    </p>
+  }
+  @if (offline()) {
+    <p class="alert alert-warning d-flex gap-2 py-2 mb-2">
+      <i class="fa-solid fa-triangle-exclamation mt-1"></i>
+      <span>{{ 'whatsapp.numbers.assignDialog.notWorking' | translate }}</span>
+    </p>
+  }
+  @if (saveError(); as error) {
+    <p class="alert alert-danger d-flex gap-2 py-2 mb-0" role="alert">
+      <i class="fa-solid fa-circle-exclamation mt-1"></i><span>{{ error }}</span>
+    </p>
+  }
+
+  <ng-container modal-footer>
+    <div class="btn-row w-100 justify-content-end">
+      <button type="button" class="btn btn-light" (click)="cancelled.emit()" [disabled]="saving()">
+        {{ 'whatsapp.numbers.assignDialog.cancel' | translate }}
+      </button>
+      <button type="button" class="btn btn-success" (click)="save()" [disabled]="!canSave()">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+        } @else {
+          <i class="fa-solid fa-link me-1"></i>
+        }
+        {{ (isChange() ? 'whatsapp.numbers.assignDialog.saveChange' : 'whatsapp.numbers.assignDialog.save') | translate }}
+      </button>
+    </div>
+  </ng-container>
+</app-modal>

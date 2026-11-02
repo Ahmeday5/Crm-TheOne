@@ -32,14 +32,21 @@ import {
 import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { PercentLabelPipe } from '../../../../shared/pipes/percent-label.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { GoalCommissionComponent } from '../../components/goal-commission/goal-commission.component';
+import { GoalCommissionSummaryComponent } from '../../components/goal-commission-summary/goal-commission-summary.component';
 import { GoalEntryEditDialogComponent } from '../../components/goal-entry-edit-dialog/goal-entry-edit-dialog.component';
 import { GoalFormDialogComponent } from '../../components/goal-form-dialog/goal-form-dialog.component';
 import { GoalProgressDialogComponent } from '../../components/goal-progress-dialog/goal-progress-dialog.component';
 import { GoalProgressHistoryComponent } from '../../components/goal-progress-history/goal-progress-history.component';
 import { GoalsService } from '../../services/goals.service';
-import { achievementPercent } from '../../utils/goal-progress.util';
+import {
+  goalAchievementPercent,
+  goalBarPercent,
+  goalOverTargetPercent,
+  hasCommissionRates,
+} from '../../utils/goal-commission.util';
 
 type GoalStatus = 'active' | 'upcoming' | 'expired';
 type FilterStatus = 'all' | GoalStatus;
@@ -70,8 +77,10 @@ interface LeaderboardEntry {
     ClampTextDirective,
     ResponsiveTableDirective,
     MoneyPipe,
+    PercentLabelPipe,
     UserAvatarComponent,
     GoalCommissionComponent,
+    GoalCommissionSummaryComponent,
     GoalProgressDialogComponent,
     GoalProgressHistoryComponent,
     GoalEntryEditDialogComponent,
@@ -90,6 +99,9 @@ export class GoalsComponent implements OnInit, OnDestroy {
   private readonly searchSubject = new Subject<string>();
 
   readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
+  /** Voice + scope for commission figures: an employee sees "your commission" / their own share. */
+  readonly commissionViewer = computed<'self' | 'manager'>(() => (this.isAdmin() ? 'manager' : 'self'));
+  readonly currentUserId = computed(() => this.auth.currentUser()?.userId ?? null);
 
   // ── list state ──
   readonly goals = signal<Goal[]>([]);
@@ -391,9 +403,28 @@ export class GoalsComponent implements OnInit, OnDestroy {
     return Math.min(100, Math.max(0, Math.round(((now - start) / total) * 100)));
   }
 
-  /** Achievement percentage: currentProgress / targetValue × 100. */
-  achievementPercent(goal: Goal): number {
-    return achievementPercent(goal.currentProgress, goal.targetValue);
+  /** Progress-bar width, capped at 100 (`progressPercent`). */
+  barPercent(goal: Goal): number {
+    return goalBarPercent(goal);
+  }
+
+  /** Real achievement, may exceed 100 (`achievementPercent`) — for display. */
+  realPercent(goal: Goal): number {
+    return goalAchievementPercent(goal);
+  }
+
+  /** % points past the target, 0 when not exceeded — drives the "+20%" chip. */
+  overTargetPercent(goal: Goal): number {
+    return goalOverTargetPercent(goal);
+  }
+
+  hasCommission(goal: Goal): boolean {
+    return hasCommissionRates(goal);
+  }
+
+  /** Bar / figure colour: tiered by achievement, blue once past the target. */
+  progressColor(goal: Goal): string {
+    return this.overTargetPercent(goal) > 0 ? '#2563eb' : this.achievementColor(this.barPercent(goal));
   }
 
   goalDaysLabel(goal: Goal): string {

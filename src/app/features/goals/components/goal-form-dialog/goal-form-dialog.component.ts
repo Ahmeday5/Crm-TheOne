@@ -6,6 +6,7 @@ import {
   Input,
   OnInit,
   Output,
+  WritableSignal,
   computed,
   inject,
   signal,
@@ -17,16 +18,35 @@ import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import {
+  CommissionTier,
   CreateGoalRequest,
   Goal,
+  GoalCommissionRates,
   GoalPeriod,
   GoalType,
   SalesPerson,
   UpdateGoalRequest,
 } from '../../../../shared/models';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { PercentLabelPipe } from '../../../../shared/pipes/percent-label.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { CommissionRangePipe } from '../../pipes/commission-range.pipe';
 import { GoalsService } from '../../services/goals.service';
 import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
+import {
+  COMMISSION_RATE_FIELD,
+  COMMISSION_TIERS,
+  CommissionQuote,
+  commissionPreviewPercents,
+  hasCommissionRates,
+  isValidCommissionRate,
+  isValidCommissionThreshold,
+  quoteCommission,
+} from '../../utils/goal-commission.util';
+
+interface CommissionPreviewRow extends CommissionQuote {
+  collected: number;
+}
 
 function toLocalDatetimeValue(iso: string): string {
   if (!iso) return '';
@@ -39,7 +59,16 @@ function toLocalDatetimeValue(iso: string): string {
 @Component({
   selector: 'app-goal-form-dialog',
   standalone: true,
-  imports: [UserAvatarComponent, CommonModule, FormsModule, TranslatePipe, ModalComponent],
+  imports: [
+    UserAvatarComponent,
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    MoneyPipe,
+    PercentLabelPipe,
+    CommissionRangePipe,
+    ModalComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './goal-form-dialog.component.html',
   styleUrl: './goal-form-dialog.component.scss',
@@ -55,6 +84,7 @@ export class GoalFormDialogComponent implements OnInit {
 
   readonly GOAL_TYPES: GoalType[] = ['Individual', 'Team'];
   readonly GOAL_PERIODS: GoalPeriod[] = ['Daily', 'Weekly', 'Monthly', 'Yearly'];
+  readonly COMMISSION_TIERS = COMMISSION_TIERS;
 
   readonly title = signal('');
   readonly description = signal('');
@@ -66,8 +96,14 @@ export class GoalFormDialogComponent implements OnInit {
   readonly startDate = signal('');
   readonly endDate = signal('');
   readonly assignedToId = signal<string | null>(null);
-  /** Optional 1–100 — minimum achievement % to earn commission. */
+  /** Optional whole 1–100 — achievement % that opens the `UpToTarget` bracket. */
   readonly commissionThreshold = signal<number | null>(null);
+  /** Optional 0–100 rate per bracket, decimals allowed. */
+  readonly commissionRates: Readonly<Record<CommissionTier, WritableSignal<number | null>>> = {
+    BelowThreshold: signal<number | null>(null),
+    UpToTarget: signal<number | null>(null),
+    AboveTarget: signal<number | null>(null),
+  };
 
   readonly salesPersons = signal<SalesPerson[]>([]);
   readonly loadingSales = signal(false);
@@ -92,10 +128,39 @@ export class GoalFormDialogComponent implements OnInit {
       this.commissionValid(),
   );
 
-  /** Empty is valid (no threshold); otherwise a whole number 1–100. */
-  readonly commissionValid = computed(() => {
-    const v = this.commissionThreshold();
-    return v === null || (Number.isInteger(v) && v >= 1 && v <= 100);
+  readonly thresholdValid = computed(() => isValidCommissionThreshold(this.commissionThreshold()));
+
+  /** Rates as the API names them — feeds the payload and the preview. */
+  readonly ratesPayload = computed<GoalCommissionRates>(() => {
+    const payload = {} as GoalCommissionRates;
+    for (const tier of COMMISSION_TIERS) {
+      payload[COMMISSION_RATE_FIELD[tier]] = this.commissionRates[tier]();
+    }
+    return payload;
+  });
+
+  readonly commissionValid = computed(
+    () =>
+      this.thresholdValid() &&
+      COMMISSION_TIERS.every((tier) => isValidCommissionRate(this.commissionRates[tier]())),
+  );
+
+  /** Threshold for range captions — ignored while it's mid-edit / invalid. */
+  readonly displayThreshold = computed(() =>
+    this.thresholdValid() ? this.commissionThreshold() : null,
+  );
+
+  /** Worked example on this goal's own target, one row per bracket boundary. */
+  readonly commissionPreview = computed<CommissionPreviewRow[]>(() => {
+    const target = this.targetValue() ?? 0;
+    const rates = this.ratesPayload();
+    if (target <= 0 || !this.commissionValid() || !hasCommissionRates(rates)) return [];
+
+    const threshold = this.displayThreshold();
+    return commissionPreviewPercents(threshold).map((pct) => {
+      const collected = Math.round((target * pct) / 100);
+      return { collected, ...quoteCommission(collected, target, threshold, rates) };
+    });
   });
 
   readonly endDateValid = computed(() => {
@@ -118,6 +183,9 @@ export class GoalFormDialogComponent implements OnInit {
       this.endDate.set(toLocalDatetimeValue(this.goal.endDate));
       this.assignedToId.set(this.goal.assignedToId);
       this.commissionThreshold.set(this.goal.commissionThresholdPercent ?? null);
+      for (const tier of COMMISSION_TIERS) {
+        this.commissionRates[tier].set(this.goal[COMMISSION_RATE_FIELD[tier]] ?? null);
+      }
     }
     this.loadSalesPersons();
   }
@@ -160,6 +228,7 @@ export class GoalFormDialogComponent implements OnInit {
         startDate: new Date(this.startDate()).toISOString(),
         endDate: new Date(this.endDate()).toISOString(),
         commissionThresholdPercent: this.commissionThreshold(),
+        ...this.ratesPayload(),
       };
       this.goalsService.update(this.goal.id, payload).subscribe({
         next: (res) => {
@@ -187,6 +256,7 @@ export class GoalFormDialogComponent implements OnInit {
         endDate: new Date(this.endDate()).toISOString(),
         assignedToId: this.type() === 'Individual' ? this.assignedToId() : null,
         commissionThresholdPercent: this.commissionThreshold(),
+        ...this.ratesPayload(),
       };
       this.goalsService.create(payload).subscribe({
         next: (res) => {
@@ -205,9 +275,13 @@ export class GoalFormDialogComponent implements OnInit {
   }
 
   /** `<input type="number">` yields `''`/`null` when cleared — normalise to `null`. */
-  onCommissionChange(raw: number | string | null): void {
+  setOptionalNumber(target: WritableSignal<number | null>, raw: number | string | null): void {
     const v = raw === '' || raw === null ? null : Number(raw);
-    this.commissionThreshold.set(v === null || Number.isNaN(v) ? null : v);
+    target.set(v === null || Number.isNaN(v) ? null : v);
+  }
+
+  rateValid(tier: CommissionTier): boolean {
+    return isValidCommissionRate(this.commissionRates[tier]());
   }
 
   periodIcon(period: GoalPeriod): string {

@@ -105,6 +105,13 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: 'fa-solid fa-headset',
         roles: ['Admin', 'Support'],
       },
+      // In-CRM WhatsApp inbox — each employee chats from their own number.
+      {
+        labelKey: 'sidebar.items.whatsapp',
+        path: '/whatsapp',
+        icon: 'fa-brands fa-whatsapp',
+        roles: ['Admin', 'Sales', 'Support'],
+      },
       {
         labelKey: 'sidebar.items.projects',
         path: '/ProjectManage',
@@ -147,11 +154,6 @@ export const NAV_SECTIONS: NavSection[] = [
         path: '/services',
         icon: 'fa-solid fa-screwdriver-wrench',
         roles: ['Admin', 'Marketing'],
-      },
-      {
-        labelKey: 'sidebar.items.whatsappSessions',
-        path: '/whatsapp-sessions',
-        icon: 'fa-brands fa-whatsapp',
       },
       {
         labelKey: 'sidebar.items.kb',
@@ -281,6 +283,7 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
 
   // Cross-role
   schedule: ['Admin', 'Sales', 'Support'],
+  whatsapp: ['Admin', 'Sales', 'Support'],
   'knowledge-base': ['Admin', 'Support', 'Developer'],
 
   // Admin-only

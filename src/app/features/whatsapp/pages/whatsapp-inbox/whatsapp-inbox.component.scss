@@ -1,0 +1,160 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  /* The inbox fills the viewport under the app header; panes scroll inside. */
+  height: calc(100dvh - var(--header-h) - 3rem);
+  min-height: 32rem;
+}
+
+@include bp.down(lg) {
+  :host { height: calc(100dvh - var(--header-h) - 2rem); }
+}
+
+.wa-inbox {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  overflow: hidden;
+  padding: 0;
+}
+
+.wa-inbox__list {
+  min-width: 0;
+  min-height: 0;
+  border-inline-end: 1px solid var(--border);
+}
+.wa-inbox__thread {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+
+  app-wa-thread { flex: 1; }
+}
+
+/* ── thread header ── */
+.wa-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-0);
+}
+.wa-head__back {
+  display: none;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-1);
+  cursor: pointer;
+
+  &:hover { background: var(--surface-2); }
+  /* The arrow points "back" in either reading direction. */
+  :host-context([dir='ltr']) & i { transform: scaleX(-1); }
+}
+.wa-head__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.wa-head__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--fw-700);
+  color: var(--text-1);
+}
+.wa-head__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.4rem;
+  min-width: 0;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+
+  .badge { font-size: 0.68rem; }
+}
+.wa-head__dot { opacity: 0.6; }
+.wa-head__owner {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 12rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+
+  span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+.wa-head__anon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+/* ── nothing selected ── */
+.wa-inbox__placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 2rem;
+  text-align: center;
+  background: var(--surface-1);
+
+  h3 { font-size: var(--fs-xl); }
+  p { max-width: 24rem; }
+}
+.wa-inbox__placeholder-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 5.5rem;
+  height: 5.5rem;
+  margin-bottom: 0.75rem;
+  border-radius: 50%;
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: 2.6rem;
+}
+
+/* ── tablets & phones: one pane at a time ── */
+@include bp.down(lg) {
+  .wa-inbox { grid-template-columns: minmax(0, 1fr); }
+  .wa-inbox__list { border-inline-end: 0; }
+
+  .wa-inbox[data-view='list'] .wa-inbox__thread { display: none; }
+  .wa-inbox[data-view='thread'] .wa-inbox__list { display: none; }
+
+  .wa-head { padding: 0.55rem 0.65rem; gap: 0.55rem; }
+  .wa-head__back { display: inline-grid; }
+  .wa-head__owner { max-width: 8rem; }
+}
+
+@include bp.down(md) {
+  /* On phones the page header shrinks so the conversation gets the room. */
+  :host ::ng-deep .page-header { margin-bottom: 0.75rem; }
+  :host ::ng-deep .page-header-subtitle { display: none; }
+  .wa-inbox[data-view='thread'] { margin-inline: calc(var(--content-pad) * -1); border-radius: 0; }
+}

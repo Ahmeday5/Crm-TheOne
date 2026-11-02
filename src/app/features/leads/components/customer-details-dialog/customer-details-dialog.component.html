@@ -1,5 +1,28 @@
-<app-modal [open]="true" [title]="'customers.details.title' | translate" icon="fa-solid fa-address-card" iconTone="info"
-  size="lg" (closed)="closed.emit()">
+<app-modal [open]="true" [title]="customer()?.fullName || ('customers.details.title' | translate)"
+  icon="fa-solid fa-address-card" iconTone="info" size="lg" (closed)="closed.emit()">
+
+  @if (canChat()) {
+    <div class="cd-tabs" role="tablist">
+      <button type="button" class="cd-tab" role="tab" [class.is-active]="tab() === 'details'"
+              [attr.aria-selected]="tab() === 'details'" (click)="tab.set('details')">
+        <i class="fa-solid fa-address-card" aria-hidden="true"></i>
+        {{ 'whatsapp.customer.detailsTab' | translate }}
+      </button>
+      <button type="button" class="cd-tab cd-tab--wa" role="tab" [class.is-active]="tab() === 'whatsapp'"
+              [attr.aria-selected]="tab() === 'whatsapp'" (click)="tab.set('whatsapp')">
+        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+        {{ 'whatsapp.customer.tab' | translate }}
+      </button>
+    </div>
+  }
+
+  @if (tab() === 'whatsapp') {
+    <app-wa-thread
+      class="cd-whatsapp"
+      [source]="whatsappSource()"
+      emptyTitleKey="whatsapp.customer.empty"
+      emptyHintKey="whatsapp.customer.emptyHint" />
+  } @else {
 
   @if (loadError()) {
     <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
@@ -149,6 +172,7 @@
       </div>
     </div>
   </div>
+  }
   }
   }
 

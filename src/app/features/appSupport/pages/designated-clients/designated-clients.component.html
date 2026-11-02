@@ -271,6 +271,7 @@
                         [activitiesCount]="(row.activities ?? []).length"
                         (view)="openDetails(row)"
                         (note)="openNote(row)"
+                        (whatsapp)="openWhatsApp(row)"
                         (activities)="openActivities(row)">
                       </app-customer-actions-menu>
                     </div>
@@ -310,6 +311,7 @@
 @if (detailsDialog(); as id) {
   <app-customer-details-dialog
     [customerId]="id"
+    [initialTab]="detailsTab()"
     (closed)="closeDetails()">
   </app-customer-details-dialog>
 }

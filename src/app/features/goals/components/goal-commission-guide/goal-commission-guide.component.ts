@@ -1,41 +1,51 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { Goal } from '../../../../shared/models';
+import { CommissionTier, Goal } from '../../../../shared/models';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { PercentLabelPipe } from '../../../../shared/pipes/percent-label.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { achievementPercent } from '../../utils/goal-progress.util';
+import { CommissionRangePipe } from '../../pipes/commission-range.pipe';
+import {
+  COMMISSION_TIERS,
+  buildCommissionInsight,
+  goalAchievementPercent,
+  goalBarPercent,
+  goalOverTargetPercent,
+  hasCommissionRates,
+  rateForTier,
+} from '../../utils/goal-commission.util';
+import { GoalCommissionNextComponent } from '../goal-commission-next/goal-commission-next.component';
 
-/** Where the employee stands against the commission rules. */
-export type CommissionStage = 'below' | 'eligible' | 'achieved';
+/** Where the employee stands — drives the accent colour and status line. */
+export type CommissionStage = 'below' | 'eligible' | 'achieved' | 'above';
 
-interface CommissionTier {
-  stage: CommissionStage;
-  /** Range label pieces, e.g. "أقل من" + 70%. */
-  rangeKey: string;
-  rangePct: number | null;
-  resultKey: string;
+interface LegendRow {
+  tier: CommissionTier;
+  rate: number | null;
+  current: boolean;
 }
+
+const STAGE_KEY: Record<CommissionStage, string> = {
+  below: 'goals.commissionGuide.stageBelow',
+  eligible: 'goals.commissionGuide.stageEligible',
+  achieved: 'goals.commissionGuide.stageAchieved',
+  above: 'goals.commissionGuide.stageAbove',
+};
 
 /**
  * Explains a goal's pay-out rules to the employee and shows where they are:
+ * the commission earned so far, a segmented meter (with the threshold tick),
+ * the brackets with their rates — current one highlighted — and what the
+ * next bracket would pay. The fixed reward (money + points) is earned once,
+ * at 100 %.
  *
- *   below threshold      → no commission
- *   threshold … < 100 %  → commission
- *   100 % or more        → commission + reward (money + points)
- *
- * All three tiers are always shown — from 0 %, before anything is logged.
- * The current tier is highlighted and the remaining amount to the next
- * milestone is spelled out. Without a threshold the first two tiers read
- * "no progress yet" / "any progress".
- *
- * The stage is derived from the actual achievement rather than the
- * server's `isCommissionEligible`: that flag is `true` for every goal
- * without a threshold — even at 0 % — which would congratulate an
- * employee who hasn't logged anything.
+ * Figures come from `buildCommissionInsight` (server fields first). Goals
+ * without rates keep the legacy wording ("commission earned" from the
+ * threshold up) and a plain "X left" line.
  */
 @Component({
   selector: 'app-goal-commission-guide',
   standalone: true,
-  imports: [TranslatePipe, MoneyPipe],
+  imports: [TranslatePipe, MoneyPipe, PercentLabelPipe, CommissionRangePipe, GoalCommissionNextComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.is-inverse]': 'tone() === "inverse"' },
   templateUrl: './goal-commission-guide.component.html',
@@ -45,26 +55,31 @@ export class GoalCommissionGuideComponent {
   readonly goal = input.required<Goal>();
   /** `inverse` = light-on-dark, for use on the gradient goal banner. */
   readonly tone = input<'surface' | 'inverse'>('surface');
+  /** Signed-in employee — on a team goal their own share is shown. */
+  readonly viewerUserId = input<string | null>(null);
 
   protected readonly threshold = computed(() => this.goal().commissionThresholdPercent ?? null);
-
-  /** Exact achievement (unrounded, unclamped) — drives the tier logic. */
-  private readonly exactPercent = computed(() => {
-    const g = this.goal();
-    return g.targetValue ? (g.currentProgress / g.targetValue) * 100 : 0;
-  });
-
-  protected readonly barPercent = computed(() =>
-    achievementPercent(this.goal().currentProgress, this.goal().targetValue),
+  protected readonly hasRates = computed(() => hasCommissionRates(this.goal()));
+  protected readonly commission = computed(() =>
+    buildCommissionInsight(this.goal(), this.viewerUserId()),
   );
 
+  protected readonly barPercent = computed(() => goalBarPercent(this.goal()));
+  protected readonly overTarget = computed(() => goalOverTargetPercent(this.goal()));
+  private readonly notStarted = computed(() => goalAchievementPercent(this.goal()) <= 0);
+
   protected readonly stage = computed<CommissionStage>(() => {
-    const pct = this.exactPercent();
-    if (this.goal().isAchieved || pct >= 100) return 'achieved';
-    const t = this.threshold();
-    const eligible = t === null ? pct > 0 : pct >= t;
-    return eligible ? 'eligible' : 'below';
+    const goal = this.goal();
+    const tier = this.commission().tier;
+    if (tier === 'AboveTarget') return 'above';
+    if (goal.isAchieved || goal.currentProgress >= goal.targetValue) return 'achieved';
+    if (this.notStarted()) return 'below';
+    return tier === 'UpToTarget' ? 'eligible' : 'below';
   });
+
+  protected readonly stageKey = computed(() =>
+    this.notStarted() ? 'goals.commissionGuide.stageNotStarted' : STAGE_KEY[this.stage()],
+  );
 
   /** Amount still needed to reach the commission threshold (0 once reached). */
   protected readonly toThreshold = computed(() => {
@@ -74,43 +89,22 @@ export class GoalCommissionGuideComponent {
     return Math.max(0, Math.ceil((g.targetValue * t) / 100) - g.currentProgress);
   });
 
-  /** Amount still needed to complete the goal (0 once achieved). */
-  protected readonly toFull = computed(() =>
+  /** Amount still needed to hit the target (0 once achieved). */
+  protected readonly toTarget = computed(() =>
     Math.max(0, this.goal().targetValue - this.goal().currentProgress),
   );
 
-  protected readonly tiers = computed<CommissionTier[]>(() => {
-    const t = this.threshold();
-    return [
-      {
-        stage: 'below',
-        rangeKey: t === null ? 'goals.commissionGuide.noProgress' : 'goals.commissionGuide.below',
-        rangePct: t,
-        resultKey: 'goals.commissionGuide.noCommission',
-      },
-      {
-        stage: 'eligible',
-        rangeKey: t === null ? 'goals.commissionGuide.anyProgress' : 'goals.commissionGuide.from',
-        rangePct: t,
-        resultKey: 'goals.commissionGuide.commission',
-      },
-      {
-        stage: 'achieved',
-        rangeKey: 'goals.commissionGuide.fullTarget',
-        rangePct: null,
-        resultKey: 'goals.commissionGuide.commissionAndReward',
-      },
-    ];
-  });
+  /** Show "any extra amount moves you up" only if the top bracket pays something. */
+  protected readonly canEarnAbove = computed(
+    () => rateForTier(this.goal(), 'AboveTarget') !== null,
+  );
 
-  protected readonly stageKey = computed(() => {
-    switch (this.stage()) {
-      case 'achieved': return 'goals.commissionGuide.stageAchieved';
-      case 'eligible': return 'goals.commissionGuide.stageEligible';
-      default:
-        return this.exactPercent() === 0
-          ? 'goals.commissionGuide.stageNotStarted'
-          : 'goals.commissionGuide.stageBelow';
-    }
+  /** Without a threshold the "below" bracket can't be reached, so it's not listed. */
+  protected readonly legend = computed<LegendRow[]>(() => {
+    const goal = this.goal();
+    const current = this.notStarted() && this.threshold() === null ? null : this.commission().tier;
+    return COMMISSION_TIERS
+      .filter((tier) => tier !== 'BelowThreshold' || this.threshold() !== null)
+      .map((tier) => ({ tier, rate: rateForTier(goal, tier), current: tier === current }));
   });
 }

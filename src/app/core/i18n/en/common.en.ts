@@ -60,6 +60,8 @@ const common: TranslationFile<'common'> = {
     first_page: 'First page',
     last_page: 'Last page',
     no_results: 'No results',
+    /** Used by the `money` pipe when the tenant hasn't set a default currency. */
+    defaultCurrency: 'EGP',
     refreshData: {
       label: 'Refresh data',
       hint: 'Load the latest data from the server instead of the cached copy',

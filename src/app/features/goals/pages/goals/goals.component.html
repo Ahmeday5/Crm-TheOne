@@ -429,14 +429,21 @@
                   <i class="fa-solid fa-chart-line"></i>
                   {{ 'goals.card.currentProgress' | translate }}
                 </span>
-                <span class="gcp-pct" [style.color]="achievementColor(achievementPercent(goal))">
-                  {{ achievementPercent(goal) }}%
+                <span class="gcp-pct-wrap">
+                  @if (overTargetPercent(goal) > 0) {
+                    <span class="g-over-chip" [title]="'goals.card.overTarget' | translate">
+                      <i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i>{{ overTargetPercent(goal) | pct:1:true }}
+                    </span>
+                  }
+                  <span class="gcp-pct" [style.color]="progressColor(goal)">{{ realPercent(goal) | pct }}</span>
                 </span>
               </div>
-              <div class="gcp-track">
+              <div class="gcp-track" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                   [attr.aria-valuenow]="barPercent(goal)"
+                   [attr.aria-label]="'goals.card.currentProgress' | translate">
                 <div class="gcp-fill"
-                     [style.width.%]="achievementPercent(goal)"
-                     [style.background]="achievementColor(achievementPercent(goal))">
+                     [style.width.%]="barPercent(goal)"
+                     [style.background]="progressColor(goal)">
                 </div>
                 @if (goal.commissionThresholdPercent; as threshold) {
                   <span class="g-commission-mark" [style.inset-inline-start.%]="threshold"
@@ -455,7 +462,10 @@
                   </span>
                 }
               </div>
-              @if (goal.commissionThresholdPercent != null) {
+              @if (hasCommission(goal)) {
+                <app-goal-commission-summary class="gcp-commission" density="compact" [goal]="goal"
+                                             [viewer]="commissionViewer()" [viewerUserId]="currentUserId()" />
+              } @else if (goal.commissionThresholdPercent != null) {
                 <app-goal-commission class="gcp-commission" [goal]="goal" />
               }
             </div>
@@ -500,8 +510,9 @@
               </div>
             </div>
 
-            <!-- Employee: prominent update-progress CTA -->
-            @if (!isAdmin() && !goal.isAchieved) {
+            <!-- Employee: prominent update-progress CTA — stays after the goal is
+                 achieved so amounts above target keep counting toward commission. -->
+            @if (!isAdmin()) {
               <button type="button" class="gc-progress-cta" (click)="openProgress(goal)">
                 <span class="gc-progress-cta__left">
                   <span class="gc-progress-cta__icon-wrap">
@@ -514,9 +525,8 @@
                     </span>
                   </span>
                 </span>
-                <span class="gc-progress-cta__badge"
-                      [style.background]="achievementColor(achievementPercent(goal))">
-                  {{ achievementPercent(goal) }}%
+                <span class="gc-progress-cta__badge" [style.background]="progressColor(goal)">
+                  {{ realPercent(goal) | pct:0 }}
                 </span>
               </button>
             }
@@ -621,9 +631,13 @@
         </div>
         <div class="gd-stat">
           <span class="gd-stat__label">{{ 'goals.detail.achievementRate' | translate }}</span>
-          <span class="gd-stat__val"
-                [style.color]="achievementColor(achievementPercent(g))">
-            {{ achievementPercent(g) }}%
+          <span class="gd-stat__val" [style.color]="progressColor(g)">
+            {{ realPercent(g) | pct }}
+            @if (overTargetPercent(g) > 0) {
+              <span class="g-over-chip" [title]="'goals.card.overTarget' | translate">
+                <i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i>{{ overTargetPercent(g) | pct:1:true }}
+              </span>
+            }
           </span>
         </div>
         <div class="gd-stat">
@@ -647,17 +661,22 @@
 
       <!-- Progress bar (+ commission threshold marker) -->
       <div class="gd-progress">
-        <div class="gd-progress__track">
+        <div class="gd-progress__track" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+             [attr.aria-valuenow]="barPercent(g)"
+             [attr.aria-label]="'goals.card.currentProgress' | translate">
           <div class="gd-progress__fill"
-               [style.width.%]="achievementPercent(g)"
-               [style.background]="achievementColor(achievementPercent(g))">
+               [style.width.%]="barPercent(g)"
+               [style.background]="progressColor(g)">
           </div>
           @if (g.commissionThresholdPercent; as threshold) {
             <span class="g-commission-mark" [style.inset-inline-start.%]="threshold"
                   [title]="('goals.commission.marker' | translate) + ' ' + threshold + '%'"></span>
           }
         </div>
-        @if (g.commissionThresholdPercent != null) {
+        @if (hasCommission(g)) {
+          <app-goal-commission-summary class="gd-commission" [goal]="g"
+                                       [viewer]="commissionViewer()" [viewerUserId]="currentUserId()" />
+        } @else if (g.commissionThresholdPercent != null) {
           <app-goal-commission class="gd-commission" [goal]="g" />
         }
       </div>
@@ -710,7 +729,7 @@
           </h6>
           <div class="gd-contributors__list">
             @for (c of g.contributors; track c.userId) {
-              <div class="gd-contrib-row">
+              <div class="gd-contrib-row" [class.is-me]="!isAdmin() && c.userId === currentUserId()">
                 <div class="gd-contrib-row__who">
                   <app-user-avatar [name]="c.fullName" [userId]="c.userId" size="sm" />
                   <div class="gd-contrib-row__info">
@@ -727,6 +746,13 @@
                   <span class="gd-contrib-row__pct">{{ c.contributionPercent }}%</span>
                   <span class="gd-contrib-row__pts"><i class="fa-solid fa-star"></i> {{ formatNumber(c.earnedPoints) }}</span>
                   <span class="gd-contrib-row__reward">{{ formatNumber(c.earnedReward) }} {{ 'goals.card.currency' | translate }}</span>
+                  @if (hasCommission(g) && c.commissionAmount != null) {
+                    <span class="gd-contrib-row__commission" [title]="'goals.detail.contributorCommission' | translate">
+                      <i class="fa-solid fa-hand-holding-dollar" aria-hidden="true"></i>
+                      <span class="visually-hidden">{{ 'goals.detail.contributorCommission' | translate }}:</span>
+                      {{ c.commissionAmount | money }}
+                    </span>
+                  }
                 </div>
               </div>
             }
@@ -785,7 +811,7 @@
 @if (editingEntry(); as entry) {
   <app-goal-entry-edit-dialog
     [entry]="entry"
-    [goalAchieved]="goalDetailDialog()?.isAchieved ?? false"
+    [goal]="goalDetailDialog()"
     (saved)="onEntrySaved($event)"
     (closed)="closeEntryEdit()" />
 }

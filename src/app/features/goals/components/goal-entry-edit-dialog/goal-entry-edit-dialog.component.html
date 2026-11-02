@@ -27,27 +27,28 @@
     <!-- Amount -->
     <div class="gpd-field">
       <label class="form-label" for="ged-value">
-        {{ 'goals.progress.amountLabel' | translate }}
-        @if (!goalAchieved()) { <span class="text-danger">*</span> }
+        {{ 'goals.progress.amountLabel' | translate }} <span class="text-danger">*</span>
       </label>
       <div class="input-group">
-        <span class="input-group-text">
-          <i [class]="goalAchieved() ? 'fa-solid fa-lock' : 'fa-solid fa-coins'"></i>
-        </span>
+        <span class="input-group-text"><i class="fa-solid fa-coins"></i></span>
         <input id="ged-value" type="number" inputmode="numeric" min="1" step="1"
                class="form-control" formControlName="value"
                [class.is-invalid]="fieldInvalid('value')"
-               [attr.aria-describedby]="goalAchieved() ? 'ged-value-locked' : null">
+               [attr.aria-describedby]="goalAchieved() ? 'ged-value-floor' : null">
       </div>
+      <app-form-error [control]="form.controls.value"
+                      [label]="'goals.progress.amountLabel' | translate"
+                      [custom]="amountMessages" />
       @if (goalAchieved()) {
-        <p id="ged-value-locked" class="gpd-info mt-2 mb-0">
+        <p id="ged-value-floor" class="gpd-info mt-2 mb-0">
           <i class="fa-solid fa-circle-info"></i>
-          <span>{{ 'goals.entryEdit.valueLocked' | translate }}</span>
+          <span>
+            {{ 'goals.entryEdit.achievedHint' | translate }}
+            @if (minAllowedValue(); as min) {
+              <br />{{ 'goals.entryEdit.minAllowed' | translate }}: <strong>{{ min | money }}</strong>
+            }
+          </span>
         </p>
-      } @else {
-        <app-form-error [control]="form.controls.value"
-                        [label]="'goals.progress.amountLabel' | translate"
-                        [custom]="amountMessages" />
       }
     </div>
 

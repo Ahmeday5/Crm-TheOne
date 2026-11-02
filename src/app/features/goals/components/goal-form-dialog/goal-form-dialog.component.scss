@@ -116,6 +116,91 @@ $t: .18s ease;
   gap: .3rem;
 
   &--error { color: #b91c1c; }
+  &--muted { align-items: flex-start; color: var(--bs-secondary-color, #64748b); line-height: 1.5; i { margin-top: .2rem; } }
+
+  // Bracket range under each commission rate, tinted like its tier.
+  &--range {
+    font-weight: 600;
+    color: var(--gform-tier, #64748b);
+  }
+}
+
+// ── Commission tiers ───────────────────────────────────────
+// Same palette as `app-goal-commission-summary`.
+[data-tier='BelowThreshold'] { --gform-tier: var(--warning, #d97706); }
+[data-tier='UpToTarget']     { --gform-tier: var(--success, #16a34a); }
+[data-tier='AboveTarget']    { --gform-tier: #2563eb; }
+
+.gform-cpreview {
+  border: 1px dashed var(--bs-border-color, #e2e8f0);
+  border-radius: $r;
+  padding: .7rem .85rem;
+  background: var(--bs-tertiary-bg, #f8fafc);
+
+  &__title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .35rem;
+    margin: 0 0 .5rem;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--bs-body-color, #374151);
+
+    i { color: #16a34a; }
+  }
+
+  &__empty { margin: 0; font-size: .75rem; color: var(--bs-secondary-color, #64748b); }
+
+  &__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .3rem; }
+
+  // Header + rows share one column template so figures line up.
+  &__head,
+  &__row {
+    display: grid;
+    grid-template-columns: minmax(3.5rem, .7fr) minmax(0, 1.4fr) minmax(3.5rem, .7fr) minmax(0, 1.2fr);
+    align-items: center;
+    gap: .5rem;
+  }
+
+  &__head {
+    padding: 0 .6rem .3rem;
+    font-size: .68rem;
+    font-weight: 600;
+    color: var(--bs-secondary-color, #94a3b8);
+  }
+
+  &__row {
+    padding: .4rem .6rem;
+    border-inline-start: 3px solid var(--gform-tier);
+    border-radius: $r-sm;
+    background: var(--bs-body-bg, #fff);
+    font-size: .78rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__pct { font-weight: 700; color: var(--gform-tier); }
+  &__collected { color: var(--bs-body-color, #374151); overflow-wrap: anywhere; }
+  &__rate { color: var(--bs-secondary-color, #64748b); white-space: nowrap; }
+  &__amount { text-align: end; color: var(--bs-emphasis-color, #0f172a); overflow-wrap: anywhere; }
+
+  // Phones: % + rate on top, collected → commission below.
+  @include bp.down(sm) {
+    &__head { display: none; }
+
+    &__row {
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-areas:
+        'pct  rate'
+        'coll amount';
+      row-gap: .15rem;
+    }
+
+    &__pct { grid-area: pct; }
+    &__rate { grid-area: rate; text-align: end; }
+    &__collected { grid-area: coll; }
+    &__amount { grid-area: amount; }
+  }
 }
 
 // ── Grid layouts ───────────────────────────────────────────

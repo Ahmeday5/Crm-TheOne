@@ -1,0 +1,100 @@
+<ng-content select="[waThreadHeader]" />
+
+<div class="wa-thread__viewport">
+  <div #scroller class="wa-thread__scroll" (scroll)="onScroll()" role="log" aria-live="polite"
+       [attr.aria-busy]="store.loading()">
+    @if (store.loading()) {
+      <div class="wa-skeleton" aria-hidden="true">
+        <span class="wa-skeleton__bubble"></span>
+        <span class="wa-skeleton__bubble is-out"></span>
+        <span class="wa-skeleton__bubble is-wide"></span>
+        <span class="wa-skeleton__bubble is-out is-wide"></span>
+        <span class="wa-skeleton__bubble"></span>
+      </div>
+    } @else if (store.forbidden()) {
+      <div class="wa-state">
+        <span class="icon-tile xl tone-danger"><i class="fa-solid fa-lock"></i></span>
+        <h6 class="fw-700 mb-1">{{ 'whatsapp.thread.forbiddenTitle' | translate }}</h6>
+        <p class="text-muted mb-0">{{ 'whatsapp.thread.forbiddenHint' | translate }}</p>
+      </div>
+    } @else if (store.error() && store.messages().length === 0) {
+      <div class="wa-state">
+        <span class="icon-tile xl tone-warning"><i class="fa-solid fa-triangle-exclamation"></i></span>
+        <p class="text-muted mb-3">{{ store.error() }}</p>
+        <button type="button" class="btn btn-sm btn-light" (click)="refresh()">
+          <i class="fa-solid fa-rotate me-1"></i>{{ 'whatsapp.retry' | translate }}
+        </button>
+      </div>
+    } @else if (store.isEmpty()) {
+      <div class="wa-state">
+        <span class="icon-tile xl tone-success"><i class="fa-brands fa-whatsapp"></i></span>
+        <h6 class="fw-700 mb-1">{{ emptyTitleKey() | translate }}</h6>
+        <p class="text-muted mb-0">{{ emptyHintKey() | translate }}</p>
+      </div>
+    } @else {
+      @if (store.canLoadOlder()) {
+        <div class="wa-older">
+          <button type="button" class="wa-older__btn" (click)="loadOlder()" [disabled]="store.loadingOlder()">
+            @if (store.loadingOlder()) {
+              <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            } @else {
+              <i class="fa-solid fa-angles-up" aria-hidden="true"></i>
+            }
+            {{ 'whatsapp.thread.loadOlder' | translate }}
+          </button>
+        </div>
+      } @else if (store.atHistoryLimit()) {
+        <p class="wa-older__note">{{ 'whatsapp.thread.historyLimit' | translate }}</p>
+      }
+
+      @for (group of groups(); track group.key) {
+        <div class="wa-day" role="separator">
+          <span>
+            @if (dayLabelKey(group.key); as key) {
+              {{ key | translate }}
+            } @else {
+              {{ group.date | cairoDate: 'date' }}
+            }
+          </span>
+        </div>
+        @for (m of group.messages; track trackMessage(m)) {
+          <app-wa-message-bubble
+            [message]="m"
+            [showSender]="showSender()"
+            [canRetry]="store.canRetry(m)"
+            [busy]="store.sending()"
+            (retry)="retry(m)"
+            (openImage)="viewer.set($event)" />
+        }
+      }
+    }
+  </div>
+
+  @if (unseen() > 0) {
+    <button type="button" class="wa-jump" (click)="jumpToLatest()"
+            [attr.aria-label]="'whatsapp.thread.jumpToLatest' | translate">
+      <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+      {{ 'whatsapp.thread.newMessages' | translate }}
+      <span class="wa-jump__count">{{ unseen() }}</span>
+    </button>
+  }
+</div>
+
+<app-wa-composer
+  [busy]="store.sending()"
+  [disabled]="!store.canCompose()"
+  (submitted)="onSubmit($event)" />
+
+@if (viewer(); as v) {
+  <app-modal [open]="true" size="xl" [title]="v.fileName || ('whatsapp.message.kind.image' | translate)"
+             icon="fa-regular fa-image" iconTone="success" (closed)="viewer.set(null)">
+    <div class="wa-viewer">
+      <img [src]="v.url" [alt]="v.fileName || ''" />
+    </div>
+    <ng-container modal-footer>
+      <a class="btn btn-light" [href]="v.url" target="_blank" rel="noopener" [attr.download]="v.fileName || ''">
+        <i class="fa-solid fa-download me-1"></i>{{ 'whatsapp.message.download' | translate }}
+      </a>
+    </ng-container>
+  </app-modal>
+}

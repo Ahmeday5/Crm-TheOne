@@ -17,6 +17,7 @@ const settings: TranslationFile<'settings'> = {
       audit: 'سجل التدقيق',
       notifications: 'الإشعارات والتنبيهات',
       backup: 'النسخ الاحتياطي والبيانات',
+      whatsapp: 'أرقام واتساب',
     },
     users: {
       title: 'إدارة المستخدمين',

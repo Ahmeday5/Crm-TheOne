@@ -25,6 +25,11 @@ export interface CustomerActionsConfig {
   view?: boolean;
   /** Edit-my-note — renders as an inline button. */
   note?: boolean;
+  /**
+   * In-CRM WhatsApp chat (opens the customer's WhatsApp tab). When off, a
+   * plain `wa.me` link is shown instead, which opens the user's own WhatsApp.
+   */
+  whatsapp?: boolean;
   /** Edit the customer profile (currently marketing-only). */
   edit?: boolean;
   /** Assign / change sales rep (marketing-only). */
@@ -76,6 +81,7 @@ export class CustomerActionsMenuComponent {
   // ── outputs (one per action — host wires only the ones it enables) ──
   readonly view = output<void>();
   readonly note = output<void>();
+  readonly whatsapp = output<void>();
   readonly edit = output<void>();
   readonly assignSales = output<void>();
   readonly assignSupport = output<void>();

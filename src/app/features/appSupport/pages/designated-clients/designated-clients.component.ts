@@ -39,7 +39,10 @@ import {
   CustomerActionsMenuComponent,
 } from '../../../leads/components/customer-actions-menu/customer-actions-menu.component';
 import { CustomerActivitiesDialogComponent } from '../../../leads/components/customer-activities-dialog/customer-activities-dialog.component';
-import { CustomerDetailsDialogComponent } from '../../../leads/components/customer-details-dialog/customer-details-dialog.component';
+import {
+  CustomerDetailsDialogComponent,
+  CustomerDetailsTab,
+} from '../../../leads/components/customer-details-dialog/customer-details-dialog.component';
 import { CustomerNoteDialogComponent } from '../../../leads/components/customer-note-dialog/customer-note-dialog.component';
 import { CustomerNotesCellComponent } from '../../../leads/components/customer-notes-cell/customer-notes-cell.component';
 import { CustomersService } from '../../../leads/services/customers.service';
@@ -131,16 +134,19 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
   readonly consultDialog = signal<CustomerListItem | null>(null);
   readonly activitiesDialog = signal<CustomerListItem | null>(null);
   readonly detailsDialog = signal<number | null>(null);
+  /** Which tab the details dialog opens on (the WhatsApp button opens the chat). */
+  readonly detailsTab = signal<CustomerDetailsTab>('details');
   readonly noteDialog = signal<CustomerListItem | null>(null);
 
   /**
-   * Row toolbar for the support queue: view details + edit-my-note inline, plus
-   * the tel/WhatsApp anchors the menu derives from the phone. The dedicated
-   * "Start consultation" CTA stays separate so it never gets buried.
+   * Row toolbar for the support queue: view details + edit-my-note inline, the
+   * in-CRM WhatsApp chat, and a tel: anchor derived from the phone. The
+   * dedicated "Start consultation" CTA stays separate so it never gets buried.
    */
   readonly actionsConfig: CustomerActionsConfig = {
     view: true,
     note: true,
+    whatsapp: true,
     activities: true,
   };
 
@@ -287,6 +293,12 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
   // ─────────── details / note dialogs ───────────
 
   openDetails(row: CustomerListItem): void {
+    this.detailsTab.set('details');
+    this.detailsDialog.set(row.id);
+  }
+
+  openWhatsApp(row: CustomerListItem): void {
+    this.detailsTab.set('whatsapp');
     this.detailsDialog.set(row.id);
   }
 

@@ -23,9 +23,16 @@
       </div>
       <div class="gpd-stat">
         <span class="gpd-stat__lbl">{{ 'goals.detail.achievementRate' | translate }}</span>
-        <span class="gpd-stat__val">{{ currentPercent() }}%</span>
+        <span class="gpd-stat__val">{{ currentRealPercent() | pct }}</span>
       </div>
     </div>
+
+    @if (goal().isAchieved) {
+      <p class="gpd-info gpd-info--success">
+        <i class="fa-solid fa-rocket"></i>
+        <span>{{ 'goals.progress.achievedHint' | translate }}</span>
+      </p>
+    }
 
     @if (serverError(); as err) {
       <div class="gpd-alert" role="alert">
@@ -64,11 +71,27 @@
                [style.width.%]="newPercent() - currentPercent()"></div>
         </div>
         <div class="gpd-preview__row">
-          <small>{{ 'goals.progress.previewLabel' | translate }}: <strong>{{ newPercent() }}%</strong></small>
+          <small>{{ 'goals.progress.previewLabel' | translate }}: <strong>{{ newRealPercent() | pct }}</strong></small>
           @if (willAchieve()) {
             <small class="gpd-achieve">{{ 'goals.progress.willAchieve' | translate }}</small>
+          } @else if (willExceed()) {
+            <small class="gpd-achieve">{{ 'goals.progress.willExceed' | translate }}</small>
           }
         </div>
+        @if (commissionAfter(); as c) {
+          <div class="gpd-preview__row">
+            <span>
+              {{ 'goals.progress.expectedCommission' | translate }}
+              <small class="text-muted">
+                {{ ('goals.commission.tier.' + c.tier) | translate }}
+                @if (c.rate !== null) {
+                  · {{ c.rate | pct:2 }}
+                }
+              </small>
+            </span>
+            <strong>{{ c.amount | money }}</strong>
+          </div>
+        }
       </div>
     }
 

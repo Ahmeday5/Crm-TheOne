@@ -80,6 +80,8 @@
   line-height: 1.5;
 
   > i { margin-top: 0.15rem; }
+
+  &--success { background: var(--success-soft); color: var(--success); }
 }
 
 .gpd-field {

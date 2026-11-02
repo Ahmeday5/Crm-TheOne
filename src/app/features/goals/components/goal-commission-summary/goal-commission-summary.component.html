@@ -1,0 +1,51 @@
+@if (visible()) {
+  @let i = insight();
+  <section class="gcs" [attr.data-tier]="i.tier" [attr.aria-label]="'goals.commission.title' | translate">
+    <header class="gcs-head">
+      <span class="gcs-head__title">
+        <i class="fa-solid fa-hand-holding-dollar" aria-hidden="true"></i>{{ 'goals.commission.title' | translate }}
+      </span>
+      <span class="gcs-badge" role="status">
+        <i [class]="tierIcon()" aria-hidden="true"></i>{{ ('goals.commission.tier.' + i.tier) | translate }}
+      </span>
+    </header>
+
+    <!-- What's earned, and how it's calculated -->
+    <div class="gcs-earned">
+      <span class="gcs-earned__label">{{ headlineKey() | translate }}</span>
+      <strong class="gcs-earned__val">{{ i.amount | money }}</strong>
+      <span class="gcs-earned__formula">
+        @if (i.rate !== null) {
+          <b>{{ i.rate | pct:2 }}</b>
+          {{ ('goals.commission.base.' + i.scope) | translate }}
+          <span class="gcs-earned__base">({{ i.base | money }})</span>
+        } @else {
+          {{ 'goals.commission.noRate' | translate }}
+        }
+      </span>
+    </div>
+
+    <!-- What's next -->
+    @if (i.next; as next) {
+      <app-goal-commission-next [milestone]="next" [scope]="i.scope" />
+    } @else if (i.tier === 'AboveTarget') {
+      <p class="gcs-top">
+        <i class="fa-solid fa-crown" aria-hidden="true"></i>
+        {{ ('goals.commission.topTier.' + viewer()) | translate }}
+      </p>
+    }
+
+    <ol class="gcs-tiers" [attr.aria-label]="'goals.commission.tiersTitle' | translate">
+      @for (row of rows(); track row.tier) {
+        <li class="gcs-tier" [attr.data-tier]="row.tier" [class.is-current]="row.current"
+            [attr.aria-current]="row.current ? 'step' : null">
+          <span class="gcs-tier__dot" aria-hidden="true"></span>
+          <span class="gcs-tier__range">{{ row.tier | commissionRange: threshold() }}</span>
+          <span class="gcs-tier__rate">
+            @if (row.rate !== null) { {{ row.rate | pct:2 }} } @else { — }
+          </span>
+        </li>
+      }
+    </ol>
+  </section>
+}

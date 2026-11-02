@@ -17,6 +17,7 @@ const settings: TranslationFile<'settings'> = {
       audit: 'Audit log',
       notifications: 'Notifications & alerts',
       backup: 'Backup & data',
+      whatsapp: 'WhatsApp numbers',
     },
     users: {
       title: 'User management',

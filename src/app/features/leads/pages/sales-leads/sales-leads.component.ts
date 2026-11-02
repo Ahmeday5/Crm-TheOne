@@ -44,7 +44,10 @@ import {
   CustomerActionsConfig,
   CustomerActionsMenuComponent,
 } from '../../components/customer-actions-menu/customer-actions-menu.component';
-import { CustomerDetailsDialogComponent } from '../../components/customer-details-dialog/customer-details-dialog.component';
+import {
+  CustomerDetailsDialogComponent,
+  CustomerDetailsTab,
+} from '../../components/customer-details-dialog/customer-details-dialog.component';
 import { CustomerNoteDialogComponent } from '../../components/customer-note-dialog/customer-note-dialog.component';
 import { CustomerNotesCellComponent } from '../../components/customer-notes-cell/customer-notes-cell.component';
 import { FollowUpDialogComponent } from '../../components/follow-up-dialog/follow-up-dialog.component';
@@ -130,6 +133,8 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
   // ─────────── dialogs ───────────
   readonly detailsDialog = signal<number | null>(null);
+  /** Which tab the details dialog opens on (the WhatsApp button opens the chat). */
+  readonly detailsTab = signal<CustomerDetailsTab>('details');
   readonly assignSupportDialog = signal<CustomerListItem | null>(null);
   readonly changeStatusDialog = signal<CustomerListItem | null>(null);
   readonly followUpDialog = signal<CustomerListItem | null>(null);
@@ -163,6 +168,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   readonly actionsConfig: CustomerActionsConfig = {
     view: true,
     note: true,
+    whatsapp: true,
     assignSupport: true,
     changeStatus: true,
     followUp: true,
@@ -278,6 +284,12 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   // ─────────── dialogs ───────────
 
   openDetails(row: CustomerListItem): void {
+    this.detailsTab.set('details');
+    this.detailsDialog.set(row.id);
+  }
+
+  openWhatsApp(row: CustomerListItem): void {
+    this.detailsTab.set('whatsapp');
     this.detailsDialog.set(row.id);
   }
 

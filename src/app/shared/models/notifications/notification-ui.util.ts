@@ -1,10 +1,25 @@
 import { TRANSLATIONS, resolveKey } from '../../../core/i18n';
 import { UserRole } from '../../../core/models/auth.model';
 import { Lang } from '../../../core/services/language.service';
-import { NotificationType } from './notification.model';
+import {
+  NotificationType,
+  WHATSAPP_CHAT_ENTITY,
+  isWhatsAppNotification,
+} from './notification.model';
+
+/** The fields of a notification (or its live toast) that decide where it leads. */
+export interface NotificationTarget {
+  type: NotificationType;
+  relatedEntityType: string | null;
+  relatedEntityId: number | null;
+}
+
+/** Roles that chat with customers on WhatsApp inside the CRM. */
+const WHATSAPP_ROLES: readonly UserRole[] = ['Admin', 'Sales', 'Support'];
 
 /** Font-Awesome icon for a notification type. */
 export function notificationIcon(type: NotificationType): string {
+  if (isWhatsAppNotification({ type, relatedEntityType: null })) return 'fa-brands fa-whatsapp';
   switch (type) {
     case 'NewSupportTicket': return 'fa-solid fa-headset';
     case 'CustomerReturnedToSales': return 'fa-solid fa-rotate-left';
@@ -22,6 +37,7 @@ export function notificationIcon(type: NotificationType): string {
 
 /** `.icon-tile.tone-*` modifier for the type's avatar. */
 export function notificationTone(type: NotificationType): string {
+  if (isWhatsAppNotification({ type, relatedEntityType: null })) return 'success';
   switch (type) {
     case 'NewSupportTicket': return 'warning';
     case 'CustomerReturnedToSales': return 'info';
@@ -43,15 +59,20 @@ export function notificationTone(type: NotificationType): string {
  * Returns `null` when there's no sensible destination for that role — the click
  * then just marks the notification read.
  *
- * @param entityType  `relatedEntityType` from the backend (preferred signal).
- * @param role        The logged-in user's role.
- * @param notifType   `type` field — used as fallback when `entityType` is null.
+ * `relatedEntityType` is the preferred signal; `type` is the fallback when the
+ * backend didn't set an entity.
  */
-export function notificationRoute(
-  entityType: string | null | undefined,
-  role: UserRole | null,
-  notifType?: string,
-): string[] | null {
+export function notificationRoute(n: NotificationTarget, role: UserRole | null): string[] | null {
+  const entityType = n.relatedEntityType;
+  const notifType = n.type;
+
+  if (isWhatsAppNotification(n)) {
+    if (!role || !WHATSAPP_ROLES.includes(role)) return null;
+    // Older payloads may carry no chat id — the inbox is still the right place.
+    const chatId = n.relatedEntityType === WHATSAPP_CHAT_ENTITY ? n.relatedEntityId : null;
+    return chatId ? ['/whatsapp', String(chatId)] : ['/whatsapp'];
+  }
+
   // ── Primary: entity-type routing (most specific) ──
   switch (entityType) {
     case 'SupportTicket':

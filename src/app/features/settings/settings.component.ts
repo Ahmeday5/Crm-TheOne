@@ -35,6 +35,12 @@ export class SettingsComponent {
       icon: 'fa-solid fa-gear',
       color: 'purple',
     },
+    {
+      routerLink: 'whatsapp',
+      labelKey: 'settings.tabs.whatsapp',
+      icon: 'fa-brands fa-whatsapp',
+      color: 'green',
+    },
     /*{
       routerLink: 'activity',
       labelKey: 'settings.tabs.activity',

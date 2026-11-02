@@ -38,7 +38,7 @@ export const routes: Routes = [
       ...MARKETING_CAMPAIGNS_ROUTES,
       ...SERVICES_ROUTES,
       ...DAILY_REPORTS_ROUTES,
-...WHATSAPP_ROUTES,
+      ...WHATSAPP_ROUTES,
       ...NOTIFICATIONS_ROUTES,
       ...GOALS_ROUTES,
       ...PROJECT_PROGRESS_ROUTES,

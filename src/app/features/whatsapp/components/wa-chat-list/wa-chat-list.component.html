@@ -1,0 +1,132 @@
+<div class="wa-list__head">
+  <div class="wa-list__title-row">
+    <h2 class="wa-list__title">
+      {{ 'whatsapp.chats.title' | translate }}
+      @if (store.totalUnread() > 0) {
+        <span class="wa-badge" [attr.aria-label]="'whatsapp.chats.unread' | translate: { n: store.totalUnread() }">
+          {{ store.totalUnread() }}
+        </span>
+      }
+    </h2>
+    <button type="button" class="wa-list__refresh" (click)="store.refresh()" [disabled]="store.refreshing() || store.loading()"
+            [title]="'whatsapp.refresh' | translate" [attr.aria-label]="'whatsapp.refresh' | translate">
+      <i class="fa-solid fa-rotate" [class.fa-spin]="store.refreshing()"></i>
+    </button>
+  </div>
+
+  <div class="wa-search" role="search">
+    <i class="fa-solid fa-magnifying-glass wa-search__icon" aria-hidden="true"></i>
+    <input type="search" class="wa-search__input" dir="auto"
+           [value]="term()"
+           [placeholder]="'whatsapp.chats.searchPlaceholder' | translate"
+           [attr.aria-label]="'whatsapp.chats.searchPlaceholder' | translate"
+           (input)="onSearch($any($event.target).value)" />
+    @if (term()) {
+      <button type="button" class="wa-search__clear" (click)="clearSearch()"
+              [attr.aria-label]="'whatsapp.chats.clearSearch' | translate">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    }
+  </div>
+</div>
+
+<div class="wa-list__scroll" (scroll)="onScroll($event)">
+  @if (store.loading()) {
+    <ul class="wa-list__items" aria-hidden="true">
+      @for (_ of [1, 2, 3, 4, 5, 6]; track $index) {
+        <li class="wa-chat wa-chat--skeleton">
+          <span class="wa-sk wa-sk--avatar"></span>
+          <span class="wa-chat__main">
+            <span class="wa-sk wa-sk--line"></span>
+            <span class="wa-sk wa-sk--line is-short"></span>
+          </span>
+        </li>
+      }
+    </ul>
+  } @else if (store.error()) {
+    <div class="wa-list__state">
+      <span class="icon-tile lg tone-warning"><i class="fa-solid fa-triangle-exclamation"></i></span>
+      <p class="text-muted mb-2">{{ store.error() }}</p>
+      <button type="button" class="btn btn-sm btn-light" (click)="store.reload()">
+        <i class="fa-solid fa-rotate me-1"></i>{{ 'whatsapp.retry' | translate }}
+      </button>
+    </div>
+  } @else if (store.chats().length === 0) {
+    <div class="wa-list__state">
+      @if (term()) {
+        <span class="icon-tile lg tone-primary"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <p class="text-muted mb-0">{{ 'whatsapp.chats.emptySearch' | translate }}</p>
+      } @else {
+        <span class="icon-tile lg tone-success"><i class="fa-brands fa-whatsapp"></i></span>
+        <h6 class="fw-700 mb-1">{{ 'whatsapp.chats.empty' | translate }}</h6>
+        <p class="text-muted mb-0 small">{{ 'whatsapp.chats.emptyHint' | translate }}</p>
+      }
+    </div>
+  } @else {
+    <ul class="wa-list__items" role="list">
+      @for (chat of store.chats(); track chat.id) {
+        @let active = chat.id === store.activeChatId();
+        @let unread = chat.unreadCount > 0;
+        <li>
+          <button type="button" class="wa-chat" [class.is-active]="active" [class.is-unread]="unread"
+                  [attr.aria-current]="active ? 'true' : null"
+                  (click)="selected.emit(chat)">
+            @if (hasName(chat)) {
+              <app-user-avatar class="wa-chat__avatar" [name]="name(chat)" size="lg" />
+            } @else {
+              <span class="wa-chat__avatar wa-chat__anon" aria-hidden="true"><i class="fa-solid fa-user"></i></span>
+            }
+
+            <span class="wa-chat__main">
+              <span class="wa-chat__row">
+                <span class="wa-chat__name" dir="auto">{{ name(chat) }}</span>
+                @switch (when(chat.lastMessageAt)) {
+                  @case ('today') { <time class="wa-chat__time">{{ chat.lastMessageAt | cairoDate: 'time' }}</time> }
+                  @case ('yesterday') { <time class="wa-chat__time">{{ 'whatsapp.thread.yesterday' | translate }}</time> }
+                  @case ('date') { <time class="wa-chat__time">{{ chat.lastMessageAt | cairoDate: 'date' }}</time> }
+                }
+              </span>
+
+              @if (chat.companyName) {
+                <span class="wa-chat__company" dir="auto">
+                  <i class="fa-regular fa-building" aria-hidden="true"></i>{{ chat.companyName }}
+                </span>
+              } @else if (!chat.customerId && hasName(chat)) {
+                <span class="wa-chat__company" dir="ltr">{{ phone(chat) }}</span>
+              }
+
+              <span class="wa-chat__row">
+                <span class="wa-chat__preview" dir="auto">
+                  {{ chat.lastMessagePreview || ('whatsapp.chats.noMessages' | translate) }}
+                </span>
+                @if (unread) {
+                  <span class="wa-badge" [attr.aria-label]="'whatsapp.chats.unread' | translate: { n: chat.unreadCount }">
+                    {{ chat.unreadCount }}
+                  </span>
+                }
+              </span>
+
+              @if (showOwner() && chat.ownerName) {
+                <span class="wa-chat__owner">
+                  <i class="fa-solid fa-user-tie" aria-hidden="true"></i>
+                  {{ 'whatsapp.chats.onNumberOf' | translate: { name: chat.ownerName } }}
+                </span>
+              }
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (store.hasMore()) {
+      <div class="wa-list__more">
+        <button type="button" class="btn btn-sm btn-light w-100" (click)="store.loadMore()" [disabled]="store.loadingMore()">
+          @if (store.loadingMore()) {
+            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+          }
+          {{ 'whatsapp.chats.loadMore' | translate }}
+        </button>
+      </div>
+    }
+  }
+</div>

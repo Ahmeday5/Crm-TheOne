@@ -4,7 +4,7 @@
       <span class="agb-pill__pulse"></span>
       <i class="fa-solid fa-bullseye agb-pill__icon"></i>
       <span class="agb-pill__text">{{ 'goals.banner.pillLabel' | translate }}</span>
-      <span class="agb-pill__pct">{{ achievementPercent(goal) }}%</span>
+      <span class="agb-pill__pct">{{ achievementPercent(goal) | pct:0 }}</span>
     </button>
   }
 } @else {
@@ -40,10 +40,19 @@
           <div class="agb__stat agb__stat--progress">
             <dt>{{ 'goals.card.currentProgress' | translate }}</dt>
             <dd>
-              <strong>{{ achievementPercent(goal) }}%</strong>
+              <strong>{{ achievementPercent(goal) | pct }}</strong>
               <small>{{ goal.currentProgress | money }} / {{ goal.targetValue | money }}</small>
             </dd>
           </div>
+          @if (primaryCommission(); as c) {
+            <div class="agb__stat agb__stat--commission">
+              <dt><i class="fa-solid fa-hand-holding-dollar agb__icon-green"></i>{{ 'goals.banner.commission' | translate }}</dt>
+              <dd>
+                <strong>{{ c.amount | money }}</strong>
+                @if (c.rate !== null) { <small>{{ c.rate | pct:2 }}</small> }
+              </dd>
+            </div>
+          }
           <div class="agb__stat">
             <dt><i class="fa-regular fa-clock"></i>{{ 'goals.banner.daysLeft' | translate }}</dt>
             <dd><strong>{{ daysLeft(goal) }}</strong></dd>
@@ -70,7 +79,7 @@
       </header>
 
       <!-- Row 2: progress + the three commission rules -->
-      <app-goal-commission-guide class="agb__guide" tone="inverse" [goal]="goal" />
+      <app-goal-commission-guide class="agb__guide" tone="inverse" [goal]="goal" [viewerUserId]="viewerUserId()" />
     </section>
   }
 }

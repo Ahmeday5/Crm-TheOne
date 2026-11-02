@@ -18,7 +18,26 @@ export type NotificationType =
   | 'ProjectAssigned'
   | 'GoalAssigned'
   | 'GoalAchieved'
+  | 'WhatsAppMessageReceived'
   | (string & {});
+
+/** `relatedEntityType` of a WhatsApp notification — `relatedEntityId` is the chat id. */
+export const WHATSAPP_CHAT_ENTITY = 'WhatsAppChat';
+
+/**
+ * True for an incoming-WhatsApp-message notification. The backend enum value
+ * is 12; it may serialize by name or by number, so both are accepted.
+ */
+export function isWhatsAppNotification(n: {
+  type: NotificationType | number;
+  relatedEntityType: string | null;
+}): boolean {
+  return (
+    n.relatedEntityType === WHATSAPP_CHAT_ENTITY ||
+    n.type === 'WhatsAppMessageReceived' ||
+    String(n.type) === '12'
+  );
+}
 
 export interface AppNotification {
   id: number;

@@ -1,0 +1,65 @@
+@use 'breakpoints' as bp;
+
+:host { display: block; }
+
+.wa-numbers__hint {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+  border-radius: var(--radius-lg);
+  background: var(--success-soft);
+  color: var(--text-1);
+  line-height: 1.6;
+
+  p { flex: 1; min-width: 0; }
+}
+.wa-numbers__hint-icon {
+  flex-shrink: 0;
+  color: var(--success);
+  font-size: 1.15rem;
+}
+.wa-numbers__hint-btn { flex-shrink: 0; }
+
+.wa-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.wa-status__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+@include bp.down(md) {
+  .section-header {
+    gap: 0.75rem !important;
+
+    .icon-tile.xl { width: 48px; height: 48px; font-size: 1.15rem; }
+  }
+
+  .wa-numbers__hint {
+    flex-wrap: wrap;
+
+    .wa-numbers__hint-btn { width: 100%; }
+  }
+
+  .kpi-card .card-body {
+    flex-direction: column-reverse;
+    align-items: flex-start !important;
+    gap: 0.6rem !important;
+    padding: 0.85rem;
+
+    > .min-w-0 { width: 100%; }
+  }
+  .kpi-card .icon-tile.xl {
+    width: 36px;
+    height: 36px;
+    font-size: 0.95rem;
+    border-radius: var(--radius-md);
+  }
+  .kpi-card .kpi-value { font-size: 1.3rem; }
+}

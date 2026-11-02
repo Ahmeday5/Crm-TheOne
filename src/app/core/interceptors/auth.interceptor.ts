@@ -7,8 +7,9 @@ import {
 import { inject } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
-import { SKIP_AUTH } from '../http/http-context.tokens';
+import { SKIP_AUTH, UNAUTHORIZED_AS_FORBIDDEN } from '../http/http-context.tokens';
 import { API_ENDPOINTS } from '../constants/api-endpoints.const';
+import { isJwtExpired } from '../utils/jwt.util';
 
 /**
  * Attaches `Authorization: Bearer <token>` to every request unless the caller
@@ -29,6 +30,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(authReq).pipe(
     catchError((err: HttpErrorResponse) => {
       if (err.status !== 401 || isAuthEndpoint(req.url)) {
+        return throwError(() => err);
+      }
+      // A business-level 401 on a live session: nothing a refresh could fix.
+      if (req.context.get(UNAUTHORIZED_AS_FORBIDDEN) && token && !isJwtExpired(token)) {
         return throwError(() => err);
       }
       return retryAfterRefresh(req, next, auth);

@@ -40,6 +40,16 @@ export const SETTINGS_ROUTES: Routes = [
         data: { titleKey: 'settings.tabs.system', icon: 'fa-solid fa-gear' },
       },
       {
+        // Number ↔ employee assignment; pairing itself happens on Wavex.
+        path: 'whatsapp',
+        title: 'أرقام واتساب',
+        loadComponent: () =>
+          import('../whatsapp/pages/whatsapp-numbers/whatsapp-numbers.component').then(
+            (m) => m.WhatsAppNumbersComponent,
+          ),
+        data: { titleKey: 'settings.tabs.whatsapp', icon: 'fa-brands fa-whatsapp' },
+      },
+      {
         path: 'activity',
         title: 'سجل الأنشطة',
         loadComponent: () =>

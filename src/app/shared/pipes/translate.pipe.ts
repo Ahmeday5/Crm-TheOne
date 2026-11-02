@@ -1,7 +1,11 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
 import { LanguageService } from '../../core/services/language.service';
-import { TRANSLATIONS, resolveKey } from '../../core/i18n';
+import { TRANSLATIONS, TranslationParams, interpolate, resolveKey } from '../../core/i18n';
 
+/**
+ *   {{ 'common.save' | translate }}
+ *   {{ 'whatsapp.chats.unread' | translate: { n: chat.unreadCount } }}   → fills `{n}`
+ */
 @Pipe({
   name: 'translate',
   standalone: true,
@@ -10,8 +14,8 @@ import { TRANSLATIONS, resolveKey } from '../../core/i18n';
 export class TranslatePipe implements PipeTransform {
   private lang = inject(LanguageService);
 
-  transform(key: string | null | undefined): string {
+  transform(key: string | null | undefined, params?: TranslationParams | null): string {
     if (!key) return '';
-    return resolveKey(TRANSLATIONS[this.lang.lang()], key);
+    return interpolate(resolveKey(TRANSLATIONS[this.lang.lang()], key), params);
   }
 }

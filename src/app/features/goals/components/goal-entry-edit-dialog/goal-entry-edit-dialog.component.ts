@@ -28,6 +28,7 @@ import {
   UpdateGoalProgressEntryRequest,
 } from '../../../../shared/models';
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { GoalsService } from '../../services/goals.service';
 import {
@@ -40,9 +41,10 @@ import {
  * Admin: edit one logged amount (`PUT /Goals/progress-entries/{entryId}`).
  *
  * Pre-filled with the entry's amount, details and image. Only changed
- * fields are sent. Once the goal is achieved the server rejects a new
- * `Value`, so the amount is locked with the reason shown next to it.
- * Emits the updated goal returned by the server.
+ * fields are sent. On an achieved goal the amount stays editable as long
+ * as total progress doesn't drop below the target: the lowest allowed
+ * amount is shown as guidance, and the server's 400 message is surfaced
+ * if the change is still rejected. Emits the updated goal from the server.
  */
 @Component({
   selector: 'app-goal-entry-edit-dialog',
@@ -51,6 +53,7 @@ import {
     ReactiveFormsModule,
     TranslatePipe,
     CairoDatePipe,
+    MoneyPipe,
     ModalComponent,
     FormErrorComponent,
     ImagePickerComponent,
@@ -62,8 +65,8 @@ import {
 })
 export class GoalEntryEditDialogComponent implements OnInit {
   readonly entry = input.required<GoalProgressEntry>();
-  /** The parent goal is achieved → the amount can no longer change. */
-  readonly goalAchieved = input<boolean>(false);
+  /** The entry's goal — used to explain the "not below target" rule once achieved. */
+  readonly goal = input<Goal | null>(null);
 
   readonly saved = output<Goal>();
   readonly closed = output<void>();
@@ -91,6 +94,21 @@ export class GoalEntryEditDialogComponent implements OnInit {
 
   protected readonly detailsLength = computed(() => (this.formValue().details ?? '').length);
 
+  protected readonly goalAchieved = computed(() => !!this.goal()?.isAchieved);
+
+  /**
+   * Smallest amount this entry can take without pulling an achieved goal
+   * back under its target — `null` when no floor applies. Guidance only:
+   * the server is authoritative.
+   */
+  protected readonly minAllowedValue = computed<number | null>(() => {
+    const goal = this.goal();
+    if (!goal?.isAchieved) return null;
+    const surplus = goal.currentProgress - goal.targetValue;
+    const floor = this.entry().value - surplus;
+    return floor > 1 ? floor : null;
+  });
+
   /** The request that would be sent — only what differs from the entry. */
   private readonly changes = computed<UpdateGoalProgressEntryRequest>(() => {
     const entry = this.entry();
@@ -98,7 +116,7 @@ export class GoalEntryEditDialogComponent implements OnInit {
     const { file, removed } = this.image();
     const req: UpdateGoalProgressEntryRequest = {};
 
-    if (!this.goalAchieved() && value !== null && value !== undefined && Number(value) !== entry.value) {
+    if (value !== null && value !== undefined && Number(value) !== entry.value) {
       req.value = Number(value);
     }
     const trimmed = (details ?? '').trim();
@@ -118,7 +136,6 @@ export class GoalEntryEditDialogComponent implements OnInit {
   ngOnInit(): void {
     const entry = this.entry();
     this.form.setValue({ value: entry.value, details: entry.details ?? '' });
-    if (this.goalAchieved()) this.form.controls.value.disable();
   }
 
   protected onImage(change: ImagePickerChange): void {

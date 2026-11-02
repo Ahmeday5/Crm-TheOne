@@ -1,0 +1,176 @@
+/* Fills whatever height the host gives it: header · scrolling log · composer. */
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  background: var(--surface-1);
+}
+
+.wa-thread__viewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.wa-thread__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem clamp(0.75rem, 3vw, 2rem);
+  /* Subtle chat wallpaper, tinted from the theme. */
+  background-color: var(--surface-1);
+  background-image: radial-gradient(color-mix(in srgb, var(--text-1) 6%, transparent) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* ── day separator ── */
+.wa-day {
+  display: flex;
+  justify-content: center;
+  margin: 0.6rem 0 0.35rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+
+  span {
+    padding: 0.2rem 0.75rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-0);
+    color: var(--text-2);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-600);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+/* ── show older ── */
+.wa-older {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 0.25rem;
+}
+.wa-older__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-0);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+  cursor: pointer;
+
+  &:hover:not(:disabled) { color: var(--brand); border-color: var(--brand); }
+  &:disabled { opacity: 0.7; cursor: progress; }
+}
+.wa-older__note {
+  margin: 0 0 0.25rem;
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+/* ── empty / error / forbidden ── */
+.wa-state {
+  margin: auto;
+  max-width: 26rem;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+
+  .icon-tile { margin-bottom: 0.65rem; }
+}
+
+/* ── loading skeleton ── */
+.wa-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding-top: 0.5rem;
+}
+.wa-skeleton__bubble {
+  display: block;
+  width: 38%;
+  height: 2.6rem;
+  border-radius: 0.9rem;
+  margin-right: auto;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-0) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: wa-shimmer 1.3s ease-in-out infinite;
+
+  &.is-out { margin-right: 0; margin-left: auto; }
+  &.is-wide { width: 58%; height: 3.6rem; }
+}
+@keyframes wa-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* ── jump to latest ── */
+.wa-jump {
+  position: absolute;
+  bottom: 0.85rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.9rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-0);
+  color: var(--success);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-700);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  animation: wa-pop 0.18s ease-out;
+}
+.wa-jump__count {
+  min-width: 1.35rem;
+  padding: 0 0.35rem;
+  border-radius: var(--radius-pill);
+  background: var(--success);
+  color: #fff;
+  font-size: var(--fs-xs);
+  line-height: 1.35rem;
+  text-align: center;
+}
+@keyframes wa-pop {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ── image viewer ── */
+.wa-viewer {
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+
+  img {
+    display: block;
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-skeleton__bubble,
+  .wa-jump { animation: none; }
+}

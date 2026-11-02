@@ -196,26 +196,95 @@
         <span class="gform-section__title">{{ 'goals.form.sectionCommission' | translate }}</span>
       </div>
       <div class="gform-section__body">
+        <!-- Threshold: splits "below" from "up to target" -->
         <div class="gform-field">
           <label class="gform-label" for="gform-commission">{{ 'goals.commission.label' | translate }}</label>
           <div class="gform-input-wrap">
-            <span class="gform-input-icon gform-input-icon--reward"><i class="fa-solid fa-percent"></i></span>
+            <span class="gform-input-icon gform-input-icon--reward"><i class="fa-solid fa-flag-checkered"></i></span>
             <input id="gform-commission" type="number" inputmode="numeric"
                    class="form-control gform-input gform-input--icon"
                    min="1" max="100" step="1"
-                   [class.is-invalid]="!commissionValid()"
+                   [class.is-invalid]="!thresholdValid()"
                    [placeholder]="'goals.commission.ph' | translate"
                    [ngModel]="commissionThreshold()"
-                   (ngModelChange)="onCommissionChange($event)"
+                   (ngModelChange)="setOptionalNumber(commissionThreshold, $event)"
                    name="commissionThresholdPercent" />
           </div>
-          @if (!commissionValid()) {
+          @if (!thresholdValid()) {
             <p class="gform-hint gform-hint--error">
               <i class="fa-solid fa-triangle-exclamation"></i>
               {{ 'goals.commission.rangeError' | translate }}
             </p>
           } @else {
             <p class="gform-hint">{{ 'goals.commission.hint' | translate }}</p>
+          }
+        </div>
+
+        <!-- One rate per bracket; the caption follows the threshold live -->
+        <div class="gform-row-3">
+          @for (tier of COMMISSION_TIERS; track tier) {
+            <div class="gform-field">
+              <label class="gform-label" [for]="'gform-rate-' + tier">
+                {{ ('goals.commission.rateLabel.' + tier) | translate }}
+              </label>
+              <div class="gform-input-wrap">
+                <span class="gform-input-icon gform-input-icon--reward"><i class="fa-solid fa-percent"></i></span>
+                <input [id]="'gform-rate-' + tier" type="number" inputmode="decimal"
+                       class="form-control gform-input gform-input--icon"
+                       min="0" max="100" step="0.01"
+                       [class.is-invalid]="!rateValid(tier)"
+                       [placeholder]="'goals.commission.ratePh' | translate"
+                       [ngModel]="commissionRates[tier]()"
+                       (ngModelChange)="setOptionalNumber(commissionRates[tier], $event)"
+                       [name]="'commissionRate' + tier"
+                       [attr.aria-describedby]="'gform-rate-' + tier + '-hint'" />
+              </div>
+              @if (!rateValid(tier)) {
+                <p class="gform-hint gform-hint--error" [id]="'gform-rate-' + tier + '-hint'">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  {{ 'goals.commission.rateRangeError' | translate }}
+                </p>
+              } @else {
+                <p class="gform-hint gform-hint--range" [attr.data-tier]="tier" [id]="'gform-rate-' + tier + '-hint'">
+                  {{ tier | commissionRange: displayThreshold() }}
+                </p>
+              }
+            </div>
+          }
+        </div>
+
+        <p class="gform-hint gform-hint--muted">
+          <i class="fa-solid fa-circle-info"></i>
+          {{ 'goals.commission.ratesHint' | translate }}
+        </p>
+
+        <!-- Worked example on this goal's own target -->
+        <div class="gform-cpreview" aria-live="polite">
+          @if (commissionPreview().length) {
+            <p class="gform-cpreview__title">
+              <i class="fa-solid fa-calculator"></i>
+              {{ 'goals.commission.preview.title' | translate }} <strong>{{ targetValue() | money }}</strong>
+            </p>
+            <div class="gform-cpreview__head" aria-hidden="true">
+              <span>{{ 'goals.commission.preview.achievement' | translate }}</span>
+              <span>{{ 'goals.commission.preview.collected' | translate }}</span>
+              <span>{{ 'goals.commission.preview.rate' | translate }}</span>
+              <span>{{ 'goals.commission.preview.commission' | translate }}</span>
+            </div>
+            <ol class="gform-cpreview__list">
+              @for (row of commissionPreview(); track row.achievementPercent) {
+                <li class="gform-cpreview__row" [attr.data-tier]="row.tier">
+                  <span class="gform-cpreview__pct">{{ row.achievementPercent | pct }}</span>
+                  <span class="gform-cpreview__collected">{{ row.collected | money }}</span>
+                  <span class="gform-cpreview__rate">
+                    @if (row.rate !== null) { × {{ row.rate | pct:2 }} } @else { — }
+                  </span>
+                  <strong class="gform-cpreview__amount">{{ row.amount | money }}</strong>
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="gform-cpreview__empty">{{ 'goals.commission.preview.empty' | translate }}</p>
           }
         </div>
       </div>

@@ -47,7 +47,7 @@ export class NotificationToastsComponent {
   open(t: NotificationToast): void {
     this.store.markRead(t.id);
     this.toastService.dismiss(t.id);
-    const route = notificationRoute(t.relatedEntityType, this.auth.currentRole(), t.type);
+    const route = notificationRoute(t, this.auth.currentRole());
     if (route) this.router.navigate(route);
   }
 

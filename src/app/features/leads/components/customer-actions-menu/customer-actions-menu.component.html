@@ -32,9 +32,18 @@
       <i class="fa-solid fa-phone"></i>
     </a>
   }
-  @if (waHref(); as href) {
+  @if (actions().whatsapp) {
+    <button type="button"
+            class="crm-action-btn tone-success"
+            [disabled]="busy()"
+            [title]="'whatsapp.customer.openChat' | translate"
+            [attr.aria-label]="'whatsapp.customer.openChat' | translate"
+            (click)="whatsapp.emit()">
+      <i class="fa-brands fa-whatsapp"></i>
+    </button>
+  } @else if (waHref()) {
     <a class="crm-action-btn tone-success"
-       [href]="href"
+       [href]="waHref()"
        target="_blank"
        rel="noopener"
        [title]="'customers.table.whatsapp' | translate"

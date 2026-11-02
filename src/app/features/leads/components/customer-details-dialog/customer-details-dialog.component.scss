@@ -1,3 +1,51 @@
+@use 'breakpoints' as bp;
+
+/* ── Details | WhatsApp tabs ── */
+.cd-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+}
+.cd-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.4rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-2);
+  font-weight: var(--fw-600);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+
+  &:hover:not(.is-active) { color: var(--text-1); }
+  &:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  &.is-active {
+    background: var(--surface-0);
+    color: var(--brand);
+    box-shadow: var(--shadow-sm);
+  }
+  &--wa.is-active { color: var(--success); }
+}
+
+/* The conversation gets a fixed, scroll-contained frame inside the modal. */
+.cd-whatsapp {
+  display: flex;
+  height: min(62vh, 36rem);
+  min-height: 22rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+
+  @include bp.down(md) { height: 65dvh; }
+}
+
 .details-grid {
   display: flex;
   flex-direction: column;

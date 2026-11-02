@@ -22,3 +22,14 @@ export function resolveKey(dict: Translations, key: string): string {
 }
 
 export const TRANSLATIONS: Record<Lang, Translations> = { ar, en };
+
+/** Values for `{placeholder}` tokens in a translated string. */
+export type TranslationParams = Readonly<Record<string, string | number | null | undefined>>;
+
+/** Replaces each `{name}` token with `params.name`; unknown tokens are left as-is. */
+export function interpolate(text: string, params?: TranslationParams | null): string {
+  if (!params) return text;
+  return text.replace(/\{(\w+)\}/g, (token, name: string) =>
+    name in params ? String(params[name] ?? '') : token,
+  );
+}

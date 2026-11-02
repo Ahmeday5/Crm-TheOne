@@ -1,0 +1,60 @@
+<app-page-header
+  [title]="'whatsapp.title' | translate"
+  [subtitle]="'whatsapp.subtitle' | translate"
+  icon="fa-brands fa-whatsapp">
+  <app-wa-number-status />
+</app-page-header>
+
+<section class="wa-inbox card" [attr.data-view]="activeChatId() ? 'thread' : 'list'">
+  <aside class="wa-inbox__list">
+    <app-wa-chat-list [showOwner]="isAdmin()" (selected)="open($event)" />
+  </aside>
+
+  <div class="wa-inbox__thread">
+    @if (source(); as src) {
+      <app-wa-thread [source]="src" [showSender]="true" (sent)="onSent()">
+        <header class="wa-head" waThreadHeader>
+          <button type="button" class="wa-head__back" (click)="backToList()"
+                  [title]="'whatsapp.thread.back' | translate"
+                  [attr.aria-label]="'whatsapp.thread.back' | translate">
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+
+          @if (activeChat(); as chat) {
+            <app-user-avatar [name]="name(chat)" size="md" />
+            <div class="wa-head__info">
+              <span class="wa-head__name" dir="auto">{{ name(chat) }}</span>
+              <span class="wa-head__meta">
+                @if (chat.companyName) {
+                  <span dir="auto">{{ chat.companyName }}</span>
+                  <span class="wa-head__dot" aria-hidden="true">·</span>
+                }
+                <span dir="ltr">{{ phone(chat) }}</span>
+                @if (!chat.customerId) {
+                  <span class="badge warning">{{ 'whatsapp.chats.notCustomer' | translate }}</span>
+                }
+              </span>
+            </div>
+            @if (isAdmin() && chat.ownerName) {
+              <span class="wa-head__owner" [title]="'whatsapp.chats.onNumberOf' | translate: { name: chat.ownerName }">
+                <i class="fa-solid fa-user-tie" aria-hidden="true"></i>
+                <span>{{ chat.ownerName }}</span>
+              </span>
+            }
+          } @else {
+            <span class="wa-head__anon" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
+            <div class="wa-head__info">
+              <span class="wa-head__name">{{ 'whatsapp.thread.unknownChat' | translate }} #{{ activeChatId() }}</span>
+            </div>
+          }
+        </header>
+      </app-wa-thread>
+    } @else {
+      <div class="wa-inbox__placeholder">
+        <span class="wa-inbox__placeholder-icon" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
+        <h3 class="fw-700 mb-1">{{ 'whatsapp.thread.selectTitle' | translate }}</h3>
+        <p class="text-muted mb-0">{{ 'whatsapp.thread.selectHint' | translate }}</p>
+      </div>
+    }
+  </div>
+</section>

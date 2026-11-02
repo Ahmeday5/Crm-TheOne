@@ -37,6 +37,14 @@ export const CACHE_INVALIDATE = new HttpContextToken<readonly string[]>(() => []
 /** Force-bypass the cache for this GET (useful for explicit refresh buttons). */
 export const CACHE_BYPASS = new HttpContextToken<boolean>(() => false);
 
+/**
+ * The endpoint answers 401 for a *business* authorization failure (e.g.
+ * "this customer isn't yours"), not only for an expired session. While the
+ * access token is still valid, the auth interceptor then passes the 401
+ * through instead of refreshing the token and replaying the request.
+ */
+export const UNAUTHORIZED_AS_FORBIDDEN = new HttpContextToken<boolean>(() => false);
+
 export function withSkipLoader(ctx: HttpContext = new HttpContext()): HttpContext {
   return ctx.set(SKIP_LOADER, true);
 }
@@ -85,4 +93,9 @@ export function withCacheInvalidate(
 /** Skip the cache lookup for this GET (e.g. user-driven refresh). */
 export function withCacheBypass(ctx: HttpContext = new HttpContext()): HttpContext {
   return ctx.set(CACHE_BYPASS, true);
+}
+
+/** See `UNAUTHORIZED_AS_FORBIDDEN` — a 401 here means "not allowed", not "logged out". */
+export function withUnauthorizedAsForbidden(ctx: HttpContext = new HttpContext()): HttpContext {
+  return ctx.set(UNAUTHORIZED_AS_FORBIDDEN, true);
 }

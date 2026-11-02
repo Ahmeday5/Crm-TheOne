@@ -12,12 +12,20 @@ import {
 import { Router } from '@angular/router';
 import { Subject, takeUntil, timer } from 'rxjs';
 import { onCacheInvalidated } from '../../../../core/http/cache-invalidation.util';
+import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { PercentLabelPipe } from '../../../../shared/pipes/percent-label.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { Goal } from '../../../../shared/models';
 import { GoalsService } from '../../services/goals.service';
+import {
+  CommissionInsight,
+  buildCommissionInsight,
+  goalAchievementPercent,
+  hasCommissionRates,
+} from '../../utils/goal-commission.util';
 import { GoalCommissionGuideComponent } from '../goal-commission-guide/goal-commission-guide.component';
 
 /**
@@ -29,7 +37,7 @@ import { GoalCommissionGuideComponent } from '../goal-commission-guide/goal-comm
 @Component({
   selector: 'app-active-goal-banner',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, MoneyPipe, ClampTextDirective, GoalCommissionGuideComponent],
+  imports: [CommonModule, TranslatePipe, MoneyPipe, PercentLabelPipe, ClampTextDirective, GoalCommissionGuideComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './active-goal-banner.component.html',
   styleUrl: './active-goal-banner.component.scss',
@@ -41,6 +49,7 @@ export class ActiveGoalBannerComponent implements OnInit, OnDestroy {
   private readonly goalsService = inject(GoalsService);
   private readonly language = inject(LanguageService);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
   private readonly destroy$ = new Subject<void>();
 
   /** Re-poll interval — cheap enough, and catches server-side auto-expiry. */
@@ -53,6 +62,13 @@ export class ActiveGoalBannerComponent implements OnInit, OnDestroy {
   readonly primaryGoal = computed<Goal | null>(() => this.goals()[0] ?? null);
   readonly hasActiveGoal = computed(() => !this.dismissed() && this.goals().length > 0);
   readonly extraCount = computed(() => Math.max(0, this.goals().length - 1));
+
+  readonly viewerUserId = computed(() => this.auth.currentUser()?.userId ?? null);
+  /** Commission on the primary goal — `null` when it has no rates. */
+  readonly primaryCommission = computed<CommissionInsight | null>(() => {
+    const goal = this.primaryGoal();
+    return goal && hasCommissionRates(goal) ? buildCommissionInsight(goal, this.viewerUserId()) : null;
+  });
 
   constructor() {
     // Host page's "refresh data" (or a goal mutation) dropped our cache.
@@ -91,9 +107,9 @@ export class ActiveGoalBannerComponent implements OnInit, OnDestroy {
     this.router.navigate(['/goals']);
   }
 
+  /** Real achievement — may exceed 100 once Sales log past the target. */
   achievementPercent(goal: Goal): number {
-    if (!goal.targetValue) return 0;
-    return Math.min(100, Math.round((goal.currentProgress / goal.targetValue) * 100));
+    return goalAchievementPercent(goal);
   }
 
   daysLeft(goal: Goal): number {

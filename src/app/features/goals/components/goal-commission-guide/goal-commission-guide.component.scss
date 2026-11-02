@@ -10,7 +10,7 @@
   --gcg-text: var(--text-1);
   --gcg-muted: var(--text-3);
   --gcg-soft: var(--text-2);
-  --gcg-zone-below: color-mix(in srgb, var(--danger) 14%, var(--surface-2));
+  --gcg-zone-below: color-mix(in srgb, var(--warning) 16%, var(--surface-2));
   --gcg-zone-eligible: color-mix(in srgb, var(--success) 16%, var(--surface-2));
   --gcg-tick: var(--text-1);
   --gcg-pill-bg: var(--surface-1);
@@ -21,7 +21,7 @@
   --gcg-text: #fff;
   --gcg-muted: rgba(255, 255, 255, 0.72);
   --gcg-soft: rgba(255, 255, 255, 0.86);
-  --gcg-zone-below: rgba(254, 202, 202, 0.28);
+  --gcg-zone-below: rgba(254, 215, 170, 0.28);
   --gcg-zone-eligible: rgba(187, 247, 208, 0.3);
   --gcg-tick: #fff;
   --gcg-pill-bg: rgba(255, 255, 255, 0.14);
@@ -41,6 +41,7 @@
 
   &--eligible { --gcg-accent: #22c55e; --gcg-accent-ink: #15803d; --gcg-accent-soft: #dcfce7; }
   &--achieved { --gcg-accent: #fbbf24; --gcg-accent-ink: #b45309; --gcg-accent-soft: #fef3c7; }
+  &--above    { --gcg-accent: #3b82f6; --gcg-accent-ink: #1d4ed8; --gcg-accent-soft: #dbeafe; }
 }
 
 /* ── Status line ── */
@@ -74,6 +75,37 @@
 
   > i { color: var(--gcg-accent); }
   strong { color: var(--gcg-text); font-weight: var(--fw-700); }
+}
+
+/* Commission earned so far — the figure the employee cares about most. */
+.gcg-earned {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.18rem 0.7rem;
+  border: 1px solid var(--gcg-pill-border);
+  border-radius: var(--radius-pill);
+  background: var(--gcg-pill-bg);
+  color: var(--gcg-soft);
+  font-size: var(--fs-xs);
+
+  > i { color: #86efac; }
+  strong { color: var(--gcg-text); font-size: var(--fs-sm); font-weight: var(--fw-700); }
+  small { color: var(--gcg-muted); }
+
+  :host(:not(.is-inverse)) & > i { color: var(--success); }
+}
+
+.gcg-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: var(--gcg-soft);
+  font-size: var(--fs-xs);
+
+  > i { color: var(--gcg-accent); }
 }
 
 /* ── Segmented meter ── */
@@ -184,9 +216,9 @@
   }
 
   /* `color` feeds the ping ring below (currentColor). */
-  &__item--below &__dot { background: #f87171; color: #f87171; }
-  &__item--eligible &__dot { background: #4ade80; color: #4ade80; }
-  &__item--achieved &__dot { background: #fbbf24; color: #fbbf24; }
+  &__item[data-tier='BelowThreshold'] &__dot { background: #fb923c; color: #fb923c; }
+  &__item[data-tier='UpToTarget'] &__dot { background: #4ade80; color: #4ade80; }
+  &__item[data-tier='AboveTarget'] &__dot { background: #60a5fa; color: #60a5fa; }
 
   /* Soft radar ping on the rule the employee is in now. */
   &__item.is-current &__dot::after {
@@ -201,14 +233,28 @@
 
   &__range { font-weight: var(--fw-700); }
   &__result::before { content: '·'; margin-inline-end: 0.35rem; }
-  &__reward { color: #86efac; font-weight: var(--fw-600); }
-
-  :host(:not(.is-inverse)) &__reward { color: var(--success); }
 
   @include bp.down(sm) {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+/* ── Fixed reward (paid once at 100 %) ── */
+.gcg-reward {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  color: var(--gcg-muted);
+  font-size: var(--fs-xs);
+
+  > i { color: #fbbf24; }
+  strong { color: var(--gcg-text); font-weight: var(--fw-600); }
+
+  &.is-earned strong { color: #86efac; }
+  :host(:not(.is-inverse)) &.is-earned strong { color: var(--success); }
 }
 
 /* ── Motion ── */

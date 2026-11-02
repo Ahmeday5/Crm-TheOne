@@ -22,8 +22,15 @@ import {
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { Goal } from '../../../../shared/models';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { PercentLabelPipe } from '../../../../shared/pipes/percent-label.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { GoalsService } from '../../services/goals.service';
+import {
+  CommissionQuote,
+  goalAchievementPercent,
+  hasCommissionRates,
+  quoteCommission,
+} from '../../utils/goal-commission.util';
 import {
   PROGRESS_DETAILS_MAX,
   achievementPercent,
@@ -35,8 +42,10 @@ import {
  * Sales: log an amount against a goal (`PATCH /Goals/{id}/progress`).
  *
  * Amount (≥ 1, whole), details (required, ≤ 1000) and an optional
- * proof-of-payment image. Shows a live "after adding" preview. Emits the
- * updated goal returned by the server so the caller can patch its views.
+ * proof-of-payment image. Shows a live "after adding" preview, including
+ * the commission it would earn on individual goals. Still open after the
+ * goal is achieved — amounts above target move it into the top commission
+ * bracket. Emits the updated goal returned by the server.
  */
 @Component({
   selector: 'app-goal-progress-dialog',
@@ -45,6 +54,7 @@ import {
     ReactiveFormsModule,
     TranslatePipe,
     MoneyPipe,
+    PercentLabelPipe,
     ModalComponent,
     FormErrorComponent,
     ImagePickerComponent,
@@ -88,6 +98,7 @@ export class GoalProgressDialogComponent {
   });
   protected readonly detailsLength = computed(() => (this.formValue().details ?? '').length);
 
+  /** Bar widths (capped at 100). */
   protected readonly currentPercent = computed(() =>
     achievementPercent(this.goal().currentProgress, this.goal().targetValue),
   );
@@ -95,9 +106,30 @@ export class GoalProgressDialogComponent {
   protected readonly newPercent = computed(() =>
     achievementPercent(this.newTotal(), this.goal().targetValue),
   );
-  protected readonly willAchieve = computed(
-    () => this.amount() > 0 && this.newTotal() >= this.goal().targetValue,
+
+  /** Displayed figures (uncapped, may exceed 100). */
+  protected readonly currentRealPercent = computed(() => goalAchievementPercent(this.goal()));
+  protected readonly newRealPercent = computed(() => {
+    const target = this.goal().targetValue;
+    return target > 0 ? (this.newTotal() / target) * 100 : 0;
+  });
+
+  protected readonly willExceed = computed(
+    () => this.amount() > 0 && this.newTotal() > this.goal().targetValue,
   );
+  protected readonly willAchieve = computed(
+    () => this.amount() > 0 && !this.goal().isAchieved && this.newTotal() >= this.goal().targetValue,
+  );
+
+  /**
+   * Commission after adding — individual goals only: on a team goal each
+   * member is paid on their own share, which this dialog doesn't know.
+   */
+  protected readonly commissionAfter = computed<CommissionQuote | null>(() => {
+    const goal = this.goal();
+    if (this.amount() <= 0 || goal.type !== 'Individual' || !hasCommissionRates(goal)) return null;
+    return quoteCommission(this.newTotal(), goal.targetValue, goal.commissionThresholdPercent, goal);
+  });
 
   protected readonly amountMessages = {
     min: () => this.t('goals.progress.amountInvalid'),

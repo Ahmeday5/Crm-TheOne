@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
     sales: 'Auth/sales',
     support: 'Auth/support',
     developers: 'Auth/developers',
+    admins: 'Auth/admins',
   },
   users: {
     list: 'Auth/GetAllUsers',
@@ -222,6 +223,32 @@ export const API_ENDPOINTS = {
     registerFcmToken: 'Notifications/register-fcm-token',
     /** Remove this device's FCM token (on logout). */
     removeFcmToken: 'Notifications/fcm-token',
+  },
+  /**
+   * In-CRM WhatsApp (Wavex behind the backend — the browser never talks to
+   * Wavex). Reads are scoped server-side: Admin sees every chat, employees
+   * only their own; a 401 means "not your customer".
+   */
+  whatsapp: {
+    /** GET paged `{ pageIndex, pageSize, count, data }` — `PageIndex`, `PageSize`, `Search`. */
+    chats: 'WhatsApp/chats',
+    /** GET oldest → newest; `take` ≤ 200. */
+    chatMessages: (chatId: number | string) => `WhatsApp/chats/${chatId}/messages`,
+    /** POST — zeroes the chat's unread counter. */
+    markChatRead: (chatId: number | string) => `WhatsApp/chats/${chatId}/read`,
+    /** GET every message with this customer, across all of our numbers. */
+    customerMessages: (customerId: number | string) =>
+      `WhatsApp/customers/${customerId}/messages`,
+    /** POST JSON `{ customerId | phone, text }`. */
+    send: 'WhatsApp/send',
+    /** POST multipart `CustomerId | Phone`, `Caption?`, `file` (≤ 5 MB). */
+    sendMedia: 'WhatsApp/send-media',
+    /** GET the caller's sending number + its connection state. */
+    status: 'WhatsApp/status',
+    /** GET (Admin) every linked number with its assignee. */
+    instances: 'WhatsApp/instances',
+    /** PUT (Admin) `{ instanceId }` links / moves, `{ instanceId: null }` unlinks. */
+    userNumber: (userId: string) => `WhatsApp/users/${encodeURIComponent(userId)}/number`,
   },
   /** Knowledge-base articles — CRUD + category option pickers. */
   articles: {

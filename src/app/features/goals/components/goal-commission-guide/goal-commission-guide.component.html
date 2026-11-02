@@ -1,19 +1,40 @@
 <section class="gcg" [class]="'gcg gcg--' + stage()" [attr.aria-label]="'goals.commissionGuide.title' | translate">
-  <!-- Status + what's next, on one line -->
+  <!-- Status + commission earned (or, without rates, what's left) -->
   <div class="gcg-top">
     <span class="gcg-status" role="status">
-      <i [class]="stage() === 'below' ? 'fa-solid fa-circle-exclamation' : stage() === 'eligible' ? 'fa-solid fa-circle-check' : 'fa-solid fa-trophy'"></i>
+      <i [class]="stage() === 'below' ? 'fa-solid fa-circle-exclamation'
+                : stage() === 'eligible' ? 'fa-solid fa-circle-check'
+                : stage() === 'above' ? 'fa-solid fa-rocket'
+                : 'fa-solid fa-trophy'"></i>
       {{ stageKey() | translate }}
     </span>
-    @if (stage() !== 'achieved') {
+
+    @if (hasRates()) {
+      @let c = commission();
+      <span class="gcg-earned">
+        <i class="fa-solid fa-hand-holding-dollar" aria-hidden="true"></i>
+        {{ ('goals.commission.earnedSoFar.' + c.scope + '.self') | translate }}:
+        <strong>{{ c.amount | money }}</strong>
+        @if (c.rate !== null) {
+          <small>({{ c.rate | pct:2 }} {{ ('goals.commission.base.' + c.scope) | translate }})</small>
+        }
+      </span>
+    }
+
+    @if (stage() === 'above') {
+      <span class="gcg-next">
+        <i class="fa-solid fa-arrow-trend-up"></i>
+        <strong>{{ overTarget() | pct:1:true }}</strong>
+      </span>
+    } @else if (!hasRates() && stage() !== 'achieved') {
       <span class="gcg-next">
         <i class="fa-solid fa-flag-checkered"></i>
-        @if (stage() === 'below' && threshold() !== null && toThreshold() > 0) {
+        @if (stage() === 'below' && toThreshold() > 0) {
           {{ 'goals.commissionGuide.remaining' | translate }} <strong>{{ toThreshold() | money }}</strong>
-          {{ 'goals.commissionGuide.toCommission' | translate }}
+          {{ 'goals.commissionGuide.toThreshold' | translate }}
         } @else {
-          {{ 'goals.commissionGuide.remaining' | translate }} <strong>{{ toFull() | money }}</strong>
-          {{ 'goals.commissionGuide.toFull' | translate }}
+          {{ 'goals.commissionGuide.remaining' | translate }} <strong>{{ toTarget() | money }}</strong>
+          {{ 'goals.commissionGuide.toTarget' | translate }}
         }
       </span>
     }
@@ -32,27 +53,46 @@
     @if (threshold(); as t) {
       <span class="gcg-meter__tick" [style.inset-inline-start.%]="t" [title]="('goals.commission.marker' | translate) + ' ' + t + '%'"></span>
     }
-    <span class="gcg-meter__goal" [class.is-reached]="stage() === 'achieved'" aria-hidden="true">
+    <span class="gcg-meter__goal" [class.is-reached]="stage() === 'achieved' || stage() === 'above'" aria-hidden="true">
       <i class="fa-solid fa-trophy"></i>
     </span>
   </div>
 
-  <!-- Legend: the three pay-out rules, current one highlighted -->
+  <!-- Legend: the commission brackets, current one highlighted -->
   <ol class="gcg-legend">
-    @for (tier of tiers(); track tier.stage) {
-      <li class="gcg-legend__item gcg-legend__item--{{ tier.stage }}" [class.is-current]="tier.stage === stage()"
-          [attr.aria-current]="tier.stage === stage() ? 'step' : null">
+    @for (row of legend(); track row.tier) {
+      <li class="gcg-legend__item" [attr.data-tier]="row.tier" [class.is-current]="row.current"
+          [attr.aria-current]="row.current ? 'step' : null">
         <span class="gcg-legend__dot" aria-hidden="true"></span>
-        <span class="gcg-legend__range">
-          {{ tier.rangeKey | translate }}@if (tier.rangePct !== null) { {{ tier.rangePct }}%}
-        </span>
+        <span class="gcg-legend__range">{{ row.tier | commissionRange: threshold() }}</span>
         <span class="gcg-legend__result">
-          {{ tier.resultKey | translate }}
-          @if (tier.stage === 'achieved') {
-            <span class="gcg-legend__reward">({{ goal().financialReward | money }} · {{ goal().points }} {{ 'goals.commissionGuide.pointsUnit' | translate }})</span>
+          @if (hasRates()) {
+            @if (row.rate !== null) {
+              {{ 'goals.commissionGuide.commissionRate' | translate }} {{ row.rate | pct:2 }}
+            } @else {
+              {{ 'goals.commissionGuide.noCommission' | translate }}
+            }
+          } @else {
+            {{ (row.tier === 'BelowThreshold' ? 'goals.commissionGuide.noCommission' : 'goals.commissionGuide.commission') | translate }}
           }
         </span>
       </li>
     }
   </ol>
+
+  <!-- What the next bracket pays — the main motivator -->
+  @if (hasRates()) {
+    @if (commission().next; as next) {
+      <app-goal-commission-next [milestone]="next" [scope]="commission().scope" [tone]="tone()" />
+    } @else if (stage() === 'achieved' && canEarnAbove()) {
+      <p class="gcg-hint"><i class="fa-solid fa-rocket"></i>{{ 'goals.commissionGuide.keepGoing' | translate }}</p>
+    }
+  }
+
+  <!-- Fixed reward: paid once, on hitting 100 % -->
+  <p class="gcg-reward" [class.is-earned]="goal().isAchieved">
+    <i class="fa-solid fa-trophy" aria-hidden="true"></i>
+    {{ (goal().isAchieved ? 'goals.commissionGuide.rewardEarned' : 'goals.commissionGuide.rewardAt') | translate }}:
+    <strong>{{ goal().financialReward | money }} · {{ goal().points }} {{ 'goals.commissionGuide.pointsUnit' | translate }}</strong>
+  </p>
 </section>

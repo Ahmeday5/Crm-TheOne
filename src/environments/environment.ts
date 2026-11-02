@@ -4,12 +4,6 @@ export const environment = {
   /** Backend API base — endpoints in `api-endpoints.const.ts` are relative to this. */
   apiUrl: 'http://15.235.51.177/TheOneCRMAPI/api',
 
-  /** WhatsApp gateway base — the sessions module talks to a separate service. */
-  whatsappApiUrl: 'https://whatsapp.theonesystemco.com/api/v1',
-
-  whatsappApiToken:
-    'wavex_X2GO4pnn_8coxpiWnGecdB1N4eEghO2V7ojkOOWnPPvwX0TBooeyl1nKW',
-
   firebase: {
     apiKey: 'AIzaSyD3jrSMr364-FbMcn1uT1fEcrp6NJZJ_Ik',
     authDomain: 'theonecrm-c6fc5.firebaseapp.com',

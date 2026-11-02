@@ -1,4 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, Subject } from 'rxjs';
 import { NotificationsService } from './notifications.service';
 import { NotificationToastService } from './notification-toast.service';
 import { NotificationSoundService } from './notification-sound.service';
@@ -36,6 +37,14 @@ export class NotificationsStore {
   private readonly totalCount = signal(0);
 
   readonly hasMore = computed(() => this.items().length < this.totalCount());
+
+  private readonly arrivalsSubject = new Subject<AppNotification[]>();
+  /**
+   * Each batch of freshly-arrived notifications (oldest first), after the
+   * initial priming load. Features react to their own types here — e.g. the
+   * WhatsApp inbox refreshes the moment a new-message notification lands.
+   */
+  readonly arrivals$: Observable<AppNotification[]> = this.arrivalsSubject.asObservable();
 
   // ─────────────── reads ───────────────
 
@@ -113,7 +122,10 @@ export class NotificationsStore {
       });
     }
     // One chime per arrival batch — not one per notification.
-    if (fresh.length > 0) this.sound.play();
+    if (fresh.length > 0) {
+      this.sound.play();
+      this.arrivalsSubject.next(fresh);
+    }
     if (maxId > this.lastSeenId) this.lastSeenId = maxId;
   }
 

@@ -60,6 +60,8 @@ const common: TranslationFile<'common'> = {
     first_page: 'الصفحة الأولى',
     last_page: 'الصفحة الأخيرة',
     no_results: 'لا توجد نتائج',
+    /** Used by the `money` pipe when the tenant hasn't set a default currency. */
+    defaultCurrency: 'ج.م',
     refreshData: {
       label: 'تحديث البيانات',
       hint: 'تحميل أحدث البيانات من الخادم بدل النسخة المحفوظة',

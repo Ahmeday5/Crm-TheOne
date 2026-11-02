@@ -1,0 +1,164 @@
+/*
+ * Tier colours are set once per `[data-tier]` and consumed through local
+ * custom properties, so the block, its badge and each tier row agree.
+ */
+[data-tier='BelowThreshold'] {
+  --gcs-accent: var(--warning);
+  --gcs-soft: var(--warning-soft);
+}
+
+[data-tier='UpToTarget'] {
+  --gcs-accent: var(--success);
+  --gcs-soft: var(--success-soft);
+}
+
+[data-tier='AboveTarget'] {
+  --gcs-accent: #2563eb;
+  --gcs-soft: rgba(37, 99, 235, 0.12);
+}
+
+:host { display: block; }
+
+.gcs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--gcs-accent) 28%, transparent);
+  border-radius: 10px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gcs-accent) 7%, transparent), transparent 70%);
+}
+
+/* ── Header: title + current tier ── */
+.gcs-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 0.75rem;
+
+  &__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-2);
+
+    > i { color: var(--gcs-accent); }
+  }
+}
+
+.gcs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-pill);
+  background: var(--gcs-soft);
+  color: var(--gcs-accent);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-700);
+  white-space: nowrap;
+}
+
+/* ── Earned so far + formula ── */
+.gcs-earned {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+
+  &__label {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-600);
+    color: var(--text-2);
+  }
+
+  &__val {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--gcs-accent);
+    overflow-wrap: anywhere;
+  }
+
+  &__formula {
+    font-size: var(--fs-xs);
+    color: var(--text-3);
+
+    b { color: var(--text-1); font-weight: var(--fw-700); }
+  }
+
+  &__base { white-space: nowrap; }
+}
+
+/* ── Top tier reached ── */
+.gcs-top {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  background: var(--gcs-soft);
+  color: var(--gcs-accent);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-700);
+}
+
+/* ── Tier list (stacked) ── */
+.gcs-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gcs-tier {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+
+  &__dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--gcs-accent);
+    opacity: 0.45;
+  }
+
+  &__range { flex: 1; min-width: 0; }
+
+  &__rate {
+    font-weight: var(--fw-700);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  &.is-current {
+    border-color: color-mix(in srgb, var(--gcs-accent) 35%, transparent);
+    background: var(--gcs-soft);
+    color: var(--text-1);
+    font-weight: var(--fw-600);
+
+    .gcs-tier__dot { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--gcs-accent) 25%, transparent); }
+    .gcs-tier__rate { color: var(--gcs-accent); }
+  }
+}
+
+/* ── Compact (goal cards) ── */
+:host(.is-compact) {
+  .gcs { gap: 0.45rem; padding: 0.6rem 0.7rem; }
+  .gcs-earned__val { font-size: 1.25rem; }
+  .gcs-tier { padding: 0.2rem 0.45rem; }
+}
