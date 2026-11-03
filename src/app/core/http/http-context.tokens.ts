@@ -99,3 +99,22 @@ export function withCacheBypass(ctx: HttpContext = new HttpContext()): HttpConte
 export function withUnauthorizedAsForbidden(ctx: HttpContext = new HttpContext()): HttpContext {
   return ctx.set(UNAUTHORIZED_AS_FORBIDDEN, true);
 }
+
+/** Body message the backend puts on a 401 that means "forbidden", not "session expired". */
+const FORBIDDEN_401_MESSAGE = /^unauthorized access\.?$/i;
+
+/**
+ * True for the backend's permission-denied 401: `{ message: "Unauthorized access." }`.
+ * A 401 without that body is a genuine authentication failure.
+ *
+ * Accepts the raw `HttpErrorResponse` (body in `error`) and the normalized
+ * `ApiError` (body in `raw`) — the auth interceptor sees the latter, since
+ * the error interceptor runs inside it.
+ */
+export function isForbidden401(
+  err: { status?: number; error?: unknown; raw?: unknown } | null | undefined,
+): boolean {
+  if (err?.status !== 401) return false;
+  const body = (err.error ?? err.raw) as { message?: unknown } | null | undefined;
+  return typeof body?.message === 'string' && FORBIDDEN_401_MESSAGE.test(body.message.trim());
+}

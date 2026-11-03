@@ -9,7 +9,7 @@
       <span class="wa-attach__name" dir="auto" [title]="f.name">{{ f.name }}</span>
       <span class="wa-attach__size">{{ fileSize() }}</span>
     </span>
-    <button type="button" class="wa-icon-btn" (click)="removeFile()" [disabled]="busy()"
+    <button type="button" class="wa-icon-btn" (click)="removeFile()"
             [title]="'whatsapp.composer.removeFile' | translate"
             [attr.aria-label]="'whatsapp.composer.removeFile' | translate">
       <i class="fa-solid fa-xmark"></i>
@@ -18,7 +18,7 @@
 }
 
 <div class="wa-compose">
-  <button type="button" class="wa-icon-btn" (click)="openPicker()" [disabled]="disabled() || busy()"
+  <button type="button" class="wa-icon-btn" (click)="openPicker()" [disabled]="disabled()"
           [title]="'whatsapp.composer.attach' | translate"
           [attr.aria-label]="'whatsapp.composer.attach' | translate">
     <i class="fa-solid fa-paperclip"></i>
@@ -29,7 +29,7 @@
             class="wa-compose__input"
             rows="1"
             dir="auto"
-            [attr.maxlength]="maxLength"
+            [attr.maxlength]="maxLength()"
             [value]="text()"
             [disabled]="disabled()"
             [placeholder]="(file() ? 'whatsapp.composer.captionPlaceholder' : 'whatsapp.composer.placeholder') | translate"
@@ -40,18 +40,13 @@
             (paste)="onPaste($event)"></textarea>
 
   <button type="button" class="wa-send" (click)="submit()" [disabled]="!canSend()"
-          [title]="(busy() ? 'whatsapp.composer.sending' : 'whatsapp.composer.send') | translate"
-          [attr.aria-label]="(busy() ? 'whatsapp.composer.sending' : 'whatsapp.composer.send') | translate"
-          [attr.aria-busy]="busy()">
-    @if (busy()) {
-      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-    } @else {
-      <i class="fa-solid fa-paper-plane"></i>
-    }
+          [title]="'whatsapp.composer.send' | translate"
+          [attr.aria-label]="'whatsapp.composer.send' | translate">
+    <i class="fa-solid fa-paper-plane"></i>
   </button>
 </div>
 
-@if (busy()) {
+@if (sending()) {
   <p class="wa-compose__hint" role="status">
     <i class="fa-regular fa-clock" aria-hidden="true"></i>
     {{ 'whatsapp.composer.sendingHint' | translate }}

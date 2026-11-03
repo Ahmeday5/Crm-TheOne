@@ -226,29 +226,38 @@ export const API_ENDPOINTS = {
   },
   /**
    * In-CRM WhatsApp (Wavex behind the backend — the browser never talks to
-   * Wavex). Reads are scoped server-side: Admin sees every chat, employees
-   * only their own; a 401 means "not your customer".
+   * Wavex). Scoped server-side: Admin sees every number, employees only their
+   * own; a 401 with "Unauthorized access." means "not allowed", not logout.
+   * Live updates arrive on the `/hubs/whatsapp` SignalR hub.
    */
   whatsapp: {
-    /** GET paged `{ pageIndex, pageSize, count, data }` — `PageIndex`, `PageSize`, `Search`. */
+    /** GET the caller's own number, live from the provider. */
+    status: 'WhatsApp/status',
+    /** GET channels — Admin: every number; employee: own only (0 or 1). */
+    instances: 'WhatsApp/instances',
+    /** GET one channel with its live status. */
+    instance: (instanceId: string) => `WhatsApp/instances/${encodeURIComponent(instanceId)}`,
+    /** POST `{ phone, instanceId? }` → a pairing code to type on the phone. */
+    connect: 'WhatsApp/instances/connect',
+    /** PUT (Admin) `{ instanceId }` assigns, `{ instanceId: null }` unassigns. */
+    userNumber: (userId: string) => `WhatsApp/users/${encodeURIComponent(userId)}/number`,
+    /** GET paged, newest first — `pageIndex`, `pageSize`, `search?`, `instanceId?`, `unreadOnly?`. */
     chats: 'WhatsApp/chats',
-    /** GET oldest → newest; `take` ≤ 200. */
+    /** GET oldest → newest — `take` (≤ 200), `beforeId?`. */
     chatMessages: (chatId: number | string) => `WhatsApp/chats/${chatId}/messages`,
-    /** POST — zeroes the chat's unread counter. */
+    /** POST — resets the CRM unread counter (no blue ticks to the customer). */
     markChatRead: (chatId: number | string) => `WhatsApp/chats/${chatId}/read`,
-    /** GET every message with this customer, across all of our numbers. */
+    /** GET oldest → newest — `take`. */
     customerMessages: (customerId: number | string) =>
       `WhatsApp/customers/${customerId}/messages`,
-    /** POST JSON `{ customerId | phone, text }`. */
+    /** POST JSON `{ chatId | customerId | phone, instanceId?, clientMessageId, text }`. */
     send: 'WhatsApp/send',
-    /** POST multipart `CustomerId | Phone`, `Caption?`, `file` (≤ 5 MB). */
+    /** POST multipart — `file` + the same fields + `caption?` (≤ 3.5 MB). */
     sendMedia: 'WhatsApp/send-media',
-    /** GET the caller's sending number + its connection state. */
-    status: 'WhatsApp/status',
-    /** GET (Admin) every linked number with its assignee. */
-    instances: 'WhatsApp/instances',
-    /** PUT (Admin) `{ instanceId }` links / moves, `{ instanceId: null }` unlinks. */
-    userNumber: (userId: string) => `WhatsApp/users/${encodeURIComponent(userId)}/number`,
+    /** GET (Admin) configuration, provider account vs. local numbers, webhook queue health. */
+    diagnostics: 'WhatsApp/diagnostics',
+    /** SignalR hub — relative to the API origin (without `/api`). */
+    hub: 'hubs/whatsapp',
   },
   /** Knowledge-base articles — CRUD + category option pickers. */
   articles: {

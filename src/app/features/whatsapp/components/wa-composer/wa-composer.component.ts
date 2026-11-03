@@ -10,12 +10,17 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
+import { TRANSLATIONS, interpolate, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import {
+  AttachmentProblem,
   WHATSAPP_ACCEPT,
+  WHATSAPP_ALLOWED_EXTENSIONS_LABEL,
+  WHATSAPP_MAX_CAPTION_LENGTH,
+  WHATSAPP_MAX_FILE_BYTES,
+  WHATSAPP_MAX_TEXT_LENGTH,
   formatBytes,
   validateAttachment,
 } from '../../utils/whatsapp.util';
@@ -25,20 +30,25 @@ export interface WaComposerSubmit {
   file: File | null;
 }
 
-/** WhatsApp's own cap on a text message. */
-const MAX_TEXT_LENGTH = 4096;
+const ATTACHMENT_ERROR_KEY: Record<AttachmentProblem, string> = {
+  type: 'whatsapp.errors.fileType',
+  tooLarge: 'whatsapp.errors.fileTooLarge',
+  empty: 'whatsapp.errors.fileEmpty',
+};
+
 /** The textarea grows up to this many pixels, then scrolls. */
 const MAX_TEXTAREA_PX = 140;
 
 /**
- * Message input: text, or one attachment with an optional caption.
+ * Message input: text (≤ 4096), or one attachment with an optional caption
+ * (≤ 1024).
  *
  * - Enter sends, Shift+Enter breaks the line (on touch screens Enter always
  *   breaks the line — there's a send button).
- * - Files are checked against the 5 MB limit before anything is uploaded;
- *   an image can also be pasted straight from the clipboard.
- * - While `busy` (a send is in flight) typing stays possible but sending is
- *   locked, so a message can never go out twice.
+ * - Files are checked for type and the 3.5 MB limit before anything is
+ *   uploaded; an image can also be pasted straight from the clipboard.
+ * - Sending never locks the composer: the thread shows each message as its
+ *   own "sending" bubble while the provider's anti-ban delay runs.
  */
 @Component({
   selector: 'app-wa-composer',
@@ -52,9 +62,9 @@ export class WaComposerComponent implements OnDestroy {
   private readonly toast = inject(ToastService);
   private readonly language = inject(LanguageService);
 
-  /** A send is in flight. */
-  readonly busy = input(false);
-  /** The thread can't send at all (e.g. no permission). */
+  /** At least one message is still on its way — shows the anti-ban delay hint. */
+  readonly sending = input(false);
+  /** The thread can't send (no permission, number disconnected). */
   readonly disabled = input(false);
 
   readonly submitted = output<WaComposerSubmit>();
@@ -63,7 +73,9 @@ export class WaComposerComponent implements OnDestroy {
   private readonly picker = viewChild<ElementRef<HTMLInputElement>>('picker');
 
   protected readonly accept = WHATSAPP_ACCEPT;
-  protected readonly maxLength = MAX_TEXT_LENGTH;
+  protected readonly maxLength = computed(() =>
+    this.file() ? WHATSAPP_MAX_CAPTION_LENGTH : WHATSAPP_MAX_TEXT_LENGTH,
+  );
   protected readonly text = signal('');
   protected readonly file = signal<File | null>(null);
   protected readonly preview = signal<string | null>(null);
@@ -73,7 +85,10 @@ export class WaComposerComponent implements OnDestroy {
     return f ? formatBytes(f.size, this.language.lang()) : '';
   });
   protected readonly canSend = computed(
-    () => !this.busy() && !this.disabled() && (!!this.text().trim() || !!this.file()),
+    () =>
+      !this.disabled() &&
+      (!!this.text().trim() || !!this.file()) &&
+      this.text().length <= this.maxLength(),
   );
 
   private readonly coarsePointer =
@@ -138,12 +153,19 @@ export class WaComposerComponent implements OnDestroy {
   private attach(file: File): void {
     const problem = validateAttachment(file);
     if (problem) {
-      this.toast.error(this.t(problem === 'tooLarge' ? 'whatsapp.errors.fileTooLarge' : 'whatsapp.errors.fileEmpty'));
+      this.toast.error(
+        interpolate(this.t(ATTACHMENT_ERROR_KEY[problem]), {
+          types: WHATSAPP_ALLOWED_EXTENSIONS_LABEL,
+          max: formatBytes(WHATSAPP_MAX_FILE_BYTES, this.language.lang()),
+        }),
+      );
       return;
     }
     this.revokePreview();
     this.file.set(file);
     if (file.type.startsWith('image/')) this.preview.set(URL.createObjectURL(file));
+    // A caption is shorter than a message — trim what was typed to fit.
+    if (this.text().length > WHATSAPP_MAX_CAPTION_LENGTH) this.text.set(this.text().slice(0, WHATSAPP_MAX_CAPTION_LENGTH));
     this.focus();
   }
 

@@ -1,0 +1,109 @@
+<app-modal
+  [open]="true"
+  size="md"
+  icon="fa-solid fa-pen-to-square"
+  iconTone="success"
+  [title]="'whatsapp.newChat.title' | translate"
+  [closeOnBackdrop]="!sending()"
+  [closeOnEsc]="!sending()"
+  (closed)="closed.emit()">
+
+  <div class="btn-group w-100 mb-3" role="radiogroup" [attr.aria-label]="'whatsapp.newChat.to' | translate">
+    <button type="button" class="btn btn-sm" role="radio"
+            [class.btn-success]="mode() === 'customer'" [class.btn-light]="mode() !== 'customer'"
+            [attr.aria-checked]="mode() === 'customer'" (click)="setMode('customer')" [disabled]="sending()">
+      <i class="fa-solid fa-user-tie me-1"></i>{{ 'whatsapp.newChat.customer' | translate }}
+    </button>
+    <button type="button" class="btn btn-sm" role="radio"
+            [class.btn-success]="mode() === 'phone'" [class.btn-light]="mode() !== 'phone'"
+            [attr.aria-checked]="mode() === 'phone'" (click)="setMode('phone')" [disabled]="sending()">
+      <i class="fa-solid fa-phone me-1"></i>{{ 'whatsapp.newChat.phone' | translate }}
+    </button>
+  </div>
+
+  @if (mode() === 'customer') {
+    <div class="mb-3">
+      <label class="form-label" for="wa-nc-customer">{{ 'whatsapp.newChat.customer' | translate }}</label>
+      <app-searchable-select
+        id="wa-nc-customer"
+        [fetchFn]="fetchCustomers"
+        labelKey="fullName"
+        valueKey="id"
+        subLabelKey="campanyName"
+        [placeholder]="'whatsapp.newChat.pickCustomer' | translate"
+        [searchPlaceholder]="'whatsapp.newChat.searchCustomer' | translate"
+        [emptyText]="'whatsapp.newChat.noCustomers' | translate"
+        [loadingText]="'whatsapp.newChat.loading' | translate"
+        [ngModel]="customerId()"
+        (ngModelChange)="onCustomer($event)" />
+    </div>
+  } @else {
+    <div class="mb-3">
+      <label class="form-label" for="wa-nc-phone">{{ 'whatsapp.newChat.phone' | translate }}</label>
+      <input id="wa-nc-phone" type="tel" class="form-control" dir="ltr" inputmode="tel" autocomplete="off"
+             [class.is-invalid]="phoneInvalid()"
+             [ngModel]="phone()" (ngModelChange)="onPhone($event)" (blur)="touched.set(true)" />
+      @if (phoneInvalid()) {
+        <div class="invalid-feedback d-block">{{ 'whatsapp.newChat.phoneInvalid' | translate }}</div>
+      } @else {
+        <small class="form-text text-muted">{{ 'whatsapp.newChat.phoneHint' | translate }}</small>
+      }
+    </div>
+  }
+
+  @if (session.isAdmin()) {
+    <div class="mb-3">
+      <label class="form-label" for="wa-nc-from">{{ 'whatsapp.newChat.from' | translate }}</label>
+      @if (channelOptions().length) {
+        <app-searchable-select
+          id="wa-nc-from"
+          [options]="channelOptions()"
+          labelKey="label"
+          valueKey="id"
+          subLabelKey="sub"
+          [allowClear]="false"
+          [placeholder]="'whatsapp.newChat.pickNumber' | translate"
+          [searchPlaceholder]="'whatsapp.newChat.searchNumber' | translate"
+          [emptyText]="'whatsapp.newChat.noNumbers' | translate"
+          [ngModel]="instanceId()"
+          (ngModelChange)="onInstance($event)" />
+      } @else {
+        <p class="alert alert-warning py-2 mb-0">{{ 'whatsapp.newChat.noNumbers' | translate }}</p>
+      }
+    </div>
+  }
+
+  <div class="mb-1">
+    <label class="form-label" for="wa-nc-text">{{ 'whatsapp.newChat.message' | translate }}</label>
+    <textarea id="wa-nc-text" class="form-control" rows="4" dir="auto" [attr.maxlength]="maxLength"
+              [placeholder]="'whatsapp.composer.placeholder' | translate"
+              [ngModel]="text()" (ngModelChange)="onText($event)"></textarea>
+  </div>
+
+  @if (sending()) {
+    <p class="small text-muted d-flex align-items-center gap-2 mt-2 mb-0" role="status">
+      <i class="fa-regular fa-clock" aria-hidden="true"></i>{{ 'whatsapp.composer.sendingHint' | translate }}
+    </p>
+  }
+  @if (error(); as message) {
+    <p class="alert alert-danger d-flex gap-2 py-2 mt-3 mb-0" role="alert">
+      <i class="fa-solid fa-circle-exclamation mt-1" aria-hidden="true"></i><span dir="auto">{{ message }}</span>
+    </p>
+  }
+
+  <ng-container modal-footer>
+    <div class="btn-row w-100 justify-content-end">
+      <button type="button" class="btn btn-light" (click)="closed.emit()" [disabled]="sending()">
+        {{ 'whatsapp.connect.cancel' | translate }}
+      </button>
+      <button type="button" class="btn btn-success" (click)="submit()" [disabled]="!canSend()">
+        @if (sending()) {
+          <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+        } @else {
+          <i class="fa-solid fa-paper-plane me-1"></i>
+        }
+        {{ 'whatsapp.newChat.send' | translate }}
+      </button>
+    </div>
+  </ng-container>
+</app-modal>

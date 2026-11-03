@@ -25,8 +25,8 @@ export interface WaImagePreview {
 }
 
 /**
- * One chat bubble. Outgoing messages sit on the right, incoming on the left
- * (physical sides, as on WhatsApp, whatever the UI language).
+ * One chat bubble. Incoming messages sit at the start side, outgoing at the
+ * end (left / right in English, mirrored in Arabic — as WhatsApp does).
  *
  * Media: outgoing rows carry a `mediaUrl` and render inline (image → opens
  * the viewer, video/audio → native player, document → file card). Incoming
@@ -52,8 +52,6 @@ export class WaMessageBubbleComponent {
   /** Show "by {employee}" under outgoing bubbles. */
   readonly showSender = input(true);
   readonly canRetry = input(false);
-  /** Disables the retry button while another send is in flight. */
-  readonly busy = input(false);
 
   readonly retry = output<void>();
   readonly openImage = output<WaImagePreview>();

@@ -79,6 +79,42 @@
   color: var(--text-3);
 }
 
+/* ── beginning of the conversation ── */
+.wa-start {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  margin: 0.25rem auto 0.5rem;
+  padding: 0.45rem 0.9rem;
+  max-width: 26rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--warning) 12%, var(--surface-0));
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  text-align: center;
+
+  span { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: var(--fw-700); }
+  small { color: var(--text-3); }
+}
+
+/* ── composer locked (disconnected / no access) ── */
+.wa-blocked {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.65rem;
+  padding: 0.55rem 0.85rem;
+  border-top: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+
+  .btn { margin-inline-start: auto; }
+}
+.wa-blocked__text { flex: 1; min-width: 12rem; }
+
 /* ── empty / error / forbidden ── */
 .wa-state {
   margin: auto;
@@ -105,12 +141,12 @@
   width: 38%;
   height: 2.6rem;
   border-radius: 0.9rem;
-  margin-right: auto;
+  margin-inline-end: auto;
   background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-0) 50%, var(--surface-2) 75%);
   background-size: 200% 100%;
   animation: wa-shimmer 1.3s ease-in-out infinite;
 
-  &.is-out { margin-right: 0; margin-left: auto; }
+  &.is-out { margin-inline-end: 0; margin-inline-start: auto; }
   &.is-wide { width: 58%; height: 3.6rem; }
 }
 @keyframes wa-shimmer {

@@ -1,0 +1,87 @@
+<div class="wa-ch__head">
+  <h2 class="wa-ch__title">{{ 'whatsapp.channels.title' | translate }}</h2>
+  <button type="button" class="wa-ch__refresh" (click)="session.loadChannels()" [disabled]="session.channelsLoading()"
+          [title]="'whatsapp.refresh' | translate" [attr.aria-label]="'whatsapp.refresh' | translate">
+    <i class="fa-solid fa-rotate" [class.fa-spin]="session.channelsLoading()"></i>
+  </button>
+</div>
+
+<div class="wa-ch__scroll">
+  @if (!session.channelsLoaded()) {
+    <ul class="wa-ch__items" aria-hidden="true">
+      @for (_ of [1, 2, 3]; track $index) {
+        <li class="wa-ch__sk"><span class="wa-sk"></span></li>
+      }
+    </ul>
+  } @else if (session.channelsError() && channels().length === 0) {
+    <div class="wa-ch__state">
+      <p class="text-muted small mb-2">{{ session.channelsError() }}</p>
+      <button type="button" class="btn btn-sm btn-light" (click)="session.loadChannels()">
+        <i class="fa-solid fa-rotate me-1"></i>{{ 'whatsapp.retry' | translate }}
+      </button>
+    </div>
+  } @else {
+    <ul class="wa-ch__items" role="list">
+      <li>
+        <button type="button" class="wa-ch" [class.is-active]="selectedId() === null"
+                [attr.aria-current]="selectedId() === null ? 'true' : null" (click)="selected.emit(null)">
+          <span class="wa-ch__icon"><i class="fa-solid fa-layer-group"></i></span>
+          <span class="wa-ch__main">
+            <span class="wa-ch__name">{{ 'whatsapp.channels.all' | translate }}</span>
+            <span class="wa-ch__sub">{{ 'whatsapp.channels.count' | translate: { n: channels().length } }}</span>
+          </span>
+          @if (session.totalUnread() > 0) {
+            <span class="wa-badge">{{ session.totalUnread() }}</span>
+          }
+        </button>
+      </li>
+
+      @for (c of channels(); track c.id) {
+        @let st = meta(c);
+        @let isActive = active(c);
+        <li class="wa-ch__row">
+          <button type="button" class="wa-ch" [class.is-active]="selectedId() === c.id" [class.is-removed]="!isActive"
+                  [attr.aria-current]="selectedId() === c.id ? 'true' : null"
+                  [title]="isActive ? '' : ('whatsapp.channels.removedHint' | translate)"
+                  (click)="selected.emit(c.id)">
+            <span class="wa-ch__icon"><i class="fa-brands fa-whatsapp"></i></span>
+            <span class="wa-ch__main">
+              <span class="wa-ch__name">
+                <span class="wa-dot wa-dot--{{ isActive ? st.tone : 'gray' }}" aria-hidden="true"></span>
+                <span dir="ltr" class="text-truncate">{{ phone(c) || c.name || ('whatsapp.numbers.noPhone' | translate) }}</span>
+                @if (c.isDefault) {
+                  <i class="fa-solid fa-building wa-ch__default" [title]="'whatsapp.numbers.companyBadge' | translate"></i>
+                }
+              </span>
+              <span class="wa-ch__sub">
+                @if (!isActive) {
+                  {{ 'whatsapp.channels.removed' | translate }}
+                } @else {
+                  {{ st.labelKey | translate }}
+                  · {{ c.assignedUserName || ('whatsapp.numbers.unassigned' | translate) }}
+                }
+              </span>
+              <span class="wa-ch__sub">{{ 'whatsapp.channels.chats' | translate: { n: c.chatsCount || 0 } }}</span>
+            </span>
+            @if (c.unreadChatsCount > 0) {
+              <span class="wa-badge">{{ c.unreadChatsCount }}</span>
+            }
+          </button>
+          @if (pairable(c)) {
+            <button type="button" class="wa-ch__pair" (click)="pair.emit(c)"
+                    [title]="'whatsapp.connect.getCode' | translate"
+                    [attr.aria-label]="'whatsapp.connect.getCode' | translate">
+              <i class="fa-solid fa-key"></i>
+            </button>
+          }
+        </li>
+      }
+    </ul>
+
+    @if (channels().length === 0) {
+      <div class="wa-ch__state">
+        <p class="text-muted small mb-0">{{ 'whatsapp.numbers.emptyHint' | translate }}</p>
+      </div>
+    }
+  }
+</div>

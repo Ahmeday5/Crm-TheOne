@@ -45,6 +45,25 @@
 
   @include bp.down(md) { height: 65dvh; }
 }
+.cd-wa-bar {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-0);
+}
+.cd-wa-bar__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--success);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; }
+}
 
 .details-grid {
   display: flex;

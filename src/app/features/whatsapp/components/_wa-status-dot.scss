@@ -1,0 +1,15 @@
+/* Status dot shared by the channel list, number card and numbers table:
+   WORKING green · connecting amber · needs relink red · banned dark. */
+.wa-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--text-3);
+}
+.wa-dot--success { background: var(--success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 22%, transparent); }
+.wa-dot--warning { background: var(--warning); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning) 22%, transparent); }
+.wa-dot--danger { background: var(--danger); box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 22%, transparent); }
+.wa-dot--dark { background: var(--text-1); }
+.wa-dot--gray { background: var(--text-3); }

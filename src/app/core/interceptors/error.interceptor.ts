@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { ToastService } from '../services/toast.service';
-import { SKIP_ERROR_TOAST } from '../http/http-context.tokens';
+import { SKIP_ERROR_TOAST, isForbidden401 } from '../http/http-context.tokens';
 import { ApiError, ApiFieldErrors } from '../models/api-response.model';
 import { API_ENDPOINTS } from '../constants/api-endpoints.const';
 import { environment } from '../../../environments/environment';
@@ -66,10 +66,12 @@ function normalizeError(err: HttpErrorResponse, isAr: boolean): ApiError {
     body?.title ||
     '';
 
-  const message =
-    (rawMessage && friendlyMessage(rawMessage, isAr)) ||
-    rawMessage ||
-    statusMessage(status, err, isAr);
+  // The backend's permission-denied 401 reads like a login failure — say what it means.
+  const message = isForbidden401(err)
+    ? statusMessage(403, err, isAr)
+    : (rawMessage && friendlyMessage(rawMessage, isAr)) ||
+      rawMessage ||
+      statusMessage(status, err, isAr);
 
   const fieldErrors: ApiFieldErrors | undefined =
     body?.errors && typeof body.errors === 'object' && !Array.isArray(body.errors)

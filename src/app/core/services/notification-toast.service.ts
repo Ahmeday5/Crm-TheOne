@@ -23,14 +23,27 @@ const MAX_VISIBLE = 4;
 export class NotificationToastService {
   readonly toasts = signal<NotificationToast[]>([]);
   private readonly timers = new Map<number, ReturnType<typeof setTimeout>>();
+  private readonly suppressors = new Set<(toast: NotificationToast) => boolean>();
 
-  show(toast: NotificationToast): void {
+  /**
+   * Hide toasts the user doesn't need — e.g. a WhatsApp message for the chat
+   * that is already open and focused. Returns the unregister function.
+   */
+  suppressWhen(predicate: (toast: NotificationToast) => boolean): () => void {
+    this.suppressors.add(predicate);
+    return () => this.suppressors.delete(predicate);
+  }
+
+  /** Returns `false` when the toast was skipped (duplicate or suppressed). */
+  show(toast: NotificationToast): boolean {
     // Skip if this notification is already on screen.
-    if (this.toasts().some((t) => t.id === toast.id)) return;
+    if (this.toasts().some((t) => t.id === toast.id)) return false;
+    for (const suppressed of this.suppressors) if (suppressed(toast)) return false;
 
     this.toasts.update((list) => [toast, ...list].slice(0, MAX_VISIBLE));
     const handle = setTimeout(() => this.dismiss(toast.id), AUTO_DISMISS_MS);
     this.timers.set(toast.id, handle);
+    return true;
   }
 
   dismiss(id: number): void {

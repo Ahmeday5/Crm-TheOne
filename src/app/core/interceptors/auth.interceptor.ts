@@ -7,7 +7,7 @@ import {
 import { inject } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
-import { SKIP_AUTH, UNAUTHORIZED_AS_FORBIDDEN } from '../http/http-context.tokens';
+import { SKIP_AUTH, UNAUTHORIZED_AS_FORBIDDEN, isForbidden401 } from '../http/http-context.tokens';
 import { API_ENDPOINTS } from '../constants/api-endpoints.const';
 import { isJwtExpired } from '../utils/jwt.util';
 
@@ -32,8 +32,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       if (err.status !== 401 || isAuthEndpoint(req.url)) {
         return throwError(() => err);
       }
-      // A business-level 401 on a live session: nothing a refresh could fix.
-      if (req.context.get(UNAUTHORIZED_AS_FORBIDDEN) && token && !isJwtExpired(token)) {
+      // A business-level 401 on a live session ("Unauthorized access." body,
+      // or an endpoint flagged as such): nothing a refresh could fix.
+      const forbidden = isForbidden401(err) || req.context.get(UNAUTHORIZED_AS_FORBIDDEN);
+      if (forbidden && token && !isJwtExpired(token)) {
         return throwError(() => err);
       }
       return retryAfterRefresh(req, next, auth);

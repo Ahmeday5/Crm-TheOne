@@ -33,7 +33,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       chat: 'الدردشة الداخلية',
       dailyReports: 'التقارير اليومية',
       myProjectReports: 'تقاريري',
-      whatsapp: 'واتساب',
+      whatsapp: 'المحادثات',
       // System administration
       settings: 'إعدادات النظام',
       services: 'إدارة الخدمات',

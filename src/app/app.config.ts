@@ -8,6 +8,7 @@ import { cacheInterceptor } from './core/interceptors/cache.interceptor';
 import { loaderInterceptor } from './core/interceptors/loader.interceptor';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { provideWhatsApp } from './features/whatsapp/whatsapp.providers';
 
 /**
  * Interceptor order matters:
@@ -37,5 +38,6 @@ export const appConfig: ApplicationConfig = {
       ]),
     ),
     provideAnimations(),
+    provideWhatsApp(),
   ],
 };

@@ -11,7 +11,7 @@
         <span class="wa-skeleton__bubble is-out is-wide"></span>
         <span class="wa-skeleton__bubble"></span>
       </div>
-    } @else if (store.forbidden()) {
+    } @else if (store.forbidden() && store.messages().length === 0) {
       <div class="wa-state">
         <span class="icon-tile xl tone-danger"><i class="fa-solid fa-lock"></i></span>
         <h6 class="fw-700 mb-1">{{ 'whatsapp.thread.forbiddenTitle' | translate }}</h6>
@@ -29,22 +29,29 @@
       <div class="wa-state">
         <span class="icon-tile xl tone-success"><i class="fa-brands fa-whatsapp"></i></span>
         <h6 class="fw-700 mb-1">{{ emptyTitleKey() | translate }}</h6>
-        <p class="text-muted mb-0">{{ emptyHintKey() | translate }}</p>
+        <p class="text-muted mb-1">{{ emptyHintKey() | translate }}</p>
+        <p class="wa-older__note mb-0">{{ 'whatsapp.thread.historyNote' | translate }}</p>
       </div>
     } @else {
-      @if (store.canLoadOlder()) {
+      @if (store.loadingOlder()) {
+        <div class="wa-older" role="status">
+          <span class="spinner-border spinner-border-sm text-success" aria-hidden="true"></span>
+          <span class="visually-hidden">{{ 'whatsapp.thread.loadingOlder' | translate }}</span>
+        </div>
+      } @else if (store.canLoadOlder()) {
         <div class="wa-older">
-          <button type="button" class="wa-older__btn" (click)="loadOlder()" [disabled]="store.loadingOlder()">
-            @if (store.loadingOlder()) {
-              <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-            } @else {
-              <i class="fa-solid fa-angles-up" aria-hidden="true"></i>
-            }
+          <button type="button" class="wa-older__btn" (click)="loadOlder()">
+            <i class="fa-solid fa-angles-up" aria-hidden="true"></i>
             {{ 'whatsapp.thread.loadOlder' | translate }}
           </button>
         </div>
       } @else if (store.atHistoryLimit()) {
         <p class="wa-older__note">{{ 'whatsapp.thread.historyLimit' | translate }}</p>
+      } @else if (store.reachedStart()) {
+        <div class="wa-start">
+          <span><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>{{ 'whatsapp.thread.beginning' | translate }}</span>
+          <small>{{ 'whatsapp.thread.historyNote' | translate }}</small>
+        </div>
       }
 
       @for (group of groups(); track group.key) {
@@ -61,8 +68,7 @@
           <app-wa-message-bubble
             [message]="m"
             [showSender]="showSender()"
-            [canRetry]="store.canRetry(m)"
-            [busy]="store.sending()"
+            [canRetry]="store.canRetry(m) && !store.blockReason()"
             (retry)="retry(m)"
             (openImage)="viewer.set($event)" />
         }
@@ -80,9 +86,29 @@
   }
 </div>
 
+@switch (store.blockReason()) {
+  @case ('disconnected') {
+    <div class="wa-blocked" role="status">
+      <i class="fa-solid fa-plug-circle-xmark" aria-hidden="true"></i>
+      <span class="wa-blocked__text">{{ 'whatsapp.composer.disconnected' | translate }}</span>
+      @if (canReconnect()) {
+        <button type="button" class="btn btn-sm btn-success" (click)="reconnect.emit()">
+          <i class="fa-solid fa-link me-1"></i>{{ 'whatsapp.connect.reconnect' | translate }}
+        </button>
+      }
+    </div>
+  }
+  @case ('forbidden') {
+    <div class="wa-blocked" role="status">
+      <i class="fa-solid fa-lock" aria-hidden="true"></i>
+      <span class="wa-blocked__text">{{ 'whatsapp.errors.noPermission' | translate }}</span>
+    </div>
+  }
+}
+
 <app-wa-composer
-  [busy]="store.sending()"
-  [disabled]="!store.canCompose()"
+  [sending]="sending()"
+  [disabled]="!!store.blockReason() || !source()"
   (submitted)="onSubmit($event)" />
 
 @if (viewer(); as v) {

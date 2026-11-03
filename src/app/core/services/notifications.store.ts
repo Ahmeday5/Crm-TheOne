@@ -111,8 +111,9 @@ export class NotificationsStore {
     const fresh = data
       .filter((n) => n.id > this.lastSeenId && !n.isRead)
       .sort((a, b) => a.id - b.id);
+    let shown = 0;
     for (const n of fresh) {
-      this.toasts.show({
+      const visible = this.toasts.show({
         id: n.id,
         title: n.title,
         message: n.message,
@@ -120,12 +121,11 @@ export class NotificationsStore {
         relatedEntityType: n.relatedEntityType,
         relatedEntityId: n.relatedEntityId,
       });
+      if (visible) shown++;
     }
-    // One chime per arrival batch — not one per notification.
-    if (fresh.length > 0) {
-      this.sound.play();
-      this.arrivalsSubject.next(fresh);
-    }
+    // One chime per arrival batch — not one per notification, none when all were suppressed.
+    if (shown > 0) this.sound.play();
+    if (fresh.length > 0) this.arrivalsSubject.next(fresh);
     if (maxId > this.lastSeenId) this.lastSeenId = maxId;
   }
 

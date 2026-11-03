@@ -47,11 +47,14 @@
               <a class="nav-link"
                  [routerLink]="item.path"
                  routerLinkActive="active"
-                 [routerLinkActiveOptions]="{ exact: true }"
+                 [routerLinkActiveOptions]="{ exact: !item.matchSubroutes }"
                  [title]="item.labelKey | translate"
                  (click)="onLinkClicked()">
                 <i [class]="item.icon"></i>
                 <span class="nav-label">{{ item.labelKey | translate }}</span>
+                @if (badges.get(item.path); as count) {
+                  <span class="nav-badge" [attr.aria-label]="count">{{ count > 99 ? '99+' : count }}</span>
+                }
               </a>
             </li>
           }

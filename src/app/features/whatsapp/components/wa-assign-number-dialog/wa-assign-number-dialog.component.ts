@@ -18,22 +18,26 @@ import { LanguageService } from '../../../../core/services/language.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { WhatsAppEmployee, WhatsAppInstance } from '../../models/whatsapp.models';
+import { WaEmployee, WaInstance } from '../../models/whatsapp.models';
 import { WhatsAppApiService } from '../../services/whatsapp-api.service';
-import { formatWhatsAppPhone, isNumberWorking, whatsappErrorText } from '../../utils/whatsapp.util';
+import { WhatsAppSessionStore } from '../../state/whatsapp-session.store';
+import { formatWhatsAppPhone, whatsappErrorText } from '../../utils/whatsapp.util';
 
 export type AssignOutcome = 'linked' | 'changed';
 
 /**
- * Admin: link a number to an employee, or hand it to someone else.
+ * Admin: assign a number to an employee (one number each), or hand it to
+ * someone else.
  *
- * The picker lists every Sales / Support / Admin user with the number they
- * hold today, and the dialog spells out side effects before saving:
+ * The picker lists active Sales / Support users (`GET /Auth/GetAllUsers`)
+ * with the number they hold today, and the dialog spells out side effects
+ * before saving:
  *   - the picked employee already has a number → they move to this one
  *     (the server releases their old number itself);
- *   - this number belongs to someone else → they're unlinked first and fall
- *     back to the company number (the server rejects a taken number).
- * If linking fails after that unlink, the previous owner is restored.
+ *   - this number belongs to someone else → they're unassigned first (the
+ *     server rejects a taken number).
+ * If assigning fails after that unassign, the previous owner is restored.
+ * Server messages (e.g. "already assigned to X") are shown as they are.
  */
 @Component({
   selector: 'app-wa-assign-number-dialog',
@@ -46,16 +50,17 @@ export class WaAssignNumberDialogComponent implements OnInit {
   private readonly api = inject(WhatsAppApiService);
   private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly session = inject(WhatsAppSessionStore);
 
   /** The number being (re)assigned. */
-  readonly instance = input.required<WhatsAppInstance>();
+  readonly instance = input.required<WaInstance>();
   /** Every number — to show who already holds which. */
-  readonly instances = input<readonly WhatsAppInstance[]>([]);
+  readonly instances = input<readonly WaInstance[]>([]);
 
   readonly saved = output<AssignOutcome>();
   readonly cancelled = output<void>();
 
-  protected readonly employees = signal<WhatsAppEmployee[]>([]);
+  protected readonly employees = signal<WaEmployee[]>([]);
   protected readonly loadingEmployees = signal(true);
   protected readonly loadFailed = signal(false);
   protected readonly selectedUserId = signal<string | null>(null);
@@ -64,11 +69,11 @@ export class WaAssignNumberDialogComponent implements OnInit {
 
   protected readonly isChange = computed(() => !!this.instance().assignedUserId);
   protected readonly phone = computed(() => formatWhatsAppPhone(this.instance().phoneNumber));
-  protected readonly offline = computed(() => !isNumberWorking(this.instance().status));
+  protected readonly offline = computed(() => !this.instance().canSend);
 
   /** userId → the *other* number that user holds now. */
   private readonly numberOfUser = computed(() => {
-    const map = new Map<string, WhatsAppInstance>();
+    const map = new Map<string, WaInstance>();
     for (const i of this.instances()) {
       if (i.assignedUserId && i.id !== this.instance().id) map.set(i.assignedUserId, i);
     }
@@ -162,8 +167,9 @@ export class WaAssignNumberDialogComponent implements OnInit {
     this.assign(userId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => {
+        next: (updated) => {
           this.saving.set(false);
+          if (updated) this.session.applyInstance(updated);
           this.saved.emit(changing ? 'changed' : 'linked');
         },
         error: (err) => {
@@ -174,7 +180,7 @@ export class WaAssignNumberDialogComponent implements OnInit {
   }
 
   /** Link `userId`; when the number is taken, release it first and roll back on failure. */
-  private assign(userId: string): Observable<unknown> {
+  private assign(userId: string): Observable<WaInstance | null> {
     const { id: instanceId, assignedUserId: previous } = this.instance();
     const link$ = this.api.assignNumber(userId, { instanceId });
     if (!previous || previous === userId) return link$;

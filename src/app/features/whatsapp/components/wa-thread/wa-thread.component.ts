@@ -16,7 +16,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { WhatsAppMessage } from '../../models/whatsapp.models';
+import { WaMessage } from '../../models/whatsapp.models';
 import { ThreadMessage, ThreadSource, WhatsAppThreadStore } from '../../state/whatsapp-thread.store';
 import { groupMessagesByDay, isOutgoing, relativeDay } from '../../utils/whatsapp.util';
 import { WaComposerComponent, WaComposerSubmit } from '../wa-composer/wa-composer.component';
@@ -24,16 +24,18 @@ import { WaImagePreview, WaMessageBubbleComponent } from '../wa-message-bubble/w
 
 /** Within this many px of the bottom counts as "reading the latest". */
 const NEAR_BOTTOM_PX = 120;
+/** Older history starts loading this close to the top. */
+const LOAD_OLDER_PX = 80;
 
 /**
- * A full conversation: messages (grouped by Cairo day) + composer.
- * Used by the inbox for the open chat and by the customer dialog's WhatsApp
- * tab. Owns its own `WhatsAppThreadStore`, so several threads can coexist.
+ * A full conversation: messages (grouped by Cairo day) + composer. Used by
+ * the inbox for the open chat and by the customer dialog's WhatsApp tab.
+ * Owns its own `WhatsAppThreadStore`, so several threads can coexist.
  *
- * Scrolling follows chat conventions: open at the latest message; new
- * messages scroll into view only if the user is already at the bottom
- * (otherwise a "new messages" pill appears); loading older history keeps the
- * user's place.
+ * Scrolling follows chat conventions: open at the latest message; scrolling
+ * to the top loads older history without moving what the user is reading;
+ * new messages scroll into view only if the user is already at the bottom
+ * (otherwise a "new messages" pill appears).
  *
  * Project a header with the `waThreadHeader` attribute.
  */
@@ -53,18 +55,28 @@ export class WaThreadComponent {
   /** i18n keys for the empty conversation state. */
   readonly emptyTitleKey = input('whatsapp.thread.empty');
   readonly emptyHintKey = input('whatsapp.thread.emptyHint');
-  /** Show "by {employee}" under our messages (useful when several people share a chat). */
+  /** Show "by {employee}" under our messages (useful when several people share a number). */
   readonly showSender = input(true);
+  /** Offer "Reconnect" on the disconnected banner (the host opens the pairing dialog). */
+  readonly canReconnect = input(false);
 
-  /** Each message the server confirmed as sent from this thread. */
-  readonly sent = output<WhatsAppMessage>();
+  /** Each message the server stored from this thread. */
+  readonly sent = output<WaMessage>();
+  /** The chat was marked read (by id). */
+  readonly read = output<number>();
+  readonly reconnect = output<void>();
 
   private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
 
+  /** The chat of the newest message — for "Open in inbox" from a customer tab. */
+  readonly latestChatId = this.store.latestChatId;
+
   protected readonly groups = computed(() => groupMessagesByDay(this.store.messages()));
+  protected readonly sending = computed(() => this.store.messages().some((m) => m.status === 'Pending'));
   protected readonly unseen = signal(0);
   protected readonly viewer = signal<WaImagePreview | null>(null);
 
+  private sourceKey: string | null = null;
   private nearBottom = true;
   private firstKey: string | null = null;
   private lastKey: string | null = null;
@@ -77,7 +89,12 @@ export class WaThreadComponent {
       () => {
         const source = this.source();
         untracked(() => {
-          this.resetScrollState();
+          // The host rebuilds the source on every chat update — only a different conversation resets the view.
+          const key = sourceKey(source);
+          if (key !== this.sourceKey) {
+            this.sourceKey = key;
+            this.resetScrollState();
+          }
           this.store.connect(source);
         });
       },
@@ -95,9 +112,10 @@ export class WaThreadComponent {
     afterRender(() => this.applyPendingScroll());
 
     this.store.sent$.pipe(takeUntilDestroyed()).subscribe((m) => this.sent.emit(m));
+    this.store.read$.pipe(takeUntilDestroyed()).subscribe((id) => this.read.emit(id));
   }
 
-  /** Re-read now — e.g. the host saw a new-message notification. */
+  /** Merge the latest messages now (retry). */
   refresh(): void {
     this.store.refresh();
   }
@@ -112,17 +130,19 @@ export class WaThreadComponent {
     this.store.retry(message);
   }
 
-  protected loadOlder(): void {
-    const el = this.scroller()?.nativeElement;
-    if (el) this.preserveOffset = el.scrollHeight - el.scrollTop;
-    this.store.loadOlder();
-  }
-
   protected onScroll(): void {
     const el = this.scroller()?.nativeElement;
     if (!el) return;
     this.nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
     if (this.nearBottom && this.unseen()) this.unseen.set(0);
+    if (el.scrollTop < LOAD_OLDER_PX) this.loadOlder();
+  }
+
+  protected loadOlder(): void {
+    if (!this.store.canLoadOlder() || this.store.loadingOlder()) return;
+    const el = this.scroller()?.nativeElement;
+    if (el) this.preserveOffset = el.scrollHeight - el.scrollTop;
+    this.store.loadOlder();
   }
 
   protected jumpToLatest(): void {
@@ -135,8 +155,9 @@ export class WaThreadComponent {
     return rel ? `whatsapp.thread.${rel}` : null;
   }
 
+  /** Optimistic and stored copies share the `clientMessageId`, so a bubble never re-mounts on confirm. */
   protected trackMessage(m: ThreadMessage): string {
-    return m.local?.key ?? String(m.id);
+    return m.clientMessageId ? `c:${m.clientMessageId}` : `s:${m.id}`;
   }
 
   // ─────────────── scrolling ───────────────
@@ -186,4 +207,9 @@ export class WaThreadComponent {
     this.unseen.set(0);
     this.viewer.set(null);
   }
+}
+
+function sourceKey(source: ThreadSource | null): string | null {
+  if (!source) return null;
+  return source.kind === 'chat' ? `chat:${source.chatId}` : `customer:${source.customerId}`;
 }

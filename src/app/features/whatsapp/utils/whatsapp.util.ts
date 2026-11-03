@@ -2,12 +2,13 @@ import { ApiError } from '../../../core/models/api-response.model';
 import { UserRole } from '../../../core/models/auth.model';
 import { APP_TIME_ZONE, parseUtc } from '../../../shared/pipes/cairo-date.pipe';
 import {
-  WhatsAppChat,
-  WhatsAppInstanceStatus,
-  WhatsAppMessage,
-  WhatsAppMessageStatus,
-  WhatsAppMessageType,
-  WhatsAppRecipient,
+  WaChat,
+  WaInstance,
+  WaInstanceStatus,
+  WaMessage,
+  WaMessageStatus,
+  WaMessageType,
+  WaNumberStatus,
 } from '../models/whatsapp.models';
 
 /** Roles that chat with customers on WhatsApp inside the CRM. */
@@ -17,50 +18,99 @@ export function canUseWhatsApp(role: UserRole | null | undefined): boolean {
   return !!role && WHATSAPP_ROLES.includes(role);
 }
 
-// ─────────────── limits (mirrors the backend) ───────────────
+// ─────────────── limits (mirror the backend) ───────────────
 
-/** `send-media` rejects anything larger. */
-export const WHATSAPP_MAX_FILE_BYTES = 5 * 1024 * 1024;
-/** First page of a thread, and the step "show older" grows it by. */
-export const WHATSAPP_TAKE_STEP = 50;
+/** `send-media` rejects anything larger (3.5 MB). */
+export const WHATSAPP_MAX_FILE_BYTES = 3.5 * 1024 * 1024;
+export const WHATSAPP_MAX_TEXT_LENGTH = 4096;
+export const WHATSAPP_MAX_CAPTION_LENGTH = 1024;
+/** One page of a thread's history. */
+export const WHATSAPP_MESSAGES_TAKE = 50;
 /** The messages endpoints cap `take` here. */
 export const WHATSAPP_MAX_TAKE = 200;
-/** Chat-list page size. */
-export const WHATSAPP_CHATS_PAGE_SIZE = 20;
+export const WHATSAPP_CHATS_PAGE_SIZE = 30;
+export const WHATSAPP_SEARCH_DEBOUNCE_MS = 300;
+/** Safety net while the real-time hub is down: re-read the visible data this often. */
+export const WHATSAPP_FALLBACK_POLL_MS = 20_000;
+/** The pairing dialog polls `GET /status` this often (alongside the hub event). */
+export const WHATSAPP_PAIRING_POLL_MS = 5_000;
 
-/** Polling cadence while there's no real-time channel yet. */
-export const WHATSAPP_CHATS_POLL_MS = 15_000;
-export const WHATSAPP_THREAD_POLL_MS = 5_000;
+/** Extension → the family it is sent as. Everything else is rejected client-side. */
+const ALLOWED_EXTENSIONS: Readonly<Record<string, 'image' | 'video' | 'document'>> = {
+  jpg: 'image', jpeg: 'image', png: 'image', webp: 'image',
+  mp4: 'video', '3gp': 'video',
+  pdf: 'document', doc: 'document', docx: 'document', xls: 'document', xlsx: 'document',
+  ppt: 'document', pptx: 'document', txt: 'document', csv: 'document', zip: 'document',
+  mp3: 'document', ogg: 'document', m4a: 'document',
+};
 
 /** What the composer's file picker offers. */
-export const WHATSAPP_ACCEPT =
-  'image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar';
+export const WHATSAPP_ACCEPT = Object.keys(ALLOWED_EXTENSIONS).map((ext) => `.${ext}`).join(',');
+export const WHATSAPP_ALLOWED_EXTENSIONS_LABEL = Object.keys(ALLOWED_EXTENSIONS).join(', ');
 
-/** The backend's message when the caller has no number and no company default. */
-const NO_NUMBER_ASSIGNED = /no whatsapp number is assigned/i;
+// ─────────────── ids ───────────────
 
-// ─────────────── chats ───────────────
+/**
+ * A fresh idempotency key for one send. `crypto.randomUUID` needs a secure
+ * context, so plain-http deployments fall back to `getRandomValues`.
+ */
+export function newClientMessageId(): string {
+  const c = globalThis.crypto;
+  if (typeof c?.randomUUID === 'function') return c.randomUUID();
+  const bytes = c.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 
-/** `+201012345678` — rendered `dir="ltr"`. */
+// ─────────────── phones ───────────────
+
+/** `+201012345678` — render with `dir="ltr"`. */
 export function formatWhatsAppPhone(phone: string | null | undefined): string {
   const digits = (phone ?? '').replace(/\D+/g, '');
   return digits ? `+${digits}` : '';
 }
 
+/**
+ * Normalises user input to `+<digits>` when it is a plausible international
+ * number (8–15 digits, E.164), else `null`. A leading `00` counts as `+`.
+ */
+export function normalizeInternationalPhone(raw: string | null | undefined): string | null {
+  const digits = (raw ?? '').trim().replace(/^00/, '').replace(/\D+/g, '');
+  return /^[1-9]\d{7,14}$/.test(digits) ? `+${digits}` : null;
+}
+
+/**
+ * A number to message: international (`+201012345678`, 8–15 digits) → `+<digits>`,
+ * or a local Egyptian number (`01012345678`) passed through as digits — the
+ * backend accepts both. `null` when neither.
+ */
+export function normalizeRecipientPhone(raw: string | null | undefined): string | null {
+  const value = (raw ?? '').trim();
+  const digits = value.replace(/\D+/g, '');
+  if (!value.startsWith('+') && !value.startsWith('00') && /^0\d{9,10}$/.test(digits)) return digits;
+  return normalizeInternationalPhone(value);
+}
+
+// ─────────────── chats ───────────────
+
 /** Customer name → WhatsApp profile name → `+phone`. */
-export function chatDisplayName(chat: Pick<WhatsAppChat, 'customerName' | 'contactName' | 'phone'>): string {
+export function chatDisplayName(chat: Pick<WaChat, 'customerName' | 'contactName' | 'phone'>): string {
   return chat.customerName?.trim() || chat.contactName?.trim() || formatWhatsAppPhone(chat.phone);
 }
 
-/** A registered customer is addressed by id; anyone else by phone. */
-export function recipientForChat(chat: Pick<WhatsAppChat, 'customerId' | 'phone'>): WhatsAppRecipient {
-  return chat.customerId ? { customerId: chat.customerId } : { phone: chat.phone };
+/** Newest activity first, ties by id — the order `GET /chats` returns. */
+export function compareChatsByActivity(a: WaChat, b: WaChat): number {
+  const at = parseUtc(a.lastMessageAt)?.getTime() ?? 0;
+  const bt = parseUtc(b.lastMessageAt)?.getTime() ?? 0;
+  return bt - at || b.id - a.id;
 }
 
 // ─────────────── messages ───────────────
 
 /** Rendering families — Wavex has a few aliases per family. */
-export type WhatsAppMediaKind =
+export type WaMediaKind =
   | 'text'
   | 'image'
   | 'video'
@@ -71,7 +121,7 @@ export type WhatsAppMediaKind =
   | 'contact'
   | 'other';
 
-export function mediaKindOf(type: WhatsAppMessageType | null | undefined): WhatsAppMediaKind {
+export function mediaKindOf(type: WaMessageType | null | undefined): WaMediaKind {
   switch ((type ?? 'text').toLowerCase()) {
     case 'text':
     case 'chat':
@@ -99,7 +149,7 @@ export function mediaKindOf(type: WhatsAppMessageType | null | undefined): Whats
   }
 }
 
-export const MEDIA_KIND_ICON: Record<Exclude<WhatsAppMediaKind, 'text'>, string> = {
+export const MEDIA_KIND_ICON: Record<Exclude<WaMediaKind, 'text'>, string> = {
   image: 'fa-regular fa-image',
   video: 'fa-solid fa-video',
   audio: 'fa-solid fa-microphone',
@@ -110,8 +160,25 @@ export const MEDIA_KIND_ICON: Record<Exclude<WhatsAppMediaKind, 'text'>, string>
   other: 'fa-solid fa-paperclip',
 };
 
-export function isOutgoing(m: Pick<WhatsAppMessage, 'direction'>): boolean {
+export function isOutgoing(m: Pick<WaMessage, 'direction'>): boolean {
   return m.direction === 'Outgoing';
+}
+
+/**
+ * Delivery progress only moves forward (Sent → Delivered → Read). `Failed`
+ * may replace Pending / Sent, never a confirmed delivery.
+ */
+const STATUS_RANK: Readonly<Record<WaMessageStatus, number>> = {
+  Pending: 0,
+  Sent: 1,
+  Failed: 1.5,
+  Delivered: 2,
+  Read: 3,
+  Received: 3,
+};
+
+export function advanceStatus(current: WaMessageStatus, next: WaMessageStatus): WaMessageStatus {
+  return STATUS_RANK[next] > STATUS_RANK[current] ? next : current;
 }
 
 export interface MessageStatusMeta {
@@ -122,7 +189,7 @@ export interface MessageStatusMeta {
 }
 
 /** WhatsApp-style ticks for outgoing messages; `null` for incoming ones. */
-export function messageStatusMeta(status: WhatsAppMessageStatus): MessageStatusMeta | null {
+export function messageStatusMeta(status: WaMessageStatus): MessageStatusMeta | null {
   switch (status) {
     case 'Pending':
       return { icon: 'fa-regular fa-clock', tone: 'muted', labelKey: 'whatsapp.message.status.Pending' };
@@ -139,18 +206,22 @@ export function messageStatusMeta(status: WhatsAppMessageStatus): MessageStatusM
   }
 }
 
-/** The message type a file will be sent as — used for the optimistic bubble. */
-export function messageTypeForFile(file: File): WhatsAppMessageType {
-  const mime = file.type.toLowerCase();
-  if (mime.startsWith('image/')) return 'image';
-  if (mime.startsWith('video/')) return 'video';
-  if (mime.startsWith('audio/')) return 'audio';
-  return 'document';
+// ─────────────── attachments ───────────────
+
+export function fileExtension(name: string): string {
+  const dot = name.lastIndexOf('.');
+  return dot >= 0 ? name.slice(dot + 1).toLowerCase() : '';
 }
 
-export type AttachmentProblem = 'empty' | 'tooLarge';
+/** The message type a file will be sent as — used for the optimistic bubble. */
+export function messageTypeForFile(file: File): WaMessageType {
+  return ALLOWED_EXTENSIONS[fileExtension(file.name)] ?? 'document';
+}
+
+export type AttachmentProblem = 'empty' | 'tooLarge' | 'type';
 
 export function validateAttachment(file: File): AttachmentProblem | null {
+  if (!ALLOWED_EXTENSIONS[fileExtension(file.name)]) return 'type';
   if (file.size === 0) return 'empty';
   if (file.size > WHATSAPP_MAX_FILE_BYTES) return 'tooLarge';
   return null;
@@ -180,7 +251,7 @@ export function cairoDayKey(value: string | Date | null | undefined): string {
   return date ? DAY_KEY_FORMAT.format(date) : '';
 }
 
-export interface MessageDayGroup<T extends WhatsAppMessage = WhatsAppMessage> {
+export interface MessageDayGroup<T extends WaMessage = WaMessage> {
   key: string;
   /** First message's timestamp — what the day separator formats. */
   date: string;
@@ -188,7 +259,7 @@ export interface MessageDayGroup<T extends WhatsAppMessage = WhatsAppMessage> {
 }
 
 /** Splits an oldest → newest list into Cairo calendar days. */
-export function groupMessagesByDay<T extends WhatsAppMessage>(messages: readonly T[]): MessageDayGroup<T>[] {
+export function groupMessagesByDay<T extends WaMessage>(messages: readonly T[]): MessageDayGroup<T>[] {
   const groups: MessageDayGroup<T>[] = [];
   for (const m of messages) {
     const key = cairoDayKey(m.sentAt);
@@ -208,52 +279,71 @@ export function relativeDay(dayKey: string, now = new Date()): 'today' | 'yester
 
 // ─────────────── numbers ───────────────
 
-export type StatusTone = 'success' | 'warning' | 'danger' | 'gray';
+/** Status-dot colour: WORKING green, connecting amber, needs relink red, banned dark. */
+export type StatusTone = 'success' | 'warning' | 'danger' | 'dark' | 'gray';
 
 export interface InstanceStatusMeta {
   tone: StatusTone;
   labelKey: string;
 }
 
-export function isNumberWorking(status: WhatsAppInstanceStatus | null | undefined): boolean {
-  return status === 'WORKING';
-}
-
-/** Badge colour + label for a number's connection state. */
-export function instanceStatusMeta(status: WhatsAppInstanceStatus | null | undefined): InstanceStatusMeta {
+export function instanceStatusMeta(status: WaNumberStatus['status'] | null | undefined): InstanceStatusMeta {
   switch (status) {
     case 'WORKING':
       return { tone: 'success', labelKey: 'whatsapp.instanceStatus.WORKING' };
-    case 'QR_REQUIRED':
-      return { tone: 'warning', labelKey: 'whatsapp.instanceStatus.QR_REQUIRED' };
     case 'CONNECTING':
     case 'INITIALIZING':
       return { tone: 'warning', labelKey: 'whatsapp.instanceStatus.CONNECTING' };
+    case 'QR_REQUIRED':
     case 'DISCONNECTED':
       return { tone: 'danger', labelKey: 'whatsapp.instanceStatus.DISCONNECTED' };
     case 'BANNED':
-      return { tone: 'danger', labelKey: 'whatsapp.instanceStatus.BANNED' };
+      return { tone: 'dark', labelKey: 'whatsapp.instanceStatus.BANNED' };
+    case 'NOT_ASSIGNED':
+      return { tone: 'gray', labelKey: 'whatsapp.instanceStatus.NOT_ASSIGNED' };
     default:
-      return { tone: 'gray', labelKey: 'whatsapp.instanceStatus.unknown' };
+      return { tone: 'gray', labelKey: 'whatsapp.instanceStatus.UNKNOWN' };
   }
+}
+
+/** A channel the admin can still act on (it exists on the provider). */
+export function isChannelActive(instance: Pick<WaInstance, 'existsInWavex'>): boolean {
+  return instance.existsInWavex !== false;
+}
+
+/** The number can be (re)linked with a pairing code: present, not connected, not banned. */
+export function canPair(instance: Pick<WaInstance, 'existsInWavex' | 'status' | 'canSend'>): boolean {
+  return isChannelActive(instance) && !instance.canSend && instance.status !== 'BANNED';
 }
 
 // ─────────────── errors ───────────────
 
-/** 401 on these endpoints = "this customer / chat isn't yours". */
+/**
+ * 401 on these endpoints = "you don't have access" — never a logout (the
+ * auth interceptor only lets a 401 through while the session is valid).
+ */
 export function isPermissionError(err: unknown): boolean {
-  return (err as ApiError | null)?.status === 401;
+  const status = (err as ApiError | null)?.status;
+  return status === 401 || status === 403;
 }
 
-/** `GET /status` answers 400 when the caller has no number to send from. */
-export function isNoNumberAssignedError(err: unknown): boolean {
-  const e = err as ApiError | null;
-  return e?.status === 400 && NO_NUMBER_ASSIGNED.test(e.message ?? '');
+/** Outcome unknown (offline, gateway timeout…): the send may have gone out — retry with the same id. */
+export function isTransientError(err: unknown): boolean {
+  const status = (err as ApiError | null)?.status ?? 0;
+  return status === 0 || status === 502 || status === 503 || status === 504;
+}
+
+/** "already requested … try again in N seconds" → N, else `null`. */
+export function retryAfterSeconds(err: unknown): number | null {
+  const message = (err as ApiError | null)?.message ?? '';
+  const match = /try again in\s+(\d+)\s*s/i.exec(message);
+  return match ? Number(match[1]) : null;
 }
 
 /**
- * User-facing text for a failed WhatsApp call: 401 → the permission message,
- * otherwise the server's own message (400s carry the reason), else `fallback`.
+ * User-facing text for a failed WhatsApp call: permission → the shared
+ * message, otherwise the server's own message (400s carry the reason),
+ * else `fallbackKey`.
  */
 export function whatsappErrorText(
   err: unknown,

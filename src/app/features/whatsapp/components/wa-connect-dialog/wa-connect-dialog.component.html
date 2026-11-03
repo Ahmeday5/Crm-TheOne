@@ -1,0 +1,127 @@
+<app-modal
+  [open]="true"
+  size="md"
+  icon="fa-brands fa-whatsapp"
+  iconTone="success"
+  [title]="(instance() ? 'whatsapp.connect.adminTitle' : 'whatsapp.connect.title') | translate"
+  [closeOnBackdrop]="!requesting()"
+  (closed)="close()">
+
+  @if (instance() && channelPhone()) {
+    <p class="wa-cn__channel">
+      <i class="fa-solid fa-sim-card" aria-hidden="true"></i>
+      {{ 'whatsapp.connect.forChannel' | translate }}
+      <strong dir="ltr">{{ channelPhone() }}</strong>
+      @if (instance()?.assignedUserName; as owner) {
+        <span class="text-muted">· {{ owner }}</span>
+      }
+    </p>
+  }
+
+  @switch (step()) {
+    @case ('phone') {
+      <form class="wa-cn__form" (ngSubmit)="requestCode()" novalidate>
+        <label class="form-label" for="wa-cn-phone">{{ 'whatsapp.connect.phoneLabel' | translate }}</label>
+        <input id="wa-cn-phone" name="phone" type="tel" class="form-control form-control-lg" dir="ltr"
+               autocomplete="tel" inputmode="tel"
+               [class.is-invalid]="phoneInvalid()"
+               [ngModel]="phone()" (ngModelChange)="onPhoneInput($event)" (blur)="touched.set(true)"
+               [attr.aria-describedby]="'wa-cn-phone-hint'" />
+        @if (phoneInvalid()) {
+          <div class="invalid-feedback d-block">{{ 'whatsapp.connect.phoneInvalid' | translate }}</div>
+        } @else {
+          <small id="wa-cn-phone-hint" class="form-text text-muted">{{ 'whatsapp.connect.phoneHint' | translate }}</small>
+        }
+        <button type="submit" class="d-none" aria-hidden="true" tabindex="-1"></button>
+      </form>
+    }
+
+    @case ('code') {
+      <div class="wa-cn__code-wrap">
+        <p class="text-muted mb-2">{{ 'whatsapp.connect.codeLabel' | translate }}</p>
+        <div class="wa-cn__code" dir="ltr" aria-live="polite">
+          @for (chunk of codeChunks(); track $index) {
+            @if ($index > 0) { <span class="wa-cn__dash" aria-hidden="true">-</span> }
+            <span>{{ chunk }}</span>
+          }
+        </div>
+        <div class="wa-cn__code-actions">
+          <button type="button" class="btn btn-sm btn-light" (click)="copyCode()">
+            <i class="fa-regular me-1" [class.fa-copy]="!copied()" [class.fa-circle-check]="copied()"></i>
+            {{ (copied() ? 'whatsapp.connect.copied' : 'whatsapp.connect.copy') | translate }}
+          </button>
+          <span class="wa-cn__timer" [class.is-low]="secondsLeft() <= 30" role="timer">
+            <i class="fa-regular fa-clock" aria-hidden="true"></i>
+            {{ 'whatsapp.connect.expiresIn' | translate: { time: countdown() } }}
+          </span>
+        </div>
+      </div>
+
+      <ol class="wa-cn__steps">
+        <li>{{ 'whatsapp.connect.steps.open' | translate }}</li>
+        <li>{{ 'whatsapp.connect.steps.linkedDevices' | translate }}</li>
+        <li>{{ 'whatsapp.connect.steps.withPhone' | translate }}</li>
+        <li>{{ 'whatsapp.connect.steps.enterCode' | translate }}</li>
+      </ol>
+
+      <p class="wa-cn__waiting" role="status">
+        <span class="spinner-grow spinner-grow-sm text-success" aria-hidden="true"></span>
+        {{ 'whatsapp.connect.waiting' | translate }}
+      </p>
+    }
+
+    @case ('expired') {
+      <div class="wa-cn__expired">
+        <span class="icon-tile lg tone-warning"><i class="fa-regular fa-clock"></i></span>
+        <h6 class="fw-700 mb-1">{{ 'whatsapp.connect.expiredTitle' | translate }}</h6>
+        <p class="text-muted mb-0">{{ 'whatsapp.connect.expiredHint' | translate }}</p>
+      </div>
+    }
+  }
+
+  @if (error(); as message) {
+    <p class="alert alert-danger d-flex gap-2 py-2 mt-3 mb-0" role="alert">
+      <i class="fa-solid fa-circle-exclamation mt-1" aria-hidden="true"></i>
+      <span dir="auto">{{ message }}</span>
+    </p>
+  }
+  @if (cooldown() > 0) {
+    <p class="alert alert-info d-flex gap-2 py-2 mt-2 mb-0" role="status">
+      <i class="fa-regular fa-hourglass-half mt-1" aria-hidden="true"></i>
+      <span>{{ 'whatsapp.connect.cooldown' | translate: { n: cooldown() } }}</span>
+    </p>
+  }
+
+  <ng-container modal-footer>
+    <div class="btn-row w-100 justify-content-end">
+      <button type="button" class="btn btn-light" (click)="close()">
+        {{ 'whatsapp.connect.cancel' | translate }}
+      </button>
+      @switch (step()) {
+        @case ('phone') {
+          <button type="button" class="btn btn-success" (click)="requestCode()" [disabled]="!canRequest()">
+            @if (requesting()) {
+              <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+            } @else {
+              <i class="fa-solid fa-key me-1"></i>
+            }
+            {{ 'whatsapp.connect.getCode' | translate }}
+          </button>
+        }
+        @default {
+          <button type="button" class="btn btn-light" (click)="changeNumber()" [disabled]="requesting()">
+            <i class="fa-solid fa-pen me-1"></i>{{ 'whatsapp.connect.changeNumber' | translate }}
+          </button>
+          <button type="button" class="btn btn-success" (click)="requestCode()" [disabled]="!canRequest()">
+            @if (requesting()) {
+              <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+            } @else {
+              <i class="fa-solid fa-rotate me-1"></i>
+            }
+            {{ 'whatsapp.connect.newCode' | translate }}
+          </button>
+        }
+      }
+    </div>
+  </ng-container>
+</app-modal>

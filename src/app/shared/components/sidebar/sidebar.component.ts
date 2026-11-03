@@ -29,6 +29,7 @@ import { UserRole } from '../../../core/models/auth.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { CompanySettingsService } from '../../../core/services/company-settings.service';
 import { LanguageService } from '../../../core/services/language.service';
+import { NavBadgesService } from '../../../core/services/nav-badges.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
@@ -62,6 +63,8 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
   private auth = inject(AuthService);
   private readonly company = inject(CompanySettingsService);
   private readonly currentRole = this.auth.currentRole;
+  /** Per-item counters published by features (e.g. WhatsApp unread chats). */
+  protected readonly badges = inject(NavBadgesService);
 
   /** White-label brand — dynamic logo + trade name, with a safe fallback. */
   readonly brandLogo = this.company.logoUrl;

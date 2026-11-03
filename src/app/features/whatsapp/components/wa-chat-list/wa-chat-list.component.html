@@ -1,17 +1,18 @@
 <div class="wa-list__head">
   <div class="wa-list__title-row">
-    <h2 class="wa-list__title">
-      {{ 'whatsapp.chats.title' | translate }}
-      @if (store.totalUnread() > 0) {
-        <span class="wa-badge" [attr.aria-label]="'whatsapp.chats.unread' | translate: { n: store.totalUnread() }">
-          {{ store.totalUnread() }}
-        </span>
+    <h2 class="wa-list__title">{{ 'whatsapp.chats.title' | translate }}</h2>
+    <div class="wa-list__tools">
+      <button type="button" class="wa-list__refresh" (click)="store.refresh()" [disabled]="store.refreshing() || store.loading()"
+              [title]="'whatsapp.refresh' | translate" [attr.aria-label]="'whatsapp.refresh' | translate">
+        <i class="fa-solid fa-rotate" [class.fa-spin]="store.refreshing()"></i>
+      </button>
+      @if (canStartChat()) {
+        <button type="button" class="wa-list__new" (click)="newChat.emit()"
+                [title]="'whatsapp.newChat.title' | translate" [attr.aria-label]="'whatsapp.newChat.title' | translate">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
       }
-    </h2>
-    <button type="button" class="wa-list__refresh" (click)="store.refresh()" [disabled]="store.refreshing() || store.loading()"
-            [title]="'whatsapp.refresh' | translate" [attr.aria-label]="'whatsapp.refresh' | translate">
-      <i class="fa-solid fa-rotate" [class.fa-spin]="store.refreshing()"></i>
-    </button>
+    </div>
   </div>
 
   <div class="wa-search" role="search">
@@ -25,6 +26,15 @@
       <button type="button" class="wa-search__clear" (click)="clearSearch()"
               [attr.aria-label]="'whatsapp.chats.clearSearch' | translate">
         <i class="fa-solid fa-xmark"></i>
+      </button>
+    }
+  </div>
+
+  <div class="wa-tabs" role="tablist">
+    @for (f of filters; track f) {
+      <button type="button" role="tab" class="wa-tabs__tab" [class.is-active]="store.filter() === f"
+              [attr.aria-selected]="store.filter() === f" (click)="setFilter(f)">
+        {{ 'whatsapp.chats.filter.' + f | translate }}
       </button>
     }
   </div>
@@ -53,7 +63,10 @@
     </div>
   } @else if (store.chats().length === 0) {
     <div class="wa-list__state">
-      @if (term()) {
+      @if (store.filter() === 'unread' && !term()) {
+        <span class="icon-tile lg tone-success"><i class="fa-solid fa-check-double"></i></span>
+        <p class="text-muted mb-0">{{ 'whatsapp.chats.emptyUnread' | translate }}</p>
+      } @else if (term()) {
         <span class="icon-tile lg tone-primary"><i class="fa-solid fa-magnifying-glass"></i></span>
         <p class="text-muted mb-0">{{ 'whatsapp.chats.emptySearch' | translate }}</p>
       } @else {
@@ -106,10 +119,12 @@
                 }
               </span>
 
-              @if (showOwner() && chat.ownerName) {
+              @if (showChannel() && (chat.instancePhoneNumber || chat.ownerName)) {
                 <span class="wa-chat__owner">
-                  <i class="fa-solid fa-user-tie" aria-hidden="true"></i>
-                  {{ 'whatsapp.chats.onNumberOf' | translate: { name: chat.ownerName } }}
+                  <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+                  @if (chat.instancePhoneNumber) { <span dir="ltr">{{ channelPhone(chat) }}</span> }
+                  @if (chat.instancePhoneNumber && chat.ownerName) { <span aria-hidden="true">·</span> }
+                  @if (chat.ownerName) { <span>{{ chat.ownerName }}</span> }
                 </span>
               }
             </span>

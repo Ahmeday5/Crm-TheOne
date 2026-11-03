@@ -69,7 +69,7 @@
     <time [attr.datetime]="m.sentAt" [title]="m.sentAt | cairoDate">{{ m.sentAt | cairoDate: 'time' }}</time>
     @if (status(); as st) {
       <i class="wa-tick wa-tick--{{ st.tone }} {{ st.icon }}"
-         [title]="st.labelKey | translate"
+         [title]="(failed() && m.errorMessage) || (st.labelKey | translate)"
          role="img" [attr.aria-label]="st.labelKey | translate"></i>
     }
   </span>
@@ -80,7 +80,7 @@
     <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
     <span class="wa-fail__text" dir="auto">{{ m.errorMessage || ('whatsapp.message.status.Failed' | translate) }}</span>
     @if (canRetry()) {
-      <button type="button" class="wa-fail__retry" [disabled]="busy()" (click)="retry.emit()">
+      <button type="button" class="wa-fail__retry" (click)="retry.emit()">
         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
         {{ 'whatsapp.message.retry' | translate }}
       </button>

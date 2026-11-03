@@ -19,6 +19,7 @@
     "@angular/platform-browser-dynamic": "^18.2.0",
     "@angular/router": "^18.2.0",
     "@fortawesome/fontawesome-free": "^7.1.0",
+    "@microsoft/signalr": "8.0.17",
     "@popperjs/core": "^2.11.8",
     "apexcharts": "^3.54.1",
     "bootstrap": "^5.3.8",

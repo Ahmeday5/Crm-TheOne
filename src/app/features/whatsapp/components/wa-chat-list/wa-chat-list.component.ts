@@ -2,16 +2,17 @@ import { ChangeDetectionStrategy, Component, inject, input, output, signal } fro
 import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { WhatsAppChat } from '../../models/whatsapp.models';
-import { WhatsAppChatsStore } from '../../state/whatsapp-chats.store';
+import { WaChat } from '../../models/whatsapp.models';
+import { ChatsFilter, WhatsAppInboxStore } from '../../state/whatsapp-inbox.store';
 import { cairoDayKey, chatDisplayName, formatWhatsAppPhone, relativeDay } from '../../utils/whatsapp.util';
 
 /** Start fetching the next page this close to the end of the list. */
 const LOAD_MORE_THRESHOLD_PX = 160;
 
 /**
- * The inbox's left pane: search + conversations, newest activity first.
- * Reads the page-provided `WhatsAppChatsStore`; emits the picked chat.
+ * The inbox's chats column: search, All / Unread, conversations newest
+ * first with infinite scroll. Reads the page-provided `WhatsAppInboxStore`;
+ * emits the picked chat.
  */
 @Component({
   selector: 'app-wa-chat-list',
@@ -22,11 +23,16 @@ const LOAD_MORE_THRESHOLD_PX = 160;
   styleUrl: './wa-chat-list.component.scss',
 })
 export class WaChatListComponent {
-  protected readonly store = inject(WhatsAppChatsStore);
+  protected readonly store = inject(WhatsAppInboxStore);
 
-  /** Admins see whose number each chat lives on. */
-  readonly showOwner = input(false);
-  readonly selected = output<WhatsAppChat>();
+  /** Admin "All channels" view: tag each chat with its number / owner. */
+  readonly showChannel = input(false);
+  /** Offer "New chat" (hidden when the sending number can't send). */
+  readonly canStartChat = input(true);
+  readonly selected = output<WaChat>();
+  readonly newChat = output<void>();
+
+  protected readonly filters: readonly ChatsFilter[] = ['all', 'unread'];
 
   protected readonly term = signal('');
 
@@ -44,17 +50,25 @@ export class WaChatListComponent {
     if (el.scrollHeight - el.scrollTop - el.clientHeight < LOAD_MORE_THRESHOLD_PX) this.store.loadMore();
   }
 
-  protected name(chat: WhatsAppChat): string {
+  protected setFilter(filter: ChatsFilter): void {
+    this.store.setFilter(filter);
+  }
+
+  protected name(chat: WaChat): string {
     return chatDisplayName(chat);
   }
 
   /** Registered customers and named contacts get an initial; bare numbers get an icon. */
-  protected hasName(chat: WhatsAppChat): boolean {
+  protected hasName(chat: WaChat): boolean {
     return !!(chat.customerName?.trim() || chat.contactName?.trim());
   }
 
-  protected phone(chat: WhatsAppChat): string {
+  protected phone(chat: WaChat): string {
     return formatWhatsAppPhone(chat.phone);
+  }
+
+  protected channelPhone(chat: WaChat): string {
+    return formatWhatsAppPhone(chat.instancePhoneNumber);
   }
 
   /** `today` → time, `yesterday` → word, older → date. */

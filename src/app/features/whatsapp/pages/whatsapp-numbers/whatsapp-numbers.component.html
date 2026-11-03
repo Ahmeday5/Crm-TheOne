@@ -1,19 +1,37 @@
-<section class="wa-numbers">
-  <header class="section-header d-flex align-items-center gap-3 mb-4">
-    <span class="icon-tile xl tone-success"><i class="fa-brands fa-whatsapp"></i></span>
-    <div class="min-w-0">
-      <h2 class="fw-700 mb-1">{{ 'whatsapp.numbers.title' | translate }}</h2>
-      <p class="text-muted mb-0">{{ 'whatsapp.numbers.subtitle' | translate }}</p>
-    </div>
-  </header>
+<app-page-header
+  [title]="'whatsapp.numbers.title' | translate"
+  [subtitle]="'whatsapp.numbers.subtitle' | translate"
+  icon="fa-solid fa-sim-card">
+  <div class="btn-row">
+    <a class="btn btn-light btn-sm" routerLink="/whatsapp">
+      <i class="fa-brands fa-whatsapp me-1"></i>{{ 'whatsapp.numbers.backToInbox' | translate }}
+    </a>
+    @if (tab() === 'numbers') {
+      <button type="button" class="btn btn-success btn-sm" (click)="load()" [disabled]="loading()">
+        <i class="fa-solid fa-rotate me-1" [class.fa-spin]="loading()"></i>{{ 'whatsapp.refresh' | translate }}
+      </button>
+    }
+  </div>
+</app-page-header>
 
-  <!-- How to add a number (pairing happens on Wavex, never in the CRM) -->
+<div class="wa-numbers__tabs mb-4" role="tablist">
+  <button type="button" role="tab" class="wa-numbers__tab" [class.is-active]="tab() === 'numbers'"
+          [attr.aria-selected]="tab() === 'numbers'" (click)="setTab('numbers')">
+    <i class="fa-solid fa-sim-card" aria-hidden="true"></i>{{ 'whatsapp.numbers.tabs.numbers' | translate }}
+  </button>
+  <button type="button" role="tab" class="wa-numbers__tab" [class.is-active]="tab() === 'diagnostics'"
+          [attr.aria-selected]="tab() === 'diagnostics'" (click)="setTab('diagnostics')">
+    <i class="fa-solid fa-stethoscope" aria-hidden="true"></i>{{ 'whatsapp.numbers.tabs.diagnostics' | translate }}
+  </button>
+</div>
+
+@if (tab() === 'diagnostics') {
+  <app-wa-diagnostics />
+} @else {
+  <!-- How to add a number -->
   <div class="wa-numbers__hint mb-4" role="note">
     <i class="fa-solid fa-circle-info wa-numbers__hint-icon" aria-hidden="true"></i>
     <p class="mb-0">{{ 'whatsapp.numbers.addHint' | translate }}</p>
-    <button type="button" class="btn btn-success btn-sm wa-numbers__hint-btn" (click)="load()" [disabled]="loading()">
-      <i class="fa-solid fa-rotate me-1" [class.fa-spin]="loading()"></i>{{ 'whatsapp.refresh' | translate }}
-    </button>
   </div>
 
   <!-- KPIs -->
@@ -96,13 +114,17 @@
                 <th>{{ 'whatsapp.numbers.col.number' | translate }}</th>
                 <th>{{ 'whatsapp.numbers.col.status' | translate }}</th>
                 <th>{{ 'whatsapp.numbers.col.employee' | translate }}</th>
+                <th>{{ 'whatsapp.numbers.col.lastSeen' | translate }}</th>
+                <th class="text-center">{{ 'whatsapp.numbers.col.chats' | translate }}</th>
+                <th class="text-center">{{ 'whatsapp.numbers.col.unread' | translate }}</th>
                 <th class="text-end rt-actions">{{ 'whatsapp.numbers.col.actions' | translate }}</th>
               </tr>
             </thead>
             <tbody>
               @for (row of rows(); track row.id) {
                 @let st = status(row);
-                <tr>
+                @let isActive = active(row);
+                <tr [class.wa-numbers__removed]="!isActive">
                   <td>
                     <div class="d-flex flex-wrap align-items-center gap-2">
                       <span class="fw-700" dir="ltr">{{ phone(row) }}</span>
@@ -115,9 +137,12 @@
                     }
                   </td>
                   <td>
-                    <span class="badge wa-status {{ st.tone }}">
-                      <span class="wa-status__dot" aria-hidden="true"></span>{{ st.labelKey | translate }}
+                    <span class="wa-status">
+                      <span class="wa-dot wa-dot--{{ st.tone }}" aria-hidden="true"></span>{{ st.labelKey | translate }}
                     </span>
+                    @if (row.pairingExpiresAt && !row.canSend) {
+                      <small class="text-muted d-block">{{ 'whatsapp.numbers.pairingActive' | translate }}</small>
+                    }
                   </td>
                   <td>
                     @if (row.assignedUserId) {
@@ -129,25 +154,46 @@
                       <span class="text-muted">{{ 'whatsapp.numbers.unassigned' | translate }}</span>
                     }
                   </td>
+                  <td>
+                    <span class="text-muted small">{{ row.lastSeenAt | cairoDate: 'datetime' }}</span>
+                  </td>
+                  <td class="text-center">{{ row.chatsCount || 0 }}</td>
+                  <td class="text-center">
+                    @if (row.unreadChatsCount > 0) {
+                      <span class="badge success">{{ row.unreadChatsCount }}</span>
+                    } @else {
+                      <span class="text-muted">0</span>
+                    }
+                  </td>
                   <td class="text-end">
-                    <div class="btn-row justify-content-end">
-                      <button type="button" class="btn btn-sm btn-light" (click)="openAssign(row)"
-                              [disabled]="unlinkingId() === row.id">
-                        <i class="fa-solid" [class.fa-link]="!row.assignedUserId" [class.fa-user-pen]="!!row.assignedUserId"></i>
-                        {{ (row.assignedUserId ? 'whatsapp.numbers.change' : 'whatsapp.numbers.assign') | translate }}
-                      </button>
-                      @if (row.assignedUserId) {
-                        <button type="button" class="btn btn-sm btn-light text-danger" (click)="confirmUnlink(row)"
+                    @if (isActive) {
+                      <div class="btn-row justify-content-end">
+                        @if (pairable(row)) {
+                          <button type="button" class="btn btn-sm btn-light text-success" (click)="pairing.set(row)">
+                            <i class="fa-solid fa-key"></i>
+                            {{ 'whatsapp.connect.getCode' | translate }}
+                          </button>
+                        }
+                        <button type="button" class="btn btn-sm btn-light" (click)="openAssign(row)"
                                 [disabled]="unlinkingId() === row.id">
-                          @if (unlinkingId() === row.id) {
-                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                          } @else {
-                            <i class="fa-solid fa-link-slash"></i>
-                          }
-                          {{ 'whatsapp.numbers.unlink' | translate }}
+                          <i class="fa-solid" [class.fa-link]="!row.assignedUserId" [class.fa-user-pen]="!!row.assignedUserId"></i>
+                          {{ (row.assignedUserId ? 'whatsapp.numbers.change' : 'whatsapp.numbers.assign') | translate }}
                         </button>
-                      }
-                    </div>
+                        @if (row.assignedUserId) {
+                          <button type="button" class="btn btn-sm btn-light text-danger" (click)="confirmUnlink(row)"
+                                  [disabled]="unlinkingId() === row.id">
+                            @if (unlinkingId() === row.id) {
+                              <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                            } @else {
+                              <i class="fa-solid fa-link-slash"></i>
+                            }
+                            {{ 'whatsapp.numbers.unlink' | translate }}
+                          </button>
+                        }
+                      </div>
+                    } @else {
+                      <span class="text-muted small">{{ 'whatsapp.channels.removedHint' | translate }}</span>
+                    }
                   </td>
                 </tr>
               }
@@ -157,12 +203,16 @@
       }
     </div>
   </div>
-</section>
+}
 
 @if (assigning(); as instance) {
   <app-wa-assign-number-dialog
     [instance]="instance"
-    [instances]="instances()"
+    [instances]="session.channels()"
     (saved)="onAssigned($event)"
     (cancelled)="assigning.set(null)" />
+}
+
+@if (pairing(); as instance) {
+  <app-wa-connect-dialog [instance]="instance" (closed)="pairing.set(null)" />
 }

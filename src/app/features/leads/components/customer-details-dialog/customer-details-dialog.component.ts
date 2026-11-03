@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -28,7 +29,7 @@ export type CustomerDetailsTab = 'details' | 'whatsapp';
 @Component({
   selector: 'app-customer-details-dialog',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, ModalComponent, LoadErrorComponent, WaThreadComponent],
+  imports: [CommonModule, RouterLink, TranslatePipe, ModalComponent, LoadErrorComponent, WaThreadComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-details-dialog.component.html',
   styleUrl: './customer-details-dialog.component.scss',

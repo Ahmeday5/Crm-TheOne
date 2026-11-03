@@ -18,10 +18,20 @@
 
   @if (tab() === 'whatsapp') {
     <app-wa-thread
+      #waThread
       class="cd-whatsapp"
       [source]="whatsappSource()"
       emptyTitleKey="whatsapp.customer.empty"
-      emptyHintKey="whatsapp.customer.emptyHint" />
+      emptyHintKey="whatsapp.customer.emptyHint">
+      @if (waThread.latestChatId(); as chatId) {
+        <div class="cd-wa-bar" waThreadHeader>
+          <a class="cd-wa-bar__link" [routerLink]="['/whatsapp', 'chats', chatId]" (click)="closed.emit()">
+            <i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i>
+            {{ 'whatsapp.customer.openInInbox' | translate }}
+          </a>
+        </div>
+      }
+    </app-wa-thread>
   } @else {
 
   @if (loadError()) {

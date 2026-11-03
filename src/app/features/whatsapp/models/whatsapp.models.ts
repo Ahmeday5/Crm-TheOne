@@ -1,141 +1,264 @@
 /**
- * Contracts for the `/api/WhatsApp/*` endpoints.
+ * Contracts for `/api/WhatsApp/*` and the `/hubs/whatsapp` SignalR hub.
  *
  * The backend fronts Wavex: the browser never sees Wavex or its API key.
  * Every timestamp is UTC (render with `cairoDate`), and `mediaUrl` is
  * server-relative (resolve with `assetUrl`).
  */
 
-/** Delivery state of a message. Incoming messages are always `Received`. */
-export type WhatsAppMessageStatus =
-  | 'Pending'
-  | 'Sent'
-  | 'Delivered'
-  | 'Read'
-  | 'Failed'
-  | 'Received';
+// ─────────────── numbers / channels ───────────────
 
-export type WhatsAppDirection = 'Incoming' | 'Outgoing';
+/** Connection state of a number on Wavex. */
+export type WaInstanceStatus =
+  | 'WORKING'
+  | 'DISCONNECTED'
+  | 'QR_REQUIRED'
+  | 'CONNECTING'
+  | 'INITIALIZING'
+  | 'BANNED'
+  | 'UNKNOWN';
+
+/** `GET /status` — the caller's own sending number, live from the provider. */
+export interface WaNumberStatus {
+  instanceId: string | null;
+  isAssigned: boolean;
+  /** Admin without an own number → the company number. */
+  isDefault: boolean;
+  name: string | null;
+  phoneNumber: string | null;
+  status: WaInstanceStatus | 'NOT_ASSIGNED';
+  /** `true` only while `WORKING`. */
+  canSend: boolean;
+  /** `QR_REQUIRED` or `DISCONNECTED` — the phone must be linked again. */
+  requiresRelink: boolean;
+  lastSeenAt: string | null;
+  lastConnectedAt: string | null;
+  /** A pairing code is active until this time. */
+  pairingExpiresAt: string | null;
+}
+
+/** One company number — a "channel" in the admin inbox. */
+export interface WaInstance {
+  /** Wavex instance id — sent as `instanceId` everywhere, never displayed. */
+  id: string;
+  name: string | null;
+  phoneNumber: string | null;
+  status: WaInstanceStatus;
+  canSend: boolean;
+  requiresRelink: boolean;
+  isDefault: boolean;
+  assignedUserId: string | null;
+  assignedUserName: string | null;
+  lastSeenAt: string | null;
+  lastConnectedAt: string | null;
+  lastSyncedAt: string | null;
+  /** `false` = removed from the provider: shown greyed and read-only. */
+  existsInWavex: boolean;
+  chatsCount: number;
+  unreadChatsCount: number;
+  pairingExpiresAt: string | null;
+}
+
+/** `POST /instances/connect` — the code the employee types on the phone. Never stored or logged. */
+export interface WaPairingCode {
+  instanceId: string;
+  pairingCode: string;
+  expiresInSeconds: number;
+  expiresAt: string;
+}
+
+export interface WaConnectRequest {
+  /** International format, e.g. `+201012345678`. */
+  phone: string;
+  /** Admin only — the channel to link. */
+  instanceId?: string;
+}
+
+/** Body of `PUT /users/{userId}/number` — `null` unassigns. */
+export interface WaAssignNumberRequest {
+  instanceId: string | null;
+}
+
+// ─────────────── chats & messages ───────────────
+
+/** One conversation between one of our numbers and one customer phone. */
+export interface WaChat {
+  id: number;
+  instanceId: string;
+  instancePhoneNumber: string | null;
+  ownerUserId: string | null;
+  ownerName: string | null;
+  /** Digits only, international, e.g. `201012345678`. */
+  phone: string;
+  /** Name from the customer's WhatsApp profile. */
+  contactName: string | null;
+  /** Linked CRM customer, when the phone matches one. */
+  customerId: number | null;
+  customerName: string | null;
+  companyName: string | null;
+  lastMessageAt: string;
+  lastMessagePreview: string | null;
+  unreadCount: number;
+}
+
+/** Delivery state. Incoming messages are always `Received`. */
+export type WaMessageStatus = 'Pending' | 'Sent' | 'Delivered' | 'Read' | 'Failed' | 'Received';
+
+export type WaDirection = 'Incoming' | 'Outgoing';
 
 /** Wavex's message kinds — open-ended, so unknown kinds still type-check. */
-export type WhatsAppMessageType =
+export type WaMessageType =
   | 'text'
   | 'image'
   | 'video'
   | 'audio'
   | 'ptt'
-  | 'voice'
   | 'document'
   | 'sticker'
   | 'location'
   | 'contact'
   | (string & {});
 
-/** Connection state of a linked number on Wavex. */
-export type WhatsAppInstanceStatus =
-  | 'WORKING'
-  | 'QR_REQUIRED'
-  | 'CONNECTING'
-  | 'INITIALIZING'
-  | 'DISCONNECTED'
-  | 'BANNED'
-  | (string & {});
-
-/** One conversation between one of our numbers and one customer phone. */
-export interface WhatsAppChat {
-  id: number;
-  /** Our number the conversation lives on. */
-  instanceId: string;
-  ownerUserId: string | null;
-  /** Employee who owns that number — shown to Admins only. */
-  ownerName: string | null;
-  /** Customer phone in international form, no `+`. */
-  phone: string;
-  /** Name from the customer's WhatsApp profile. */
-  contactName: string | null;
-  /** `null` while the phone isn't registered as a customer. */
-  customerId: number | null;
-  customerName: string | null;
-  companyName: string | null;
-  lastMessageAt: string | null;
-  lastMessagePreview: string | null;
-  unreadCount: number;
-}
-
-export interface WhatsAppMessage {
+export interface WaMessage {
   id: number;
   chatId: number;
-  direction: WhatsAppDirection;
-  messageType: WhatsAppMessageType;
+  externalMessageId: string | null;
+  /** The id we generated when sending — matches an optimistic bubble to its stored row. */
+  clientMessageId: string | null;
+  direction: WaDirection;
+  messageType: WaMessageType;
   /** Body, or the caption of a media message. */
   text: string | null;
-  /** Server-relative — present only on outgoing media. */
+  /** Server-relative; `null` for incoming media (provider limitation). */
   mediaUrl: string | null;
   fileName: string | null;
-  status: WhatsAppMessageStatus;
+  status: WaMessageStatus;
   sentById: string | null;
+  /** CRM user who sent it — `null` when sent from the phone, or incoming. */
   sentByName: string | null;
   sentAt: string;
   deliveredAt: string | null;
   readAt: string | null;
-  /** Failure reason when `status === 'Failed'`. */
+  /** Reason when `status === 'Failed'`. */
   errorMessage: string | null;
 }
 
-/** `GET /WhatsApp/status` — the caller's sending number. */
-export interface WhatsAppNumberStatus {
-  instanceId: string;
-  /** `true` when the caller has no own number and sends from the company's. */
-  isDefault: boolean;
-  phoneNumber: string | null;
-  status: WhatsAppInstanceStatus;
+export interface Pagination<T> {
+  pageIndex: number;
+  pageSize: number;
+  count: number;
+  data: T[];
 }
 
-/** `GET /WhatsApp/instances` (Admin) — one linked number. */
-export interface WhatsAppInstance {
-  /** Opaque Wavex id — used in requests only, never displayed. */
-  id: string;
-  name: string | null;
-  phoneNumber: string | null;
-  status: WhatsAppInstanceStatus;
-  /** The company's default sending number. */
-  isDefault: boolean;
-  assignedUserId: string | null;
-  assignedUserName: string | null;
+/** Query for `GET /chats` — `pageIndex` is 1-based, `pageSize` ≤ 100. */
+export interface WaChatsQuery {
+  pageIndex: number;
+  pageSize: number;
+  search?: string;
+  /** Admin only — one channel's chats. */
+  instanceId?: string;
+  unreadOnly?: boolean;
 }
 
-/** Query for `GET /WhatsApp/chats` (PascalCase, as the API expects). */
-export interface WhatsAppChatsQuery {
-  PageIndex: number;
-  PageSize: number;
-  Search?: string;
+/** Query for `GET /chats/{id}/messages` — results are oldest first. */
+export interface WaMessagesQuery {
+  take: number;
+  /** Only messages older than this id (history paging). */
+  beforeId?: number;
 }
 
-/**
- * Who a message goes to: a registered customer, or a bare phone for a chat
- * that isn't linked to a customer yet.
- */
-export type WhatsAppRecipient = { customerId: number } | { phone: string };
+/** Exactly one target per send. */
+export type WaSendTarget = { chatId: number } | { customerId: number } | { phone: string };
 
-export interface SendWhatsAppTextRequest {
-  recipient: WhatsAppRecipient;
+export interface WaSendTextRequest {
+  target: WaSendTarget;
   text: string;
+  /** Idempotency key — reuse it only when retrying after a network error. */
+  clientMessageId: string;
+  /** Admin only — the number to send from (new chats). */
+  instanceId?: string;
 }
 
-export interface SendWhatsAppMediaRequest {
-  recipient: WhatsAppRecipient;
+export interface WaSendMediaRequest {
+  target: WaSendTarget;
   file: File;
   caption?: string;
+  clientMessageId: string;
+  instanceId?: string;
 }
 
-/** Body of `PUT /WhatsApp/users/{userId}/number` — `null` unlinks. */
-export interface AssignWhatsAppNumberRequest {
+// ─────────────── real-time hub events ───────────────
+
+/** `whatsappMessage` — a new incoming or outgoing message (any sender). */
+export interface WaMessageEvent {
+  instanceId: string;
+  chat: WaChat;
+  message: WaMessage;
+}
+
+/** `whatsappMessageStatus` — delivery progress of an outgoing message. */
+export interface WaMessageStatusEvent {
+  instanceId: string;
+  chatId: number;
+  messageId: number;
+  externalMessageId: string | null;
+  status: WaMessageStatus;
+  deliveredAt: string | null;
+  readAt: string | null;
+}
+
+/** `whatsappInstanceStatus` — a number's connection changed. */
+export interface WaInstanceStatusEvent {
+  instance: WaInstance;
+  previousStatus: string | null;
+  becameConnected: boolean;
+}
+
+// ─────────────── admin diagnostics ───────────────
+
+/** `GET /diagnostics` (Admin) — is the integration wired correctly end to end? */
+export interface WaDiagnostics {
+  apiKeyConfigured: boolean;
+  webhookSecretConfigured: boolean;
+  defaultInstanceId: string | null;
+  /** What the configured Wavex account actually holds. */
+  wavexAccountInstances: { id: string; phoneNumber: string | null; status: string | null }[];
+  /** Set when the provider couldn't be reached / rejected the key. */
+  wavexError: string | null;
+  localInstances: WaDiagnosticsLocalInstance[];
+  pendingWebhookEvents: number;
+  failedWebhookEvents: number;
+  recentWebhookEvents: WaWebhookEvent[];
+}
+
+export interface WaDiagnosticsLocalInstance {
+  instanceId: string;
+  phoneNumber: string | null;
+  status: string | null;
+  /** `false` = stored locally but missing from the configured Wavex account. */
+  inCurrentWavexAccount: boolean;
+  ownerUserId: string | null;
+  ownerName: string | null;
+  chatsCount: number;
+}
+
+export interface WaWebhookEvent {
+  id: number;
+  eventType: string;
   instanceId: string | null;
+  instancePhoneNumber: string | null;
+  instanceOwnerName: string | null;
+  attempts: number;
+  receivedAt: string;
+  processedAt: string | null;
+  lastError: string | null;
 }
 
-/** An employee who can own a number (merged from the role rosters). */
-export interface WhatsAppEmployee {
+// ─────────────── UI-side ───────────────
+
+/** Someone who can own a number (from `GET /Auth/GetAllUsers`). */
+export interface WaEmployee {
   userId: string;
   fullName: string;
-  role: 'Admin' | 'Sales' | 'Support';
+  role: 'Sales' | 'Support';
 }

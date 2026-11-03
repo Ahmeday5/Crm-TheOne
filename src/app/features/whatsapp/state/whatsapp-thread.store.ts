@@ -1,362 +1,520 @@
-import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Observable, Subject, Subscription, exhaustMap, finalize } from 'rxjs';
+import { Observable, Subject, Subscription, timer } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../core/i18n';
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
-import { parseUtc } from '../../../shared/pipes/cairo-date.pipe';
-import { WhatsAppMessage, WhatsAppRecipient } from '../models/whatsapp.models';
+import {
+  WaChat,
+  WaMessage,
+  WaMessageEvent,
+  WaMessageStatusEvent,
+  WaSendTarget,
+} from '../models/whatsapp.models';
 import { WhatsAppApiService } from '../services/whatsapp-api.service';
-import { pollWhileVisible } from '../utils/poll-while-visible.util';
+import { WhatsAppRealtimeService } from '../services/whatsapp-realtime.service';
+import { WindowFocusService } from '../services/window-focus.service';
 import {
   WHATSAPP_MAX_TAKE,
-  WHATSAPP_TAKE_STEP,
-  WHATSAPP_THREAD_POLL_MS,
-  isPermissionError,
+  WHATSAPP_MESSAGES_TAKE,
+  advanceStatus,
   isOutgoing,
+  isPermissionError,
+  isTransientError,
   mediaKindOf,
   messageTypeForFile,
+  newClientMessageId,
   whatsappErrorText,
 } from '../utils/whatsapp.util';
+import { WhatsAppSessionStore } from './whatsapp-session.store';
 
 /**
- * Where a thread's messages come from — and who its replies go to. A chat's
- * `recipient` is `null` until the chat's details are known (e.g. a deep link
- * to a chat outside the loaded list): it can be read, not answered.
+ * Where a thread's messages come from and where its replies go:
+ * - `chat`: one inbox conversation — replies go by `chatId`, so the number is
+ *   always the chat's own (no picker needed, admins included);
+ * - `customer`: everything with one customer (customer page tab) — replies go
+ *   by `customerId`.
  */
 export type ThreadSource =
-  | { kind: 'chat'; chatId: number; recipient: WhatsAppRecipient | null }
+  | { kind: 'chat'; chatId: number; instanceId: string | null; unreadCount: number | null }
   | { kind: 'customer'; customerId: number };
 
-/** What the user asked to send — kept so a failed send can be retried as-is. */
-interface LocalPayload {
-  key: string;
-  createdAt: number;
+/** What the user asked to send — kept so a failed send can be retried as-is (file included). */
+export interface OutgoingPayload {
+  clientMessageId: string;
   text: string;
   file: File | null;
-  /** Object URL for an image preview; revoked once the bubble goes away. */
+  /** Object URL for an image preview; revoked once no bubble needs it. */
   previewUrl: string | null;
+  /**
+   * The last attempt's outcome is unknown (offline, gateway timeout): a retry
+   * must reuse the same `clientMessageId` so the backend can't send twice.
+   */
+  reuseIdOnRetry: boolean;
 }
 
-/** A message as rendered: server rows, plus optimistic ones still in flight. */
-export interface ThreadMessage extends WhatsAppMessage {
-  /** Present only on optimistic messages the server hasn't confirmed. */
-  local?: LocalPayload;
+/** A rendered message: server rows plus optimistic ones still in flight. */
+export interface ThreadMessage extends WaMessage {
+  /** Present while this bubble can be re-sent with its original payload. */
+  local?: OutgoingPayload;
 }
 
-/** A server-side "Failed" copy must be this close in time to replace a local one. */
-const RECONCILE_WINDOW_MS = 2 * 60_000;
+/** Automatic retries (same id) after a network error, before showing "Failed". */
+const TRANSIENT_RETRY_DELAYS_MS = [2_000, 5_000];
 
 /**
  * State for one WhatsApp conversation — the inbox's open chat or a
  * customer's WhatsApp tab. Provided per thread component, never at root.
  *
- * - Server rows are the source of truth for the latest `take` messages; a poll
- *   every 5 s (paused while the tab is hidden) replaces them wholesale.
- * - Sending is optimistic: the bubble appears at once with a 🕓, the send
- *   button stays locked until the API answers (Wavex delays 3–12 s on
- *   purpose), then the bubble is swapped for the stored message.
- * - A failed send stays as a red bubble with the reason and a retry, until the
- *   server's own "Failed" copy shows up on a later poll.
- * - Chat threads are marked read on open and whenever new incoming messages
- *   arrive while open.
+ * - History: newest 50 first; older pages by `beforeId` (customer threads
+ *   widen `take` instead — that endpoint has no cursor). Fewer rows than
+ *   asked = the beginning of the conversation.
+ * - Live: hub messages are appended (deduped by id, replacing the optimistic
+ *   bubble with the same `clientMessageId`); status events move ticks forward
+ *   only. After a reconnect the latest page is merged back in.
+ * - Sending never blocks the composer: each message is its own optimistic
+ *   bubble with a fresh `clientMessageId`, replaced by the stored row.
+ * - Reading: the chat is marked read on open when it has unread messages,
+ *   and on each incoming message while the window is focused.
  */
 @Injectable()
 export class WhatsAppThreadStore {
   private readonly api = inject(WhatsAppApiService);
+  private readonly realtime = inject(WhatsAppRealtimeService);
+  private readonly session = inject(WhatsAppSessionStore);
+  private readonly focus = inject(WindowFocusService);
   private readonly auth = inject(AuthService);
   private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly source = signal<ThreadSource | null>(null);
-  private readonly serverMessages = signal<WhatsAppMessage[]>([]);
+  /** Stored messages, ascending by id, unique. */
+  private readonly server = signal<WaMessage[]>([]);
+  /** Optimistic bubbles not yet stored. */
   private readonly pending = signal<ThreadMessage[]>([]);
-  private readonly take = signal(WHATSAPP_TAKE_STEP);
+  /** Payloads that can still be re-sent, by `clientMessageId`. */
+  private readonly outbox = signal<ReadonlyMap<string, OutgoingPayload>>(new Map());
+  /** Customer threads page by widening `take`. */
+  private customerTake = WHATSAPP_MESSAGES_TAKE;
+  /** Instance learned from hub events, for deep-linked chats. */
+  private readonly learnedInstanceId = signal<string | null>(null);
 
-  /** First load of the current source. */
   readonly loading = signal(false);
   readonly loadingOlder = signal(false);
-  /** A send is in flight — the composer's send button is locked meanwhile. */
-  readonly sending = signal(false);
-  /** Load failure text (the thread stays usable for sending). */
+  /** The whole history is loaded ("Beginning of conversation"). */
+  readonly reachedStart = signal(false);
+  /** Customer threads stop at the API's `take` cap. */
+  readonly atHistoryLimit = signal(false);
   readonly error = signal<string | null>(null);
-  /** 401: this chat / customer isn't the caller's. Polling stops. */
+  /** 401: this chat / customer isn't the caller's. */
   readonly forbidden = signal(false);
 
-  readonly messages = computed<ThreadMessage[]>(() => [...this.serverMessages(), ...this.pending()]);
-  /** The thread has someone to reply to and the caller is allowed to. */
-  readonly canCompose = computed(() => {
-    const source = this.source();
-    if (!source || this.forbidden()) return false;
-    return source.kind === 'customer' || !!source.recipient;
+  readonly messages = computed<ThreadMessage[]>(() => {
+    const outbox = this.outbox();
+    const stored = this.server().map((m): ThreadMessage => {
+      const local = m.status === 'Failed' && m.clientMessageId ? outbox.get(m.clientMessageId) : undefined;
+      return local ? { ...m, local } : m;
+    });
+    return [...stored, ...this.pending()];
   });
   readonly isEmpty = computed(() => !this.loading() && this.messages().length === 0);
-
-  /** The server returned a full window, so older messages may exist. */
   readonly canLoadOlder = computed(
-    () => this.serverMessages().length >= this.take() && this.take() < WHATSAPP_MAX_TAKE,
-  );
-  /** We hold the API's maximum window — older history isn't reachable here. */
-  readonly atHistoryLimit = computed(
-    () => this.take() >= WHATSAPP_MAX_TAKE && this.serverMessages().length >= WHATSAPP_MAX_TAKE,
+    () => !this.reachedStart() && !this.atHistoryLimit() && this.server().length > 0,
   );
 
-  private readonly sentSubject = new Subject<WhatsAppMessage>();
-  /** Each message the server confirmed as sent from this thread. */
-  readonly sent$: Observable<WhatsAppMessage> = this.sentSubject.asObservable();
+  /** The number replies go out from, when known. */
+  readonly instanceId = computed(() => {
+    const source = this.source();
+    return (source?.kind === 'chat' ? source.instanceId : null) ?? this.learnedInstanceId();
+  });
 
-  /** Bumped on every `connect()`, so late responses for an old source are dropped. */
+  /** Why the composer is locked, or `null` when the thread can send. */
+  readonly blockReason = computed<'forbidden' | 'disconnected' | null>(() => {
+    if (!this.source()) return null;
+    if (this.forbidden()) return 'forbidden';
+    return this.session.canSendFrom(this.instanceId()) ? null : 'disconnected';
+  });
+
+  /** The conversation the latest message belongs to — "Open in inbox" from a customer tab. */
+  readonly latestChatId = computed(() => {
+    const list = this.server();
+    return list.length ? list[list.length - 1].chatId : null;
+  });
+
+  private readonly sentSubject = new Subject<WaMessage>();
+  private readonly readSubject = new Subject<number>();
+  /** Each message the server stored from this thread. */
+  readonly sent$: Observable<WaMessage> = this.sentSubject.asObservable();
+  /** The chat was marked read on the server (by id). */
+  readonly read$: Observable<number> = this.readSubject.asObservable();
+
+  /** Bumped on every `connect()` — late responses for an old source are dropped. */
   private generation = 0;
-  /** Request ordering: a response older than the last applied one is ignored. */
-  private requestSeq = 0;
-  private appliedSeq = 0;
-  /** Highest incoming id already reported read for the current chat. */
-  private lastReadIncomingId = 0;
-  private localSeq = 0;
-  private pollSub: Subscription | null = null;
+  private loadSub: Subscription | null = null;
+  /** Incoming messages arrived while the window was not focused. */
+  private unreadWhileAway = false;
+  /** Server failures already re-sent — their bubble no longer offers Retry. */
+  private readonly retried = new Set<number>();
 
   constructor() {
+    this.realtime.message$.pipe(takeUntilDestroyed()).subscribe((e) => this.onHubMessage(e));
+    this.realtime.messageStatus$.pipe(takeUntilDestroyed()).subscribe((e) => this.onHubStatus(e));
+    this.realtime.reconnected$.pipe(takeUntilDestroyed()).subscribe(() => this.refresh());
+
+    // Back to the window with unread incoming messages → report them read.
+    effect(() => {
+      if (!this.focus.focused()) return;
+      untracked(() => {
+        if (this.unreadWhileAway) this.markRead();
+      });
+    });
+
     this.destroyRef.onDestroy(() => {
-      this.pollSub?.unsubscribe();
-      this.clearPending();
+      this.loadSub?.unsubscribe();
+      this.revokeAll();
     });
   }
 
   // ─────────────── lifecycle ───────────────
 
-  /** Switch the thread to `source` (or detach with `null`). */
+  /** Switch to `source` (or detach with `null`). */
   connect(source: ThreadSource | null): void {
     if (sameSource(this.source(), source)) {
-      // Same conversation; the recipient may have changed (phone → linked customer).
+      // Same conversation, fresher details (e.g. its instance became known).
       if (source) this.source.set(source);
       return;
     }
 
     this.generation++;
-    this.pollSub?.unsubscribe();
-    this.pollSub = null;
-    this.clearPending();
+    this.loadSub?.unsubscribe();
+    this.revokeAll();
     this.source.set(source);
-    this.serverMessages.set([]);
-    this.take.set(WHATSAPP_TAKE_STEP);
+    this.server.set([]);
+    this.pending.set([]);
+    this.outbox.set(new Map());
+    this.retried.clear();
+    this.customerTake = WHATSAPP_MESSAGES_TAKE;
+    this.learnedInstanceId.set(null);
+    this.reachedStart.set(false);
+    this.atHistoryLimit.set(false);
     this.error.set(null);
     this.forbidden.set(false);
-    this.sending.set(false);
     this.loadingOlder.set(false);
-    this.lastReadIncomingId = 0;
+    this.unreadWhileAway = false;
+    this.loading.set(!!source);
 
-    if (!source) {
-      this.loading.set(false);
-      return;
-    }
-
-    this.loading.set(true);
-    this.fetch(true);
-    this.startPolling();
+    if (source) this.loadLatest('initial');
   }
 
-  /** Re-read now (e.g. a new-message notification just arrived). */
+  /** Merge the latest page back in (manual retry, reconnect). */
   refresh(): void {
-    if (this.source() && !this.forbidden()) this.fetch(false);
+    // The first load is still on its way and will bring (and mark read) the latest page.
+    if (!this.source() || this.forbidden() || this.loading()) return;
+    this.loadLatest(this.server().length ? 'merge' : 'initial');
   }
 
-  /** "Show older": widen the window by one step (API max 200). */
   loadOlder(): void {
-    if (this.loadingOlder() || !this.canLoadOlder()) return;
-    this.take.update((n) => Math.min(WHATSAPP_MAX_TAKE, n + WHATSAPP_TAKE_STEP));
+    const source = this.source();
+    if (!source || this.loadingOlder() || !this.canLoadOlder()) return;
+    const gen = this.generation;
     this.loadingOlder.set(true);
-    this.fetch(false);
+
+    const read$ =
+      source.kind === 'chat'
+        ? this.api.chatMessages(source.chatId, { take: WHATSAPP_MESSAGES_TAKE, beforeId: this.server()[0].id })
+        : this.api.customerMessages(source.customerId, this.customerTake + WHATSAPP_MESSAGES_TAKE);
+
+    read$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (rows) => {
+        if (gen !== this.generation) return;
+        this.loadingOlder.set(false);
+        if (source.kind === 'chat') {
+          this.reachedStart.set(rows.length < WHATSAPP_MESSAGES_TAKE);
+        } else {
+          this.customerTake = Math.min(WHATSAPP_MAX_TAKE, this.customerTake + WHATSAPP_MESSAGES_TAKE);
+          this.reachedStart.set(rows.length < this.customerTake);
+          this.atHistoryLimit.set(!this.reachedStart() && this.customerTake >= WHATSAPP_MAX_TAKE);
+        }
+        this.upsertMany(rows);
+      },
+      error: (err) => {
+        if (gen !== this.generation) return;
+        this.loadingOlder.set(false);
+        if (isPermissionError(err)) this.forbidden.set(true);
+      },
+    });
   }
 
   // ─────────────── sending ───────────────
 
-  /**
-   * Sends text, or a file with `text` as its caption. Returns `false` when the
-   * thread can't send right now (another send in flight, nothing to send).
-   */
+  /** Sends text, or a file with `text` as its caption. Never blocks: each call is its own bubble. */
   send(text: string, file: File | null = null): boolean {
-    const source = this.source();
-    const recipient = source ? recipientOf(source) : null;
     const body = text.trim();
-    if (!source || !recipient || this.forbidden() || this.sending() || (!body && !file)) return false;
+    if (!this.source() || this.blockReason() || (!body && !file)) return false;
 
-    const local = this.buildLocal(body, file);
-    this.pending.update((list) => [...list, local]);
-    this.sending.set(true);
-
-    const request$ = file
-      ? this.api.sendMedia({ recipient, file, caption: body })
-      : this.api.sendText({ recipient, text: body });
-    const gen = this.generation;
-
-    request$
-      .pipe(
-        finalize(() => {
-          if (gen === this.generation) this.sending.set(false);
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (stored) => {
-          if (gen !== this.generation) return;
-          this.dropPending(local.local!.key);
-          if (stored?.id) {
-            this.serverMessages.update((list) =>
-              list.some((m) => m.id === stored.id) ? list : [...list, stored],
-            );
-            this.sentSubject.next(stored);
-          } else {
-            this.refresh();
-          }
-        },
-        error: (err) => {
-          if (gen !== this.generation) return;
-          this.patchPending(local.local!.key, {
-            status: 'Failed',
-            errorMessage: whatsappErrorText(err, (k) => this.t(k), 'whatsapp.errors.sendFailed'),
-          });
-          // A 400 is stored server-side as Failed; pull it so the copies reconcile.
-          if (!isPermissionError(err)) this.refresh();
-        },
-      });
-
+    const payload: OutgoingPayload = {
+      clientMessageId: newClientMessageId(),
+      text: body,
+      file,
+      previewUrl: file && messageTypeForFile(file) === 'image' ? URL.createObjectURL(file) : null,
+      reuseIdOnRetry: false,
+    };
+    this.pending.update((list) => [...list, this.optimistic(payload)]);
+    this.dispatch(payload, 0);
     return true;
   }
 
   /**
-   * Retry a failed message: a local one is re-sent with its original payload
-   * (file included); a server-side failure can be re-sent when it was text.
+   * Re-send a failed message. Same id when the last outcome was unknown
+   * (the backend returns the stored message instead of sending twice), a new
+   * id after a definite failure.
    */
   retry(message: ThreadMessage): boolean {
-    if (this.sending()) return false;
-    if (message.local) {
-      const { key, text, file } = message.local;
-      this.dropPending(key);
-      return this.send(text, file);
-    }
-    return this.canRetry(message) ? this.send(message.text ?? '') : false;
+    if (!this.canRetry(message) || this.blockReason()) return false;
+
+    const original: OutgoingPayload = message.local ?? {
+      clientMessageId: message.clientMessageId ?? newClientMessageId(),
+      text: message.text ?? '',
+      file: null,
+      previewUrl: null,
+      reuseIdOnRetry: false,
+    };
+    const payload: OutgoingPayload = {
+      ...original,
+      clientMessageId: original.reuseIdOnRetry ? original.clientMessageId : newClientMessageId(),
+      reuseIdOnRetry: false,
+    };
+
+    // Retire the failed copy: a local bubble goes away, a stored row stays as history.
+    if (message.id < 0) this.pending.update((list) => list.filter((m) => m.clientMessageId !== original.clientMessageId));
+    else this.retried.add(message.id);
+    // The preview moves to the new bubble, so it must not be revoked here.
+    this.forget(original.clientMessageId, false);
+
+    this.pending.update((list) => [...list, this.optimistic(payload)]);
+    this.dispatch(payload, 0);
+    return true;
   }
 
   canRetry(message: ThreadMessage): boolean {
-    if (message.status !== 'Failed' || !isOutgoing(message)) return false;
+    if (message.status !== 'Failed' || !isOutgoing(message) || this.retried.has(message.id)) return false;
     if (message.local) return true;
+    // A stored failure without its payload (e.g. after a reload) can be re-sent when it was text.
     return mediaKindOf(message.messageType) === 'text' && !!message.text?.trim();
   }
 
-  // ─────────────── internals ───────────────
+  // ─────────────── internals: loading ───────────────
 
-  private startPolling(): void {
-    this.pollSub = pollWhileVisible(WHATSAPP_THREAD_POLL_MS)
-      .pipe(
-        exhaustMap(() => this.request()),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe();
-  }
-
-  private fetch(initial: boolean): void {
-    this.request(initial).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
-  }
-
-  /** One read of the current window; the result is applied in order. */
-  private request(initial = false): Observable<void> {
+  private loadLatest(mode: 'initial' | 'merge'): void {
     const source = this.source();
+    if (!source) return;
     const gen = this.generation;
-    const seq = ++this.requestSeq;
+    this.loadSub?.unsubscribe();
 
-    return new Observable<void>((subscriber) => {
-      if (!source || this.forbidden()) {
-        subscriber.complete();
-        return;
-      }
-      const read$ =
-        source.kind === 'chat'
-          ? this.api.chatMessages(source.chatId, this.take())
-          : this.api.customerMessages(source.customerId, this.take());
+    const take = source.kind === 'chat' ? WHATSAPP_MESSAGES_TAKE : this.customerTake;
+    const read$ =
+      source.kind === 'chat'
+        ? this.api.chatMessages(source.chatId, { take })
+        : this.api.customerMessages(source.customerId, take);
 
-      return read$.subscribe({
-        next: (rows) => {
-          if (gen === this.generation && seq > this.appliedSeq) {
-            this.appliedSeq = seq;
-            this.apply(rows, initial);
-          }
-          subscriber.complete();
-        },
-        error: (err) => {
-          if (gen === this.generation) this.onReadError(err, initial);
-          subscriber.complete();
-        },
-      });
+    this.loadSub = read$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (rows) => {
+        if (gen !== this.generation) return;
+        this.loading.set(false);
+        this.error.set(null);
+        const newest = this.server()[this.server().length - 1]?.id ?? 0;
+        if (mode === 'initial') {
+          // `connect()` already emptied the list; anything there now arrived live meanwhile — keep it.
+          this.reachedStart.set(rows.length < take);
+        } else if (rows.length && rows[0].id > newest) {
+          // No overlap with what we hold → a gap: start over from this page.
+          this.server.set([]);
+          this.reachedStart.set(rows.length < take);
+        }
+        this.upsertMany(rows);
+        if (mode === 'initial') this.markReadOnOpen();
+      },
+      error: (err) => {
+        if (gen !== this.generation) return;
+        this.loading.set(false);
+        if (isPermissionError(err)) {
+          this.forbidden.set(true);
+          return;
+        }
+        // A failed background merge keeps the last good view.
+        if (!this.server().length) {
+          this.error.set(whatsappErrorText(err, (k) => this.t(k), 'whatsapp.errors.loadMessages'));
+        }
+      },
     });
   }
 
-  private apply(rows: WhatsAppMessage[], initial: boolean): void {
-    this.serverMessages.set(rows);
-    this.loading.set(false);
-    this.loadingOlder.set(false);
-    this.error.set(null);
-    this.reconcilePending(rows);
-    this.markReadIfNeeded(rows, initial);
-  }
+  // ─────────────── internals: hub ───────────────
 
-  private onReadError(err: unknown, initial: boolean): void {
-    this.loading.set(false);
-    this.loadingOlder.set(false);
-    if (isPermissionError(err)) {
-      this.forbidden.set(true);
-      this.pollSub?.unsubscribe();
-      this.pollSub = null;
-      return;
-    }
-    // A failed background poll keeps the last good view; only a first load reports.
-    if (initial || this.serverMessages().length === 0) {
-      this.error.set(whatsappErrorText(err, (k) => this.t(k), 'whatsapp.errors.loadMessages'));
+  private onHubMessage({ chat, message }: WaMessageEvent): void {
+    if (!this.belongs(chat)) return;
+    if (this.source()?.kind === 'chat') this.learnedInstanceId.set(chat.instanceId);
+    this.upsertMany([message]);
+
+    if (message.direction === 'Incoming' && this.source()?.kind === 'chat') {
+      if (this.focus.focused()) this.markRead();
+      else this.unreadWhileAway = true;
     }
   }
 
-  /** Chat threads: report read on open, and again when new incoming messages land. */
-  private markReadIfNeeded(rows: WhatsAppMessage[], initial: boolean): void {
+  private onHubStatus(e: WaMessageStatusEvent): void {
+    if (!this.server().some((m) => m.id === e.messageId)) return;
+    this.server.update((list) =>
+      list.map((m) =>
+        m.id === e.messageId
+          ? {
+              ...m,
+              status: advanceStatus(m.status, e.status),
+              deliveredAt: e.deliveredAt ?? m.deliveredAt,
+              readAt: e.readAt ?? m.readAt,
+            }
+          : m,
+      ),
+    );
+  }
+
+  private belongs(chat: WaChat): boolean {
+    const source = this.source();
+    if (!source) return false;
+    return source.kind === 'chat' ? chat.id === source.chatId : chat.customerId === source.customerId;
+  }
+
+  // ─────────────── internals: reading ───────────────
+
+  private markReadOnOpen(): void {
     const source = this.source();
     if (source?.kind !== 'chat') return;
+    // Unknown count (deep link) → mark anyway; it's cheap and idempotent.
+    if (source.unreadCount === 0) return;
+    if (this.focus.focused()) this.markRead();
+    else this.unreadWhileAway = true;
+  }
 
-    const newestIncoming = rows.reduce(
-      (max, m) => (isOutgoing(m) ? max : Math.max(max, m.id)),
-      0,
-    );
-    if (!initial && newestIncoming <= this.lastReadIncomingId) return;
-    this.lastReadIncomingId = Math.max(this.lastReadIncomingId, newestIncoming);
-    // Best effort: a failure leaves the server badge, and the next arrival retries.
+  private markRead(): void {
+    const source = this.source();
+    if (source?.kind !== 'chat' || this.forbidden()) return;
+    this.unreadWhileAway = false;
+    const chatId = source.chatId;
+    const instanceId = this.instanceId();
+    if (instanceId) this.session.noteChatRead({ id: chatId, instanceId });
+    this.readSubject.next(chatId);
+    // Best effort: a failure leaves the server badge; the next arrival retries.
     this.api
-      .markChatRead(source.chatId)
+      .markChatRead(chatId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ error: () => undefined });
   }
 
-  /** Drop local failures once the server's own "Failed" copy is in the window. */
-  private reconcilePending(rows: WhatsAppMessage[]): void {
-    const failedOnServer = rows.filter((m) => isOutgoing(m) && m.status === 'Failed');
-    if (!failedOnServer.length) return;
-    for (const local of this.pending()) {
-      if (local.status !== 'Failed' || !local.local) continue;
-      if (failedOnServer.some((m) => isServerCopyOf(m, local.local!))) this.dropPending(local.local.key);
+  // ─────────────── internals: sending ───────────────
+
+  private dispatch(payload: OutgoingPayload, attempt: number): void {
+    const source = this.source();
+    if (!source) return;
+    const gen = this.generation;
+    const target: WaSendTarget =
+      source.kind === 'chat' ? { chatId: source.chatId } : { customerId: source.customerId };
+
+    const request$ = payload.file
+      ? this.api.sendMedia({
+          target,
+          file: payload.file,
+          caption: payload.text,
+          clientMessageId: payload.clientMessageId,
+        })
+      : this.api.sendText({ target, text: payload.text, clientMessageId: payload.clientMessageId });
+
+    this.remember(payload);
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (stored) => {
+        if (gen !== this.generation) return;
+        if (stored?.id) {
+          this.upsertMany([stored]);
+          this.sentSubject.next(stored);
+        } else {
+          this.refresh();
+        }
+      },
+      error: (err) => {
+        if (gen !== this.generation) return;
+        const transient = isTransientError(err);
+        if (transient && attempt < TRANSIENT_RETRY_DELAYS_MS.length) {
+          timer(TRANSIENT_RETRY_DELAYS_MS[attempt])
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => gen === this.generation && this.dispatch(payload, attempt + 1));
+          return;
+        }
+        const failed: OutgoingPayload = { ...payload, reuseIdOnRetry: transient };
+        this.remember(failed);
+        this.pending.update((list) =>
+          list.map((m) =>
+            m.clientMessageId === payload.clientMessageId
+              ? {
+                  ...m,
+                  status: 'Failed',
+                  errorMessage: whatsappErrorText(err, (k) => this.t(k), 'whatsapp.errors.sendFailed'),
+                  local: failed,
+                }
+              : m,
+          ),
+        );
+        if (isPermissionError(err)) this.forbidden.set(true);
+      },
+    });
+  }
+
+  /**
+   * Insert / merge stored rows: dedupe by id, replace the optimistic bubble
+   * with the same `clientMessageId`, keep ticks moving forward only.
+   */
+  private upsertMany(rows: readonly WaMessage[]): void {
+    if (!rows.length) return;
+    const byId = new Map(this.server().map((m) => [m.id, m]));
+    /** clientMessageId → the stored row that confirms it. */
+    const confirmed = new Map<string, WaMessage>();
+
+    for (const row of rows) {
+      const existing = byId.get(row.id);
+      const merged = existing
+        ? {
+            ...existing,
+            ...row,
+            status: advanceStatus(existing.status, row.status),
+            // A stale copy must not erase timestamps a status event already set.
+            deliveredAt: row.deliveredAt ?? existing.deliveredAt,
+            readAt: row.readAt ?? existing.readAt,
+          }
+        : row;
+      byId.set(row.id, merged);
+      if (merged.clientMessageId) confirmed.set(merged.clientMessageId, merged);
+    }
+    this.server.set([...byId.values()].sort((a, b) => a.id - b.id));
+
+    if (!confirmed.size) return;
+    this.pending.update((list) => list.filter((m) => !m.clientMessageId || !confirmed.has(m.clientMessageId)));
+    // Stored rows no longer need their payload; failed ones keep it for Retry.
+    for (const [clientMessageId, stored] of confirmed) {
+      if (stored.status !== 'Failed') this.forget(clientMessageId, true);
     }
   }
 
-  private buildLocal(text: string, file: File | null): ThreadMessage {
-    const key = `local-${++this.localSeq}`;
-    const isImage = !!file && file.type.startsWith('image/');
-    const previewUrl = isImage ? URL.createObjectURL(file!) : null;
+  private optimistic(payload: OutgoingPayload): ThreadMessage {
     const source = this.source();
     const user = this.auth.currentUser();
-
     return {
-      id: -this.localSeq,
+      id: -Date.now() - Math.random(),
       chatId: source?.kind === 'chat' ? source.chatId : 0,
+      externalMessageId: null,
+      clientMessageId: payload.clientMessageId,
       direction: 'Outgoing',
-      messageType: file ? messageTypeForFile(file) : 'text',
-      text: text || null,
-      mediaUrl: previewUrl,
-      fileName: file?.name ?? null,
+      messageType: payload.file ? messageTypeForFile(payload.file) : 'text',
+      text: payload.text || null,
+      mediaUrl: payload.previewUrl,
+      fileName: payload.file?.name ?? null,
       status: 'Pending',
       sentById: user?.userId ?? null,
       sentByName: user?.fullName?.trim() || user?.email || null,
@@ -364,25 +522,33 @@ export class WhatsAppThreadStore {
       deliveredAt: null,
       readAt: null,
       errorMessage: null,
-      local: { key, createdAt: Date.now(), text, file, previewUrl },
+      local: payload,
     };
   }
 
-  private patchPending(key: string, patch: Partial<WhatsAppMessage>): void {
-    this.pending.update((list) => list.map((m) => (m.local?.key === key ? { ...m, ...patch } : m)));
+  private remember(payload: OutgoingPayload): void {
+    this.outbox.update((map) => new Map(map).set(payload.clientMessageId, payload));
   }
 
-  private dropPending(key: string): void {
-    const target = this.pending().find((m) => m.local?.key === key);
-    if (target?.local?.previewUrl) URL.revokeObjectURL(target.local.previewUrl);
-    this.pending.update((list) => list.filter((m) => m.local?.key !== key));
-  }
-
-  private clearPending(): void {
-    for (const m of this.pending()) {
-      if (m.local?.previewUrl) URL.revokeObjectURL(m.local.previewUrl);
+  private forget(clientMessageId: string, revokePreview: boolean): void {
+    const payload = this.outbox().get(clientMessageId);
+    if (!payload) return;
+    // The bubble may still show the local preview until the stored media loads; revoke later.
+    if (revokePreview && payload.previewUrl) {
+      const url = payload.previewUrl;
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
     }
-    this.pending.set([]);
+    this.outbox.update((map) => {
+      const next = new Map(map);
+      next.delete(clientMessageId);
+      return next;
+    });
+  }
+
+  private revokeAll(): void {
+    for (const payload of this.outbox().values()) {
+      if (payload.previewUrl) URL.revokeObjectURL(payload.previewUrl);
+    }
   }
 
   private t(key: string): string {
@@ -390,21 +556,9 @@ export class WhatsAppThreadStore {
   }
 }
 
-function recipientOf(source: ThreadSource): WhatsAppRecipient | null {
-  return source.kind === 'chat' ? source.recipient : { customerId: source.customerId };
-}
-
 function sameSource(a: ThreadSource | null, b: ThreadSource | null): boolean {
   if (!a || !b) return a === b;
   if (a.kind === 'chat' && b.kind === 'chat') return a.chatId === b.chatId;
   if (a.kind === 'customer' && b.kind === 'customer') return a.customerId === b.customerId;
   return false;
-}
-
-/** Same content, sent around the same time → the server's record of our send. */
-function isServerCopyOf(server: WhatsAppMessage, local: LocalPayload): boolean {
-  const at = parseUtc(server.sentAt)?.getTime() ?? 0;
-  if (at < local.createdAt - RECONCILE_WINDOW_MS) return false;
-  if (local.file) return server.fileName === local.file.name;
-  return (server.text ?? '').trim() === local.text;
 }

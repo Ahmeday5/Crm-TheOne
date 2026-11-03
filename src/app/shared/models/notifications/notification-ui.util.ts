@@ -70,7 +70,7 @@ export function notificationRoute(n: NotificationTarget, role: UserRole | null):
     if (!role || !WHATSAPP_ROLES.includes(role)) return null;
     // Older payloads may carry no chat id — the inbox is still the right place.
     const chatId = n.relatedEntityType === WHATSAPP_CHAT_ENTITY ? n.relatedEntityId : null;
-    return chatId ? ['/whatsapp', String(chatId)] : ['/whatsapp'];
+    return chatId ? ['/whatsapp', 'chats', String(chatId)] : ['/whatsapp'];
   }
 
   // ── Primary: entity-type routing (most specific) ──

@@ -1,51 +1,71 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnInit,
   computed,
   effect,
   inject,
   signal,
   untracked,
-  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter, map } from 'rxjs';
-import { AuthService } from '../../../../core/services/auth.service';
+import { NotificationToastService } from '../../../../core/services/notification-toast.service';
 import { NotificationsStore } from '../../../../core/services/notifications.store';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
-import { isWhatsAppNotification } from '../../../../shared/models';
+import { WHATSAPP_CHAT_ENTITY, isWhatsAppNotification } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { CustomerDetailsDialogComponent } from '../../../leads/components/customer-details-dialog/customer-details-dialog.component';
+import { WaChannelListComponent } from '../../components/wa-channel-list/wa-channel-list.component';
 import { WaChatListComponent } from '../../components/wa-chat-list/wa-chat-list.component';
-import { WaNumberStatusComponent } from '../../components/wa-number-status/wa-number-status.component';
+import { WaConnectDialogComponent } from '../../components/wa-connect-dialog/wa-connect-dialog.component';
+import { WaNewChatDialogComponent } from '../../components/wa-new-chat-dialog/wa-new-chat-dialog.component';
+import { WaNumberCardComponent } from '../../components/wa-number-card/wa-number-card.component';
 import { WaThreadComponent } from '../../components/wa-thread/wa-thread.component';
-import { WhatsAppChat } from '../../models/whatsapp.models';
-import { WhatsAppChatsStore } from '../../state/whatsapp-chats.store';
+import { WaChat, WaInstance, WaMessage } from '../../models/whatsapp.models';
+import { WhatsAppRealtimeService } from '../../services/whatsapp-realtime.service';
+import { WindowFocusService } from '../../services/window-focus.service';
+import { WhatsAppInboxStore } from '../../state/whatsapp-inbox.store';
+import { WhatsAppSessionStore } from '../../state/whatsapp-session.store';
 import { ThreadSource } from '../../state/whatsapp-thread.store';
-import { chatDisplayName, formatWhatsAppPhone, recipientForChat } from '../../utils/whatsapp.util';
+import { canPair, chatDisplayName, formatWhatsAppPhone } from '../../utils/whatsapp.util';
+
+/** What the pairing dialog links: the caller's own number, or an admin's channel. */
+interface PairTarget {
+  instance: WaInstance | null;
+}
 
 /**
- * `/whatsapp` and `/whatsapp/:chatId` — a WhatsApp-Web-style inbox for
- * Admin, Sales and Support. The URL owns the open chat, so the browser's
- * back button, notification deep links and page reloads all just work.
+ * `/whatsapp` and `/whatsapp/chats/:chatId` — the WhatsApp inbox.
  *
- * Desktop: conversations on one side, the open thread beside it.
- * Phones: one pane at a time — the list, or the thread with a back button.
+ * Three columns (RTL aware):
+ *   1. Admin: channels (every company number) · Employee: their number card;
+ *   2. chats of the selected channel (search, All / Unread, infinite scroll);
+ *   3. the open conversation.
+ * Phones show one pane at a time. The URL owns the open chat (`chatId`) and
+ * the admin's channel (`?channel=`), so back / reload / notification deep
+ * links all land in the same place.
  */
 @Component({
   selector: 'app-whatsapp-inbox',
   standalone: true,
   imports: [
+    RouterLink,
     TranslatePipe,
     PageHeaderComponent,
     UserAvatarComponent,
+    WaChannelListComponent,
     WaChatListComponent,
     WaThreadComponent,
-    WaNumberStatusComponent,
+    WaNumberCardComponent,
+    WaConnectDialogComponent,
+    WaNewChatDialogComponent,
+    CustomerDetailsDialogComponent,
   ],
-  providers: [WhatsAppChatsStore],
+  providers: [WhatsAppInboxStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './whatsapp-inbox.component.html',
   styleUrl: './whatsapp-inbox.component.scss',
@@ -53,13 +73,14 @@ import { chatDisplayName, formatWhatsAppPhone, recipientForChat } from '../../ut
 export class WhatsAppInboxComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly auth = inject(AuthService);
   private readonly notifications = inject(NotificationsStore);
-  protected readonly chats = inject(WhatsAppChatsStore);
+  private readonly notificationToasts = inject(NotificationToastService);
+  private readonly focus = inject(WindowFocusService);
+  protected readonly realtime = inject(WhatsAppRealtimeService);
+  protected readonly session = inject(WhatsAppSessionStore);
+  protected readonly inbox = inject(WhatsAppInboxStore);
 
-  private readonly thread = viewChild(WaThreadComponent);
-
-  protected readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
+  protected readonly isAdmin = this.session.isAdmin;
 
   protected readonly activeChatId = toSignal(
     this.route.paramMap.pipe(
@@ -71,90 +92,138 @@ export class WhatsAppInboxComponent implements OnInit {
     { initialValue: null },
   );
 
-  /**
-   * Every chat seen this session. The open chat keeps its header and
-   * recipient even when a search filters it out of the visible list.
-   */
-  private readonly knownChats = signal<ReadonlyMap<number, WhatsAppChat>>(new Map());
+  /** Admin channel filter from `?channel=` — `null` = all channels. */
+  protected readonly channelId = toSignal(
+    this.route.queryParamMap.pipe(map((q) => q.get('channel') || null)),
+    { initialValue: null },
+  );
 
-  protected readonly activeChat = computed(() => {
-    const id = this.activeChatId();
-    return id ? this.knownChats().get(id) ?? null : null;
-  });
+  protected readonly selectedChannel = computed(() => this.session.channel(this.channelId()));
+  protected readonly activeChat = this.inbox.activeChat;
 
   protected readonly source = computed<ThreadSource | null>(() => {
     const id = this.activeChatId();
     if (!id) return null;
     const chat = this.activeChat();
-    return { kind: 'chat', chatId: id, recipient: chat ? recipientForChat(chat) : null };
+    return { kind: 'chat', chatId: id, instanceId: chat?.instanceId ?? null, unreadCount: chat?.unreadCount ?? null };
   });
+
+  /**
+   * The number that needs relinking, if any: the employee's own, or (admin)
+   * the selected channel / the open chat's channel.
+   */
+  protected readonly relinkTarget = computed<PairTarget | null>(() => {
+    if (!this.isAdmin()) {
+      return this.session.status()?.requiresRelink ? { instance: null } : null;
+    }
+    const channel = this.selectedChannel() ?? this.session.channel(this.activeChat()?.instanceId);
+    return channel?.requiresRelink && canPair(channel) ? { instance: channel } : null;
+  });
+
+  /** New chats need a number that can send: employee → own; admin → any working channel. */
+  protected readonly canStartChat = computed(() =>
+    this.isAdmin() ? this.session.channels().some((c) => c.canSend) : !!this.session.status()?.canSend,
+  );
+
+  /** Phones: which pane shows when no chat is open. */
+  protected readonly mobilePane = signal<'channels' | 'list'>('list');
+  protected readonly view = computed(() => (this.activeChatId() ? 'thread' : this.mobilePane()));
+
+  protected readonly pairTarget = signal<PairTarget | null>(null);
+  protected readonly newChatOpen = signal(false);
+  /** The linked customer's details, opened from the conversation header. */
+  protected readonly customerDialogId = signal<number | null>(null);
 
   constructor() {
     effect(
       () => {
         const id = this.activeChatId();
-        untracked(() => {
-          this.chats.setActive(id);
-          if (id) this.chats.markReadLocally(id);
-        });
+        untracked(() => this.inbox.setActive(id));
       },
       { allowSignalWrites: true },
     );
 
     effect(
       () => {
-        const list = this.chats.chats();
-        untracked(() => this.remember(list));
+        const channelId = this.isAdmin() ? this.channelId() : null;
+        untracked(() => this.inbox.setChannel(channelId));
       },
       { allowSignalWrites: true },
     );
 
-    // A new-message notification → refresh at once instead of waiting for the poll.
+    // No toast for a message in the chat the user is looking at right now.
+    const unregister = this.notificationToasts.suppressWhen(
+      (n) =>
+        isWhatsAppNotification(n) &&
+        n.relatedEntityType === WHATSAPP_CHAT_ENTITY &&
+        n.relatedEntityId === this.activeChatId() &&
+        this.focus.focused(),
+    );
+
+    // Hub down → a new-message notification is the next best signal.
     this.notifications.arrivals$
       .pipe(
         map((batch) => batch.filter(isWhatsAppNotification)),
-        filter((batch) => batch.length > 0),
+        filter((batch) => batch.length > 0 && !this.realtime.connected()),
         takeUntilDestroyed(),
       )
-      .subscribe((batch) => {
-        this.chats.refresh();
-        const open = this.activeChatId();
-        if (open && batch.some((n) => n.relatedEntityId === open)) this.thread()?.refresh();
-      });
+      .subscribe(() => this.inbox.refresh());
+
+    inject(DestroyRef).onDestroy(unregister);
   }
 
   ngOnInit(): void {
-    this.chats.start();
+    this.inbox.start();
   }
 
-  protected open(chat: WhatsAppChat): void {
+  // ─────────────── navigation ───────────────
+
+  protected open(chat: WaChat): void {
     if (chat.id === this.activeChatId()) return;
-    this.router.navigate(['/whatsapp', chat.id]);
+    this.router.navigate(['/whatsapp', 'chats', chat.id], { queryParamsHandling: 'preserve' });
   }
 
   protected backToList(): void {
-    this.router.navigate(['/whatsapp']);
+    this.mobilePane.set('list');
+    this.router.navigate(['/whatsapp'], { queryParamsHandling: 'preserve' });
   }
 
-  /** Our reply changes the chat's preview and position — re-read the list. */
+  protected selectChannel(channelId: string | null): void {
+    this.mobilePane.set('list');
+    this.router.navigate(['/whatsapp'], { queryParams: { channel: channelId } });
+  }
+
+  // ─────────────── actions ───────────────
+
+  protected onRead(chatId: number): void {
+    this.inbox.markReadLocally(chatId);
+  }
+
   protected onSent(): void {
-    this.chats.refresh();
+    if (!this.realtime.connected()) this.inbox.refresh();
   }
 
-  protected name(chat: WhatsAppChat): string {
+  protected onChatStarted(message: WaMessage): void {
+    this.newChatOpen.set(false);
+    if (!this.realtime.connected()) this.inbox.refresh();
+    this.router.navigate(['/whatsapp', 'chats', message.chatId], { queryParamsHandling: 'preserve' });
+  }
+
+  protected openPairing(target: PairTarget): void {
+    this.pairTarget.set(target);
+  }
+
+  protected onConnected(): void {
+    this.inbox.refresh();
+  }
+
+  // ─────────────── view helpers ───────────────
+
+  protected name(chat: WaChat): string {
     return chatDisplayName(chat);
   }
 
-  protected phone(chat: WhatsAppChat): string {
-    return formatWhatsAppPhone(chat.phone);
-  }
-
-  private remember(list: readonly WhatsAppChat[]): void {
-    if (!list.length) return;
-    this.knownChats.update((current) => {
-      const next = new Map(current);
-      for (const chat of list) next.set(chat.id, chat);
-      return next;
-    });
+  protected phone(value: string | null | undefined): string {
+    return formatWhatsAppPhone(value);
   }
 }

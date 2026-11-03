@@ -15,6 +15,8 @@ export interface NavItem {
   icon: string;
   /** Roles allowed to see/use the item. Omit to allow all. */
   roles?: UserRole[];
+  /** Stay highlighted on nested routes too (e.g. `/whatsapp/chats/12`). */
+  matchSubroutes?: boolean;
 }
 
 export interface NavSection {
@@ -111,6 +113,7 @@ export const NAV_SECTIONS: NavSection[] = [
         path: '/whatsapp',
         icon: 'fa-brands fa-whatsapp',
         roles: ['Admin', 'Sales', 'Support'],
+        matchSubroutes: true,
       },
       {
         labelKey: 'sidebar.items.projects',

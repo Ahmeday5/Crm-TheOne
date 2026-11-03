@@ -1,6 +1,6 @@
 import { Injectable, NgZone, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, of, shareReplay, throwError } from 'rxjs';
+import { Observable, Subject, of, shareReplay, throwError } from 'rxjs';
 import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ApiService } from './api.service';
@@ -67,6 +67,13 @@ export class AuthService {
   readonly currentUser = this.currentUserSignal.asReadonly();
   readonly isAuthenticated = computed(() => !!this.currentUserSignal());
   readonly currentRole = computed<UserRole | null>(() => this.currentUserSignal()?.role ?? null);
+
+  private readonly accessTokenChangedSubject = new Subject<void>();
+  /**
+   * Emits after this tab stored a new access token (login or refresh) —
+   * long-lived connections (e.g. SignalR) reconnect with it.
+   */
+  readonly accessTokenChanged$: Observable<void> = this.accessTokenChangedSubject.asObservable();
 
   /** Shared in-flight refresh — prevents duplicate network calls. */
   private inflightRefresh: Observable<AuthTokens> | null = null;
@@ -244,6 +251,7 @@ export class AuthService {
 
     this.scheduleProactiveRefresh();
     this.broadcast({ type: 'session-updated' });
+    this.accessTokenChangedSubject.next();
   }
 
   private clearLocalSession(): void {

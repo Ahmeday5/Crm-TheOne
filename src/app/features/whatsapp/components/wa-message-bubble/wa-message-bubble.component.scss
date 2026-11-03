@@ -10,13 +10,13 @@
   flex-direction: column;
   max-width: min(75%, 34rem);
   min-width: 0;
-  /* Physical sides on purpose: ours on the right, the customer's on the left. */
-  margin-right: auto;
+  /* Logical sides: the customer's at the start, ours at the end — mirrored in RTL like WhatsApp. */
+  margin-inline-end: auto;
   align-items: flex-start;
 }
 :host(.is-out) {
-  margin-right: 0;
-  margin-left: auto;
+  margin-inline-end: 0;
+  margin-inline-start: auto;
   align-items: flex-end;
 }
 
@@ -30,7 +30,7 @@
   max-width: 100%;
   padding: 0.4rem 0.6rem 0.3rem;
   border-radius: 0.9rem;
-  border-top-left-radius: 0.25rem;
+  border-start-start-radius: 0.25rem;
   background: var(--wa-in-bg);
   color: var(--text-1);
   box-shadow: 0 1px 1px color-mix(in srgb, var(--text-1) 8%, transparent);
@@ -38,8 +38,8 @@
 }
 :host(.is-out) .wa-bubble {
   background: var(--wa-out-bg);
-  border-top-left-radius: 0.9rem;
-  border-top-right-radius: 0.25rem;
+  border-start-start-radius: 0.9rem;
+  border-start-end-radius: 0.25rem;
 }
 :host(.is-pending) .wa-bubble { opacity: 0.85; }
 :host(.is-failed) .wa-bubble {
