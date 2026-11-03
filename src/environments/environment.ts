@@ -2,7 +2,7 @@ export const environment = {
   production: true,
 
   /** Backend API base — endpoints in `api-endpoints.const.ts` are relative to this. */
-  apiUrl: 'http://78.89.159.126:9494/TheOneCRMAPI/api',
+  apiUrl: 'http://15.235.51.177/TheOneCRMAPI/api',
 
   firebase: {
     apiKey: 'AIzaSyD3jrSMr364-FbMcn1uT1fEcrp6NJZJ_Ik',
