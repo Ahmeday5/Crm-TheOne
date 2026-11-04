@@ -124,17 +124,21 @@
 <!-- ── Cell templates ── -->
 
 <ng-template #titleCell let-row>
+  @let tags = tagSummary(row);
   <div class="task-title-cell">
-    <span class="task-name">{{ row.title }}</span>
-    @if (parseTags(row.tags).length > 0) {
-      <div class="task-tags">
-        @for (tag of parseTags(row.tags); track tag) {
-          <span class="task-tag">{{ tag }}</span>
-        }
-      </div>
-    }
+    <span class="task-name" [title]="row.title">{{ row.title }}</span>
     @if (row.description) {
       <span class="task-desc" appClampText="1" [clampTitle]="row.title">{{ row.description }}</span>
+    }
+    @if (tags.visible.length > 0) {
+      <div class="task-tags">
+        @for (tag of tags.visible; track tag) {
+          <span class="task-tag" [title]="tag">{{ tag }}</span>
+        }
+        @if (tags.hidden.length > 0) {
+          <span class="task-tag task-tag--more" [title]="tags.hidden.join('، ')">+{{ tags.hidden.length }}</span>
+        }
+      </div>
     }
   </div>
 </ng-template>
@@ -217,14 +221,16 @@
 
 <ng-template #createdCell let-row>
   <div class="created-cell">
-    <span class="created-name">{{ row.createdByName || '—' }}</span>
+    @if (row.createdByName) {
+      <span class="created-name">{{ row.createdByName }}</span>
+    }
     <span class="created-date">{{ formatDate(row.createdAt) }}</span>
   </div>
 </ng-template>
 
 <!-- ── Row actions ── -->
 <ng-template #actionsCell let-row>
-  <div class="d-inline-flex flex-wrap gap-1">
+  <div class="row-actions">
     <button type="button"
             class="btn btn-sm btn-light"
             [title]="'projects.tasksManage.table.view' | translate"
@@ -242,7 +248,7 @@
         <i class="fa-solid fa-pen"></i>
       </button>
       <button type="button"
-              class="btn btn-sm btn-icon btn-danger-soft"
+              class="btn btn-sm btn-danger-soft"
               [disabled]="busyId() === row.id"
               [title]="'projects.tasksManage.table.delete' | translate"
               [attr.aria-label]="'projects.tasksManage.table.delete' | translate"

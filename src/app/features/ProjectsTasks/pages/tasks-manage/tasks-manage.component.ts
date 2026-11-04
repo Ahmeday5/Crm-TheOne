@@ -58,6 +58,19 @@ interface ProjectFilterOption {
   title: string;
 }
 
+interface TagSummary {
+  visible: string[];
+  /** Collapsed into a "+N" chip whose tooltip lists them. */
+  hidden: string[];
+}
+
+const MAX_VISIBLE_TAGS = 2;
+
+function parseTags(tags: string | null | undefined): string[] {
+  if (!tags?.trim()) return [];
+  return tags.split(',').map((t) => t.trim()).filter(Boolean);
+}
+
 const DEFAULT_PAGE_SIZE = 10;
 
 @Component({
@@ -448,9 +461,18 @@ export class TasksManageComponent implements OnInit, OnDestroy {
     );
   }
 
-  parseTags(tags: string | null | undefined): string[] {
-    if (!tags?.trim()) return [];
-    return tags.split(',').map((t) => t.trim()).filter(Boolean);
+  /**
+   * Tags shown under the task title: capped at `MAX_VISIBLE_TAGS` with a
+   * "+N" counter, and a tag that merely repeats the description is dropped
+   * (users often paste the description into tags, which doubled the text).
+   */
+  tagSummary(row: TaskListItem): TagSummary {
+    const description = row.description?.trim();
+    const tags = parseTags(row.tags).filter((t) => t !== description);
+    return {
+      visible: tags.slice(0, MAX_VISIBLE_TAGS),
+      hidden: tags.slice(MAX_VISIBLE_TAGS),
+    };
   }
 
   isOverdue(row: TaskListItem): boolean {

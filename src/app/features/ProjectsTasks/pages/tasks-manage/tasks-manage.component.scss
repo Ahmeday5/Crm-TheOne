@@ -9,11 +9,16 @@
   max-width: 280px;
   min-width: 0;
 
+  // Every line here is single-line: title / description / tag row. Full
+  // text lives in the tooltip, the clamp dialog, or the details dialog.
   .task-name {
     font-weight: var(--fw-600);
     font-size: 0.875rem;
     line-height: 1.4;
     color: var(--text-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   // Clamped to one line by `appClampText`; tapping opens the full text.
@@ -25,21 +30,54 @@
 
   .task-tags {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 4px;
+    min-width: 0;
     margin-top: 2px;
+    overflow: hidden;
   }
 
   .task-tag {
-    display: inline-block;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 120px;
     padding: 1px 7px;
     border-radius: var(--radius-pill);
     font-size: 0.67rem;
     font-weight: var(--fw-500);
+    line-height: 1.6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     background: var(--brand-soft);
     color: var(--brand);
     border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
-    line-height: 1.6;
+
+    &--more {
+      flex: none;
+      max-width: none;
+      cursor: default;
+      background: var(--surface-2);
+      color: var(--text-2);
+      border-color: var(--border);
+    }
+  }
+}
+
+// ── Row actions — one horizontal row of equal square buttons ─────────────────
+
+.row-actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+
+  .btn {
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 0.8rem;
   }
 }
 

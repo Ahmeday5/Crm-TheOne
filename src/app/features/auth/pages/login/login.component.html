@@ -1,122 +1,129 @@
-<div class="auth-page">
+<div class="login">
 
-  <!-- Toolbar — language & theme switchers, always visible -->
-  <div class="auth-toolbar">
-    <div class="pill">
-      <app-language-toggle></app-language-toggle>
-      <app-theme-toggle></app-theme-toggle>
+  <!-- Animated brand panel (desktop only) -->
+  @if (!compact()) {
+    <app-auth-showcase class="login__showcase"
+      [logo]="brandLogo()" [fallbackLogo]="fallbackLogo" [brandName]="brandName()" />
+  }
+
+  <!-- Form panel -->
+  <main class="panel" appPointerParallax>
+    <div class="panel__bg" aria-hidden="true">
+      <span class="ring ring--a"></span>
+      <span class="ring ring--b"></span>
+      <span class="dots"></span>
     </div>
-  </div>
 
-  <!-- Centered 2-col grid -->
-  <div class="auth-grid">
-    <div class="container">
-      <div class="row align-items-center justify-content-center g-4 g-xl-5">
-
-        <!-- Brand side (visible from lg up) -->
-        <div class="col-xl-6 col-lg-6 d-none d-lg-block">
-          <div class="brand-side">
-            <img [src]="brandLogo() || fallbackLogo" class="brand-logo mb-4" alt="logo" (error)="onLogoError($event)" />
-            <h1 class="brand-headline">
-              {{ 'auth.welcome' | translate }} <br />
-              <span class="brand-highlight">{{ brandName() || ('header.app' | translate) }}</span>
-            </h1>
-            <p class="brand-lead mb-4">{{ 'auth.subtitle' | translate }}</p>
-
-            <div class="row g-3">
-              <div class="col-6">
-                <div class="stat-card">
-                  <h2>10+</h2>
-                  <p>{{ 'auth.stats.modules' | translate }}</p>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="stat-card">
-                  <h2>5</h2>
-                  <p>{{ 'auth.stats.roles' | translate }}</p>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="stat-card">
-                  <h2>99%</h2>
-                  <p>{{ 'auth.stats.uptime' | translate }}</p>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="stat-card">
-                  <h2>24/7</h2>
-                  <p>{{ 'auth.stats.support' | translate }}</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="d-flex justify-content-end mt-2">
-              <h5 style="color: #fff;">Developed by <strong>TheOneSystem</strong></h5>
-            </div>
-          </div>
-        </div>
-
-        <!-- Form side -->
-        <div class="col-xl-5 col-lg-6 col-md-8 col-sm-10">
-          <div class="login-card">
-            <div class="text-center mb-4">
-              <span class="login-icon mb-3"><i class="fa-solid fa-shield-halved"></i></span>
-              <h3 class="fw-800 mb-1">{{ 'auth.login.title' | translate }}</h3>
-              <p class="text-muted mb-0">{{ 'auth.login.hint' | translate }}</p>
-            </div>
-
-            <form (ngSubmit)="login()" #loginForm="ngForm" novalidate>
-              <div class="mb-3">
-                <label class="form-label fw-600">{{ 'auth.email' | translate }}</label>
-                <input type="email" class="form-control" name="email" [(ngModel)]="email" required autocomplete="email"
-                  [disabled]="submitting()" [placeholder]="'auth.emailPlaceholder' | translate" />
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label fw-600">{{ 'auth.password' | translate }}</label>
-                <div class="position-relative">
-                  <input [type]="showPassword ? 'text' : 'password'" class="form-control pe-5" name="password"
-                    [(ngModel)]="password" required autocomplete="current-password" [disabled]="submitting()"
-                    [placeholder]="'auth.passwordPlaceholder' | translate" />
-                  <button type="button" class="btn-icon password-toggle" (click)="togglePassword()"
-                    [disabled]="submitting()" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
-                    <i class="bi" [class.bi-eye-slash]="showPassword" [class.bi-eye]="!showPassword"></i>
-                  </button>
-                </div>
-              </div>
-
-              <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="rememberMe" name="rememberMe"
-                    [(ngModel)]="rememberMe" [disabled]="submitting()" />
-                  <label class="form-check-label" for="rememberMe">{{ 'auth.remember' | translate }}</label>
-                </div>
-                <a href="#" class="link-primary fw-600 small">{{ 'auth.forgot' | translate }}</a>
-              </div>
-
-              @if (errorMessage()) {
-              <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3" role="alert">
-                <i class="fa-solid fa-circle-exclamation"></i>
-                <span>{{ errorMessage() }}</span>
-              </div>
-              }
-
-              <button type="submit" class="btn btn-submit w-100" [disabled]="submitting() || !loginForm.form.valid">
-                @if (submitting()) {
-                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                {{ 'auth.login.submit' | translate }}...
-                } @else {
-                {{ 'auth.login.submit' | translate }}
-                <i class="fa-solid fa-arrow-left arrow-icon ms-1 fs-5 align-middle"></i>
-                }
-              </button>
-            </form>
-          </div>
-
-          <p class="text-center copyright mt-3 mb-0">{{ 'auth.copyright' | translate }}</p>
-        </div>
-
+    <div class="panel__toolbar reveal" style="--d: 0">
+      @if (compact()) {
+        <img class="panel__logo" [src]="brandLogo() || fallbackLogo" alt="logo" (error)="onLogoError($event)" />
+      }
+      <div class="pill">
+        <app-language-toggle></app-language-toggle>
+        <app-theme-toggle></app-theme-toggle>
       </div>
     </div>
-  </div>
+
+    <div class="panel__body">
+      <section class="card" [class.is-shaking]="shaking()"
+               (animationend)="onCardAnimationEnd($event)">
+
+        @if (succeeded()) {
+          <div class="success" role="status">
+            <svg class="success__check" viewBox="0 0 52 52" aria-hidden="true">
+              <circle class="success__circle" cx="26" cy="26" r="23" />
+              <path class="success__tick" d="M15 27 l7.5 7.5 L37 19" />
+            </svg>
+            <h3>{{ 'auth.login.success' | translate }}</h3>
+            <p>{{ 'auth.login.successRedirect' | translate }}</p>
+          </div>
+        }
+
+        <header class="card__head">
+          <span class="badge reveal" style="--d: 1" aria-hidden="true">
+            <span class="badge__orbit"></span>
+            <i class="fa-solid fa-shield-halved"></i>
+          </span>
+          <span class="eyebrow reveal" style="--d: 2">{{ 'auth.login.eyebrow' | translate }}</span>
+          <h2 class="title reveal" style="--d: 3">{{ 'auth.login.title' | translate }}</h2>
+          <p class="hint reveal" style="--d: 4">{{ 'auth.login.hint' | translate }}</p>
+        </header>
+
+        <form (ngSubmit)="login()" #loginForm="ngForm" novalidate>
+          <div class="field reveal" style="--d: 5">
+            <i class="field__icon fa-regular fa-envelope" aria-hidden="true"></i>
+            <input id="login-email" class="field__input" type="email" name="email" [(ngModel)]="email"
+              required autocomplete="email" [disabled]="submitting() || succeeded()"
+              [placeholder]="'auth.emailPlaceholder' | translate" />
+            <label class="field__label" for="login-email">{{ 'auth.email' | translate }}</label>
+            <span class="field__glow" aria-hidden="true"></span>
+          </div>
+
+          <div class="field reveal" style="--d: 6">
+            <i class="field__icon fa-solid fa-lock" aria-hidden="true"></i>
+            <input id="login-password" class="field__input field__input--action"
+              [type]="showPassword ? 'text' : 'password'" name="password" [(ngModel)]="password"
+              required autocomplete="current-password" [disabled]="submitting() || succeeded()"
+              [placeholder]="'auth.passwordPlaceholder' | translate"
+              (keydown)="onPasswordKey($event)" (keyup)="onPasswordKey($event)" (blur)="capsLockOn.set(false)" />
+            <label class="field__label" for="login-password">{{ 'auth.password' | translate }}</label>
+            <button type="button" class="field__action" (click)="togglePassword()"
+              [disabled]="submitting() || succeeded()"
+              [attr.aria-label]="(showPassword ? 'auth.hidePassword' : 'auth.showPassword') | translate"
+              [attr.aria-pressed]="showPassword">
+              <i class="bi" [class.bi-eye-slash]="showPassword" [class.bi-eye]="!showPassword"></i>
+            </button>
+            <span class="field__glow" aria-hidden="true"></span>
+          </div>
+
+          @if (capsLockOn()) {
+            <p class="caps" role="status">
+              <i class="fa-solid fa-triangle-exclamation"></i>{{ 'auth.login.capsLock' | translate }}
+            </p>
+          }
+
+          <div class="options reveal" style="--d: 7">
+            <label class="check">
+              <input type="checkbox" name="rememberMe" [(ngModel)]="rememberMe"
+                [disabled]="submitting() || succeeded()" />
+              <span class="check__box" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+              {{ 'auth.remember' | translate }}
+            </label>
+            <a href="#" class="link">{{ 'auth.forgot' | translate }}</a>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="alert-error" role="alert">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+
+          <div class="reveal" style="--d: 8">
+            <button type="submit" class="submit" [class.is-loading]="submitting()"
+              [disabled]="submitting() || succeeded() || !loginForm.form.valid">
+              @if (submitting()) {
+                <span class="submit__spinner" aria-hidden="true"></span>
+                <span>{{ 'auth.login.submitting' | translate }}</span>
+              } @else {
+                <span>{{ 'auth.login.submit' | translate }}</span>
+                <i class="fa-solid fa-arrow-right submit__arrow" aria-hidden="true"></i>
+              }
+            </button>
+          </div>
+        </form>
+
+        <p class="secure reveal" style="--d: 9">
+          <i class="fa-solid fa-lock"></i>{{ 'auth.login.secure' | translate }}
+        </p>
+      </section>
+    </div>
+
+    <footer class="panel__footer reveal" style="--d: 10">
+      <span>{{ 'auth.copyright' | translate }}</span>
+      @if (compact()) {
+        <span>{{ 'auth.developedBy' | translate }} <strong>TheOneSystem</strong></span>
+      }
+    </footer>
+  </main>
 </div>

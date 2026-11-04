@@ -1,0 +1,125 @@
+<section class="showcase" appPointerParallax>
+
+  <!-- Ambient background: drifting brand shapes, moving grid, particles -->
+  <div class="showcase__bg" aria-hidden="true">
+    <span class="shape shape--a"></span>
+    <span class="shape shape--b"></span>
+    <span class="shape shape--c"></span>
+    <span class="grid-plane"></span>
+    <span class="particles">
+      @for (p of particles; track $index) {
+        <i [style.--x]="p.x + '%'" [style.--size]="p.size + 'px'"
+           [style.--dur]="p.duration + 's'" [style.--delay]="p.delay + 's'"></i>
+      }
+    </span>
+  </div>
+
+  <header class="showcase__top">
+    <img class="showcase__logo reveal" style="--d: 0" [src]="logo() || fallbackLogo()"
+         alt="logo" (error)="onLogoError($event)" />
+    <span class="eyebrow reveal" style="--d: 1">
+      <span class="eyebrow__dot"></span>
+      {{ 'auth.showcase.eyebrow' | translate }}
+    </span>
+  </header>
+
+  <div class="showcase__copy">
+    <h1 class="headline reveal" style="--d: 2">
+      <span class="headline__lead">{{ 'auth.showcase.headline' | translate }}</span>
+      <span class="headline__rotator" aria-live="polite">
+        <!-- Single-item @for keyed by the word: each change re-creates the
+             span so its entrance animation replays. -->
+        @for (w of [word()]; track w) {
+          <span class="headline__word">{{ ('auth.showcase.words.' + w) | translate }}</span>
+        }
+      </span>
+    </h1>
+    <p class="lead reveal" style="--d: 3">
+      {{ 'auth.welcome' | translate }}
+      <strong>{{ brandName() || ('header.app' | translate) }}</strong> —
+      {{ 'auth.subtitle' | translate }}
+    </p>
+  </div>
+
+  <!-- Floating product preview — decorative, hidden from assistive tech -->
+  <div class="stage" aria-hidden="true">
+
+    <article class="widget widget--revenue" style="--depth: 22; --enter: 0.55s; --float: 7s">
+      <div class="widget__head">
+        <span class="widget__icon tone-brand"><i class="fa-solid fa-sack-dollar"></i></span>
+        <span class="widget__label">{{ 'auth.showcase.revenue' | translate }}</span>
+        <span class="delta"><i class="fa-solid fa-arrow-trend-up"></i> +24.8%</span>
+      </div>
+      <div class="widget__value">
+        <span [appCountUp]="128" prefix="$" suffix="K" [delay]="700"></span>
+        <small>{{ 'auth.showcase.vsLastMonth' | translate }}</small>
+      </div>
+      <div class="chart">
+        <div class="bars">
+          @for (h of revenue; track $index) {
+            <span [style.--h]="h + '%'" [style.--i]="$index"></span>
+          }
+        </div>
+        <svg class="sparkline" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path class="sparkline__line" [attr.d]="sparkline" pathLength="1" />
+        </svg>
+      </div>
+    </article>
+
+    <article class="widget widget--pipeline" style="--depth: 40; --enter: 0.75s; --float: 8.5s">
+      <div class="widget__head">
+        <span class="widget__icon tone-info"><i class="fa-solid fa-bullseye"></i></span>
+        <span class="widget__label">{{ 'auth.showcase.pipeline' | translate }}</span>
+      </div>
+      <div class="donut">
+        <svg viewBox="0 0 100 100">
+          <circle class="donut__track" cx="50" cy="50" r="40" />
+          <circle class="donut__ring donut__ring--outer" cx="50" cy="50" r="40" pathLength="100" />
+          <circle class="donut__track" cx="50" cy="50" r="29" />
+          <circle class="donut__ring donut__ring--inner" cx="50" cy="50" r="29" pathLength="100" />
+        </svg>
+        <div class="donut__center">
+          <strong [appCountUp]="72" suffix="%" [delay]="900"></strong>
+          <small>{{ 'auth.showcase.winRate' | translate }}</small>
+        </div>
+      </div>
+    </article>
+
+    <article class="widget widget--activity" style="--depth: 30; --enter: 0.95s; --float: 9.5s">
+      <div class="widget__head">
+        <span class="live-dot"></span>
+        <span class="widget__label">{{ 'auth.showcase.activity' | translate }}</span>
+      </div>
+      <ul class="feed">
+        @for (item of feed(); track item.id) {
+          <li class="feed__item">
+            <span class="feed__icon tone-{{ item.tone }}"><i [class]="item.icon"></i></span>
+            <span class="feed__text">{{ item.key | translate }}</span>
+            <span class="feed__time">{{ 'auth.showcase.now' | translate }}</span>
+          </li>
+        }
+      </ul>
+    </article>
+  </div>
+
+  <ul class="stats">
+    @for (s of stats; track s.labelKey; let i = $index) {
+      <li class="stat reveal" [style.--d]="5 + i">
+        <strong [appCountUp]="s.value" [suffix]="s.suffix" [delay]="600 + i * 120"></strong>
+        <span>{{ s.labelKey | translate }}</span>
+      </li>
+    }
+  </ul>
+
+  <div class="marquee reveal" style="--d: 9" aria-hidden="true">
+    <div class="marquee__track">
+      @for (f of marquee; track $index) {
+        <span class="chip"><i [class]="f.icon"></i>{{ f.labelKey | translate }}</span>
+      }
+    </div>
+  </div>
+
+  <footer class="showcase__footer reveal" style="--d: 10">
+    {{ 'auth.developedBy' | translate }} <strong>TheOneSystem</strong>
+  </footer>
+</section>

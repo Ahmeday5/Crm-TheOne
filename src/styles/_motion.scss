@@ -1,0 +1,67 @@
+/*
+ * Motion system — shared easing curves + entrance / reduced-motion mixins.
+ *
+ * Emits no CSS on its own, so it is safe to `@use` from any component
+ * stylesheet (`src/styles` is on the SCSS include path):
+ *
+ *   @use 'motion';
+ *
+ *   @include motion.reveal-keyframes;          // once per stylesheet
+ *   .title { @include motion.reveal; }         // + style="--d: 2" to stagger
+ *   @include motion.reduced { … }              // calm fallback
+ *
+ * Entrances animate `translate` / `opacity` / `filter` — never `transform` —
+ * so hover effects and parallax that use `transform` keep working after the
+ * entrance has finished (animation fill would otherwise pin `transform`).
+ */
+
+$ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+$ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+$ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+$ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+/* Gap between staggered siblings (`--d: 0, 1, 2…`). */
+$stagger: 90ms;
+
+@mixin reveal-keyframes {
+  @keyframes motion-reveal {
+    from {
+      opacity: 0;
+      translate: var(--reveal-x, 0) var(--reveal-y, 18px);
+      filter: blur(6px);
+    }
+    /* `none` (not `0 0` / `blur(0)`) so the filled end state creates no
+     * stacking context or containing block — dropdowns inside stay intact. */
+    to {
+      opacity: 1;
+      translate: none;
+      filter: none;
+    }
+  }
+}
+
+/* Staggered fade-up entrance. Needs `reveal-keyframes` in the same file. */
+@mixin reveal($duration: 0.9s, $base-delay: 0.1s) {
+  animation: motion-reveal $duration $ease-out-expo both;
+  animation-delay: calc(#{$base-delay} + var(--d, 0) * #{$stagger});
+}
+
+@mixin reduced {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+/* Collapse every animation / transition inside the current scope. */
+@mixin calm-everything {
+  @include reduced {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
