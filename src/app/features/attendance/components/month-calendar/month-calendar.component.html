@@ -4,25 +4,29 @@
       <h5 class="mc-title"><i class="fa-regular fa-calendar-days"></i>{{ 'attendance.calendar.title' | translate }}</h5>
       <p class="mc-sub">{{ 'attendance.calendar.subtitle' | translate }}</p>
     </div>
-    <div class="mc-nav" role="group" [attr.aria-label]="'attendance.calendar.navigate' | translate">
-      <button type="button" class="mc-nav-btn" [disabled]="!canPrev() || loading()" (click)="prev.emit()"
-              [attr.aria-label]="'attendance.calendar.prev' | translate" [appTip]="'attendance.calendar.prev' | translate">
-        <i class="fa-solid fa-chevron-right mc-flip"></i>
-      </button>
-      <span class="mc-month">
-        {{ monthLabel() }}
-        @if (loading() && ready()) { <span class="spinner-border spinner-border-sm ms-1"></span> }
-      </span>
-      <button type="button" class="mc-nav-btn" [disabled]="!canNext() || loading()" (click)="next.emit()"
-              [attr.aria-label]="'attendance.calendar.next' | translate" [appTip]="'attendance.calendar.next' | translate">
-        <i class="fa-solid fa-chevron-left mc-flip"></i>
-      </button>
-    </div>
+    @if (navigable()) {
+      <div class="mc-nav" role="group" [attr.aria-label]="'attendance.calendar.navigate' | translate">
+        <button type="button" class="mc-nav-btn" [disabled]="!canPrev() || loading()" (click)="prev.emit()"
+                [attr.aria-label]="'attendance.calendar.prev' | translate" [appTip]="'attendance.calendar.prev' | translate">
+          <i class="fa-solid fa-chevron-right mc-flip"></i>
+        </button>
+        <span class="mc-month">
+          {{ monthLabel() }}
+          @if (loading() && ready()) { <span class="spinner-border spinner-border-sm ms-1"></span> }
+        </span>
+        <button type="button" class="mc-nav-btn" [disabled]="!canNext() || loading()" (click)="next.emit()"
+                [attr.aria-label]="'attendance.calendar.next' | translate" [appTip]="'attendance.calendar.next' | translate">
+          <i class="fa-solid fa-chevron-left mc-flip"></i>
+        </button>
+      </div>
+    } @else {
+      <span class="mc-month">{{ monthLabel() }}</span>
+    }
   </header>
 
   <div class="mc-grid mc-weekdays" aria-hidden="true">
     @for (w of weekdays(); track w.key) {
-      <span class="mc-wd" [class.is-weekend]="w.isWeekend">{{ w.short }}</span>
+      <span class="mc-wd">{{ w.short }}</span>
     }
   </div>
 
@@ -39,21 +43,20 @@
         <button type="button" role="gridcell"
                 class="mc-day st-{{ d.status }}"
                 [class.is-today]="d.isToday"
+                [class.is-future]="d.isFuture"
                 [class.is-selected]="selected() === d.date"
-                [class.is-open]="d.isOpen"
                 [style.--i]="i"
                 [attr.aria-selected]="selected() === d.date"
                 [attr.aria-label]="tip(d)"
                 [appTip]="tip(d)"
                 (click)="select.emit(d.date)">
           <span class="mc-num">{{ d.dayOfMonth }}</span>
-          <i class="mc-ic" [class]="icons[d.status]" aria-hidden="true"></i>
-          @if (d.checkIn) {
-            <span class="mc-time">{{ d.checkIn | cairoDate: 'time' }}</span>
-          } @else if (d.leave?.halfDay) {
-            <span class="mc-time">½</span>
+          @if (icons[d.status]) { <i class="mc-ic" [class]="icons[d.status]" aria-hidden="true"></i> }
+          @switch (d.status) {
+            @case ('present') { <span class="mc-time">{{ 'attendance.units.hoursShort' | translate: { h: hours(d) } }}</span> }
+            @case ('working') { <span class="mc-time">{{ d.record?.checkInAt | cairoDate: 'time' }}</span> }
+            @case ('missingOut') { <span class="mc-time">{{ d.record?.checkInAt | cairoDate: 'time' }}</span> }
           }
-          @if (d.isExtra) { <span class="mc-extra" aria-hidden="true"></span> }
         </button>
       }
     </div>

@@ -7,10 +7,24 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import {
+  Subject,
+  Subscription,
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  firstValueFrom,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
+import { AuthService } from '../../../../core/services/auth.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ExportColumn } from '../../../../core/services/table-export.service';
@@ -21,7 +35,14 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
-import { ContractListItem } from '../../../../shared/models';
+import {
+  CONTRACTS_MAX_PAGE_SIZE,
+  ContractListItem,
+  ContractListQuery,
+  ContractStatistics,
+  PagedResult,
+  SalesPerson,
+} from '../../../../shared/models';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
@@ -31,13 +52,18 @@ import { ContractsService } from '../../services/contracts.service';
 import {
   ContractLifecycle,
   contractLifecycle,
-  countContracts,
   daysUntilEnd,
 } from '../../utils/contract-lifecycle.util';
+import {
+  CONTRACT_TABS,
+  ContractTab,
+  contractTabCount,
+  contractTabFilter,
+} from '../../utils/contract-tabs.util';
 
-type ContractTab = 'all' | 'active' | 'expiring' | 'expired' | 'cancelled';
-
-const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 20;
+const PAGE_SIZE_OPTIONS: readonly number[] = [10, 20, 50, CONTRACTS_MAX_PAGE_SIZE];
+const SEARCH_DEBOUNCE_MS = 300;
 
 const BADGES: Record<ContractLifecycle, string> = {
   active: 'bg-success-subtle text-success',
@@ -53,12 +79,21 @@ const LABELS: Record<ContractLifecycle, string> = {
   cancelled: 'cancelled',
 };
 
+type PageLoad =
+  | { ok: true; page: PagedResult<ContractListItem> }
+  | { ok: false };
+
 /**
- * Contracts management.
+ * Contracts management — fully server-driven.
  *
- * The API has no status filter, so the whole portfolio is loaded once and
- * KPI tiles, tab badges, the table and pagination are all derived from that
- * single list through `contractLifecycle()` — the numbers can't disagree.
+ *  - KPI tiles + tab badges come from `GET Contracts/ContractStatistics`,
+ *    scoped by the server (Admin: everything, sales reps: their own).
+ *  - The table comes from `GET Contracts/GetContracts` with the tab filter,
+ *    search and `pageIndex`/`pageSize`; the total is the page `count`.
+ *
+ * Page requests flow through one `switchMap`, so a slow response for an
+ * older tab / page / search can never overwrite a newer one. Every
+ * mutation reloads both statistics and the current page.
  */
 @Component({
   selector: 'app-contracts-management',
@@ -88,106 +123,184 @@ export class ContractsManagementComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly language = inject(LanguageService);
+  private readonly auth = inject(AuthService);
 
-  /** Every contract — tabs, counts, KPIs and pagination all derive from it. */
-  readonly rows = signal<ContractListItem[]>([]);
+  readonly tabs = CONTRACT_TABS;
+  /** The sales-rep filter is Admin-only (a rep only ever sees their own contracts). */
+  readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
+  readonly salesTeam = signal<SalesPerson[]>([]);
+  readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
+
+  // ── query state ──
+  readonly activeTab = signal<ContractTab>('all');
+  readonly search = signal('');
+  /** `SalesPersonId` filter — `null` = everyone. */
+  readonly salesPersonId = signal<string | null>(null);
   readonly pageIndex = signal(1);
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+
+  // ── current page (server) ──
+  readonly rows = signal<ContractListItem[]>([]);
+  readonly totalCount = signal(0);
   readonly loading = signal(false);
   readonly loadError = signal<string | null>(null);
-  readonly busyId = signal<number | null>(null);
 
-  readonly search = signal('');
-  readonly activeTab = signal<ContractTab>('all');
+  // ── statistics (server) ──
+  readonly stats = signal<ContractStatistics | null>(null);
+  readonly statsLoading = signal(false);
+  private statsSub?: Subscription;
+
+  readonly busyId = signal<number | null>(null);
 
   /** Form dialog state. `formOpen` toggles the modal; `editId` ≠ null ⇒ edit. */
   readonly formOpen = signal(false);
   readonly editId = signal<number | null>(null);
 
-  readonly tabs: ReadonlyArray<{ key: ContractTab; icon: string }> = [
-    { key: 'all', icon: 'fa-solid fa-folder-open' },
-    { key: 'active', icon: 'fa-solid fa-file-circle-check' },
-    { key: 'expiring', icon: 'fa-solid fa-circle-exclamation' },
-    { key: 'expired', icon: 'fa-solid fa-file-circle-xmark' },
-    { key: 'cancelled', icon: 'fa-solid fa-ban' },
-  ];
+  /** The exact query the table shows (tab filter + search + paging). */
+  private readonly query = computed<ContractListQuery>(() => ({
+    pageIndex: this.pageIndex(),
+    pageSize: this.pageSize(),
+    search: this.search() || undefined,
+    salesPersonId: this.salesPersonId() ?? undefined,
+    ...contractTabFilter(this.activeTab()),
+  }));
 
-  /** Rows after the search filter (feeds the tab badges and the table). */
-  private readonly searched = computed(() => {
-    const term = this.search().trim().toLowerCase();
-    if (!term) return this.rows();
-    return this.rows().filter((r) =>
-      [r.customerName, r.companyName, r.phone, r.title, `cnt-${r.id}`]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(term)),
-    );
+  /** KPI tiles; `null` renders as a placeholder until statistics load. */
+  readonly kpis = computed(() => {
+    const s = this.stats();
+    return {
+      total: s?.totalContracts ?? null,
+      active: s?.activeContracts ?? null,
+      expiring: s?.expiringSoonContracts ?? null,
+      expired: s?.expiredContracts ?? null,
+      cancelled: s?.cancelledContracts ?? null,
+    };
   });
 
-  /** Search + active tab, across ALL contracts. */
-  readonly filteredRows = computed(() =>
-    this.searched().filter((r) => this.matchesTab(r, this.activeTab())),
-  );
+  private readonly pageRequests$ = new Subject<{ query: ContractListQuery; force: boolean }>();
+  private readonly searchInput$ = new Subject<string>();
 
-  /** The current page of `filteredRows`. */
-  readonly visibleRows = computed(() => {
-    const start = (this.pageIndex() - 1) * this.pageSize();
-    return this.filteredRows().slice(start, start + this.pageSize());
-  });
+  constructor() {
+    this.pageRequests$
+      .pipe(
+        tap(() => {
+          this.loading.set(true);
+          this.loadError.set(null);
+        }),
+        switchMap(({ query, force }) =>
+          this.service.list(query, force).pipe(
+            map((page): PageLoad => ({ ok: true, page })),
+            catchError(() => of<PageLoad>({ ok: false })),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe((result) => this.applyPage(result));
 
-  /** Tab badges — same data as the table, so a badge always matches its tab. */
-  readonly tabCounts = computed(() => countContracts(this.searched()));
-
-  /** KPI tiles — the whole portfolio (unaffected by search). */
-  readonly stats = computed(() => {
-    const c = countContracts(this.rows());
-    return { total: c.all, active: c.active, expiring: c.expiring, expired: c.expired, cancelled: c.cancelled };
-  });
+    this.searchInput$
+      .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((term) => {
+        this.search.set(term);
+        this.pageIndex.set(1);
+        this.loadPage();
+      });
+  }
 
   ngOnInit(): void {
     this.reload();
+    if (this.isAdmin()) {
+      this.service.salesTeam().subscribe({
+        next: (team) => this.salesTeam.set([...team].sort((a, b) => a.fullName.localeCompare(b.fullName))),
+        error: () => this.salesTeam.set([]),
+      });
+    }
   }
 
+  /** Statistics + current page (initial load, refresh, after mutations). */
   reload(force = false): void {
-    this.loading.set(true);
-    this.loadError.set(null);
-    this.service.listAll(force).subscribe({
-      next: (rows) => {
-        this.rows.set(rows);
-        this.clampPage();
-        this.loading.set(false);
+    this.loadStats(force);
+    this.loadPage(force);
+  }
+
+  tabCount(tab: ContractTab): number | null {
+    return contractTabCount(tab, this.stats());
+  }
+
+  private loadPage(force = false): void {
+    this.pageRequests$.next({ query: this.query(), force });
+  }
+
+  /** KPI + tab numbers: the statistics endpoint, or per-rep counts when filtered. */
+  private loadStats(force = false): void {
+    const rep = this.salesPersonId();
+    this.statsLoading.set(true);
+    this.statsSub?.unsubscribe();
+    const source = rep
+      ? this.service.statisticsForSalesPerson(rep, force)
+      : this.service.statistics(force);
+    this.statsSub = source.subscribe({
+      next: (stats) => {
+        this.stats.set(stats);
+        this.statsLoading.set(false);
       },
-      error: () => {
-        this.loading.set(false);
-        this.loadError.set(this.t('sales.contractsMgmt.loadFailed'));
-      },
+      // Keep the last known numbers; the table still works without them.
+      error: () => this.statsLoading.set(false),
     });
+  }
+
+  private applyPage(result: PageLoad): void {
+    if (!result.ok) {
+      this.loading.set(false);
+      this.loadError.set(this.t('sales.contractsMgmt.loadFailed'));
+      return;
+    }
+    const { page } = result;
+    // Past the end (e.g. the only row of the last page was deleted): step
+    // back to the real last page instead of showing an empty table.
+    const lastPage = Math.max(1, Math.ceil(page.count / this.pageSize()));
+    if (page.data.length === 0 && this.pageIndex() > lastPage) {
+      this.pageIndex.set(lastPage);
+      this.loadPage(true);
+      return;
+    }
+    this.rows.set(page.data);
+    this.totalCount.set(page.count);
+    this.loading.set(false);
   }
 
   // ─────────── filters / paging ───────────
 
   setTab(tab: ContractTab): void {
+    if (tab === this.activeTab()) return;
     this.activeTab.set(tab);
     this.pageIndex.set(1);
+    this.loadPage();
   }
 
   onSearch(value: string): void {
-    this.search.set(value);
+    this.searchInput$.next(value.trim());
+  }
+
+  /** Admin: show one sales rep's contracts — cards, tabs and table follow. */
+  onSalesPersonChange(userId: string | null): void {
+    const next = userId || null;
+    if (next === this.salesPersonId()) return;
+    this.salesPersonId.set(next);
     this.pageIndex.set(1);
+    this.stats.set(null);
+    this.reload();
   }
 
   onPageChange(page: number): void {
+    if (page === this.pageIndex()) return;
     this.pageIndex.set(page);
+    this.loadPage();
   }
 
   onPageSizeChange(size: number): void {
-    this.pageSize.set(size);
+    this.pageSize.set(Math.min(Math.max(1, size), CONTRACTS_MAX_PAGE_SIZE));
     this.pageIndex.set(1);
-  }
-
-  /** Keep the page in range after a delete. */
-  private clampPage(): void {
-    const pages = Math.max(1, Math.ceil(this.filteredRows().length / this.pageSize()));
-    if (this.pageIndex() > pages) this.pageIndex.set(pages);
+    this.loadPage();
   }
 
   // ─────────── create / edit ───────────
@@ -254,14 +367,6 @@ export class ContractsManagementComponent implements OnInit {
     return contractLifecycle(row) === 'expiring';
   }
 
-  private matchesTab(row: ContractListItem, tab: ContractTab): boolean {
-    if (tab === 'all') return true;
-    const state = contractLifecycle(row);
-    // "Active" includes the ones expiring soon — they are still active.
-    if (tab === 'active') return state === 'active' || state === 'expiring';
-    return state === tab;
-  }
-
   /** Badge reflects the effective state (an "Active" contract past its end date shows as expired). */
   statusBadgeClass(row: ContractListItem): string {
     return BADGES[contractLifecycle(row)];
@@ -269,6 +374,12 @@ export class ContractsManagementComponent implements OnInit {
 
   statusKey(row: ContractListItem): string {
     return `sales.contractsMgmt.status.${LABELS[contractLifecycle(row)]}`;
+  }
+
+  /** Whole-number KPI; '—' while statistics are loading / unavailable. */
+  formatCount(value: number | null): string {
+    if (value == null) return '—';
+    return value.toLocaleString(this.language.lang() === 'ar' ? 'ar-EG' : 'en-US');
   }
 
   formatMoney(value: number | null | undefined): string {
@@ -288,8 +399,6 @@ export class ContractsManagementComponent implements OnInit {
       { year: 'numeric', month: 'short', day: 'numeric' },
     );
   }
-
-  trackById = (_: number, r: ContractListItem) => r.id;
 
   // ─────────── export / print ───────────
 
@@ -322,13 +431,11 @@ export class ContractsManagementComponent implements OnInit {
     ];
   }
 
-  /** Current page = the rows visible after search + active tab. */
-  get visibleExportRows(): ContractListItem[] {
-    return this.visibleRows();
-  }
-
-  /** Every matching contract (all pages) — already loaded, no extra request. */
-  readonly fetchAllRows = async (): Promise<ContractListItem[]> => this.filteredRows();
+  /** Every contract matching the current tab + search, fetched 100 at a time. */
+  readonly fetchAllRows = (): Promise<ContractListItem[]> => {
+    const { pageIndex: _page, pageSize: _size, ...filters } = this.query();
+    return firstValueFrom(this.service.listAllMatching(filters));
+  };
 
   private t(key: string): string {
     return resolveKey(TRANSLATIONS[this.language.lang()], key);

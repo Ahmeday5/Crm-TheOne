@@ -14,11 +14,12 @@ import { UserAvatarComponent } from '../user-avatar/user-avatar.component';
 import { RouterLink } from "@angular/router";
 import { PwaService } from '../../../core/pwa/pwa.service';
 import { CommandCenterUiService, CommandTriggerComponent, TourService } from '../../../features/command-center';
+import { AttendanceClockChipComponent } from '../../../features/attendance';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, ThemeToggleComponent, LanguageToggleComponent, NotificationsBellComponent, TranslatePipe, RouterLink, UserAvatarComponent, CommandTriggerComponent],
+  imports: [CommonModule, ThemeToggleComponent, LanguageToggleComponent, NotificationsBellComponent, TranslatePipe, RouterLink, UserAvatarComponent, CommandTriggerComponent, AttendanceClockChipComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
 })

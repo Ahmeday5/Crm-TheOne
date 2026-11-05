@@ -1,31 +1,30 @@
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Announcement, AnnouncementInput } from '../models/announcement.models';
+import {
+  Announcement,
+  AnnouncementInput,
+  AnnouncementQuery,
+  AnnouncementReader,
+} from '../models/announcement.models';
+import { HttpAnnouncementsRepository } from './http-announcements.repository';
 
 /**
- * Persistence port for announcements.
+ * Persistence port for announcements. The store and UI depend only on this
+ * contract (swap it in tests with `{ provide: AnnouncementsRepository, useValue }`).
  *
- * The store and UI depend only on this contract; the concrete adapter
- * (mock today, HTTP once the backend ships) is chosen in exactly one place:
- * `ANNOUNCEMENTS_REPOSITORY` in `announcements-repository.provider.ts`.
- *
- * Contract every adapter honours:
- *   - `list()` returns only what the caller may see (Admin: everything,
- *     employees: announcements that target them), with the caller's own
- *     `isRead` / `readAt` filled in.
- *   - `create()` also *delivers* the announcement — every targeted employee
- *     receives a real notification.
+ * The server owns scoping (Admin sees everything, employees what targets
+ * them), the live window (`isActive`), read receipts and delivery: every
+ * targeted employee is notified (in-app + push) when an announcement starts.
  */
+@Injectable({ providedIn: 'root', useExisting: HttpAnnouncementsRepository })
 export abstract class AnnouncementsRepository {
-  abstract list(): Observable<Announcement[]>;
-  abstract create(input: AnnouncementInput): Observable<Announcement>;
-  abstract update(id: string, input: AnnouncementInput): Observable<Announcement>;
-  abstract remove(id: string): Observable<void>;
-  abstract setPinned(id: string, isPinned: boolean): Observable<Announcement>;
-  abstract markRead(id: string): Observable<void>;
-
-  /**
-   * Fires when data changed somewhere else (another tab, a push event…) so
-   * the store can refetch. Adapters without such a signal return `EMPTY`.
-   */
-  abstract readonly externalChanges$: Observable<void>;
+  abstract list(query: AnnouncementQuery): Observable<Announcement[]>;
+  /** Live today for the caller (the banner), pinned first. */
+  abstract active(): Observable<Announcement[]>;
+  abstract create(input: AnnouncementInput): Observable<Announcement | null>;
+  abstract update(id: number, input: AnnouncementInput): Observable<Announcement | null>;
+  abstract remove(id: number): Observable<void>;
+  abstract markRead(id: number): Observable<void>;
+  /** Admin: who was targeted and who read it. */
+  abstract readers(id: number): Observable<AnnouncementReader[]>;
 }

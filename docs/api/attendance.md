@@ -1,91 +1,49 @@
-# Attendance & leave API — backend contract
+# Attendance & leave API — contract used by the frontend
 
-The frontend is built against this contract. Until it is deployed, the app
-runs on a browser-only mock (`MockAttendanceRepository`, data kept in
-`localStorage`). Once these endpoints are live, change two lines in
-`src/app/features/attendance/data/attendance-repository.provider.ts`:
+Live backend contract (no mock). Envelope: `{ statusCode, message, data }`;
+errors `{ statusCode, message, details }` — the UI shows `message` (e.g.
+"already checked in today", "overlapping leave request"). A 401 whose body is
+`"Unauthorized access."` means *forbidden*, not an expired session.
 
-- set `USING_MOCK_ATTENDANCE` to `false`
-- change the factory to `inject(HttpAttendanceRepository)`
+All times are Cairo time. Zone-less timestamps are read as Cairo wall-clock
+and converted to UTC instants once, in
+`features/attendance/data/attendance.mapper.ts`. Every number shown in the UI
+(hours, day counts, totals) is the server's — the client never re-derives it.
 
-All responses use the standard envelope `{ statusCode, message, data }`.
-Timestamps are UTC ISO-8601. **Dates (`date`, `from`, `to`) are calendar days
-`YYYY-MM-DD` in Africa/Cairo.** `from`/`to` are inclusive.
+## Me (every employee)
 
-## Policy
-
-These values must match the frontend `config/attendance.config.ts`.
-
-| Rule | Value |
-|---|---|
-| Workday | 09:00 – 17:00 Cairo, 8 h |
-| Grace | 15 minutes (check-in after 09:15 counts as late) |
-| Weekly day off | Friday |
-| Annual / casual / sick entitlement | 21 / 6 / 15 days per calendar year |
-| Sick leave | may start up to 7 days in the past; other types cannot start in the past |
-| Half day | single date only, charges 0.5 |
-| Charged days | workdays only, so Fridays and public holidays are not deducted |
-
-## Models
-
-```jsonc
-// AttendanceRecord: one per user per day
-{ "id": "string", "userId": "guid", "date": "2026-11-05",
-  "checkIn": "2026-11-05T07:02:00Z", "checkOut": null }
-
-// LeaveRequest
-{ "id": "string", "userId": "guid",
-  "employeeName": "string", "employeeRole": "Sales|Marketing|Support|Developer|Admin",
-  "employeeImageUrl": null,
-  "type": "annual|sick|casual", "from": "2026-11-10", "to": "2026-11-12",
-  "halfDay": false, "days": 3, "reason": "string",
-  "status": "pending|approved|rejected|cancelled",
-  "createdAt": "…Z", "decidedAt": null,
-  "decidedBy": { "id": "guid", "name": "string" } | null,
-  "rejectionReason": null }
-
-// LeaveBalance
-{ "type": "annual", "entitled": 21, "used": 4, "pending": 2, "available": 15 }
-
-// AttendanceEmployee (admin)
-{ "id": "guid", "name": "string", "email": "string", "role": "Sales", "imageUrl": null }
-
-// PublicHoliday
-{ "date": "2026-01-07", "name": { "ar": "عيد الميلاد المجيد", "en": "Coptic Christmas" } }
-```
-
-## Endpoints
-
-### Everyone
-
-| Method | Path | Body / query | Returns |
+| Method | Path | Body / query | Response |
 |---|---|---|---|
-| GET | `/api/Attendance/holidays` | — | `PublicHoliday[]` |
-| GET | `/api/Attendance/me` | `?from=&to=` | caller's `AttendanceRecord[]` |
-| POST | `/api/Attendance/check-in` | — | `AttendanceRecord`; the server stamps the time |
-| POST | `/api/Attendance/check-out` | — | `AttendanceRecord` |
-| GET | `/api/Attendance/leaves/me` | — | caller's `LeaveRequest[]` |
-| GET | `/api/Attendance/leaves/me/balances` | `?year=2026` | `LeaveBalance[]` |
-| POST | `/api/Attendance/leaves` | `{ type, from, to, halfDay, reason }` | `LeaveRequest` (`pending`); notifies admins |
-| POST | `/api/Attendance/leaves/{id}/cancel` | — | `LeaveRequest`; own pending requests only |
+| GET | `/api/Attendance/Today` | | `{ date, checkedIn, checkedOut, onLeave, record }` |
+| POST | `/api/Attendance/CheckIn` | `{ note }` (optional) | record |
+| POST | `/api/Attendance/CheckOut` | `{ note }` (optional) | record |
+| GET | `/api/Attendance/My?year=&month=` | | `{ presentDays, totalHours, leaveDays, missingCheckOuts, records[], leaves[] }` |
+| POST | `/api/Attendance/Leaves` | `{ type, startDate, endDate, reason (≤1000) }` | request |
+| GET | `/api/Attendance/Leaves/My?year=` | | requests[] |
+| DELETE | `/api/Attendance/Leaves/{id}` | | cancels a **pending** request |
 
-### Admin
+`record` = `{ workDate, checkInAt, checkOutAt, workedHours, checkInNote, checkOutNote }`.
+Leave `type`: `Annual | Sick | Casual | Unpaid | Other`.
+Leave `status`: `Pending | Approved | Rejected | Cancelled`.
+Request = `{ id, type, startDate, endDate, days, reason, status, reviewedByName, reviewedAt, reviewNote, createdAt }`.
 
-| Method | Path | Body / query | Returns |
-|---|---|---|---|
-| GET | `/api/Attendance/employees` | — | `AttendanceEmployee[]` |
-| GET | `/api/Attendance/team` | `?from=&to=` | everyone's `AttendanceRecord[]` |
-| GET | `/api/Attendance/leaves` | — | all `LeaveRequest[]` |
-| POST | `/api/Attendance/leaves/{id}/decision` | `{ approve: true }` or `{ approve: false, reason }` | `LeaveRequest`; notifies the employee |
+## Admin (others get 403)
 
-Check-in and check-out times must come from the server clock, never from the
-client.
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/Attendance/TodayAll` | `[{ userId, fullName, checkInAt, checkOutAt, workedHours }]` |
+| GET | `/api/Attendance/Monthly?year=&month=&userId=` | same shape as `/My` per employee, plus `userId`, `fullName` |
+| GET | `/api/Attendance/Leaves?status=&userId=&year=` | requests with `fullName`; UI sorts pending first |
+| PUT | `/api/Attendance/Leaves/{id}/Review` | `{ approve: true\|false, note }` — the employee is notified by the server |
 
-## Errors
+## Notifications
 
-Return `4xx` with a `code` field. The UI translates these codes, and falls
-back to `message` for anything else.
+| Type | Who | Opens |
+|---|---|---|
+| `LeaveRequestSubmitted` | Admin | `/attendance/requests` (also refreshes the sidebar pending badge) |
+| `LeaveRequestReviewed` | employee | `/attendance/leaves` (and refetches my requests / month) |
 
-`endBeforeStart`, `startInPast`, `halfDayRange`, `noWorkingDays`, `overlap`,
-`insufficientBalance`, `alreadyCheckedIn`, `alreadyCheckedOut`,
-`notCheckedIn`, `notPending`, `reasonRequired`, `notFound`, `forbidden`.
+## Frontend routes
+
+`/attendance` (my attendance) · `/attendance/leaves` · `/attendance/team` (Admin) · `/attendance/requests` (Admin).
+The header time clock (check in / out from any page) shares state with the page.

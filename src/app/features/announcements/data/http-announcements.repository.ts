@@ -1,61 +1,85 @@
 import { Injectable, inject } from '@angular/core';
-import { EMPTY, Observable, map } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { withInlineHandling, withSkipLoader } from '../../../core/http/http-context.tokens';
 import { ApiService } from '../../../core/services/api.service';
-import { Announcement, AnnouncementInput } from '../models/announcement.models';
-import { AnnouncementsRepository } from './announcements.repository';
+import {
+  Announcement,
+  AnnouncementDto,
+  AnnouncementInput,
+  AnnouncementQuery,
+  AnnouncementReader,
+} from '../models/announcement.models';
+import { toAnnouncement, toReader } from './announcement.mapper';
 
 /**
- * Real backend adapter — implements `docs/api/announcements.md`.
+ * `Announcements/*` over HTTP.
  *
- * The server owns delivery (it notifies every targeted employee on create),
- * read receipts and the read/recipient counters. Reads skip the global loader
- * because the banner polls quietly in the background.
+ * Reads skip the global loader (the banner refreshes quietly in the
+ * background); mutations use inline handling so the caller shows the
+ * server's `message` itself (in the form or as a toast).
  */
 @Injectable({ providedIn: 'root' })
-export class HttpAnnouncementsRepository extends AnnouncementsRepository {
+export class HttpAnnouncementsRepository {
   private readonly api = inject(ApiService);
 
-  readonly externalChanges$: Observable<void> = EMPTY;
-
-  list(): Observable<Announcement[]> {
+  list(query: AnnouncementQuery): Observable<Announcement[]> {
     return this.api
-      .get<Announcement[]>(API_ENDPOINTS.announcements.list, { context: withSkipLoader() })
-      .pipe(map((rows) => rows ?? []));
+      .get<AnnouncementDto[]>(API_ENDPOINTS.announcements.list, {
+        params: { includeExpired: query.includeExpired, search: query.search.trim() },
+        context: withSkipLoader(withInlineHandling()),
+      })
+      .pipe(map((rows) => (rows ?? []).map(toAnnouncement)));
   }
 
-  create(input: AnnouncementInput): Observable<Announcement> {
-    return this.api.post<Announcement>(API_ENDPOINTS.announcements.create, input, {
-      context: withInlineHandling(),
-    });
+  active(): Observable<Announcement[]> {
+    return this.api
+      .get<AnnouncementDto[]>(API_ENDPOINTS.announcements.active, {
+        context: withSkipLoader(withInlineHandling()),
+      })
+      .pipe(map((rows) => (rows ?? []).map(toAnnouncement)));
   }
 
-  update(id: string, input: AnnouncementInput): Observable<Announcement> {
-    return this.api.put<Announcement>(API_ENDPOINTS.announcements.update(id), input, {
-      context: withInlineHandling(),
-    });
+  /** `null` when the server answers without the saved row (caller refetches). */
+  create(input: AnnouncementInput): Observable<Announcement | null> {
+    return this.api
+      .post<AnnouncementDto | null>(API_ENDPOINTS.announcements.create, input, {
+        context: withInlineHandling(),
+      })
+      .pipe(map(toAnnouncementOrNull));
   }
 
-  remove(id: string): Observable<void> {
+  update(id: number, input: AnnouncementInput): Observable<Announcement | null> {
+    return this.api
+      .put<AnnouncementDto | null>(API_ENDPOINTS.announcements.update(id), input, {
+        context: withInlineHandling(),
+      })
+      .pipe(map(toAnnouncementOrNull));
+  }
+
+  remove(id: number): Observable<void> {
     return this.api
       .delete<unknown>(API_ENDPOINTS.announcements.delete(id), { context: withInlineHandling() })
       .pipe(map(() => undefined));
   }
 
-  setPinned(id: string, isPinned: boolean): Observable<Announcement> {
-    return this.api.patch<Announcement>(
-      API_ENDPOINTS.announcements.pin(id),
-      { isPinned },
-      { context: withInlineHandling() },
-    );
-  }
-
-  markRead(id: string): Observable<void> {
+  markRead(id: number): Observable<void> {
     return this.api
       .post<unknown>(API_ENDPOINTS.announcements.read(id), {}, {
         context: withSkipLoader(withInlineHandling()),
       })
       .pipe(map(() => undefined));
   }
+
+  readers(id: number): Observable<AnnouncementReader[]> {
+    return this.api
+      .get<AnnouncementReader[]>(API_ENDPOINTS.announcements.readers(id), {
+        context: withSkipLoader(withInlineHandling()),
+      })
+      .pipe(map((rows) => (rows ?? []).map(toReader)));
+  }
+}
+
+function toAnnouncementOrNull(dto: AnnouncementDto | null): Announcement | null {
+  return dto && typeof dto === 'object' && 'id' in dto ? toAnnouncement(dto) : null;
 }

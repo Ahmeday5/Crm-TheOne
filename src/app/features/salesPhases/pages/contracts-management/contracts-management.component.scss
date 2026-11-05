@@ -61,6 +61,11 @@
   }
 }
 
+.contracts-rep {
+  flex: 0 1 240px;
+  min-width: 0;
+}
+
 .contracts-search {
   flex: 1 1 16rem;
   max-width: 420px;
@@ -84,8 +89,20 @@
     scroll-snap-align: start;
   }
 
-  .contracts-search { max-width: none; flex-basis: 100%; }
+  .contracts-search,
+  .contracts-rep { max-width: none; flex-basis: 100%; }
   .contracts-add { width: 100%; }
 
   .contracts-table .contract-title-cell { max-width: none; }
+}
+
+// Paging / tab switches keep the current rows on screen, dimmed, until the
+// next page arrives (no layout jump to a spinner).
+.contracts-table-wrap {
+  transition: opacity 0.15s ease;
+
+  &.is-refreshing {
+    opacity: 0.55;
+    pointer-events: none;
+  }
 }

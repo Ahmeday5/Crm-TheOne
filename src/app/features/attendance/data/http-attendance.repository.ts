@@ -1,111 +1,119 @@
 import { Injectable, inject } from '@angular/core';
-import { EMPTY, Observable, map } from 'rxjs';
+import { Observable, map } from 'rxjs';
+import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { withInlineHandling, withSkipLoader } from '../../../core/http/http-context.tokens';
 import { ApiService } from '../../../core/services/api.service';
-import { PublicHoliday } from '../config/attendance.config';
 import {
-  AttendanceEmployee,
   AttendanceRecord,
-  LeaveBalance,
-  LeaveDecision,
+  AttendanceRecordDto,
+  AttendanceToday,
+  AttendanceTodayDto,
+  ClockNoteInput,
+  EmployeeMonthlyAttendance,
+  LeaveListQuery,
   LeaveRequest,
+  LeaveRequestDto,
   LeaveRequestInput,
+  LeaveReviewInput,
+  MonthlyAttendance,
+  MonthlyAttendanceDto,
+  MonthlyQuery,
+  TodayAttendanceEntry,
+  TodayAttendanceEntryDto,
+  YearMonth,
 } from '../models/attendance.models';
-import { AttendanceRepository } from './attendance.repository';
+import {
+  toEmployeeMonthly,
+  toLeave,
+  toMonthly,
+  toRecord,
+  toToday,
+  toTodayEntry,
+} from './attendance.mapper';
+
+const EP = API_ENDPOINTS.attendance;
 
 /**
- * Endpoints of `docs/api/attendance.md`. Move them into
- * `core/constants/api-endpoints.const.ts` (as `API_ENDPOINTS.attendance`)
- * when the adapter is switched on.
- */
-export const ATTENDANCE_ENDPOINTS = {
-  holidays: 'Attendance/holidays',
-  myRecords: 'Attendance/me',
-  checkIn: 'Attendance/check-in',
-  checkOut: 'Attendance/check-out',
-  myLeaves: 'Attendance/leaves/me',
-  myBalances: 'Attendance/leaves/me/balances',
-  requestLeave: 'Attendance/leaves',
-  cancelLeave: (id: string) => `Attendance/leaves/${encodeURIComponent(id)}/cancel`,
-  employees: 'Attendance/employees',
-  teamRecords: 'Attendance/team',
-  teamLeaves: 'Attendance/leaves',
-  decideLeave: (id: string) => `Attendance/leaves/${encodeURIComponent(id)}/decision`,
-} as const;
-
-/**
- * Real backend adapter — implements `docs/api/attendance.md`.
+ * `Attendance/*` over HTTP.
  *
- * The server owns the clock (check-in/out are stamped server-side), the
- * leave balances and all validation. Reads skip the global loader because
- * the page refreshes quietly in the background.
+ * Reads skip the global loader (widgets refresh quietly in the background).
+ * Everything uses inline handling: callers show the server's `message`
+ * (e.g. "already checked in today", "overlapping leave") in a toast or
+ * next to the form, exactly once.
  */
 @Injectable({ providedIn: 'root' })
-export class HttpAttendanceRepository extends AttendanceRepository {
+export class HttpAttendanceRepository {
   private readonly api = inject(ApiService);
 
-  readonly externalChanges$: Observable<void> = EMPTY;
-
-  holidays(): Observable<PublicHoliday[]> {
-    return this.list<PublicHoliday>(ATTENDANCE_ENDPOINTS.holidays);
+  today(): Observable<AttendanceToday> {
+    return this.get<AttendanceTodayDto>(EP.today).pipe(map(toToday));
   }
 
-  myRecords(from: string, to: string): Observable<AttendanceRecord[]> {
-    return this.list<AttendanceRecord>(ATTENDANCE_ENDPOINTS.myRecords, { from, to });
-  }
-
-  checkIn(): Observable<AttendanceRecord> {
-    return this.api.post<AttendanceRecord>(ATTENDANCE_ENDPOINTS.checkIn, {}, { context: withInlineHandling() });
-  }
-
-  checkOut(): Observable<AttendanceRecord> {
-    return this.api.post<AttendanceRecord>(ATTENDANCE_ENDPOINTS.checkOut, {}, { context: withInlineHandling() });
-  }
-
-  myLeaves(): Observable<LeaveRequest[]> {
-    return this.list<LeaveRequest>(ATTENDANCE_ENDPOINTS.myLeaves);
-  }
-
-  myBalances(year: number): Observable<LeaveBalance[]> {
-    return this.list<LeaveBalance>(ATTENDANCE_ENDPOINTS.myBalances, { year: String(year) });
-  }
-
-  requestLeave(input: LeaveRequestInput): Observable<LeaveRequest> {
-    return this.api.post<LeaveRequest>(ATTENDANCE_ENDPOINTS.requestLeave, input, {
-      context: withInlineHandling(),
-    });
-  }
-
-  cancelLeave(id: string): Observable<LeaveRequest> {
-    return this.api.post<LeaveRequest>(ATTENDANCE_ENDPOINTS.cancelLeave(id), {}, {
-      context: withInlineHandling(),
-    });
-  }
-
-  employees(): Observable<AttendanceEmployee[]> {
-    return this.list<AttendanceEmployee>(ATTENDANCE_ENDPOINTS.employees);
-  }
-
-  teamRecords(from: string, to: string): Observable<AttendanceRecord[]> {
-    return this.list<AttendanceRecord>(ATTENDANCE_ENDPOINTS.teamRecords, { from, to });
-  }
-
-  teamLeaves(): Observable<LeaveRequest[]> {
-    return this.list<LeaveRequest>(ATTENDANCE_ENDPOINTS.teamLeaves);
-  }
-
-  decideLeave(id: string, decision: LeaveDecision): Observable<LeaveRequest> {
-    return this.api.post<LeaveRequest>(ATTENDANCE_ENDPOINTS.decideLeave(id), decision, {
-      context: withInlineHandling(),
-    });
-  }
-
-  private list<T>(endpoint: string, query?: Record<string, string>): Observable<T[]> {
+  checkIn(input: ClockNoteInput): Observable<AttendanceRecord | null> {
     return this.api
-      .get<T[]>(endpoint, {
-        params: query,
-        context: withSkipLoader(withInlineHandling()),
-      })
-      .pipe(map((rows) => rows ?? []));
+      .post<AttendanceRecordDto | null>(EP.checkIn, { note: input.note?.trim() || null }, { context: withInlineHandling() })
+      .pipe(map(recordOrNull));
   }
+
+  checkOut(input: ClockNoteInput): Observable<AttendanceRecord | null> {
+    return this.api
+      .post<AttendanceRecordDto | null>(EP.checkOut, { note: input.note?.trim() || null }, { context: withInlineHandling() })
+      .pipe(map(recordOrNull));
+  }
+
+  myMonth({ year, month }: YearMonth): Observable<MonthlyAttendance> {
+    return this.get<MonthlyAttendanceDto>(EP.my, { year, month }).pipe(map(toMonthly));
+  }
+
+  myLeaves(year: number): Observable<LeaveRequest[]> {
+    return this.get<LeaveRequestDto[]>(EP.myLeaves, { year }).pipe(map((rows) => (rows ?? []).map(toLeave)));
+  }
+
+  requestLeave(input: LeaveRequestInput): Observable<LeaveRequest | null> {
+    return this.api
+      .post<LeaveRequestDto | null>(EP.leaves, input, { context: withInlineHandling() })
+      .pipe(map((dto) => (dto && typeof dto === 'object' && 'id' in dto ? toLeave(dto) : null)));
+  }
+
+  cancelLeave(id: number): Observable<void> {
+    return this.api
+      .delete<unknown>(EP.leave(id), { context: withInlineHandling() })
+      .pipe(map(() => undefined));
+  }
+
+  todayAll(): Observable<TodayAttendanceEntry[]> {
+    return this.get<TodayAttendanceEntryDto[]>(EP.todayAll).pipe(map((rows) => (rows ?? []).map(toTodayEntry)));
+  }
+
+  monthly({ year, month, userId }: MonthlyQuery): Observable<EmployeeMonthlyAttendance[]> {
+    return this.get<MonthlyAttendanceDto[]>(EP.monthly, { year, month, userId }).pipe(
+      map((rows) => (rows ?? []).map(toEmployeeMonthly)),
+    );
+  }
+
+  leaves(query: LeaveListQuery): Observable<LeaveRequest[]> {
+    return this.get<LeaveRequestDto[]>(EP.leaves, {
+      status: query.status,
+      userId: query.userId,
+      year: query.year,
+    }).pipe(map((rows) => (rows ?? []).map(toLeave)));
+  }
+
+  reviewLeave(id: number, input: LeaveReviewInput): Observable<LeaveRequest | null> {
+    return this.api
+      .put<LeaveRequestDto | null>(
+        EP.reviewLeave(id),
+        { approve: input.approve, note: input.note?.trim() || null },
+        { context: withInlineHandling() },
+      )
+      .pipe(map((dto) => (dto && typeof dto === 'object' && 'id' in dto ? toLeave(dto) : null)));
+  }
+
+  private get<T>(endpoint: string, params?: Record<string, unknown>): Observable<T> {
+    return this.api.get<T>(endpoint, { params, context: withSkipLoader(withInlineHandling()) });
+  }
+}
+
+function recordOrNull(dto: AttendanceRecordDto | null): AttendanceRecord | null {
+  return dto && typeof dto === 'object' && 'workDate' in dto ? toRecord(dto) : null;
 }

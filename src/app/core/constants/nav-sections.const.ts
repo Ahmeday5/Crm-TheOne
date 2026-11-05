@@ -288,6 +288,8 @@ export const NAV_SECTIONS: NavSection[] = [
         labelKey: 'sidebar.items.attendance',
         path: '/attendance',
         icon: 'fa-solid fa-user-clock',
+        // `/attendance/leaves|team|requests` are tabs of the same page.
+        matchSubroutes: true,
       },
     ],
   },
@@ -335,6 +337,8 @@ export const NAV_SECTIONS: NavSection[] = [
             labelKey: 'sidebar.items.announcements',
             path: '/announcements',
             icon: 'fa-solid fa-thumbtack',
+            // `/announcements/:id` (notification deep link) is the same board.
+            matchSubroutes: true,
           },
           {
             labelKey: 'sidebar.items.notifications',

@@ -1,0 +1,59 @@
+<app-modal
+  [open]="true"
+  [title]="'announcements.readers.title' | translate"
+  icon="fa-regular fa-eye"
+  iconTone="info"
+  size="md"
+  (closed)="closed.emit()">
+
+  <p class="ar-sub">{{ announcement().title }}</p>
+
+  @if (loading()) {
+    <div class="ar-list" aria-busy="true">
+      @for (i of [1, 2, 3, 4]; track i) { <div class="ar-skel"></div> }
+    </div>
+  } @else if (error() !== null) {
+    <app-load-error [message]="error() || ('announcements.readers.loadFailed' | translate)" [loading]="loading()" (retry)="load()" />
+  } @else {
+    <div class="ar-summary">
+      <div class="ar-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="readPct()">
+        <span [style.width.%]="readPct()"></span>
+      </div>
+      <span>{{ 'announcements.readStats' | translate: { read: counts().read, total: counts().all } }}</span>
+    </div>
+
+    <div class="ar-tabs" role="tablist">
+      @for (f of filters; track f) {
+        <button type="button" role="tab" class="ar-tab" [class.is-on]="filter() === f"
+                [attr.aria-selected]="filter() === f" (click)="filter.set(f)">
+          {{ 'announcements.readers.' + f | translate }}
+          <b>{{ counts()[f] }}</b>
+        </button>
+      }
+    </div>
+
+    @if (visible().length === 0) {
+      <p class="ar-empty">{{ 'announcements.readers.empty' | translate }}</p>
+    } @else {
+      <ul class="ar-list">
+        @for (r of visible(); track r.userId) {
+          <li class="ar-row" [class.is-read]="r.hasRead">
+            <app-user-avatar size="sm" [name]="r.fullName" [userId]="r.userId" />
+            <span class="ar-name">{{ r.fullName }}</span>
+            @if (r.hasRead) {
+              <span class="ar-state is-read">
+                <i class="fa-solid fa-check-double"></i>{{ r.readAt | cairoDate: 'datetime' }}
+              </span>
+            } @else {
+              <span class="ar-state"><i class="fa-regular fa-clock"></i>{{ 'announcements.readers.notYet' | translate }}</span>
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+
+  <div modal-footer class="btn-row justify-content-end w-100">
+    <button type="button" class="btn btn-primary" (click)="closed.emit()">{{ 'announcements.close' | translate }}</button>
+  </div>
+</app-modal>

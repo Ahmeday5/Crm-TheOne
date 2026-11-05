@@ -12,7 +12,7 @@
     </div>
     @if (isAdmin()) {
       <button type="button" class="btn btn-primary page-cta" (click)="openCreate()">
-        <i class="fa-solid fa-plus"></i>{{ 'announcements.new' | translate }}
+        <i class="fa-solid fa-plus"></i>{{ 'announcements.create' | translate }}
       </button>
     }
   </header>
@@ -37,8 +37,8 @@
                        [sub]="'announcements.stats.readRateHint' | translate"
                        icon="fa-solid fa-eye" tone="info"></app-stat-card>
       } @else {
-        <app-stat-card [label]="'announcements.stats.scheduled' | translate" [value]="counts().scheduled"
-                       icon="fa-regular fa-calendar" tone="info"></app-stat-card>
+        <app-stat-card [label]="'announcements.stats.previous' | translate" [value]="counts().previous"
+                       icon="fa-solid fa-box-archive" tone="info"></app-stat-card>
       }
     </div>
   </div>
@@ -46,16 +46,15 @@
   <!-- Toolbar -->
   <div class="card mb-4">
     <div class="card-body ab-toolbar">
-      <div class="ab-tabs" role="tablist">
-        @for (p of phases; track p) {
-          <button type="button" role="tab" class="ab-tab"
-                  [class.is-on]="phase() === p"
-                  [attr.aria-selected]="phase() === p"
-                  (click)="phase.set(p)">
-            {{ 'announcements.filters.' + p | translate }}
-            <span class="ab-tab-count">{{ counts()[p] }}</span>
-          </button>
-        }
+      <div class="ab-tabs" role="radiogroup" [attr.aria-label]="'announcements.filters.scope' | translate">
+        <button type="button" role="radio" class="ab-tab" [class.is-on]="!currentOnly()"
+                [attr.aria-checked]="!currentOnly()" (click)="setCurrentOnly(false)">
+          {{ 'announcements.filters.all' | translate }}
+        </button>
+        <button type="button" role="radio" class="ab-tab" [class.is-on]="currentOnly()"
+                [attr.aria-checked]="currentOnly()" (click)="setCurrentOnly(true)">
+          {{ 'announcements.filters.currentOnly' | translate }}
+        </button>
       </div>
 
       <label class="ab-check">
@@ -66,7 +65,10 @@
       <div class="ab-search">
         <i class="fa-solid fa-magnifying-glass"></i>
         <input type="search" class="form-control" [placeholder]="'announcements.filters.search' | translate"
-               [ngModel]="search()" (ngModelChange)="search.set($event)" />
+               [ngModel]="searchText()" (ngModelChange)="onSearch($event)" />
+        @if (loading() && loaded()) {
+          <span class="spinner-border spinner-border-sm ab-search-spin" aria-hidden="true"></span>
+        }
       </div>
     </div>
   </div>
@@ -79,7 +81,7 @@
         <div class="col-12 col-xl-6"><div class="ab-skeleton"></div></div>
       }
     </div>
-  } @else if (pinned().length === 0 && others().length === 0) {
+  } @else if (isEmpty()) {
     <div class="card">
       <app-empty-state
         icon="fa-solid fa-bullhorn"
@@ -95,40 +97,43 @@
       }
     </div>
   } @else {
-    @if (pinned().length) {
-      <h5 class="ab-section-title"><i class="fa-solid fa-thumbtack"></i>{{ 'announcements.pinnedSection' | translate }}</h5>
+    <ng-template #cards let-list>
       <div class="row g-3 mb-4">
-        @for (a of pinned(); track a.id; let i = $index) {
+        @for (a of list; track a.id; let i = $index) {
           <div class="col-12 col-xl-6 ab-cell" [style.--i]="i">
             <app-announcement-card
               [announcement]="a" [today]="today()" [canManage]="isAdmin()"
               [focused]="focusId() === a.id" [busy]="busyId() === a.id"
-              (markRead)="markRead($event)" (edit)="openEdit($event)"
-              (remove)="remove($event)" (togglePin)="togglePin($event)" />
+              (open)="open($event)" (markRead)="markRead($event)" (edit)="openEdit($event)"
+              (remove)="remove($event)" (readers)="readersOf.set($event)" />
           </div>
         }
       </div>
+    </ng-template>
+
+    @if (pinned().length) {
+      <h5 class="ab-section-title"><span aria-hidden="true">📌</span>{{ 'announcements.pinnedSection' | translate }}</h5>
+      <ng-container *ngTemplateOutlet="cards; context: { $implicit: pinned() }" />
     }
 
-    @if (others().length) {
+    @if (current().length) {
       @if (pinned().length) {
-        <h5 class="ab-section-title"><i class="fa-solid fa-layer-group"></i>{{ 'announcements.othersSection' | translate }}</h5>
+        <h5 class="ab-section-title"><i class="fa-solid fa-layer-group"></i>{{ 'announcements.currentSection' | translate }}</h5>
       }
-      <div class="row g-3">
-        @for (a of others(); track a.id; let i = $index) {
-          <div class="col-12 col-xl-6 ab-cell" [style.--i]="i">
-            <app-announcement-card
-              [announcement]="a" [today]="today()" [canManage]="isAdmin()"
-              [focused]="focusId() === a.id" [busy]="busyId() === a.id"
-              (markRead)="markRead($event)" (edit)="openEdit($event)"
-              (remove)="remove($event)" (togglePin)="togglePin($event)" />
-          </div>
-        }
-      </div>
+      <ng-container *ngTemplateOutlet="cards; context: { $implicit: current() }" />
+    }
+
+    @if (previous().length) {
+      <h5 class="ab-section-title is-muted"><i class="fa-solid fa-box-archive"></i>{{ 'announcements.previousSection' | translate }}</h5>
+      <ng-container *ngTemplateOutlet="cards; context: { $implicit: previous() }" />
     }
   }
 </section>
 
 @if (editing() !== undefined) {
   <app-announcement-form-dialog [announcement]="editing() ?? null" (saved)="closeForm()" (cancel)="closeForm()" />
+}
+
+@if (readersOf(); as r) {
+  <app-announcement-readers-dialog [announcement]="r" (closed)="readersOf.set(null)" />
 }

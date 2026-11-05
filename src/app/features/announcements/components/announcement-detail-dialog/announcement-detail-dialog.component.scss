@@ -1,0 +1,73 @@
+.ad {
+  display: grid;
+  gap: 1rem;
+}
+
+.ad-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ad-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--fs-xs, 0.75rem);
+  font-weight: 600;
+
+  &.is-pinned { background: var(--warning-soft); color: var(--warning); }
+  &.phase-active { background: var(--success-soft); color: var(--success); }
+  &.phase-scheduled { background: var(--info-soft); color: var(--info); }
+  &.phase-expired { color: var(--text-3); }
+}
+
+.ad-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ad-body {
+  margin: 0;
+  color: var(--text-1);
+  line-height: 1.8;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.ad-meta {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface-2);
+
+  dt {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-3);
+    font-size: var(--fs-xs, 0.75rem);
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0.15rem 0 0;
+    color: var(--text-1);
+  }
+}
+
+.ad-read {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--success);
+  font-weight: 600;
+}

@@ -2,6 +2,8 @@ import { TRANSLATIONS, resolveKey } from '../../../core/i18n';
 import { UserRole } from '../../../core/models/auth.model';
 import { Lang } from '../../../core/services/language.service';
 import {
+  ANNOUNCEMENT_ENTITY,
+  LEAVE_REQUEST_ENTITY,
   NotificationType,
   WHATSAPP_CHAT_ENTITY,
   isWhatsAppNotification,
@@ -31,6 +33,9 @@ export function notificationIcon(type: NotificationType): string {
     case 'ProjectAssigned': return 'fa-solid fa-diagram-project';
     case 'GoalAssigned': return 'fa-solid fa-bullseye';
     case 'GoalAchieved': return 'fa-solid fa-trophy';
+    case 'Announcement': return 'fa-solid fa-bullhorn';
+    case 'LeaveRequestSubmitted': return 'fa-solid fa-plane-departure';
+    case 'LeaveRequestReviewed': return 'fa-solid fa-calendar-check';
     default: return 'fa-solid fa-bell';
   }
 }
@@ -49,6 +54,9 @@ export function notificationTone(type: NotificationType): string {
     case 'ProjectAssigned': return 'success';
     case 'GoalAssigned': return 'purple';
     case 'GoalAchieved': return 'warning';
+    case 'Announcement': return 'orange';
+    case 'LeaveRequestSubmitted': return 'info';
+    case 'LeaveRequestReviewed': return 'success';
     default: return 'primary';
   }
 }
@@ -71,6 +79,22 @@ export function notificationRoute(n: NotificationTarget, role: UserRole | null):
     // Older payloads may carry no chat id — the inbox is still the right place.
     const chatId = n.relatedEntityType === WHATSAPP_CHAT_ENTITY ? n.relatedEntityId : null;
     return chatId ? ['/whatsapp', 'chats', String(chatId)] : ['/whatsapp'];
+  }
+
+  // Announcements: everyone; the id opens that announcement on the board.
+  if (entityType === ANNOUNCEMENT_ENTITY || notifType === 'Announcement') {
+    return entityType === ANNOUNCEMENT_ENTITY && n.relatedEntityId
+      ? ['/announcements', String(n.relatedEntityId)]
+      : ['/announcements'];
+  }
+
+  // Leave: a new request goes to the admin inbox, a decision to "my leave".
+  if (notifType === 'LeaveRequestSubmitted') {
+    return role === 'Admin' ? ['/attendance', 'requests'] : null;
+  }
+  if (notifType === 'LeaveRequestReviewed') return ['/attendance', 'leaves'];
+  if (entityType === LEAVE_REQUEST_ENTITY) {
+    return role === 'Admin' ? ['/attendance', 'requests'] : ['/attendance', 'leaves'];
   }
 
   // ── Primary: entity-type routing (most specific) ──

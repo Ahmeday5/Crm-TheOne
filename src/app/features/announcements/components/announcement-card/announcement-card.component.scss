@@ -31,7 +31,7 @@
   &.phase-expired:hover { opacity: 1; }
 }
 
-/* Deep link (`?focus=id`) flashes the card once. */
+/* Deep link (`/announcements/:id`) flashes the card once. */
 :host(.is-focused) .ac { animation: ac-focus 1.6s var(--ac-ease) 2; }
 
 @keyframes ac-focus {
@@ -67,9 +67,34 @@
 }
 
 .ac-pin {
-  color: var(--tone);
-  transform: rotate(35deg);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+/* Shared reset for text that behaves as a button (title, body, stats). */
+%ac-text-btn {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--tone);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.ac-title-btn {
+  @extend %ac-text-btn;
+  transition: color 0.15s ease;
+
+  &:hover { color: var(--tone); }
 }
 
 .ac-title {
@@ -108,7 +133,6 @@
   i { margin-inline-end: 0.3rem; }
 }
 
-.ac-edited { font-style: italic; }
 
 .ac-phase {
   display: inline-flex;
@@ -141,11 +165,19 @@
 }
 
 .ac-body {
-  margin: 0;
+  @extend %ac-text-btn;
+  display: -webkit-box;
+  width: 100%;
   color: var(--text-2);
   line-height: 1.7;
   white-space: pre-line;
+  overflow: hidden;
   overflow-wrap: anywhere;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  line-clamp: 4;
+
+  &:hover { color: var(--text-1); }
 }
 
 .ac-audience {
@@ -233,11 +265,17 @@
 }
 
 .ac-stats {
+  @extend %ac-text-btn;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: var(--radius-sm);
   font-size: var(--fs-xs);
   color: var(--text-2);
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover { background: var(--surface-2); color: var(--text-1); }
 }
 
 .ac-stats-bar {

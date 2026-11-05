@@ -1,77 +1,100 @@
 import { UserRole } from '../../../core/models/auth.model';
 
-/** Departments an announcement can target (the publisher is always an Admin). */
-export type AnnouncementDepartment = Exclude<UserRole, 'Admin'>;
-
-export const ANNOUNCEMENT_DEPARTMENTS: ReadonlyArray<AnnouncementDepartment> = [
-  'Sales',
-  'Marketing',
-  'Support',
-  'Developer',
-];
-
-/** Visual weight — drives the banner / card accent colour. */
-export type AnnouncementTone = 'info' | 'success' | 'warning' | 'danger';
-
-export const ANNOUNCEMENT_TONES: ReadonlyArray<AnnouncementTone> = [
-  'info',
-  'success',
-  'warning',
-  'danger',
-];
-
 /**
- * `all`   → every employee.
- * `roles` → only the listed departments (`roles` is non-empty).
+ * Who an announcement targets: one department, or everyone (`null`).
+ * Admin is a valid target too (e.g. a note for managers only).
  */
-export type AnnouncementAudience = 'all' | 'roles';
+export type AnnouncementTarget = UserRole | null;
 
-/** Lifecycle derived from today's date vs. the [startsOn, endsOn] window. */
+/** Dropdown order of the composer ("All employees" first). */
+export const ANNOUNCEMENT_TARGETS: ReadonlyArray<AnnouncementTarget> = [
+  null,
+  'Sales',
+  'Support',
+  'Marketing',
+  'Developer',
+  'Admin',
+];
+
+/** Server limits (validated client-side too). */
+export const ANNOUNCEMENT_TITLE_MAX = 200;
+export const ANNOUNCEMENT_BODY_MAX = 4000;
+
+/** Lifecycle relative to today (Cairo). */
 export type AnnouncementPhase = 'scheduled' | 'active' | 'expired';
 
-export interface AnnouncementAuthor {
-  id: string;
-  name: string;
+/** Raw row of `GET /Announcements`, `/Announcements/Active` and hub events. */
+export interface AnnouncementDto {
+  id: number;
+  title: string;
+  body: string;
+  targetRole: string | null;
+  isPinned: boolean;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  isRead: boolean;
+  createdByName: string | null;
+  createdAt: string;
+  /** Admin only. */
+  readCount?: number | null;
+  /** Admin only. */
+  targetCount?: number | null;
 }
 
 /**
- * One announcement, as seen by the current user.
+ * One announcement as the UI uses it (normalised at the HTTP boundary).
  *
- * `startsOn` / `endsOn` are calendar dates (`YYYY-MM-DD`, Cairo time) and both
- * are inclusive: the banner shows from the first moment of `startsOn` until
- * the end of `endsOn`, then disappears on its own.
+ * `startsOn` / `endsOn` are inclusive Cairo calendar days (`YYYY-MM-DD`).
+ * `isActive` is the server's verdict for "live today for this audience" —
+ * the UI never second-guesses it.
  */
 export interface Announcement {
-  id: string;
+  id: number;
   title: string;
   body: string;
-  tone: AnnouncementTone;
-  audience: AnnouncementAudience;
-  roles: AnnouncementDepartment[];
+  target: AnnouncementTarget;
   isPinned: boolean;
   startsOn: string;
   endsOn: string;
-  createdAt: string;
-  updatedAt: string | null;
-  author: AnnouncementAuthor;
-
-  /** Has the *current* user marked it as read? */
+  isActive: boolean;
   isRead: boolean;
-  readAt: string | null;
-
-  /** Admin insight: how many targeted employees read it / were targeted. */
-  readCount: number;
-  recipientsCount: number;
+  authorName: string | null;
+  /** UTC ISO instant. */
+  createdAt: string;
+  /** Admin only — `null` for everyone else. */
+  readCount: number | null;
+  targetCount: number | null;
 }
 
-/** Body for create / update. */
+/** Body of `POST /Announcements` and `PUT /Announcements/{id}`. */
 export interface AnnouncementInput {
   title: string;
   body: string;
-  tone: AnnouncementTone;
-  audience: AnnouncementAudience;
-  roles: AnnouncementDepartment[];
+  targetRole: AnnouncementTarget;
   isPinned: boolean;
-  startsOn: string;
-  endsOn: string;
+  /** `YYYY-MM-DD` (Cairo), inclusive. */
+  startDate: string;
+  /** `YYYY-MM-DD` (Cairo), inclusive, `>= startDate`. */
+  endDate: string;
+}
+
+/** Board query (`GET /Announcements`). */
+export interface AnnouncementQuery {
+  includeExpired: boolean;
+  search: string;
+}
+
+/** Row of `GET /Announcements/{id}/Readers`. */
+export interface AnnouncementReader {
+  userId: string;
+  fullName: string;
+  hasRead: boolean;
+  /** UTC ISO instant, `null` until read. */
+  readAt: string | null;
+}
+
+/** Payload of the `announcementRemoved` hub event. */
+export interface AnnouncementRemovedEvent {
+  id: number;
 }

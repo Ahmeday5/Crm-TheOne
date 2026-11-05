@@ -1,76 +1,54 @@
-# Announcements API — backend contract
+# Announcements API — contract used by the frontend
 
-The frontend is fully built against this contract. Until it is deployed, the
-app runs on a browser-only mock (`MockAnnouncementsRepository`). Once these
-endpoints are live, switch the adapter in
-`src/app/features/announcements/data/announcements-repository.provider.ts`
-to `inject(HttpAnnouncementsRepository)`. No other frontend change is needed.
+Live backend contract (no mock). Envelope: `{ statusCode, message, data }`;
+errors `{ statusCode, message, details }` — the UI shows `message`.
+A 401 whose body is `"Unauthorized access."` means *forbidden*, not an expired
+session (no logout). Dates/times are Cairo time; zone-less timestamps are
+treated as Cairo wall-clock and normalised to UTC in
+`features/announcements/data/announcement.mapper.ts`.
 
-All responses use the standard envelope `{ statusCode, message, data }`.
-Timestamps are UTC ISO-8601. `startsOn` / `endsOn` are **calendar dates**
-(`YYYY-MM-DD`, Africa/Cairo) and **both are inclusive**.
+## Model
 
-## Rules
-
-| Rule | Detail |
-|---|---|
-| Who publishes | `Admin` only (create, update, delete, pin). Return `403` for everyone else. |
-| Who reads | Every authenticated user. `GET` returns only what targets the caller: `audience = "all"`, or the caller's role is in `roles`. Admin gets everything. |
-| Delivery | `POST` must send a notification (existing `Notifications` table + FCM push) to **every targeted employee**, excluding the publisher and other admins (except when `audience = "all"`). |
-| Window | Active while `startsOn <= today(Cairo) <= endsOn`. No server job is needed, because the frontend hides expired items itself. |
-| Read receipts | One row per (announcementId, userId). Idempotent. |
-
-## Model — `AnnouncementDto`
-
-```jsonc
+```json
 {
-  "id": "string",                 // GUID or int as string
-  "title": "string",              // ≤ 120 chars, required
-  "body": "string",               // ≤ 1000 chars, required
-  "tone": "info | success | warning | danger",
-  "audience": "all | roles",
-  "roles": ["Sales", "Marketing", "Support", "Developer"], // [] when audience = all; ≥1 when roles
-  "isPinned": false,
-  "startsOn": "2026-11-05",
-  "endsOn": "2026-11-11",         // >= startsOn
-  "createdAt": "2026-11-05T09:12:00Z",
-  "updatedAt": null,
-  "author": { "id": "user-guid", "name": "Admin name" },
-
-  // per caller
+  "id": 7, "title": "…", "body": "…",
+  "targetRole": "Sales",            // null = everyone; Sales | Support | Marketing | Developer | Admin
+  "isPinned": true,
+  "startDate": "2026-11-05", "endDate": "2026-11-07",   // inclusive
+  "isActive": true,                  // live today for this audience (server decides)
   "isRead": false,
-  "readAt": null,
-
-  // counters (meaningful for Admin; may be 0 for others)
-  "readCount": 12,                // targeted users who read it
-  "recipientsCount": 30           // targeted users at publish time
+  "createdByName": "…", "createdAt": "2026-11-05T09:00:00",
+  "readCount": 3, "targetCount": 12  // Admin only
 }
 ```
 
-`AnnouncementInputDto` (create / update body) = `title, body, tone, audience, roles, isPinned, startsOn, endsOn`.
-
-Validation errors → `400` with a human-readable `message` (shown as-is in the form):
-- empty title/body, or length limits exceeded
-- `audience = "roles"` with empty `roles`
-- `endsOn < startsOn`
-- on create only: `startsOn` earlier than today (Cairo)
-
 ## Endpoints
 
-| Method | Path | Body | Returns |
+| Method | Path | Who | Notes |
 |---|---|---|---|
-| `GET` | `/api/Announcements` | — | `AnnouncementDto[]` (any order; the frontend sorts pinned first) |
-| `POST` | `/api/Announcements` | `AnnouncementInputDto` | `AnnouncementDto` (with `recipientsCount` filled in) and delivers notifications |
-| `PUT` | `/api/Announcements/{id}` | `AnnouncementInputDto` | `AnnouncementDto`, sets `updatedAt`, does **not** re-notify |
-| `DELETE` | `/api/Announcements/{id}` | — | `200`, removes it everywhere |
-| `PATCH` | `/api/Announcements/{id}/pin` | `{ "isPinned": true }` | `AnnouncementDto` |
-| `POST` | `/api/Announcements/{id}/read` | — | `200`, idempotent read receipt for the caller |
+| GET | `/api/Announcements?includeExpired=true&search=` | all | scoped to the caller; "Current only" sends `includeExpired=false` |
+| GET | `/api/Announcements/Active` | all | the banner: live today for the caller, pinned first |
+| POST | `/api/Announcements` | Admin | `{ title (≤200), body (≤4000), targetRole, isPinned, startDate, endDate }` |
+| PUT | `/api/Announcements/{id}` | Admin | same body |
+| DELETE | `/api/Announcements/{id}` | Admin | |
+| POST | `/api/Announcements/{id}/Read` | all | read receipt (opening an announcement also sends it) |
+| GET | `/api/Announcements/{id}/Readers` | Admin | `[{ userId, fullName, hasRead, readAt }]` — UI lists unread first |
 
-## Suggested notification payload
+Delivery (in-app notification + push) is done by the server when an
+announcement **starts** — the frontend never fans out notifications.
 
-```jsonc
-{ "title": "<announcement title>", "message": "<first 160 chars of body>", "type": "<new Announcement type>" }
-```
+## Real time — `/hubs/app` (shared app hub)
 
-If a dedicated notification `type` is added, the bell can deep-link to
-`/announcements?focus=<id>`. The board already scrolls to and highlights that card.
+| Event | Payload | Frontend reaction |
+|---|---|---|
+| `announcement` | announcement | add to banner (if live) + board, toast "📢 New announcement" |
+| `announcementUpdated` | announcement | replace by id (drops from the banner if no longer live) |
+| `announcementRemoved` | `{ id }` | remove from banner + board |
+
+After a reconnect, on every new Cairo day and hourly as a safety net the
+frontend reloads `/Active`.
+
+## Notifications
+
+`type = Announcement`, `relatedEntityType = "Announcement"`,
+`relatedEntityId = <id>` → opens `/announcements/<id>`.

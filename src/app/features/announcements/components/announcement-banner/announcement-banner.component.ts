@@ -8,43 +8,49 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
 import { interval } from 'rxjs';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { Announcement } from '../../models/announcement.models';
-import { ANNOUNCEMENTS_PATH, AnnouncementsStore } from '../../state/announcements.store';
-import { TONE_ICON, daysLeft } from '../../utils/announcement.util';
+import { AnnouncementViewerService } from '../../state/announcement-viewer.service';
+import { AnnouncementsStore } from '../../state/announcements.store';
+import { announcementIcon, announcementTone, daysLeft } from '../../utils/announcement.util';
+import { AnnouncementDetailDialogComponent } from '../announcement-detail-dialog/announcement-detail-dialog.component';
 
-const ROTATE_MS = 8_000;
+const ROTATE_MS = 6_000;
 const MINIMIZED_KEY = 'crm.announcements.banner.minimized';
 
 /**
- * Sticky banner above every page while an announcement is live.
+ * Sticky banner above every page while an announcement is live for the
+ * current user (`GET /Announcements/Active`).
  *
  * Product rules:
- *   - It cannot be dismissed — only minimised to a slim bar.
- *   - It disappears on its own once the last day has passed (the store's
- *     day clock drops it from `bannerItems`).
- *   - Minimising remembers *which* announcements were showing; a newly
- *     published one re-expands the banner so it is never missed.
+ *   - It cannot be dismissed — only minimised to a slim 📢 bar with a count.
+ *   - Several live announcements rotate every 6 s (paused on hover / focus,
+ *     never with reduced motion) and can be paged with the arrows.
+ *   - It disappears on its own after the last day: the store reloads
+ *     `/Active` on every new Cairo day and the server stops returning it.
+ *   - Minimising remembers *which* announcements were showing (in
+ *     localStorage, so it survives a refresh); a new one re-expands it.
+ *   - Clicking an announcement opens it in full and marks it read. The
+ *     detail dialog is hosted here because the banner lives on every page.
  */
 @Component({
   selector: 'app-announcement-banner',
   standalone: true,
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, AnnouncementDetailDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './announcement-banner.component.html',
   styleUrl: './announcement-banner.component.scss',
 })
 export class AnnouncementBannerComponent implements OnInit {
   private readonly store = inject(AnnouncementsStore);
-  private readonly router = inject(Router);
+  protected readonly viewer = inject(AnnouncementViewerService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly items = this.store.bannerItems;
   readonly index = signal(0);
   readonly paused = signal(false);
-  private readonly minimizedIds = signal<ReadonlySet<string>>(this.loadMinimized());
+  private readonly minimizedIds = signal<ReadonlySet<number>>(this.loadMinimized());
 
   readonly current = computed<Announcement | null>(() => {
     const list = this.items();
@@ -65,8 +71,6 @@ export class AnnouncementBannerComponent implements OnInit {
   readonly rotating = computed(() => this.items().length > 1 && !this.paused() && !this.minimized());
 
   ngOnInit(): void {
-    this.store.start();
-
     interval(ROTATE_MS)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
@@ -98,15 +102,19 @@ export class AnnouncementBannerComponent implements OnInit {
     this.store.markRead(a);
   }
 
+  /** Full text in a dialog (marks it read). */
   openDetails(a: Announcement): void {
-    this.store.markRead(a);
-    this.router.navigate([ANNOUNCEMENTS_PATH], { queryParams: { focus: a.id } });
+    this.viewer.open(a);
   }
 
   // ─────────── view helpers ───────────
 
   icon(a: Announcement): string {
-    return TONE_ICON[a.tone];
+    return announcementIcon(a);
+  }
+
+  tone(a: Announcement): string {
+    return announcementTone(a);
   }
 
   daysLeft(a: Announcement): number {
@@ -119,16 +127,16 @@ export class AnnouncementBannerComponent implements OnInit {
     return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
-  private loadMinimized(): ReadonlySet<string> {
+  private loadMinimized(): ReadonlySet<number> {
     try {
       const raw = JSON.parse(localStorage.getItem(MINIMIZED_KEY) ?? '[]');
-      return new Set(Array.isArray(raw) ? raw : []);
+      return new Set(Array.isArray(raw) ? raw.map(Number).filter(Number.isFinite) : []);
     } catch {
       return new Set();
     }
   }
 
-  private saveMinimized(ids: ReadonlySet<string>): void {
+  private saveMinimized(ids: ReadonlySet<number>): void {
     this.minimizedIds.set(ids);
     try {
       localStorage.setItem(MINIMIZED_KEY, JSON.stringify([...ids]));

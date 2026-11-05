@@ -18,6 +18,7 @@
 
   &.is-working { --tc-accent: var(--success); --tc-accent-soft: var(--success-soft); }
   &.is-done    { --tc-accent: var(--success); --tc-accent-soft: var(--success-soft); }
+  &.is-onLeave { --tc-accent: var(--info); --tc-accent-soft: var(--info-soft); }
 }
 
 /* ── Header ───────────────────────────────────────── */
@@ -100,36 +101,38 @@
   font-size: var(--fs-sm);
 }
 
-.tc-shift {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: 0.45rem;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-md);
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  font-size: var(--fs-sm);
-  color: var(--text-1);
-  font-weight: var(--fw-600);
+/* ── On leave today ───────────────────────────────── */
 
-  i { color: var(--brand-500); grid-row: span 2; }
-  small { color: var(--text-3); font-weight: var(--fw-500); font-size: var(--fs-xs); }
-}
-
-.tc-note {
+.tc-leave {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 0.8rem;
-  border-radius: var(--radius-md);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-600);
+  gap: 0.35rem;
+  padding: 1.75rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--info-soft);
+  color: var(--info);
+  text-align: center;
   animation: tc-fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 
-  &.tone-leave   { background: var(--info-soft); color: var(--info); }
-  &.tone-holiday { background: var(--warning-soft); color: var(--warning); }
-  &.tone-weekend { background: var(--surface-2); color: var(--text-2); }
+  strong { font-size: var(--fs-lg); }
+  small { color: var(--text-2); }
+}
+
+.tc-leave-ic {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 0.35rem;
+  border-radius: 50%;
+  background: var(--surface-0);
+  font-size: 1.6rem;
+  animation: tc-bob 3s ease-in-out infinite;
+}
+
+@keyframes tc-bob {
+  50% { transform: translateY(-4px); }
 }
 
 /* ── Ring + button ────────────────────────────────── */
@@ -303,22 +306,34 @@
 
 :host-context([dir='rtl']) .tc-out i { transform: scaleX(-1); }
 
-.tc-progress-line {
+/* ── Note + done line ─────────────────────────────── */
+
+.tc-note-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: var(--fs-sm);
+  gap: 0.35rem;
+  margin-top: 0.75rem;
   color: var(--text-2);
-  text-align: center;
+  text-decoration: none;
+
+  &:hover { color: var(--tc-accent); }
 }
 
-.tc-pct {
-  padding: 0.05rem 0.5rem;
-  border-radius: var(--radius-pill);
-  background: var(--success-soft);
-  color: var(--success);
-  font-weight: var(--fw-700);
-  font-size: var(--fs-xs);
+.tc-note-field {
+  width: 100%;
+  max-width: 360px;
+  margin-top: 0.75rem;
+  animation: tc-fade-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  textarea { resize: none; font-size: var(--fs-sm); }
+}
+
+.tc-done-line {
+  margin: 0.75rem 0 0;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+  text-align: center;
 }
 
 /* ── Summary ──────────────────────────────────────── */
@@ -361,16 +376,14 @@
   }
 }
 
-.tc-chip {
-  display: inline-block;
-  margin-top: 0.3rem;
-  padding: 0.05rem 0.45rem;
-  border-radius: var(--radius-pill);
-  font-size: 0.68rem;
-  font-weight: var(--fw-700);
-
-  &.tone-success { background: var(--success-soft); color: var(--success); }
-  &.tone-warning { background: var(--warning-soft); color: var(--warning); }
+.tc-tile-note {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @keyframes tc-fade-up {
@@ -381,7 +394,6 @@
 @include bp.down(md) {
   .tc { padding: 1rem; }
   .tc-hm { font-size: var(--fs-3xl); }
-  .tc-shift { width: 100%; }
   .tc-summary { grid-template-columns: 1fr 1fr; }
   .tc-tile:last-child { grid-column: span 2; }
 }
@@ -392,6 +404,8 @@
   .tc-btn-ic,
   .tc-ring-ticks,
   .tc-btn-inner,
-  .tc-note { animation: none !important; }
+  .tc-leave,
+  .tc-leave-ic,
+  .tc-note-field { animation: none !important; }
   .tc-ring-bar, .tc-btn, .tc-tile { transition: none !important; }
 }

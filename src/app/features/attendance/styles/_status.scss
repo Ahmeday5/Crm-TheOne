@@ -7,14 +7,11 @@
 // (`--st-soft`); components decide where to apply them.
 
 @mixin tones {
-  .st-present  { --st: var(--success); --st-soft: var(--success-soft); --st-ink: var(--success); }
-  .st-late     { --st: var(--warning); --st-soft: var(--warning-soft); --st-ink: var(--warning); }
-  .st-absent   { --st: var(--danger);  --st-soft: var(--danger-soft);  --st-ink: var(--danger); }
-  .st-leave    { --st: var(--info);    --st-soft: var(--info-soft);    --st-ink: var(--info); }
-  .st-holiday  { --st: var(--brand-500); --st-soft: var(--brand-soft); --st-ink: var(--brand-500); }
-  .st-weekend  { --st: var(--text-3);  --st-soft: var(--surface-2);    --st-ink: var(--text-3); }
-  .st-pending  { --st: var(--border);  --st-soft: var(--surface-1);    --st-ink: var(--text-2); }
-  .st-upcoming { --st: var(--border);  --st-soft: transparent;         --st-ink: var(--text-3); }
+  .st-present    { --st: var(--success); --st-soft: var(--success-soft); --st-ink: var(--success); }
+  .st-working    { --st: var(--success); --st-soft: var(--success-soft); --st-ink: var(--success); }
+  .st-missingOut { --st: var(--warning); --st-soft: var(--warning-soft); --st-ink: var(--warning); }
+  .st-leave      { --st: var(--info);    --st-soft: var(--info-soft);    --st-ink: var(--info); }
+  .st-none       { --st: var(--border);  --st-soft: transparent;         --st-ink: var(--text-3); }
 }
 
 // Leave type badge + request status chip, shared by "my requests" and the
@@ -35,9 +32,11 @@
     transition: transform 0.2s ease;
   }
 
-  .type-annual    { --chip: var(--brand-500); --chip-soft: var(--brand-soft); }
-  .type-sick      { --chip: var(--danger);    --chip-soft: var(--danger-soft); }
-  .type-casual    { --chip: var(--warning);   --chip-soft: var(--warning-soft); }
+  .type-annual { --chip: var(--brand-500); --chip-soft: var(--brand-soft); }
+  .type-sick   { --chip: var(--danger);    --chip-soft: var(--danger-soft); }
+  .type-casual { --chip: var(--warning);   --chip-soft: var(--warning-soft); }
+  .type-unpaid { --chip: var(--text-2);    --chip-soft: var(--surface-2); }
+  .type-other  { --chip: var(--info);      --chip-soft: var(--info-soft); }
 
   .status-pending   { --chip: var(--warning); --chip-soft: var(--warning-soft); }
   .status-approved  { --chip: var(--success); --chip-soft: var(--success-soft); }

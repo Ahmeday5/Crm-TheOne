@@ -1,4 +1,4 @@
-<article class="tc card" [class]="'is-' + state()" [class.is-busy]="busy()">
+<article class="tc card" [class]="'is-' + state()" [class.is-busy]="!!busy()">
   <!-- ── Header: live clock ─────────────────────────── -->
   <header class="tc-head">
     <div class="min-w-0">
@@ -10,115 +10,121 @@
       </div>
       <p class="tc-date">{{ dateLabel() }}</p>
     </div>
-    <div class="tc-shift">
-      <i class="fa-regular fa-clock"></i>
-      <span>{{ 'attendance.clock.shift' | translate: { start: shift().start, end: shift().end } }}</span>
-      <small>{{ 'attendance.clock.grace' | translate: { m: policy.graceMinutes } }}</small>
-    </div>
   </header>
 
-  @if (dayNote(); as note) {
-    <div class="tc-note tone-{{ note }}" role="status">
-      @switch (note) {
-        @case ('leave') { <i class="fa-solid fa-umbrella-beach"></i>{{ 'attendance.clock.leave' | translate }} }
-        @case ('holiday') { <i class="fa-solid fa-flag"></i>{{ 'attendance.clock.holiday' | translate: { name: holidayName() } }} }
-        @default { <i class="fa-solid fa-mug-saucer"></i>{{ 'attendance.clock.weekend' | translate }} }
+  @if (state() === 'onLeave') {
+    <!-- On approved leave today: no actions -->
+    <div class="tc-leave" role="status">
+      <span class="tc-leave-ic"><i class="fa-solid fa-umbrella-beach"></i></span>
+      <strong>{{ 'attendance.clock.onLeave' | translate }}</strong>
+      <small>{{ 'attendance.clock.onLeaveSub' | translate }}</small>
+    </div>
+  } @else {
+    <!-- ── Ring + button ──────────────────────────────── -->
+    <div class="tc-stage">
+      <div class="tc-ring-wrap">
+        <svg class="tc-ring" viewBox="0 0 200 200" aria-hidden="true">
+          <circle class="tc-ring-track" cx="100" cy="100" [attr.r]="ringR" />
+          <circle class="tc-ring-ticks" cx="100" cy="100" [attr.r]="ringR" />
+          <circle class="tc-ring-bar" cx="100" cy="100" [attr.r]="ringR"
+                  [attr.stroke-dasharray]="ringC" [attr.stroke-dashoffset]="dashOffset()" />
+        </svg>
+
+        @if (state() === 'notStarted' && !loading()) {
+          <span class="tc-pulse" aria-hidden="true"></span>
+          <span class="tc-pulse delay" aria-hidden="true"></span>
+        }
+
+        <button type="button" class="tc-btn"
+                [disabled]="!canAct()"
+                [attr.aria-busy]="!!busy()"
+                [attr.aria-label]="(state() === 'working' ? 'attendance.clock.checkOut' : 'attendance.clock.checkIn') | translate"
+                (click)="press()">
+          @if (loading()) {
+            <span class="tc-btn-inner"><span class="spinner-border text-secondary"></span></span>
+          } @else if (busy()) {
+            <span class="tc-btn-inner">
+              <span class="spinner-border"></span>
+              <small>{{ (busy() === 'out' ? 'attendance.clock.checkingOut' : 'attendance.clock.checkingIn') | translate }}</small>
+            </span>
+          } @else {
+            @switch (state()) {
+              @case ('notStarted') {
+                <span class="tc-btn-inner">
+                  <i class="fa-solid fa-fingerprint tc-btn-ic"></i>
+                  <strong>{{ 'attendance.clock.checkIn' | translate }}</strong>
+                  <small>{{ 'attendance.clock.tapToStart' | translate }}</small>
+                </span>
+              }
+              @case ('working') {
+                <span class="tc-btn-inner">
+                  <small class="tc-working"><span class="tc-live-dot" aria-hidden="true"></span>{{ 'attendance.clock.working' | translate }}</small>
+                  <strong class="tc-elapsed" dir="ltr">{{ elapsed() }}</strong>
+                  <span class="tc-out"><i class="fa-solid fa-right-from-bracket"></i>{{ 'attendance.clock.checkOut' | translate }}</span>
+                </span>
+              }
+              @case ('done') {
+                <span class="tc-btn-inner">
+                  <i class="fa-solid fa-circle-check tc-btn-ic"></i>
+                  <strong>{{ 'attendance.clock.done' | translate }}</strong>
+                  <small>{{ record()?.workedHours | workHours: '—' }}</small>
+                </span>
+              }
+            }
+          }
+        </button>
+      </div>
+
+      <!-- Optional note for the next action -->
+      @if (state() === 'notStarted' || state() === 'working') {
+        @if (noteOpen()) {
+          <div class="tc-note-field">
+            <label class="visually-hidden" for="tc-note">{{ 'attendance.clock.note' | translate }}</label>
+            <textarea id="tc-note" class="form-control" rows="2" [maxlength]="noteMax"
+                      [placeholder]="(state() === 'working' ? 'attendance.clock.notePhOut' : 'attendance.clock.notePhIn') | translate"
+                      [ngModel]="note()" (ngModelChange)="note.set($event)"
+                      [disabled]="!!busy()"></textarea>
+          </div>
+        } @else {
+          <button type="button" class="btn btn-link btn-sm tc-note-toggle" (click)="noteOpen.set(true)">
+            <i class="fa-regular fa-note-sticky"></i>{{ 'attendance.clock.addNote' | translate }}
+          </button>
+        }
+      }
+
+      @if (state() === 'done') {
+        <p class="tc-done-line">
+          {{ 'attendance.clock.doneLine' | translate: {
+            in: (record()?.checkInAt | cairoDate: 'time'),
+            out: (record()?.checkOutAt | cairoDate: 'time'),
+            hours: (record()?.workedHours | workHours: '—')
+          } }}
+        </p>
       }
     </div>
   }
-
-  <!-- ── Ring + button ──────────────────────────────── -->
-  <div class="tc-stage">
-    <div class="tc-ring-wrap">
-      <svg class="tc-ring" viewBox="0 0 200 200" aria-hidden="true">
-        <circle class="tc-ring-track" cx="100" cy="100" [attr.r]="ringR" />
-        <circle class="tc-ring-ticks" cx="100" cy="100" [attr.r]="ringR" />
-        <circle class="tc-ring-bar" cx="100" cy="100" [attr.r]="ringR"
-                [attr.stroke-dasharray]="ringC" [attr.stroke-dashoffset]="dashOffset()" />
-      </svg>
-
-      @if (state() === 'notStarted' && !loading()) {
-        <span class="tc-pulse" aria-hidden="true"></span>
-        <span class="tc-pulse delay" aria-hidden="true"></span>
-      }
-
-      <button type="button" class="tc-btn"
-              [disabled]="loading() || busy() || state() === 'done'"
-              [attr.aria-busy]="busy()"
-              [attr.aria-label]="(state() === 'working' ? 'attendance.clock.checkOut' : 'attendance.clock.checkIn') | translate"
-              (click)="press()">
-        @if (loading()) {
-          <span class="tc-btn-inner"><span class="spinner-border text-secondary"></span></span>
-        } @else if (busy()) {
-          <span class="tc-btn-inner">
-            <span class="spinner-border"></span>
-            <small>{{ (state() === 'working' ? 'attendance.clock.checkingOut' : 'attendance.clock.checkingIn') | translate }}</small>
-          </span>
-        } @else {
-          @switch (state()) {
-            @case ('notStarted') {
-              <span class="tc-btn-inner">
-                <i class="fa-solid fa-fingerprint tc-btn-ic"></i>
-                <strong>{{ 'attendance.clock.checkIn' | translate }}</strong>
-                <small>{{ 'attendance.clock.tapToStart' | translate }}</small>
-              </span>
-            }
-            @case ('working') {
-              <span class="tc-btn-inner">
-                <small class="tc-working"><span class="tc-live-dot" aria-hidden="true"></span>{{ 'attendance.clock.working' | translate }}</small>
-                <strong class="tc-elapsed" dir="ltr">{{ elapsed() }}</strong>
-                <span class="tc-out"><i class="fa-solid fa-right-from-bracket"></i>{{ 'attendance.clock.checkOut' | translate }}</span>
-              </span>
-            }
-            @case ('done') {
-              <span class="tc-btn-inner">
-                <i class="fa-solid fa-circle-check tc-btn-ic"></i>
-                <strong>{{ 'attendance.clock.done' | translate }}</strong>
-                <small>{{ workedMinutes() | workDuration }}</small>
-              </span>
-            }
-          }
-        }
-      </button>
-    </div>
-
-    <div class="tc-progress-line" role="progressbar"
-         [attr.aria-label]="'attendance.clock.progress' | translate"
-         aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="progressPct()">
-      @if (state() === 'notStarted') {
-        {{ 'attendance.clock.goal' | translate: { t: (policy.workdayMinutes | workDuration) } }}
-      } @else if (overtimeMinutes() > 0) {
-        <i class="fa-solid fa-bolt text-warning"></i>
-        {{ 'attendance.clock.overtime' | translate: { t: (overtimeMinutes() | workDuration) } }}
-      } @else if (state() === 'working') {
-        {{ 'attendance.clock.remaining' | translate: { t: (remainingMinutes() | workDuration) } }}
-        <span class="tc-pct">{{ progressPct() }}%</span>
-      } @else {
-        {{ 'attendance.clock.doneSub' | translate: { pct: progressPct() } }}
-      }
-    </div>
-  </div>
 
   <!-- ── Today's summary ────────────────────────────── -->
   <dl class="tc-summary">
     <div class="tc-tile">
       <dt><i class="fa-solid fa-right-to-bracket"></i>{{ 'attendance.clock.checkedIn' | translate }}</dt>
-      <dd>{{ record()?.checkIn | cairoDate: 'time' : ('attendance.clock.notYet' | translate) }}</dd>
-      @if (record()) {
-        @if (day().lateMinutes > 0) {
-          <span class="tc-chip tone-warning">{{ 'attendance.clock.late' | translate: { m: day().lateMinutes } }}</span>
-        } @else if (!day().isExtra) {
-          <span class="tc-chip tone-success">{{ 'attendance.clock.onTime' | translate }}</span>
-        }
-      }
+      <dd>{{ record()?.checkInAt | cairoDate: 'time' : ('attendance.clock.notYet' | translate) }}</dd>
+      @if (record()?.checkInNote; as n) { <small class="tc-tile-note" [title]="n">{{ n }}</small> }
     </div>
     <div class="tc-tile">
       <dt><i class="fa-solid fa-right-from-bracket"></i>{{ 'attendance.clock.checkedOut' | translate }}</dt>
-      <dd>{{ record()?.checkOut | cairoDate: 'time' : ('attendance.clock.notYet' | translate) }}</dd>
+      <dd>{{ record()?.checkOutAt | cairoDate: 'time' : ('attendance.clock.notYet' | translate) }}</dd>
+      @if (record()?.checkOutNote; as n) { <small class="tc-tile-note" [title]="n">{{ n }}</small> }
     </div>
     <div class="tc-tile">
       <dt><i class="fa-solid fa-hourglass-half"></i>{{ 'attendance.clock.worked' | translate }}</dt>
-      <dd>{{ workedMinutes() | workDuration: '—' }}</dd>
+      <dd>
+        @if (state() === 'working') {
+          <span dir="ltr">{{ elapsed() }}</span>
+        } @else {
+          {{ record()?.workedHours | workHours: '—' }}
+        }
+      </dd>
     </div>
   </dl>
 </article>

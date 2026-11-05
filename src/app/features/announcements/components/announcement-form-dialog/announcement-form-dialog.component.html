@@ -36,58 +36,18 @@
           </div>
         </div>
 
-        <!-- Tone -->
-        <fieldset class="mb-3">
-          <legend class="form-label fw-600">{{ 'announcements.form.tone' | translate }}</legend>
-          <div class="af-tones" role="radiogroup">
-            @for (tone of tones; track tone) {
-              <button type="button" class="af-tone tone-{{ tone }}"
-                      role="radio"
-                      [attr.aria-checked]="value().tone === tone"
-                      [class.is-on]="value().tone === tone"
-                      (click)="setTone(tone)">
-                <i [class]="toneIcon(tone)"></i>
-                {{ 'announcements.tones.' + tone | translate }}
-              </button>
-            }
-          </div>
-        </fieldset>
-
         <!-- Audience -->
-        <fieldset class="mb-3">
-          <legend class="form-label fw-600">{{ 'announcements.form.audience' | translate }}</legend>
-          <div class="af-seg" role="radiogroup">
-            <button type="button" role="radio" class="af-seg-btn"
-                    [attr.aria-checked]="value().audience === 'all'"
-                    [class.is-on]="value().audience === 'all'"
-                    (click)="setAudience('all')">
-              <i class="fa-solid fa-users"></i>{{ 'announcements.audience.all' | translate }}
-            </button>
-            <button type="button" role="radio" class="af-seg-btn"
-                    [attr.aria-checked]="value().audience === 'roles'"
-                    [class.is-on]="value().audience === 'roles'"
-                    (click)="setAudience('roles')">
-              <i class="fa-solid fa-sitemap"></i>{{ 'announcements.audience.roles' | translate }}
-            </button>
-          </div>
-
-          @if (value().audience === 'roles') {
-            <div class="af-deps">
-              @for (dep of departments; track dep) {
-                <button type="button" class="af-dep"
-                        [class.is-on]="value().roles?.includes(dep)"
-                        [attr.aria-pressed]="value().roles?.includes(dep)"
-                        (click)="toggleDepartment(dep)">
-                  <i class="fa-solid" [class.fa-square-check]="value().roles?.includes(dep)" [class.fa-square]="!value().roles?.includes(dep)"></i>
-                  {{ 'announcements.departments.' + dep | translate }}
-                </button>
-              }
-            </div>
-            @if (showRolesError()) {
-              <div class="af-error"><i class="fa-solid fa-circle-exclamation me-1"></i>{{ 'announcements.form.rolesRequired' | translate }}</div>
+        <div class="mb-3">
+          <label class="form-label fw-600" for="af-target">{{ 'announcements.form.audience' | translate }}</label>
+          <select id="af-target" class="form-select" formControlName="target">
+            @for (t of targets; track t) {
+              <option [ngValue]="t">{{ targetKey(t) | translate }}</option>
             }
-          }
-        </fieldset>
+          </select>
+          <small class="text-muted d-block mt-1">
+            <i class="fa-solid fa-bell me-1"></i>{{ 'announcements.form.audienceHint' | translate }}
+          </small>
+        </div>
       </div>
 
       <!-- ── Schedule + preview ─────────────────── -->
@@ -137,11 +97,11 @@
         <!-- Live preview of the banner -->
         <div class="af-preview-wrap">
           <span class="af-card-title"><i class="fa-regular fa-eye"></i>{{ 'announcements.form.preview' | translate }}</span>
-          <div class="af-preview tone-{{ value().tone }}">
-            <span class="af-preview-ic"><i [class]="toneIcon(value().tone || 'info')"></i></span>
+          <div class="af-preview" [class.tone-warning]="value().isPinned">
+            <span class="af-preview-ic"><i class="fa-solid" [class.fa-thumbtack]="value().isPinned" [class.fa-bullhorn]="!value().isPinned"></i></span>
             <div class="min-w-0">
               <strong class="af-preview-title">
-                @if (value().isPinned) { <i class="fa-solid fa-thumbtack me-1"></i> }
+                @if (value().isPinned) { <span class="me-1" aria-hidden="true">📌</span> }
                 {{ value().title || ('announcements.form.titlePh' | translate) }}
               </strong>
               <p class="af-preview-text">{{ value().body || ('announcements.form.bodyPh' | translate) }}</p>
@@ -167,8 +127,8 @@
         <span class="spinner-border spinner-border-sm me-1"></span>
         {{ (isEdit() ? 'announcements.form.saving' : 'announcements.form.publishing') | translate }}
       } @else {
-        <i class="fa-solid" [class.fa-paper-plane]="!isEdit()" [class.fa-floppy-disk]="isEdit()"></i>
-        {{ (isEdit() ? 'announcements.form.save' : 'announcements.form.publish') | translate }}
+        <i class="fa-solid" [class.fa-paper-plane]="!isEdit() && !startsLater()" [class.fa-calendar-check]="!isEdit() && startsLater()" [class.fa-floppy-disk]="isEdit()"></i>
+        {{ (isEdit() ? 'announcements.form.save' : (startsLater() ? 'announcements.form.schedule' : 'announcements.form.publish')) | translate }}
       }
     </button>
   </div>

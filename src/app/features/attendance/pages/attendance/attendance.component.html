@@ -6,7 +6,7 @@
       <div class="min-w-0">
         <h3 class="fw-700 mb-1">{{ 'attendance.title' | translate }}</h3>
         <p class="text-muted mb-0">
-          {{ (store.isAdmin() ? 'attendance.subtitleAdmin' : 'attendance.subtitle') | translate }}
+          {{ (isAdmin() ? 'attendance.subtitleAdmin' : 'attendance.subtitle') | translate }}
         </p>
       </div>
     </div>
@@ -14,12 +14,6 @@
       <i class="fa-solid fa-plane-departure"></i>{{ 'attendance.leave.new' | translate }}
     </button>
   </header>
-
-  @if (isMock) {
-    <div class="att-mock" role="note">
-      <i class="fa-solid fa-flask"></i>{{ 'attendance.mockNotice' | translate }}
-    </div>
-  }
 
   <!-- Tabs -->
   <div class="att-tabs" role="tablist" (keydown)="onTabKey($event)">
@@ -34,109 +28,132 @@
               (click)="setTab(t)">
         <i [class]="tabIcons[t]"></i>
         <span>{{ 'attendance.tabs.' + t | translate }}</span>
-        @if (t === 'approvals' && pendingCount()) {
-          <span class="att-tab-badge">{{ pendingCount() }}</span>
+        @if (t === 'requests' && inbox.pendingCount()) {
+          <span class="att-tab-badge">{{ inbox.pendingCount() }}</span>
         }
       </button>
     }
   </div>
 
-  @if (store.myState.error() && !store.myState.loaded()) {
-    <app-load-error [message]="'attendance.loadFailed' | translate" [loading]="store.myState.loading()" (retry)="store.refresh()" />
-  }
-
   <div class="att-panel" role="tabpanel" [attr.aria-labelledby]="'att-tab-' + tab()">
     @switch (tab()) {
       <!-- ── My attendance ─────────────────────────── -->
       @case ('mine') {
+        @if (mine.monthError() !== null && !mine.monthLoaded()) {
+          <app-load-error [message]="mine.monthError() || ('attendance.loadFailed' | translate)"
+                          [loading]="mine.monthLoading()" (retry)="mine.loadMonth()" />
+        }
+
         <div class="att-grid">
           <app-time-clock-card
             class="att-clock"
-            [record]="store.todayRecord()"
-            [day]="store.todayDay()"
-            [state]="store.clockState()"
-            [busy]="store.clockBusy()"
-            [loading]="store.todayState.loading() && !store.todayState.loaded()"
-            (checkIn)="checkIn()"
-            (checkOut)="checkOut()" />
+            [today]="today.today()"
+            [state]="today.state()"
+            [day]="today.day()"
+            [busy]="today.busy()"
+            [loading]="!today.loaded()"
+            (checkIn)="today.checkIn($event)"
+            (checkOut)="today.checkOut($event)" />
 
           <app-month-calendar
             class="att-calendar"
-            [month]="store.month()"
-            [days]="store.myDays()"
-            [ready]="store.monthReady()"
-            [loading]="store.myState.loading()"
-            [canPrev]="store.canPrevMonth()"
-            [canNext]="store.canNextMonth()"
+            [period]="mine.period()"
+            [days]="mine.days()"
+            [ready]="mine.monthLoaded()"
+            [loading]="mine.monthLoading()"
+            [canPrev]="mine.canPrev()"
+            [canNext]="mine.canNext()"
             [selected]="selectedDay()"
             (prev)="shiftMonth(-1)"
             (next)="shiftMonth(1)"
             (select)="selectDay($event)" />
         </div>
 
-        <app-day-log-table
-          [days]="store.myDays()"
-          [summary]="store.mySummary()"
-          [ready]="store.monthReady()"
+        <app-month-summary [month]="mine.month()" [ready]="mine.monthLoaded()" />
+
+        <app-month-records-table
+          [days]="mine.days()"
+          [ready]="mine.monthLoaded()"
           [selected]="selectedDay()"
           (select)="selectDay($event)" />
       }
 
       <!-- ── My leave ──────────────────────────────── -->
-      @case ('leave') {
-        <app-leave-balances
-          [balances]="store.balances()"
-          [loading]="store.leaveState.loading() && !store.leaveState.loaded()" />
-
-        <app-my-leave-requests
-          [requests]="store.myLeaves()"
-          [loaded]="store.leaveState.loaded()"
-          [busyId]="busyLeaveId()"
-          (cancelRequest)="cancelLeave($event)"
-          (create)="leaveDialogOpen.set(true)" />
+      @case ('leaves') {
+        @if (mine.leavesError() !== null && !mine.leavesLoaded()) {
+          <app-load-error [message]="mine.leavesError() || ('attendance.loadFailed' | translate)"
+                          [loading]="mine.leavesLoading()" (retry)="mine.loadLeaves()" />
+        } @else {
+          <app-my-leave-requests
+            [requests]="mine.leaves()"
+            [loaded]="mine.leavesLoaded()"
+            [busyId]="busyLeaveId()"
+            [year]="mine.leavesYear()"
+            [years]="years()"
+            (yearChange)="mine.setLeavesYear($event)"
+            (cancelRequest)="cancelLeave($event)"
+            (create)="leaveDialogOpen.set(true)" />
+        }
       }
 
       <!-- ── Team (admin) ──────────────────────────── -->
       @case ('team') {
-        <app-today-board
-          [presence]="store.presence()"
-          [ready]="store.boardReady()"
-          [loading]="store.boardState.loading()" />
+        @if (team.todayError() !== null && !team.todayLoaded()) {
+          <app-load-error [message]="team.todayError() || ('attendance.loadFailed' | translate)"
+                          [loading]="team.todayLoading()" (retry)="team.loadToday()" />
+        } @else {
+          <app-today-board
+            [entries]="team.todayEntries()"
+            [ready]="team.todayLoaded()"
+            [loading]="team.todayLoading()" />
+        }
 
-        <app-team-matrix
-          [rows]="store.teamRows()"
-          [month]="store.teamMonth()"
-          [ready]="store.teamReady()"
-          [loading]="store.teamState.loading()"
-          [canPrev]="store.canPrevTeamMonth()"
-          [canNext]="store.canNextTeamMonth()"
-          (prev)="store.shiftTeamMonth(-1)"
-          (next)="store.shiftTeamMonth(1)" />
+        <app-team-monthly-table
+          [rows]="team.monthly()"
+          [period]="team.period()"
+          [employees]="team.employees()"
+          [employeeId]="team.employeeFilter()"
+          [ready]="team.monthlyLoaded()"
+          [loading]="team.monthlyLoading()"
+          [error]="team.monthlyError()"
+          [canPrev]="team.canPrev()"
+          [canNext]="team.canNext()"
+          (prev)="team.shiftMonth(-1)"
+          (next)="team.shiftMonth(1)"
+          (employeeChange)="team.setEmployee($event)"
+          (open)="employeeOpen.set($event)"
+          (retry)="team.loadMonthly()" />
       }
 
-      <!-- ── Approvals (admin) ─────────────────────── -->
-      @case ('approvals') {
-        <app-leave-approvals
-          [pending]="store.pendingApprovals()"
-          [history]="store.decidedLeaves()"
-          [loaded]="store.approvalsState.loaded()"
-          [busyId]="busyLeaveId()"
-          (approve)="approve($event)"
-          (reject)="openReject($event)" />
+      <!-- ── Leave requests (admin) ────────────────── -->
+      @case ('requests') {
+        <app-leave-requests-inbox
+          [requests]="team.leaves()"
+          [status]="team.statusFilter()"
+          [pendingCount]="inbox.pendingCount()"
+          [year]="team.leavesYear()"
+          [years]="years()"
+          [ready]="team.leavesLoaded()"
+          [loading]="team.leavesLoading()"
+          [error]="team.leavesError()"
+          (statusChange)="team.setStatusFilter($event)"
+          (yearChange)="team.setLeavesYear($event)"
+          (review)="reviewing.set($event)"
+          (retry)="team.loadLeaves()" />
       }
     }
   </div>
 </section>
 
 @if (leaveDialogOpen()) {
-  <app-leave-request-dialog (saved)="leaveDialogOpen.set(false); setTab('leave')" (cancel)="leaveDialogOpen.set(false)" />
+  <app-leave-request-dialog (saved)="onLeaveSaved()" (cancel)="leaveDialogOpen.set(false)" />
 }
 
-@if (rejecting(); as r) {
-  <app-reject-leave-dialog
-    [request]="r"
-    [busy]="busyLeaveId() === r.id"
-    [error]="rejectError()"
-    (confirm)="confirmReject($event)"
-    (cancel)="rejecting.set(null)" />
+@if (reviewing(); as rv) {
+  <app-review-leave-dialog [request]="rv.request" [decision]="rv.decision"
+                           (done)="reviewing.set(null)" (cancel)="reviewing.set(null)" />
+}
+
+@if (employeeOpen(); as emp) {
+  <app-employee-month-dialog [employee]="emp" [period]="team.period()" (closed)="employeeOpen.set(null)" />
 }

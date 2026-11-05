@@ -92,10 +92,18 @@
   }
 
   .form-control { padding-inline-start: 2.2rem; }
+
+  .ab-search-spin {
+    position: absolute;
+    inset-inline-end: 0.8rem;
+    top: 50%;
+    margin-top: -0.5rem;
+    color: var(--text-3);
+  }
 }
 
 @include bp.down(md) {
-  .ab-tabs { width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); }
+  .ab-tabs { width: 100%; display: grid; grid-template-columns: repeat(2, 1fr); }
   .ab-tab { justify-content: center; padding: 0 0.3rem; }
   .ab-search { max-width: none; margin-inline-start: 0; flex-basis: 100%; }
 }
@@ -116,6 +124,12 @@
     flex: 1;
     height: 1px;
     background: var(--border);
+  }
+
+  /* "Previous announcements" — no longer live. */
+  &.is-muted {
+    color: var(--text-3);
+    i { color: var(--text-3); }
   }
 }
 

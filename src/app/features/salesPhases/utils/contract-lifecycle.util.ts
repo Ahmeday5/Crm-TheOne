@@ -1,9 +1,11 @@
 import { ContractListItem } from '../../../shared/models';
 
 /**
- * Single source of truth for "what state is this contract really in?".
- * Pure (no Angular) so tabs, KPI cards, row badges and exports can never
- * disagree with each other.
+ * Per-row display state for badges, the days-left cell and exports.
+ *
+ * Display only: tab membership, tab badges and KPI tiles come from the
+ * server (`GetContracts` filters + `ContractStatistics`) — see
+ * `contract-tabs.util.ts`. Pure (no Angular).
  *
  *   cancelled  status = Cancelled (wins over dates)
  *   expired    status = Expired, or the end date has passed
@@ -34,27 +36,4 @@ export function contractLifecycle(
   if (row.status === 'Expired' || (days !== null && days < 0)) return 'expired';
   if (days !== null && days <= EXPIRING_WINDOW_DAYS) return 'expiring';
   return 'active';
-}
-
-export interface ContractCounts {
-  all: number;
-  /** Active including the ones expiring soon (they are still active). */
-  active: number;
-  expiring: number;
-  expired: number;
-  cancelled: number;
-}
-
-export function countContracts(rows: ReadonlyArray<Pick<ContractListItem, 'status' | 'endDate'>>, now = Date.now()): ContractCounts {
-  const counts: ContractCounts = { all: rows.length, active: 0, expiring: 0, expired: 0, cancelled: 0 };
-  for (const row of rows) {
-    const state = contractLifecycle(row, now);
-    if (state === 'expiring') {
-      counts.expiring++;
-      counts.active++;
-    } else {
-      counts[state]++;
-    }
-  }
-  return counts;
 }

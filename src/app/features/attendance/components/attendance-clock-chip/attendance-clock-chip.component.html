@@ -1,0 +1,53 @@
+@if (ready()) {
+  @switch (state()) {
+    @case ('notStarted') {
+      <button type="button" class="acc is-start" [disabled]="!!busy()" (click)="checkIn()"
+              [appTip]="'attendance.chip.checkInTip' | translate">
+        @if (busy()) {
+          <span class="spinner-border spinner-border-sm"></span>
+        } @else {
+          <i class="fa-solid fa-fingerprint"></i>
+        }
+        <span class="acc-label">{{ 'attendance.clock.checkIn' | translate }}</span>
+      </button>
+    }
+
+    @case ('working') {
+      <div class="acc is-working" role="group" [attr.aria-label]="'attendance.chip.working' | translate">
+        <a routerLink="/attendance" class="acc-time"
+           [appTip]="'attendance.chip.since' | translate: { time: (record()?.checkInAt | cairoDate: 'time') }">
+          <span class="acc-dot" aria-hidden="true"></span>
+          <span dir="ltr">{{ elapsed() }}</span>
+        </a>
+        <button type="button" class="acc-out" [disabled]="!!busy()" (click)="checkOut()"
+                [attr.aria-label]="'attendance.clock.checkOut' | translate">
+          @if (busy()) {
+            <span class="spinner-border spinner-border-sm"></span>
+          } @else {
+            <i class="fa-solid fa-right-from-bracket acc-flip"></i>
+          }
+          <span class="acc-label">{{ 'attendance.chip.out' | translate }}</span>
+        </button>
+      </div>
+    }
+
+    @case ('done') {
+      <a routerLink="/attendance" class="acc is-done"
+         [appTip]="'attendance.clock.doneLine' | translate: {
+           in: (record()?.checkInAt | cairoDate: 'time'),
+           out: (record()?.checkOutAt | cairoDate: 'time'),
+           hours: (record()?.workedHours | workHours: '—')
+         }">
+        <i class="fa-solid fa-circle-check"></i>
+        <span class="acc-label">{{ record()?.workedHours | workHours: '—' }}</span>
+      </a>
+    }
+
+    @case ('onLeave') {
+      <a routerLink="/attendance" class="acc is-leave" [appTip]="'attendance.clock.onLeave' | translate">
+        <i class="fa-solid fa-umbrella-beach"></i>
+        <span class="acc-label">{{ 'attendance.chip.onLeave' | translate }}</span>
+      </a>
+    }
+  }
+}

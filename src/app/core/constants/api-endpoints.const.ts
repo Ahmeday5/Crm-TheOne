@@ -215,17 +215,45 @@ export const API_ENDPOINTS = {
   },
   /** Per-user notification center + bell badge + FCM push registration. */
   /**
-   * Announcements board — contract in `docs/api/announcements.md`.
-   * Not deployed yet: the app uses the mock repository until it is
-   * (see `announcements-repository.provider.ts`).
+   * Announcements board + sticky banner (`docs/api/announcements.md`).
+   * Live updates arrive on the shared `/hubs/app` SignalR hub.
    */
   announcements: {
+    /** GET `?includeExpired=&search=` — scoped to the caller; Admin also gets read stats. */
     list: 'Announcements',
+    /** GET: live today for the caller (banner), pinned first. */
+    active: 'Announcements/Active',
     create: 'Announcements',
-    update: (id: string) => `Announcements/${id}`,
-    delete: (id: string) => `Announcements/${id}`,
-    pin: (id: string) => `Announcements/${id}/pin`,
-    read: (id: string) => `Announcements/${id}/read`,
+    update: (id: number) => `Announcements/${id}`,
+    delete: (id: number) => `Announcements/${id}`,
+    /** POST: mark read for the caller. */
+    read: (id: number) => `Announcements/${id}/Read`,
+    /** GET (Admin): `[{ userId, fullName, hasRead, readAt }]`. */
+    readers: (id: number) => `Announcements/${id}/Readers`,
+  },
+  /** Attendance & leave (`docs/api/attendance.md`). Times are Cairo wall-clock. */
+  attendance: {
+    today: 'Attendance/Today',
+    checkIn: 'Attendance/CheckIn',
+    checkOut: 'Attendance/CheckOut',
+    /** GET `?year=&month=` — the caller's month. */
+    my: 'Attendance/My',
+    /** GET (Admin): who checked in / out today. */
+    todayAll: 'Attendance/TodayAll',
+    /** GET (Admin) `?year=&month=&userId=` — one month summary per employee. */
+    monthly: 'Attendance/Monthly',
+    /** POST: request leave. GET (Admin) `?status=&userId=&year=`: every request. */
+    leaves: 'Attendance/Leaves',
+    /** GET `?year=` — the caller's requests. */
+    myLeaves: 'Attendance/Leaves/My',
+    /** DELETE: cancel the caller's pending request. */
+    leave: (id: number) => `Attendance/Leaves/${id}`,
+    /** PUT (Admin): `{ approve, note }`. */
+    reviewLeave: (id: number) => `Attendance/Leaves/${id}/Review`,
+  },
+  /** SignalR hubs (mapped at the API origin, not under `/api`). */
+  realtime: {
+    appHub: 'hubs/app',
   },
   notifications: {
     list: 'Notifications',

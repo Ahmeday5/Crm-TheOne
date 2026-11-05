@@ -215,7 +215,7 @@ export class DashboardComponent {
       admin: this.adminDashboard.dashboard(),
       sources: this.marketing.sourcePerformance(),
       leads: this.customers.list({ PageIndex: 1, PageSize: 5 }),
-      deals: this.contracts.list({ PageIndex: 1, PageSize: 5 }),
+      deals: this.contracts.list({ pageIndex: 1, pageSize: 5 }),
       tickets: this.tickets.list({ PageIndex: 1, PageSize: 5 }),
     }).subscribe({
       next: (res) => {

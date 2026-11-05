@@ -1,0 +1,94 @@
+<section class="tm card">
+  <header class="tm-head">
+    <div class="min-w-0">
+      <h5 class="tm-title"><i class="fa-solid fa-table-list"></i>{{ 'attendance.team.title' | translate }}</h5>
+      <p class="tm-sub">{{ 'attendance.team.subtitle' | translate }}</p>
+    </div>
+
+    <div class="tm-tools">
+      <select class="form-select form-select-sm tm-employee" [attr.aria-label]="'attendance.team.employee' | translate"
+              [value]="employeeId() ?? ''" (change)="onEmployee($any($event.target).value)">
+        <option value="">{{ 'attendance.team.allEmployees' | translate }}</option>
+        @for (e of employees(); track e.userId) {
+          <option [value]="e.userId">{{ e.fullName }}</option>
+        }
+      </select>
+
+      <div class="tm-nav" role="group" [attr.aria-label]="'attendance.calendar.navigate' | translate">
+        <button type="button" class="tm-nav-btn" [disabled]="!canPrev() || loading()" (click)="prev.emit()"
+                [attr.aria-label]="'attendance.calendar.prev' | translate">
+          <i class="fa-solid fa-chevron-right tm-flip"></i>
+        </button>
+        <span class="tm-month">
+          {{ monthLabel() }}
+          @if (loading() && ready()) { <span class="spinner-border spinner-border-sm ms-1"></span> }
+        </span>
+        <button type="button" class="tm-nav-btn" [disabled]="!canNext() || loading()" (click)="next.emit()"
+                [attr.aria-label]="'attendance.calendar.next' | translate">
+          <i class="fa-solid fa-chevron-left tm-flip"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (error() !== null && !ready()) {
+    <app-load-error [message]="error() || ('attendance.loadFailed' | translate)" [loading]="loading()" (retry)="retry.emit()" />
+  } @else if (!ready()) {
+    <div class="tm-skel-wrap">@for (i of [1, 2, 3, 4]; track i) { <div class="tm-skel"></div> }</div>
+  } @else if (rows().length === 0) {
+    <app-empty-state icon="fa-regular fa-calendar-xmark" [compact]="true" [message]="'attendance.team.empty' | translate" />
+  } @else {
+    <div class="table-responsive-md" [class.is-refreshing]="loading()">
+      <table class="table table-hover align-middle mb-0 tm-table" appResponsiveTable [rtPrimaryCol]="0">
+        <thead>
+          <tr>
+            <th>{{ 'attendance.team.employee' | translate }}</th>
+            <th class="text-center">{{ 'attendance.summary.presentDays' | translate }}</th>
+            <th class="text-center">{{ 'attendance.summary.totalHours' | translate }}</th>
+            <th class="text-center">{{ 'attendance.summary.leaveDays' | translate }}</th>
+            <th class="text-center">{{ 'attendance.summary.missingCheckOuts' | translate }}</th>
+            <th class="rt-actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows(); track r.userId; let i = $index) {
+            <tr class="tm-row" [style.--i]="i" tabindex="0" (click)="open.emit(r)" (keydown.enter)="open.emit(r)"
+                [attr.aria-label]="'attendance.team.openCalendar' | translate: { name: r.fullName }">
+              <td>
+                <span class="tm-person">
+                  <app-user-avatar size="sm" [name]="r.fullName" [userId]="r.userId" />
+                  <strong class="text-truncate">{{ r.fullName }}</strong>
+                </span>
+              </td>
+              <td class="text-center tm-num">{{ r.presentDays }}</td>
+              <td class="text-center tm-num">{{ hours(r.totalHours) }}</td>
+              <td class="text-center tm-num">
+                <span [class.tm-pill]="r.leaveDays > 0" class="is-info">{{ r.leaveDays }}</span>
+              </td>
+              <td class="text-center tm-num">
+                <span [class.tm-pill]="r.missingCheckOuts > 0" class="is-warning">{{ r.missingCheckOuts }}</span>
+              </td>
+              <td class="rt-actions text-end">
+                <span class="tm-open" [appTip]="'attendance.team.openCalendarShort' | translate">
+                  <i class="fa-regular fa-calendar-days"></i>
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+        @if (rows().length > 1) {
+          <tfoot>
+            <tr class="tm-total">
+              <td>{{ 'attendance.team.total' | translate }}</td>
+              <td class="text-center tm-num">{{ totals().presentDays }}</td>
+              <td class="text-center tm-num">{{ hours(totals().totalHours) }}</td>
+              <td class="text-center tm-num">{{ totals().leaveDays }}</td>
+              <td class="text-center tm-num">{{ totals().missingCheckOuts }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        }
+      </table>
+    </div>
+  }
+</section>

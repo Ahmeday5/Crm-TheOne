@@ -1,55 +1,44 @@
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { PublicHoliday } from '../config/attendance.config';
 import {
-  AttendanceEmployee,
   AttendanceRecord,
-  LeaveBalance,
-  LeaveDecision,
+  AttendanceToday,
+  ClockNoteInput,
+  EmployeeMonthlyAttendance,
+  LeaveListQuery,
   LeaveRequest,
   LeaveRequestInput,
+  LeaveReviewInput,
+  MonthlyAttendance,
+  MonthlyQuery,
+  TodayAttendanceEntry,
+  YearMonth,
 } from '../models/attendance.models';
+import { HttpAttendanceRepository } from './http-attendance.repository';
 
 /**
- * Persistence port for attendance & leave.
+ * Persistence port for attendance & leave. The stores depend only on this
+ * contract (swap it in tests with `{ provide: AttendanceRepository, useValue }`).
  *
- * The store and UI depend only on this contract; the concrete adapter
- * (mock today, HTTP once the backend ships) is chosen in exactly one place:
- * `ATTENDANCE_REPOSITORY` in `attendance-repository.provider.ts`.
- *
- * Contract every adapter honours (see `docs/api/attendance.md`):
- *   - the server stamps check-in / check-out with its own clock — the client
- *     never sends a time;
- *   - `my*` methods act on the signed-in user only;
- *   - team methods and `decideLeave` are Admin-only (others get an error);
- *   - `requestLeave` re-validates overlap, dates and balance server-side.
+ * The server owns the clock (check-in / out are stamped server-side), every
+ * total, overlap / double-check-in validation and the review notifications.
+ * Admin methods return 403 / "Unauthorized access." for everyone else.
  */
+@Injectable({ providedIn: 'root', useExisting: HttpAttendanceRepository })
 export abstract class AttendanceRepository {
-  /** Official holidays (the calendar paints them and leave skips them). */
-  abstract holidays(): Observable<PublicHoliday[]>;
-
-  // ─────────── my attendance ───────────
-  /** My records with `date` in `[from, to]` (inclusive `YYYY-MM-DD`). */
-  abstract myRecords(from: string, to: string): Observable<AttendanceRecord[]>;
-  abstract checkIn(): Observable<AttendanceRecord>;
-  abstract checkOut(): Observable<AttendanceRecord>;
-
-  // ─────────── my leave ───────────
-  abstract myLeaves(): Observable<LeaveRequest[]>;
-  abstract myBalances(year: number): Observable<LeaveBalance[]>;
-  abstract requestLeave(input: LeaveRequestInput): Observable<LeaveRequest>;
+  // ─────────── me ───────────
+  abstract today(): Observable<AttendanceToday>;
+  abstract checkIn(input: ClockNoteInput): Observable<AttendanceRecord | null>;
+  abstract checkOut(input: ClockNoteInput): Observable<AttendanceRecord | null>;
+  abstract myMonth(period: YearMonth): Observable<MonthlyAttendance>;
+  abstract myLeaves(year: number): Observable<LeaveRequest[]>;
+  abstract requestLeave(input: LeaveRequestInput): Observable<LeaveRequest | null>;
   /** Only a pending request can be cancelled. */
-  abstract cancelLeave(id: string): Observable<LeaveRequest>;
+  abstract cancelLeave(id: number): Observable<void>;
 
   // ─────────── admin ───────────
-  abstract employees(): Observable<AttendanceEmployee[]>;
-  abstract teamRecords(from: string, to: string): Observable<AttendanceRecord[]>;
-  /** Every request in the company — pending ones and the decision history. */
-  abstract teamLeaves(): Observable<LeaveRequest[]>;
-  abstract decideLeave(id: string, decision: LeaveDecision): Observable<LeaveRequest>;
-
-  /**
-   * Fires when data changed somewhere else (another tab, a push event…) so
-   * the store can refetch. Adapters without such a signal return `EMPTY`.
-   */
-  abstract readonly externalChanges$: Observable<void>;
+  abstract todayAll(): Observable<TodayAttendanceEntry[]>;
+  abstract monthly(query: MonthlyQuery): Observable<EmployeeMonthlyAttendance[]>;
+  abstract leaves(query: LeaveListQuery): Observable<LeaveRequest[]>;
+  abstract reviewLeave(id: number, input: LeaveReviewInput): Observable<LeaveRequest | null>;
 }

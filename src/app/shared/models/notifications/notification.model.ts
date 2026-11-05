@@ -19,7 +19,15 @@ export type NotificationType =
   | 'GoalAssigned'
   | 'GoalAchieved'
   | 'WhatsAppMessageReceived'
+  | 'Announcement'
+  | 'LeaveRequestSubmitted'
+  | 'LeaveRequestReviewed'
   | (string & {});
+
+/** `relatedEntityType` of an announcement notification — `relatedEntityId` is its id. */
+export const ANNOUNCEMENT_ENTITY = 'Announcement';
+/** `relatedEntityType` of a leave-request notification. */
+export const LEAVE_REQUEST_ENTITY = 'LeaveRequest';
 
 /** `relatedEntityType` of a WhatsApp notification — `relatedEntityId` is the chat id. */
 export const WHATSAPP_CHAT_ENTITY = 'WhatsAppChat';

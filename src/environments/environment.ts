@@ -4,6 +4,9 @@ export const environment = {
   /** Backend API base — endpoints in `api-endpoints.const.ts` are relative to this. */
   apiUrl: 'http://15.235.51.177/TheOneCRMAPI/api',
 
+  //http://15.235.51.177/TheOneCRMAPI/api
+  //https://crmproject.runasp.net/api
+
   firebase: {
     apiKey: 'AIzaSyD3jrSMr364-FbMcn1uT1fEcrp6NJZJ_Ik',
     authDomain: 'theonecrm-c6fc5.firebaseapp.com',

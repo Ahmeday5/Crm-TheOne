@@ -1,5 +1,5 @@
 @let a = announcement();
-<article class="ac tone-{{ a.tone }} phase-{{ phase() }}" [class.is-unread]="!a.isRead" [class.is-pinned]="a.isPinned"
+<article class="ac tone-{{ tone() }} phase-{{ phase() }}" [class.is-unread]="!a.isRead" [class.is-pinned]="a.isPinned"
          [attr.id]="'announcement-' + a.id">
   <header class="ac-head">
     <span class="ac-ic"><i [class]="icon()"></i></span>
@@ -7,19 +7,18 @@
     <div class="ac-head-text">
       <div class="ac-title-row">
         @if (a.isPinned) {
-          <i class="fa-solid fa-thumbtack ac-pin" [appTip]="'announcements.pinned' | translate"></i>
+          <span class="ac-pin" [appTip]="'announcements.pinned' | translate" aria-hidden="true">📌</span>
         }
-        <h3 class="ac-title">{{ a.title }}</h3>
+        <h3 class="ac-title">
+          <button type="button" class="ac-title-btn" (click)="open.emit(a)">{{ a.title }}</button>
+        </h3>
         @if (!a.isRead && phase() !== 'expired') {
           <span class="ac-new">{{ 'announcements.new' | translate }}</span>
         }
       </div>
       <div class="ac-byline">
-        <span><i class="fa-regular fa-user"></i>{{ a.author.name || ('announcements.admin' | translate) }}</span>
+        <span><i class="fa-regular fa-user"></i>{{ a.authorName || ('announcements.admin' | translate) }}</span>
         <span><i class="fa-regular fa-clock"></i>{{ a.createdAt | cairoDate: 'datetime' }}</span>
-        @if (a.updatedAt) {
-          <span class="ac-edited">{{ 'announcements.edited' | translate }}</span>
-        }
       </div>
     </div>
 
@@ -29,16 +28,11 @@
     </span>
   </header>
 
-  <p class="ac-body" appClampText="4" [clampTitle]="a.title" [clampText]="a.body">{{ a.body }}</p>
+  <!-- The body opens the full announcement (and marks it read) -->
+  <button type="button" class="ac-body" (click)="open.emit(a)">{{ a.body }}</button>
 
   <div class="ac-audience">
-    @if (a.audience === 'all') {
-      <span class="ac-chip"><i class="fa-solid fa-users"></i>{{ 'announcements.audience.all' | translate }}</span>
-    } @else {
-      @for (dep of a.roles; track dep) {
-        <span class="ac-chip"><i class="fa-solid fa-sitemap"></i>{{ 'announcements.departments.' + dep | translate }}</span>
-      }
-    }
+    <span class="ac-chip"><i class="fa-solid" [class.fa-users]="!a.target" [class.fa-sitemap]="!!a.target"></i>{{ targetKey() | translate }}</span>
   </div>
 
   <!-- Timeline of the display window -->
@@ -63,10 +57,7 @@
 
   <footer class="ac-foot">
     @if (a.isRead) {
-      <span class="ac-read">
-        <i class="fa-solid fa-check-double"></i>{{ 'announcements.read' | translate }}
-        @if (a.readAt) { <small>· {{ a.readAt | cairoDate: 'datetime' }}</small> }
-      </span>
+      <span class="ac-read"><i class="fa-solid fa-check-double"></i>{{ 'announcements.read' | translate }}</span>
     } @else {
       <button type="button" class="btn btn-sm btn-primary" (click)="markRead.emit(a)">
         <i class="fa-solid fa-check"></i>{{ 'announcements.markRead' | translate }}
@@ -74,25 +65,27 @@
     }
 
     @if (canManage()) {
-      <div class="ac-stats" [appTip]="'announcements.readStatsTip' | translate">
-        <i class="fa-regular fa-eye"></i>
-        <span>{{ 'announcements.readStats' | translate: { read: a.readCount, total: a.recipientsCount } }}</span>
-        <span class="ac-stats-bar"><span [style.width.%]="readRate()"></span></span>
-      </div>
+      @if (a.targetCount !== null) {
+        <button type="button" class="ac-stats" (click)="readers.emit(a)"
+                [appTip]="'announcements.readStatsTip' | translate">
+          <i class="fa-regular fa-eye"></i>
+          <span>{{ 'announcements.readStats' | translate: { read: a.readCount ?? 0, total: a.targetCount } }}</span>
+          <span class="ac-stats-bar"><span [style.width.%]="readRate()"></span></span>
+        </button>
+      }
 
       <div class="ac-actions">
-        <button type="button" class="ac-act" [disabled]="busy()" (click)="togglePin.emit(a)"
-                [appTip]="(a.isPinned ? 'announcements.unpin' : 'announcements.pin') | translate"
-                [attr.aria-label]="(a.isPinned ? 'announcements.unpin' : 'announcements.pin') | translate">
-          <i class="fa-solid fa-thumbtack" [class.fa-rotate-90]="a.isPinned"></i>
-        </button>
         <button type="button" class="ac-act" [disabled]="busy()" (click)="edit.emit(a)"
                 [appTip]="'announcements.edit' | translate" [attr.aria-label]="'announcements.edit' | translate">
           <i class="fa-solid fa-pen"></i>
         </button>
         <button type="button" class="ac-act is-danger" [disabled]="busy()" (click)="remove.emit(a)"
                 [appTip]="'announcements.delete' | translate" [attr.aria-label]="'announcements.delete' | translate">
-          <i class="fa-solid fa-trash"></i>
+          @if (busy()) {
+            <span class="spinner-border spinner-border-sm"></span>
+          } @else {
+            <i class="fa-solid fa-trash"></i>
+          }
         </button>
       </div>
     }

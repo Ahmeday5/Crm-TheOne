@@ -1,0 +1,59 @@
+@let a = announcement();
+<app-modal
+  [open]="true"
+  [title]="a.title"
+  [icon]="a.isPinned ? 'fa-solid fa-thumbtack' : 'fa-solid fa-bullhorn'"
+  [iconTone]="tone()"
+  size="lg"
+  (closed)="closed.emit()">
+
+  <article class="ad">
+    <div class="ad-chips">
+      @if (a.isPinned) {
+        <span class="ad-chip is-pinned">📌 {{ 'announcements.pinned' | translate }}</span>
+      }
+      <span class="ad-chip phase-{{ phase() }}">
+        <span class="ad-dot" aria-hidden="true"></span>{{ 'announcements.phase.' + phase() | translate }}
+      </span>
+      <span class="ad-chip"><i class="fa-solid fa-users"></i>{{ targetKey() | translate }}</span>
+    </div>
+
+    <p class="ad-body">{{ a.body }}</p>
+
+    <dl class="ad-meta">
+      <div>
+        <dt><i class="fa-regular fa-calendar"></i>{{ 'announcements.period' | translate }}</dt>
+        <dd>
+          {{ a.startsOn | cairoDate: 'date' }} – {{ a.endsOn | cairoDate: 'date' }}
+          @if (phase() === 'active') {
+            <small class="text-muted">
+              · {{ (daysLeft() <= 1 ? 'announcements.banner.lastDay' : 'announcements.banner.daysLeft') | translate: { days: daysLeft() } }}
+            </small>
+          }
+        </dd>
+      </div>
+      <div>
+        <dt><i class="fa-regular fa-user"></i>{{ 'announcements.publishedBy' | translate }}</dt>
+        <dd>{{ a.authorName || ('announcements.admin' | translate) }} · {{ a.createdAt | cairoDate: 'datetime' }}</dd>
+      </div>
+    </dl>
+  </article>
+
+  <div modal-footer class="btn-row justify-content-between w-100">
+    @if (isAdmin() && a.targetCount !== null) {
+      <button type="button" class="btn btn-light" (click)="readersOpen.set(true)">
+        <i class="fa-regular fa-eye"></i>
+        {{ 'announcements.readStats' | translate: { read: a.readCount ?? 0, total: a.targetCount } }}
+      </button>
+    } @else {
+      <span class="ad-read"><i class="fa-solid fa-check-double"></i>{{ 'announcements.read' | translate }}</span>
+    }
+    <button type="button" class="btn btn-primary" (click)="closed.emit()">
+      {{ 'announcements.close' | translate }}
+    </button>
+  </div>
+</app-modal>
+
+@if (readersOpen()) {
+  <app-announcement-readers-dialog [announcement]="a" (closed)="readersOpen.set(false)" />
+}

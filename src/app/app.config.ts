@@ -9,6 +9,8 @@ import { cacheInterceptor } from './core/interceptors/cache.interceptor';
 import { loaderInterceptor } from './core/interceptors/loader.interceptor';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { provideAnnouncements } from './features/announcements';
+import { provideAttendance } from './features/attendance';
 import { provideWhatsApp } from './features/whatsapp/whatsapp.providers';
 
 /**
@@ -40,6 +42,9 @@ export const appConfig: ApplicationConfig = {
     ),
     provideAnimations(),
     provideWhatsApp(),
+    // Banner, hub listeners, header time clock and sidebar badges on every page.
+    provideAnnouncements(),
+    provideAttendance(),
     // PWA — production builds only; registers once the app is idle so it
     // never competes with the first render. API calls are never cached
     // (ngsw-config.json has no dataGroups).

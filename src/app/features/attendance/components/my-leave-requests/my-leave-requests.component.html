@@ -1,14 +1,20 @@
 <section class="mr card">
   <header class="mr-head">
     <h5 class="mr-title"><i class="fa-solid fa-file-signature"></i>{{ 'attendance.myRequests.title' | translate }}</h5>
-    <div class="mr-filters" role="tablist">
-      @for (f of filters; track f) {
-        <button type="button" role="tab" class="mr-filter" [class.is-on]="filter() === f"
-                [attr.aria-selected]="filter() === f" (click)="filter.set(f)">
-          {{ 'attendance.leaveStatus.' + f | translate }}
-          <span class="mr-count">{{ counts()[f] }}</span>
-        </button>
-      }
+    <div class="mr-tools">
+      <select class="form-select form-select-sm mr-year" [attr.aria-label]="'attendance.myRequests.year' | translate"
+              [value]="year()" (change)="yearChange.emit(+$any($event.target).value)">
+        @for (y of years(); track y) { <option [value]="y">{{ y }}</option> }
+      </select>
+      <div class="mr-filters" role="tablist">
+        @for (f of filters; track f) {
+          <button type="button" role="tab" class="mr-filter" [class.is-on]="filter() === f"
+                  [attr.aria-selected]="filter() === f" (click)="filter.set(f)">
+            {{ filterKey(f) | translate }}
+            <span class="mr-count">{{ counts()[f] }}</span>
+          </button>
+        }
+      </div>
     </div>
   </header>
 
@@ -41,34 +47,39 @@
           @for (r of rows(); track r.id; let i = $index) {
             <tr class="mr-row" [style.--i]="i">
               <td>
-                <span class="lv-type type-{{ r.type }}">
+                <span class="lv-type {{ typeClass(r.type) }}">
                   <i [class]="typeIcon[r.type]"></i>{{ 'attendance.leaveTypes.' + r.type | translate }}
                 </span>
               </td>
               <td class="mr-period">
-                @if (r.from === r.to) {
-                  {{ r.from | cairoDate: 'date' }}
+                @if (r.startDate === r.endDate) {
+                  {{ r.startDate | cairoDate: 'date' }}
                 } @else {
-                  {{ r.from | cairoDate: 'date' }} <span class="text-muted">←</span> {{ r.to | cairoDate: 'date' }}
+                  {{ r.startDate | cairoDate: 'date' }} – {{ r.endDate | cairoDate: 'date' }}
                 }
-                @if (r.halfDay) { <small class="d-block text-muted">{{ 'attendance.leave.halfDay' | translate }}</small> }
               </td>
-              <td class="fw-700">{{ 'attendance.units.days' | translate: { n: r.days } }}</td>
+              <td class="fw-700">{{ (r.days === 1 ? 'attendance.units.oneDay' : 'attendance.units.days') | translate: { n: r.days } }}</td>
               <td>
-                <span class="lv-status status-{{ r.status }}">
+                <span class="lv-status {{ statusClass(r.status) }}">
                   <i [class]="statusIcon[r.status]"></i>{{ 'attendance.leaveStatus.' + r.status | translate }}
                 </span>
-                @if (r.status === 'rejected' && r.rejectionReason) {
-                  <small class="d-block text-danger mt-1" appClampText="2">{{ r.rejectionReason }}</small>
+                @if (r.reviewNote) {
+                  <small class="d-block mt-1" [class.text-danger]="r.status === 'Rejected'" [class.text-muted]="r.status !== 'Rejected'"
+                         appClampText="2">
+                    <i class="fa-regular fa-comment-dots me-1"></i>{{ r.reviewNote }}
+                  </small>
                 }
-                @if (r.decidedBy && r.status !== 'cancelled') {
-                  <small class="d-block text-muted mt-1">{{ 'attendance.myRequests.decidedBy' | translate: { name: r.decidedBy.name } }}</small>
+                @if (r.reviewedByName && (r.status === 'Approved' || r.status === 'Rejected')) {
+                  <small class="d-block text-muted mt-1">
+                    {{ 'attendance.myRequests.reviewedBy' | translate: { name: r.reviewedByName } }}
+                    @if (r.reviewedAt) { · {{ r.reviewedAt | cairoDate: 'date' }} }
+                  </small>
                 }
               </td>
               <td class="mr-reason"><span appClampText="2">{{ r.reason }}</span></td>
               <td class="text-muted small">{{ r.createdAt | cairoDate: 'date' }}</td>
               <td class="rt-actions">
-                @if (r.status === 'pending') {
+                @if (r.status === 'Pending') {
                   <button type="button" class="btn btn-sm btn-outline-danger mr-cancel"
                           [disabled]="busyId() === r.id" (click)="cancelRequest.emit(r)"
                           [appTip]="'attendance.myRequests.cancelTip' | translate">

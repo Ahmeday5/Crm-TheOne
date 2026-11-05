@@ -9,29 +9,25 @@
     </div>
 
     @if (ready()) {
-      <div class="tb-meter" [style.--p]="stats().rate"
-           [appTip]="'attendance.board.rateTip' | translate: { in: stats().inside, total: stats().expected }">
-        <svg viewBox="0 0 36 36" aria-hidden="true">
-          <circle class="tb-meter-track" cx="18" cy="18" r="15.915" />
-          <circle class="tb-meter-bar" cx="18" cy="18" r="15.915" [attr.stroke-dasharray]="stats().rate + ' 100'" />
-        </svg>
-        <span class="tb-meter-val">{{ stats().rate }}%</span>
-        <span class="tb-meter-cap">
-          <strong>{{ stats().inside }}/{{ stats().expected }}</strong>
-          <small>{{ 'attendance.board.inOffice' | translate: { n: stats().working } }}</small>
+      <div class="tb-counts">
+        <span class="tb-count">
+          <strong>{{ stats().present }}</strong>{{ 'attendance.board.presentToday' | translate }}
         </span>
+        <span class="tb-count is-live">
+          <strong>{{ stats().working }}</strong>{{ 'attendance.board.inOfficeNow' | translate }}
+        </span>
+        @if (loading()) { <span class="spinner-border spinner-border-sm text-muted"></span> }
       </div>
     }
   </header>
 
   @if (!ready()) {
     <div class="tb-lanes">
-      @for (i of [1, 2, 3, 4]; track i) { <div class="tb-lane tb-skel"></div> }
+      @for (i of [1, 2]; track i) { <div class="tb-lane tb-skel"></div> }
     </div>
-  } @else if (stats().allOff) {
+  } @else if (stats().present === 0) {
     <app-empty-state icon="fa-solid fa-mug-saucer" tone="info" [compact]="true"
-                     [title]="'attendance.board.dayOffTitle' | translate"
-                     [message]="'attendance.board.dayOff' | translate" />
+                     [message]="'attendance.board.nobodyYet' | translate" />
   } @else {
     <div class="tb-lanes">
       @for (lane of lanes(); track lane.key; let li = $index) {
@@ -43,34 +39,26 @@
           </header>
 
           <ul class="tb-people">
-            @for (p of lane.entries; track p.employee.id; let i = $index) {
+            @for (p of lane.entries; track p.userId; let i = $index) {
               <li class="tb-person" [style.--i]="i">
                 <span class="tb-avatar">
-                  <app-user-avatar [name]="p.employee.name" [imageUrl]="p.employee.imageUrl" [userId]="p.employee.id" size="sm" />
-                  @if (p.state === 'working') { <span class="tb-online" [appTip]="'attendance.presence.working' | translate"></span> }
+                  <app-user-avatar [name]="p.fullName" [userId]="p.userId" size="sm" />
+                  @if (lane.key === 'working') { <span class="tb-online" [appTip]="'attendance.status.working' | translate"></span> }
                 </span>
                 <span class="min-w-0 flex-grow-1">
-                  <strong class="tb-name">{{ p.employee.name }}</strong>
-                  <small class="tb-role">{{ 'attendance.roles.' + p.employee.role | translate }}</small>
+                  <strong class="tb-name">{{ p.fullName }}</strong>
+                  <small class="tb-role">
+                    <i class="fa-solid fa-right-to-bracket me-1"></i>{{ p.checkInAt | cairoDate: 'time' }}
+                    @if (p.checkOutAt) {
+                      <i class="fa-solid fa-right-from-bracket ms-2 me-1"></i>{{ p.checkOutAt | cairoDate: 'time' }}
+                    }
+                  </small>
                 </span>
                 <span class="tb-meta">
-                  @switch (p.state) {
-                    @case ('working') {
-                      <span class="tb-time">{{ p.checkIn | cairoDate: 'time' }}</span>
-                      @if (p.isLate) { <small class="tb-late">+{{ p.lateMinutes }}{{ 'attendance.units.minShort' | translate }}</small> }
-                    }
-                    @case ('done') {
-                      <span class="tb-time" [appTip]="'attendance.presence.done' | translate">
-                        <i [class]="stateIcon.done"></i>{{ p.checkOut | cairoDate: 'time' }}
-                      </span>
-                      @if (p.isLate) { <small class="tb-late">+{{ p.lateMinutes }}{{ 'attendance.units.minShort' | translate }}</small> }
-                    }
-                    @case ('leave') {
-                      <small class="tb-tag">{{ 'attendance.leaveTypes.' + (p.leaveType ?? 'annual') | translate }}</small>
-                    }
-                    @default {
-                      <small class="tb-tag">{{ 'attendance.presence.' + p.state | translate }}</small>
-                    }
+                  @if (p.checkOutAt) {
+                    <span class="tb-time">{{ p.workedHours | workHours: '—' }}</span>
+                  } @else {
+                    <small class="tb-tag">{{ 'attendance.status.working' | translate }}</small>
                   }
                 </span>
               </li>

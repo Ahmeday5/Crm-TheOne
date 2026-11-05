@@ -2,7 +2,7 @@
 
 .lf-types {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 0.6rem;
 }
 
@@ -24,6 +24,8 @@
 
   &.type-sick   { --tone: var(--danger);  --tone-soft: var(--danger-soft); }
   &.type-casual { --tone: var(--warning); --tone-soft: var(--warning-soft); }
+  &.type-unpaid { --tone: var(--text-2);  --tone-soft: var(--surface-2); }
+  &.type-other  { --tone: var(--info);    --tone-soft: var(--info-soft); }
 
   small { color: var(--text-3); font-size: var(--fs-xs); }
 
@@ -80,42 +82,6 @@
   i { color: var(--brand-500); }
 }
 
-.lf-switch {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-
-  input { position: absolute; opacity: 0; pointer-events: none; }
-  small { font-size: var(--fs-xs); }
-}
-
-.lf-switch-track {
-  position: relative;
-  width: 42px;
-  height: 24px;
-  flex-shrink: 0;
-  border-radius: var(--radius-pill);
-  background: var(--surface-3);
-  transition: background-color 0.25s ease;
-}
-
-.lf-switch-thumb {
-  position: absolute;
-  inset-block-start: 3px;
-  inset-inline-start: 3px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: var(--shadow-sm);
-  transition: inset-inline-start 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.lf-switch input:checked + .lf-switch-track { background: var(--brand-500); }
-.lf-switch input:checked + .lf-switch-track .lf-switch-thumb { inset-inline-start: 21px; }
-.lf-switch input:focus-visible + .lf-switch-track { outline: 2px solid var(--brand-500); outline-offset: 2px; }
-
 .lf-error {
   display: flex;
   align-items: center;
@@ -130,35 +96,37 @@
   animation: lf-shake 0.4s ease both;
 }
 
-.lf-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
+.lf-days {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   margin-top: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  animation: lf-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 
-  > div {
-    padding: 0.55rem 0.65rem;
-    border-radius: var(--radius-md);
-    background: var(--surface-0);
-    border: 1px solid var(--border);
-    transition: border-color 0.25s ease;
-  }
-
-  span { display: block; font-size: var(--fs-xs); color: var(--text-3); }
-  strong { font-size: var(--fs-lg); font-weight: var(--fw-800); color: var(--text-1); font-variant-numeric: tabular-nums; }
-
-  &.is-bad > div:last-child { border-color: var(--danger); strong { color: var(--danger); } }
+  strong { color: var(--text-1); }
+  small { color: var(--text-3); font-size: var(--fs-xs); }
 }
 
-.lf-note {
-  display: flex;
-  gap: 0.4rem;
-  align-items: flex-start;
-  margin: 0.6rem 0 0;
-  font-size: var(--fs-xs);
-  color: var(--text-3);
+.lf-days-num {
+  min-width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--brand-500);
+  color: #fff;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-800);
+  font-variant-numeric: tabular-nums;
+}
 
-  i { margin-top: 0.15rem; color: var(--info); }
+@keyframes lf-pop {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: none; }
 }
 
 .lf-hint-row {
@@ -183,11 +151,10 @@
 }
 
 @include bp.down(md) {
-  .lf-types { grid-template-columns: 1fr; }
-  .lf-summary strong { font-size: var(--fs-md); }
+  .lf-types { grid-template-columns: 1fr 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lf-error { animation: none !important; }
-  .lf-type, .lf-type-check, .lf-switch-thumb { transition: none !important; }
+  .lf-error, .lf-days { animation: none !important; }
+  .lf-type, .lf-type-check { transition: none !important; }
 }

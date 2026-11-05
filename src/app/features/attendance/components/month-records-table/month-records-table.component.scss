@@ -1,0 +1,178 @@
+@use 'breakpoints' as bp;
+@use '../../styles/status' as st;
+
+@include st.tones;
+
+:host { display: block; }
+
+.dl {
+  padding: 1.25rem;
+  border-radius: var(--radius-xl);
+}
+
+.dl-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.dl-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-700);
+
+  i { color: var(--brand-500); }
+}
+
+.dl-scroll {
+  max-height: 520px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.dl-table {
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface-1);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-700);
+    color: var(--text-3);
+    white-space: nowrap;
+  }
+}
+
+.dl-row {
+  cursor: pointer;
+  animation: dl-row-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(min(var(--i, 0), 20) * 22ms);
+  transition: background-color 0.2s ease;
+
+  td { transition: background-color 0.2s ease; }
+
+  td:first-child { box-shadow: inset 3px 0 0 transparent; transition: box-shadow 0.25s ease; }
+  :host-context([dir='rtl']) & td:first-child { box-shadow: inset -3px 0 0 transparent; }
+
+  &:hover td { background: var(--surface-1); }
+  &:hover td:first-child,
+  &.is-selected td:first-child { box-shadow: inset 3px 0 0 var(--st); }
+  :host-context([dir='rtl']) &:hover td:first-child,
+  :host-context([dir='rtl']) &.is-selected td:first-child { box-shadow: inset -3px 0 0 var(--st); }
+
+  &.is-selected td { background: var(--st-soft); }
+}
+
+.dl-date {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+
+  strong { font-size: var(--fs-sm); }
+}
+
+.dl-dnum {
+  width: 2.1rem;
+  height: 2.1rem;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--st-soft);
+  color: var(--st-ink);
+  font-weight: var(--fw-800);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  .dl-row:hover & { transform: scale(1.1) rotate(-4deg); }
+  .is-today & { background: var(--brand-500); color: #fff; }
+}
+
+.dl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--st-soft);
+  color: var(--st-ink);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-700);
+  white-space: nowrap;
+}
+
+.dl-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.dl-note { max-width: 180px; white-space: normal; font-variant-numeric: normal; }
+
+
+
+.dl-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--success);
+  font-weight: var(--fw-700);
+  font-size: var(--fs-xs);
+}
+
+.dl-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: dl-pulse 1.4s ease-in-out infinite;
+}
+
+.dl-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-top: 0.85rem;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+
+  span { display: inline-flex; align-items: center; gap: 0.4rem; }
+  i { color: var(--brand-500); }
+}
+
+.dl-skel-wrap { display: grid; gap: 0.5rem; }
+
+.dl-skel {
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  animation: dl-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes dl-row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes dl-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+@keyframes dl-shimmer {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.8; }
+}
+
+@include bp.down(md) {
+  .dl { padding: 1rem; }
+  .dl-scroll { max-height: none; overflow: visible; border: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-row, .dl-dot, .dl-skel { animation: none !important; }
+  .dl-dnum { transition: none !important; }
+}

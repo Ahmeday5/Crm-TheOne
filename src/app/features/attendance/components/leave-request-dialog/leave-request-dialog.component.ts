@@ -1,31 +1,38 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { startWith } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { cairoToday } from '../../../../core/utils/cairo-time.util';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { ATTENDANCE_POLICY } from '../../config/attendance.config';
-import { LEAVE_TYPES, LeaveRequest, LeaveRequestInput, LeaveType } from '../../models/attendance.models';
-import { AttendanceStore } from '../../state/attendance.store';
-import { addDays } from '../../utils/attendance-date.util';
-import { LEAVE_TYPE_ICON, countLeaveDays, earliestStart, validateLeaveRequest } from '../../utils/leave.util';
-import { leaveErrorKey } from '../../utils/attendance-errors.util';
+import { LEAVE_REASON_MAX, LEAVE_TYPES, LeaveRequestInput, LeaveType } from '../../models/attendance.models';
+import { MyAttendanceStore } from '../../state/my-attendance.store';
+import { LEAVE_TYPE_ICON, leaveTypeClass, requestedDays } from '../../utils/leave.util';
 
-const REASON_MAX = 500;
+/** "To" may not be before "From" (both inclusive). */
+const rangeValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
+  const from = group.get('startDate')?.value as string;
+  const to = group.get('endDate')?.value as string;
+  return from && to && to < from ? { endBeforeStart: true } : null;
+};
 
-/** New leave request — validated live against dates, overlaps and balance. */
+/**
+ * "Request leave" — type, inclusive period (with a live day count) and a
+ * reason. The server validates the rest (e.g. an overlapping request) and
+ * its message is shown inside the form.
+ */
 @Component({
   selector: 'app-leave-request-dialog',
   standalone: true,
@@ -35,124 +42,90 @@ const REASON_MAX = 500;
   styleUrl: './leave-request-dialog.component.scss',
 })
 export class LeaveRequestDialogComponent {
-  readonly saved = output<LeaveRequest>();
+  readonly saved = output<void>();
   readonly cancel = output<void>();
 
   private readonly fb = inject(FormBuilder);
-  private readonly store = inject(AttendanceStore);
+  private readonly store = inject(MyAttendanceStore);
   private readonly toast = inject(ToastService);
   private readonly language = inject(LanguageService);
 
   readonly types = LEAVE_TYPES;
   readonly typeIcon = LEAVE_TYPE_ICON;
-  readonly reasonMax = REASON_MAX;
-  readonly today = this.store.today();
+  readonly reasonMax = LEAVE_REASON_MAX;
+  private readonly today = cairoToday();
 
   readonly submitting = signal(false);
   readonly submitAttempted = signal(false);
   readonly serverError = signal<string | null>(null);
 
-  /** Business rules as a group validator → `{ leaveRule: <code> }`. */
-  private readonly rulesValidator: ValidatorFn = (group) => {
-    const v = group.value as LeaveRequestInput;
-    const code = validateLeaveRequest(this.normalize(v), {
-      today: this.store.today(),
-      policy: ATTENDANCE_POLICY,
-      holidays: this.store.holidays(),
-      existing: this.store.myLeaves(),
-      balances: this.store.balances(),
-    });
-    return code ? { leaveRule: code } : null;
-  };
-
   readonly form = this.fb.nonNullable.group(
     {
-      type: this.fb.nonNullable.control<LeaveType>('annual'),
-      from: [addDays(this.today, 1), Validators.required],
-      to: [addDays(this.today, 1), Validators.required],
-      halfDay: false,
-      reason: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(REASON_MAX), Validators.pattern(/\S/)]],
+      type: this.fb.nonNullable.control<LeaveType>('Annual'),
+      startDate: [this.today, Validators.required],
+      endDate: [this.today, Validators.required],
+      reason: ['', [Validators.required, Validators.maxLength(LEAVE_REASON_MAX), Validators.pattern(/\S/)]],
     },
-    { validators: [this.rulesValidator] },
+    { validators: [rangeValidator] },
   );
 
   readonly value = toSignal(this.form.valueChanges.pipe(startWith(this.form.getRawValue())), {
     initialValue: this.form.getRawValue(),
   });
 
-  readonly minFrom = computed(() =>
-    earliestStart(this.value().type ?? 'annual', this.store.today(), ATTENDANCE_POLICY.sickBackdateDays),
-  );
+  /** Inclusive day count of the chosen period (0 when invalid). */
+  readonly days = computed(() => requestedDays(this.value().startDate ?? '', this.value().endDate ?? ''));
 
-  readonly days = computed(() => {
-    const v = this.value();
-    return countLeaveDays(v.from ?? '', v.halfDay ? (v.from ?? '') : (v.to ?? ''), !!v.halfDay, ATTENDANCE_POLICY, this.store.holidays());
+  readonly rangeError = computed(() => {
+    this.value();
+    const show = this.submitAttempted() || this.form.controls.endDate.touched;
+    return show && this.form.errors?.['endBeforeStart'] ? 'attendance.leaveForm.endBeforeStart' : null;
   });
 
-  readonly balance = computed(() => this.store.balances().find((b) => b.type === this.value().type) ?? null);
-  readonly balanceAfter = computed(() => {
-    const b = this.balance();
-    return b ? b.available - this.days() : null;
-  });
-
-  // ─────────── field helpers ───────────
-
-  availableOf(type: LeaveType): number | string {
-    return this.store.balances().find((b) => b.type === type)?.available ?? '—';
+  typeClass(type: LeaveType): string {
+    return leaveTypeClass(type);
   }
 
   setType(type: LeaveType): void {
     this.form.controls.type.setValue(type);
   }
 
-  toggleHalfDay(): void {
-    const half = !this.form.controls.halfDay.value;
-    this.form.controls.halfDay.setValue(half);
-    if (half) this.form.controls.to.setValue(this.form.controls.from.value);
+  /** Moving "From" past "To" drags "To" along (a 1-day request by default). */
+  onStartChange(): void {
+    const { startDate, endDate } = this.form.getRawValue();
+    if (startDate && (!endDate || endDate < startDate)) this.form.controls.endDate.setValue(startDate);
   }
-
-  onFromChange(): void {
-    const { from, to, halfDay } = this.form.getRawValue();
-    if (halfDay || (from && to && to < from)) this.form.controls.to.setValue(from);
-  }
-
-  /** Key of the rule broken right now (shown once the user touched a date or submitted). */
-  ruleError(): string | null {
-    const code = this.form.errors?.['leaveRule'] as string | undefined;
-    const touched = this.submitAttempted() || this.form.controls.from.dirty || this.form.controls.to.dirty || this.form.controls.type.dirty;
-    return code && touched ? leaveErrorKey(code) : null;
-  }
-
-  // ─────────── submit ───────────
 
   submit(): void {
     this.submitAttempted.set(true);
     this.form.markAllAsTouched();
-    this.form.updateValueAndValidity();
     if (this.form.invalid || this.submitting()) return;
+
+    const v = this.form.getRawValue();
+    const input: LeaveRequestInput = {
+      type: v.type,
+      startDate: v.startDate,
+      endDate: v.endDate,
+      reason: v.reason.trim(),
+    };
 
     this.submitting.set(true);
     this.serverError.set(null);
-    this.store.requestLeave(this.normalize(this.form.getRawValue())).subscribe({
-      next: (saved) => {
+    this.store.requestLeave(input).subscribe({
+      next: () => {
         this.submitting.set(false);
-        this.toast.success(this.t('attendance.messages.leaveRequested'));
-        this.saved.emit(saved);
+        this.toast.success(this.t('attendance.leaveForm.submitted'));
+        this.saved.emit();
       },
       error: (err: ApiError) => {
         this.submitting.set(false);
-        const key = err?.code ? leaveErrorKey(err.code) : null;
-        this.serverError.set(key ? this.t(key) : err?.message?.trim() || this.t('attendance.messages.saveFailed'));
+        this.serverError.set(err?.message?.trim() || this.t('attendance.leaveForm.failed'));
       },
     });
   }
 
   close(): void {
     if (!this.submitting()) this.cancel.emit();
-  }
-
-  private normalize(v: LeaveRequestInput): LeaveRequestInput {
-    return { ...v, to: v.halfDay ? v.from : v.to, reason: (v.reason ?? '').trim() };
   }
 
   private t(key: string): string {

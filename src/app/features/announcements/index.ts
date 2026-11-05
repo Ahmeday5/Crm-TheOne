@@ -5,3 +5,4 @@
 export { AnnouncementBannerComponent } from './components/announcement-banner/announcement-banner.component';
 export { AnnouncementsStore } from './state/announcements.store';
 export { ANNOUNCEMENTS_ROUTES } from './announcements.routes';
+export { provideAnnouncements } from './announcements.providers';

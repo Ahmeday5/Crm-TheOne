@@ -9,48 +9,57 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, map } from 'rxjs';
+import { map } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
+import { AuthService } from '../../../../core/services/auth.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { DayLogTableComponent } from '../../components/day-log-table/day-log-table.component';
-import { LeaveApprovalsComponent } from '../../components/leave-approvals/leave-approvals.component';
-import { LeaveBalancesComponent } from '../../components/leave-balances/leave-balances.component';
+import { EmployeeMonthDialogComponent } from '../../components/employee-month-dialog/employee-month-dialog.component';
 import { LeaveRequestDialogComponent } from '../../components/leave-request-dialog/leave-request-dialog.component';
+import {
+  LeaveRequestsInboxComponent,
+  ReviewDecision,
+} from '../../components/leave-requests-inbox/leave-requests-inbox.component';
 import { MonthCalendarComponent } from '../../components/month-calendar/month-calendar.component';
+import { MonthRecordsTableComponent } from '../../components/month-records-table/month-records-table.component';
+import { MonthSummaryComponent } from '../../components/month-summary/month-summary.component';
 import { MyLeaveRequestsComponent } from '../../components/my-leave-requests/my-leave-requests.component';
-import { RejectLeaveDialogComponent } from '../../components/reject-leave-dialog/reject-leave-dialog.component';
-import { TeamMatrixComponent } from '../../components/team-matrix/team-matrix.component';
+import { ReviewLeaveDialogComponent } from '../../components/review-leave-dialog/review-leave-dialog.component';
+import { TeamMonthlyTableComponent } from '../../components/team-monthly-table/team-monthly-table.component';
 import { TimeClockCardComponent } from '../../components/time-clock-card/time-clock-card.component';
 import { TodayBoardComponent } from '../../components/today-board/today-board.component';
-import { USING_MOCK_ATTENDANCE } from '../../data/attendance-repository.provider';
-import { LeaveRequest } from '../../models/attendance.models';
-import { AttendanceStore } from '../../state/attendance.store';
-import { leaveErrorKey } from '../../utils/attendance-errors.util';
+import { EmployeeMonthlyAttendance, LeaveRequest } from '../../models/attendance.models';
+import { AttendanceTodayStore } from '../../state/attendance-today.store';
+import { ATTENDANCE_PATH, LeaveInboxStore } from '../../state/leave-inbox.store';
+import { MyAttendanceStore } from '../../state/my-attendance.store';
+import { TeamAttendanceStore } from '../../state/team-attendance.store';
 
-type AttendanceTab = 'mine' | 'leave' | 'team' | 'approvals';
+/** URL segment of each tab (`''` = `/attendance`). */
+type AttendanceTab = 'mine' | 'leaves' | 'team' | 'requests';
 
-const EMPLOYEE_TABS: AttendanceTab[] = ['mine', 'leave'];
-const ADMIN_TABS: AttendanceTab[] = ['mine', 'leave', 'team', 'approvals'];
+const EMPLOYEE_TABS: AttendanceTab[] = ['mine', 'leaves'];
+const ADMIN_TABS: AttendanceTab[] = ['mine', 'leaves', 'team', 'requests'];
 
 const TAB_ICONS: Record<AttendanceTab, string> = {
   mine: 'fa-solid fa-fingerprint',
-  leave: 'fa-solid fa-umbrella-beach',
+  leaves: 'fa-solid fa-umbrella-beach',
   team: 'fa-solid fa-people-group',
-  approvals: 'fa-solid fa-inbox',
+  requests: 'fa-solid fa-inbox',
 };
 
+/** Years offered by the leave filters (current and the two before). */
+const YEARS_BACK = 2;
+
 /**
- * Attendance & leave — `/attendance?tab=mine|leave|team|approvals`.
+ * Attendance & leave — `/attendance[/leaves|team|requests]`.
  *
- * Everyone: time clock, monthly calendar + log, leave balances and requests.
- * Admin also: today's team board, the team monthly matrix and the approvals
- * inbox. The page owns the `AttendanceStore` instance (timers and polling
- * live exactly as long as the page).
+ * Everyone: time clock, month summary + calendar + table, leave requests.
+ * Admin also: today's board + everyone's month, and the leave inbox.
+ * Every number on the page is the server's; each tab loads on first open.
  */
 @Component({
   selector: 'app-attendance',
@@ -59,69 +68,90 @@ const TAB_ICONS: Record<AttendanceTab, string> = {
     TranslatePipe,
     LoadErrorComponent,
     TimeClockCardComponent,
+    MonthSummaryComponent,
     MonthCalendarComponent,
-    DayLogTableComponent,
-    LeaveBalancesComponent,
+    MonthRecordsTableComponent,
     MyLeaveRequestsComponent,
     LeaveRequestDialogComponent,
     TodayBoardComponent,
-    TeamMatrixComponent,
-    LeaveApprovalsComponent,
-    RejectLeaveDialogComponent,
+    TeamMonthlyTableComponent,
+    EmployeeMonthDialogComponent,
+    LeaveRequestsInboxComponent,
+    ReviewLeaveDialogComponent,
   ],
-  providers: [AttendanceStore],
+  providers: [MyAttendanceStore, TeamAttendanceStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './attendance.component.html',
   styleUrl: './attendance.component.scss',
 })
 export class AttendanceComponent {
-  protected readonly store = inject(AttendanceStore);
+  protected readonly today = inject(AttendanceTodayStore);
+  protected readonly mine = inject(MyAttendanceStore);
+  protected readonly team = inject(TeamAttendanceStore);
+  protected readonly inbox = inject(LeaveInboxStore);
+  private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   private readonly dialog = inject(DialogService);
   private readonly language = inject(LanguageService);
 
-  readonly isMock = USING_MOCK_ATTENDANCE;
   readonly tabIcons = TAB_ICONS;
-  readonly tabs = computed(() => (this.store.isAdmin() ? ADMIN_TABS : EMPLOYEE_TABS));
+  readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
+  readonly tabs = computed(() => (this.isAdmin() ? ADMIN_TABS : EMPLOYEE_TABS));
 
-  private readonly tabParam = toSignal(this.route.queryParamMap.pipe(map((q) => q.get('tab'))), {
-    initialValue: null,
+  private readonly tabParam = toSignal(this.route.paramMap.pipe(map((p) => p.get('tab'))), {
+    initialValue: this.route.snapshot.paramMap.get('tab'),
   });
 
-  /** Unknown / forbidden `?tab=` values fall back to the first tab. */
+  /** Unknown / forbidden tabs fall back to "my attendance". */
   readonly tab = computed<AttendanceTab>(() => {
     const t = this.tabParam() as AttendanceTab | null;
     return t && this.tabs().includes(t) ? t : 'mine';
   });
 
+  readonly years = computed(() => {
+    const current = Number(this.today.day().slice(0, 4));
+    return Array.from({ length: YEARS_BACK + 1 }, (_, i) => current - i);
+  });
+
   // ─────────── UI state ───────────
   readonly selectedDay = signal<string | null>(null);
   readonly leaveDialogOpen = signal(false);
-  readonly rejecting = signal<LeaveRequest | null>(null);
-  readonly rejectError = signal<string | null>(null);
-  readonly busyLeaveId = signal<string | null>(null);
-
-  readonly pendingCount = computed(() => this.store.pendingApprovals().length);
+  readonly busyLeaveId = signal<number | null>(null);
+  readonly reviewing = signal<{ request: LeaveRequest; decision: ReviewDecision } | null>(null);
+  readonly employeeOpen = signal<EmployeeMonthlyAttendance | null>(null);
 
   constructor() {
-    // Admin data loads only once an admin tab is actually opened.
+    // Each tab loads the first time it is shown (refreshes quietly after that).
+    const opened = new Set<AttendanceTab>();
     effect(() => {
-      const t = this.tab();
+      const tab = this.tab();
       untracked(() => {
-        if (t === 'team' || t === 'approvals') this.store.enableTeam();
+        const first = !opened.has(tab);
+        opened.add(tab);
+        switch (tab) {
+          case 'mine':
+            this.today.refresh(true);
+            this.mine.loadMonth(!first);
+            break;
+          case 'leaves':
+            this.mine.loadLeaves(!first);
+            break;
+          case 'team':
+            this.team.loadToday(!first);
+            this.team.loadMonthly(!first);
+            break;
+          case 'requests':
+            this.team.loadLeaves(!first);
+            break;
+        }
       });
     });
   }
 
   setTab(tab: AttendanceTab): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { tab: tab === 'mine' ? null : tab },
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
+    void this.router.navigate(tab === 'mine' ? [ATTENDANCE_PATH] : [ATTENDANCE_PATH, tab], { replaceUrl: true });
   }
 
   /** Arrow keys move between tabs (mirrored in RTL). */
@@ -137,24 +167,7 @@ export class AttendanceComponent {
     queueMicrotask(() => document.getElementById(`att-tab-${next}`)?.focus());
   }
 
-  // ─────────── clock ───────────
-
-  checkIn(): void {
-    this.punch(this.store.checkIn(), 'attendance.clock.checkedIn');
-  }
-
-  checkOut(): void {
-    this.punch(this.store.checkOut(), 'attendance.clock.checkedOut');
-  }
-
-  private punch(request$: Observable<unknown>, successKey: string): void {
-    request$.subscribe({
-      next: () => this.toast.success(this.t(successKey)),
-      error: (err: ApiError) => this.fail(err),
-    });
-  }
-
-  // ─────────── calendar / log ───────────
+  // ─────────── my month ───────────
 
   selectDay(date: string): void {
     this.selectedDay.update((d) => (d === date ? null : date));
@@ -162,81 +175,36 @@ export class AttendanceComponent {
 
   shiftMonth(delta: number): void {
     this.selectedDay.set(null);
-    this.store.shiftMonth(delta);
+    this.mine.shiftMonth(delta);
   }
 
   // ─────────── my leave ───────────
 
+  onLeaveSaved(): void {
+    this.leaveDialogOpen.set(false);
+    this.setTab('leaves');
+  }
+
   async cancelLeave(r: LeaveRequest): Promise<void> {
     const ok = await this.dialog.confirm({
-      title: this.t('attendance.actions.cancelRequest'),
-      message: `${this.t(`attendance.leaveTypes.${r.type}`)} · ${r.from} → ${r.to}`,
+      title: this.t('attendance.myRequests.cancelTitle'),
+      message: this.t('attendance.myRequests.cancelMessage'),
       confirmText: this.t('attendance.actions.cancelRequest'),
+      cancelText: this.t('attendance.actions.back'),
       type: 'warning',
     });
     if (!ok) return;
     this.busyLeaveId.set(r.id);
-    this.store.cancelLeave(r.id).subscribe({
+    this.mine.cancelLeave(r.id).subscribe({
       next: () => {
         this.busyLeaveId.set(null);
-        this.toast.success(this.t('attendance.messages.leaveCancelled'));
+        this.toast.success(this.t('attendance.myRequests.cancelled'));
       },
       error: (err: ApiError) => {
         this.busyLeaveId.set(null);
-        this.fail(err);
+        this.toast.error(err?.message?.trim() || this.t('attendance.myRequests.cancelFailed'));
       },
     });
-  }
-
-  // ─────────── approvals (admin) ───────────
-
-  approve(r: LeaveRequest): void {
-    this.busyLeaveId.set(r.id);
-    this.store.decideLeave(r.id, { approve: true }).subscribe({
-      next: () => {
-        this.busyLeaveId.set(null);
-        this.toast.success(this.t('attendance.messages.leaveApproved'));
-      },
-      error: (err: ApiError) => {
-        this.busyLeaveId.set(null);
-        this.fail(err);
-      },
-    });
-  }
-
-  openReject(r: LeaveRequest): void {
-    this.rejectError.set(null);
-    this.rejecting.set(r);
-  }
-
-  confirmReject(reason: string): void {
-    const r = this.rejecting();
-    if (!r) return;
-    this.busyLeaveId.set(r.id);
-    this.rejectError.set(null);
-    this.store.decideLeave(r.id, { approve: false, reason }).subscribe({
-      next: () => {
-        this.busyLeaveId.set(null);
-        this.rejecting.set(null);
-        this.toast.success(this.t('attendance.messages.leaveRejected'));
-      },
-      error: (err: ApiError) => {
-        this.busyLeaveId.set(null);
-        this.rejectError.set(this.errorText(err));
-      },
-    });
-  }
-
-  // ─────────── helpers ───────────
-
-  private fail(err: ApiError): void {
-    this.toast.error(this.errorText(err));
-  }
-
-  private errorText(err: ApiError): string {
-    const code = err?.code;
-    const key = code ? leaveErrorKey(code) : null;
-    return key ? this.t(key) : err?.message?.trim() || this.t('attendance.messages.saveFailed');
   }
 
   private t(key: string): string {

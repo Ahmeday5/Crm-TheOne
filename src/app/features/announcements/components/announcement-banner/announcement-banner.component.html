@@ -1,5 +1,5 @@
 @if (current(); as a) {
-  <section class="ab tone-{{ a.tone }}"
+  <section class="ab tone-{{ tone(a) }}"
            [class.is-min]="minimized()"
            role="region"
            [attr.aria-label]="'announcements.banner.region' | translate"
@@ -12,7 +12,8 @@
       <!-- Slim bar: still visible, never closable -->
       <button type="button" class="ab-min" (click)="expand()" [attr.aria-expanded]="false">
         <span class="ab-min-ic">
-          <i class="fa-solid fa-bullhorn"></i>
+          <span aria-hidden="true">📢</span>
+          <span class="ab-min-count">{{ items().length }}</span>
           @if (unread()) { <span class="ab-dot" aria-hidden="true"></span> }
         </span>
         <span class="ab-min-text">
@@ -32,7 +33,8 @@
         <span class="ab-ic" aria-hidden="true"><i [class]="icon(a)"></i></span>
 
         @for (item of [a]; track item.id) {
-          <div class="ab-content" aria-live="polite">
+          <button type="button" class="ab-content" aria-live="polite" (click)="openDetails(a)"
+                  [attr.aria-label]="('announcements.banner.open' | translate) + ': ' + a.title">
             <div class="ab-title-row">
               @if (a.isPinned) {
                 <i class="fa-solid fa-thumbtack ab-pin" [attr.aria-label]="'announcements.pinned' | translate"></i>
@@ -43,7 +45,7 @@
               }
             </div>
             <p class="ab-text">{{ a.body }}</p>
-          </div>
+          </button>
         }
 
         <div class="ab-meta">
@@ -61,7 +63,7 @@
               <button type="button" class="ab-btn" (click)="prev()" [attr.aria-label]="'announcements.banner.prev' | translate">
                 <i class="fa-solid fa-chevron-right ab-flip"></i>
               </button>
-              <span class="ab-pos">{{ position() }}/{{ items().length }}</span>
+              <span class="ab-pos" dir="ltr">{{ position() }} / {{ items().length }}</span>
               <button type="button" class="ab-btn" (click)="next()" [attr.aria-label]="'announcements.banner.next' | translate">
                 <i class="fa-solid fa-chevron-left ab-flip"></i>
               </button>
@@ -95,4 +97,12 @@
       }
     }
   </section>
+}
+
+<!-- Full announcement (from the banner, the board or a notification) -->
+<!-- Deferred: the dialog's code loads on idle, never in the initial bundle -->
+@if (viewer.current(); as open) {
+  @defer (on idle) {
+    <app-announcement-detail-dialog [announcement]="open" (closed)="viewer.close()" />
+  }
 }

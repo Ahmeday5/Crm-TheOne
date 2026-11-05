@@ -18,30 +18,28 @@ import {
   Validators,
 } from '@angular/forms';
 import { startWith } from 'rxjs';
-import { TRANSLATIONS, interpolate, resolveKey } from '../../../../core/i18n';
+import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { addDays, cairoToday } from '../../../../core/utils/cairo-time.util';
 import {
-  ANNOUNCEMENT_DEPARTMENTS,
-  ANNOUNCEMENT_TONES,
+  ANNOUNCEMENT_BODY_MAX,
+  ANNOUNCEMENT_TARGETS,
+  ANNOUNCEMENT_TITLE_MAX,
   Announcement,
-  AnnouncementAudience,
-  AnnouncementDepartment,
   AnnouncementInput,
-  AnnouncementTone,
+  AnnouncementTarget,
 } from '../../models/announcement.models';
 import { AnnouncementsStore } from '../../state/announcements.store';
-import { TONE_ICON, addDays, cairoToday, windowLength } from '../../utils/announcement.util';
+import { targetLabelKey, windowLength } from '../../utils/announcement.util';
 
-const TITLE_MAX = 120;
-const BODY_MAX = 1000;
 const DEFAULT_DAYS = 7;
 
-/** Window must be at least one day: `endsOn >= startsOn` (both inclusive). */
+/** `endsOn >= startsOn` (both inclusive); a new post can't start in the past. */
 function windowValidator(minStart: string | null): ValidatorFn {
   return (group: AbstractControl): ValidationErrors | null => {
     const start = group.get('startsOn')?.value as string;
@@ -53,13 +51,11 @@ function windowValidator(minStart: string | null): ValidatorFn {
   };
 }
 
-/** "Departments" needs at least one ticked department. */
-const audienceValidator: ValidatorFn = (group) => {
-  const audience = group.get('audience')?.value as AnnouncementAudience;
-  const roles = (group.get('roles')?.value as string[]) ?? [];
-  return audience === 'roles' && roles.length === 0 ? { rolesRequired: true } : null;
-};
-
+/**
+ * Admin composer — create / edit. The server delivers the notification
+ * (in-app + push) to every targeted employee when the announcement starts,
+ * so publishing a future announcement is "schedule", not "send now".
+ */
 @Component({
   selector: 'app-announcement-form-dialog',
   standalone: true,
@@ -71,7 +67,7 @@ const audienceValidator: ValidatorFn = (group) => {
 export class AnnouncementFormDialogComponent implements OnInit {
   /** `null` → create; otherwise edit this announcement. */
   readonly announcement = input<Announcement | null>(null);
-  readonly saved = output<Announcement>();
+  readonly saved = output<void>();
   readonly cancel = output<void>();
 
   private readonly fb = inject(FormBuilder);
@@ -79,30 +75,24 @@ export class AnnouncementFormDialogComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly language = inject(LanguageService);
 
-  readonly tones = ANNOUNCEMENT_TONES;
-  readonly departments = ANNOUNCEMENT_DEPARTMENTS;
+  readonly targets = ANNOUNCEMENT_TARGETS;
   readonly durations = [1, 3, 7, 14, 30];
-  readonly titleMax = TITLE_MAX;
-  readonly bodyMax = BODY_MAX;
+  readonly titleMax = ANNOUNCEMENT_TITLE_MAX;
+  readonly bodyMax = ANNOUNCEMENT_BODY_MAX;
   readonly today = cairoToday();
 
   readonly submitting = signal(false);
   readonly submitAttempted = signal(false);
   readonly serverError = signal<string | null>(null);
 
-  readonly form = this.fb.nonNullable.group(
-    {
-      title: ['', [Validators.required, Validators.maxLength(TITLE_MAX), Validators.pattern(/\S/)]],
-      body: ['', [Validators.required, Validators.maxLength(BODY_MAX), Validators.pattern(/\S/)]],
-      tone: this.fb.nonNullable.control<AnnouncementTone>('info'),
-      audience: this.fb.nonNullable.control<AnnouncementAudience>('all'),
-      roles: this.fb.nonNullable.control<AnnouncementDepartment[]>([]),
-      isPinned: false,
-      startsOn: [this.today, Validators.required],
-      endsOn: [addDays(this.today, DEFAULT_DAYS - 1), Validators.required],
-    },
-    { validators: [audienceValidator] },
-  );
+  readonly form = this.fb.nonNullable.group({
+    title: ['', [Validators.required, Validators.maxLength(ANNOUNCEMENT_TITLE_MAX), Validators.pattern(/\S/)]],
+    body: ['', [Validators.required, Validators.maxLength(ANNOUNCEMENT_BODY_MAX), Validators.pattern(/\S/)]],
+    target: this.fb.nonNullable.control<AnnouncementTarget>(null),
+    isPinned: false,
+    startsOn: [this.today, Validators.required],
+    endsOn: [addDays(this.today, DEFAULT_DAYS - 1), Validators.required],
+  });
 
   /** Live form value → drives the preview, counters and the duration chip. */
   readonly value = toSignal(this.form.valueChanges.pipe(startWith(this.form.getRawValue())), {
@@ -124,9 +114,7 @@ export class AnnouncementFormDialogComponent implements OnInit {
       this.form.setValue({
         title: a.title,
         body: a.body,
-        tone: a.tone,
-        audience: a.audience,
-        roles: [...a.roles],
+        target: a.target,
         isPinned: a.isPinned,
         startsOn: a.startsOn,
         endsOn: a.endsOn,
@@ -137,30 +125,17 @@ export class AnnouncementFormDialogComponent implements OnInit {
 
   // ─────────── field helpers ───────────
 
-  setTone(tone: AnnouncementTone): void {
-    this.form.controls.tone.setValue(tone);
+  targetKey(target: AnnouncementTarget): string {
+    return targetLabelKey(target);
   }
 
-  setAudience(audience: AnnouncementAudience): void {
-    this.form.controls.audience.setValue(audience);
-  }
-
-  toggleDepartment(dep: AnnouncementDepartment): void {
-    const current = this.form.controls.roles.value;
-    this.form.controls.roles.setValue(
-      current.includes(dep) ? current.filter((d) => d !== dep) : [...current, dep],
-    );
-    this.form.controls.roles.markAsTouched();
-  }
+  /** Scheduled for later → the CTA says "schedule", not "publish now". */
+  readonly startsLater = computed(() => (this.value().startsOn ?? this.today) > this.today);
 
   applyDuration(days: number): void {
     const start = this.form.controls.startsOn.value || this.today;
     this.form.controls.endsOn.setValue(addDays(start, days - 1));
     this.form.controls.endsOn.markAsTouched();
-  }
-
-  toneIcon(tone: AnnouncementTone): string {
-    return TONE_ICON[tone];
   }
 
   /** Error to show under the period fields (group-level validators). */
@@ -173,10 +148,6 @@ export class AnnouncementFormDialogComponent implements OnInit {
     return null;
   }
 
-  showRolesError(): boolean {
-    return !!this.form.errors?.['rolesRequired'] && (this.submitAttempted() || this.form.controls.roles.touched);
-  }
-
   // ─────────── submit ───────────
 
   submit(): void {
@@ -186,10 +157,12 @@ export class AnnouncementFormDialogComponent implements OnInit {
 
     const v = this.form.getRawValue();
     const payload: AnnouncementInput = {
-      ...v,
       title: v.title.trim(),
       body: v.body.trim(),
-      roles: v.audience === 'all' ? [] : v.roles,
+      targetRole: v.target,
+      isPinned: v.isPinned,
+      startDate: v.startsOn,
+      endDate: v.endsOn,
     };
 
     this.submitting.set(true);
@@ -198,20 +171,21 @@ export class AnnouncementFormDialogComponent implements OnInit {
     const request$ = existing ? this.store.update(existing.id, payload) : this.store.publish(payload);
 
     request$.subscribe({
-      next: (saved) => {
+      next: () => {
         this.submitting.set(false);
-        this.toast.success(
-          existing
-            ? this.t('announcements.messages.updated')
-            : interpolate(this.t('announcements.messages.published'), { count: saved.recipientsCount }),
-        );
-        this.saved.emit(saved);
+        this.toast.success(this.t(this.successKey(!!existing, payload.startDate)));
+        this.saved.emit();
       },
       error: (err: ApiError) => {
         this.submitting.set(false);
         this.serverError.set(err?.message?.trim() || this.t('announcements.messages.saveFailed'));
       },
     });
+  }
+
+  private successKey(isEdit: boolean, startDate: string): string {
+    if (isEdit) return 'announcements.messages.updated';
+    return startDate > this.today ? 'announcements.messages.scheduled' : 'announcements.messages.published';
   }
 
   close(): void {

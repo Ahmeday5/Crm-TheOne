@@ -87,12 +87,19 @@ export interface ContractDetail {
   createdAt: string;
 }
 
-/** Payload of `GET /Contracts/ContractStatistics`. */
+/**
+ * Payload of `GET /Contracts/ContractStatistics`.
+ *
+ * Scoped by the server to the caller: Admin gets the whole portfolio, sales
+ * reps only the contracts they created. This is the ONLY source for the KPI
+ * tiles and tab badges — never derive them from a (capped) list page.
+ */
 export interface ContractStatistics {
   totalContracts: number;
   activeContracts: number;
-  expiredContracts: number;
   expiringSoonContracts: number;
+  expiredContracts: number;
+  cancelledContracts: number;
 }
 
 /** Row returned by `GET /Contracts/GetContracts` (paged `data[]`). */
@@ -115,9 +122,20 @@ export interface ContractListItem {
   createdAt: string;
 }
 
-/** Query params for `GET /Contracts/GetContracts`. */
+/** Hard server cap on `GET /Contracts/GetContracts?pageSize=`. */
+export const CONTRACTS_MAX_PAGE_SIZE = 100;
+
+/**
+ * Query params for `GET /Contracts/GetContracts`. Filtering happens on the
+ * server: `status` and `expiringSoon` are mutually exclusive tab filters.
+ */
 export interface ContractListQuery {
-  PageIndex?: number;
-  PageSize?: number;
-  Search?: string;
+  pageIndex: number;
+  /** 1…{@link CONTRACTS_MAX_PAGE_SIZE}. */
+  pageSize: number;
+  search?: string;
+  status?: ContractStatus;
+  expiringSoon?: boolean;
+  /** Admin: only contracts created by this sales rep (`SalesPersonId`). */
+  salesPersonId?: string;
 }

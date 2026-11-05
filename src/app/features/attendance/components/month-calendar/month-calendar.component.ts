@@ -1,11 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { TRANSLATIONS, interpolate, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
-import { TipDirective } from '../../../../shared/directives/tip.directive';
-import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
-import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { ATTENDANCE_POLICY } from '../../config/attendance.config';
-import { AttendanceDay, DAY_STATUSES_LEGEND, DayStatus } from '../../models/attendance.models';
 import {
   addDays,
   firstDayOfMonth,
@@ -13,12 +8,27 @@ import {
   formatMonthLabel,
   formatWeekday,
   localeFor,
-} from '../../utils/attendance-date.util';
-import { DAY_STATUS_ICON, dayTooltip } from '../../utils/attendance-view.util';
+  weekdayOf,
+} from '../../../../core/utils/cairo-time.util';
+import { TipDirective } from '../../../../shared/directives/tip.directive';
+import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
+import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { CalendarDay, DAY_STATUS_LEGEND, DayStatus, YearMonth } from '../../models/attendance.models';
+import { WEEK_STARTS_ON, formatHours, ymKey } from '../../utils/attendance-calendar.util';
+
+const STATUS_ICON: Record<DayStatus, string> = {
+  present: 'fa-solid fa-circle-check',
+  working: 'fa-solid fa-circle-play',
+  missingOut: 'fa-solid fa-triangle-exclamation',
+  leave: 'fa-solid fa-umbrella-beach',
+  none: '',
+};
 
 /**
- * Month grid of the signed-in user's attendance, colour-coded by status.
- * Weeks start on Saturday; Friday is the weekly day off.
+ * Month grid of one employee's attendance (mine, or one employee for the
+ * admin), colour-coded from server data only:
+ * present (green, with hours) · leave (blue) · no check-out (orange).
+ * Weeks start on Saturday.
  */
 @Component({
   selector: 'app-month-calendar',
@@ -29,10 +39,12 @@ import { DAY_STATUS_ICON, dayTooltip } from '../../utils/attendance-view.util';
   styleUrl: './month-calendar.component.scss',
 })
 export class MonthCalendarComponent {
-  readonly month = input.required<string>();
-  readonly days = input.required<AttendanceDay[]>();
+  readonly period = input.required<YearMonth>();
+  readonly days = input.required<CalendarDay[]>();
   readonly ready = input(true);
   readonly loading = input(false);
+  /** Hide the month navigator (e.g. inside the admin's employee dialog). */
+  readonly navigable = input(true);
   readonly canPrev = input(true);
   readonly canNext = input(true);
   readonly selected = input<string | null>(null);
@@ -44,33 +56,24 @@ export class MonthCalendarComponent {
   private readonly language = inject(LanguageService);
   private readonly locale = computed(() => localeFor(this.language.lang()));
 
-  readonly legend = DAY_STATUSES_LEGEND;
-  readonly icons = DAY_STATUS_ICON;
+  readonly legend = DAY_STATUS_LEGEND;
+  readonly icons = STATUS_ICON;
 
+  private readonly month = computed(() => ymKey(this.period()));
   readonly monthLabel = computed(() => formatMonthLabel(this.month(), this.locale()));
+
+  /** Empty cells before the 1st. */
+  readonly leading = computed(() => (weekdayOf(firstDayOfMonth(this.month())) - WEEK_STARTS_ON + 7) % 7);
+  readonly blanks = computed(() => Array.from({ length: this.leading() }, (_, i) => i));
 
   /** Weekday headers in display order (Saturday first). */
   readonly weekdays = computed(() => {
-    const first = firstDayOfMonth(this.month());
-    const offset = this.leading();
-    const anchor = addDays(first, -offset); // the Saturday on/before the 1st
+    const anchor = addDays(firstDayOfMonth(this.month()), -this.leading());
     return Array.from({ length: 7 }, (_, i) => {
       const d = addDays(anchor, i);
-      return {
-        key: d,
-        short: formatWeekday(d, this.locale(), 'short'),
-        isWeekend: ATTENDANCE_POLICY.weekendDays.includes(new Date(`${d}T00:00:00Z`).getUTCDay()),
-      };
+      return { key: d, short: formatWeekday(d, this.locale(), 'short') };
     });
   });
-
-  /** Empty cells before the 1st. */
-  readonly leading = computed(() => {
-    const weekday = new Date(`${firstDayOfMonth(this.month())}T00:00:00Z`).getUTCDay();
-    return (weekday - ATTENDANCE_POLICY.weekStartsOn + 7) % 7;
-  });
-
-  readonly blanks = computed(() => Array.from({ length: this.leading() }, (_, i) => i));
 
   readonly counts = computed(() => {
     const out: Partial<Record<DayStatus, number>> = {};
@@ -78,10 +81,25 @@ export class MonthCalendarComponent {
     return out;
   });
 
-  tip(day: AttendanceDay): string {
-    const lang = this.language.lang();
-    const dict = TRANSLATIONS[lang];
+  hours(day: CalendarDay): string {
+    return formatHours(day.record?.workedHours, this.locale());
+  }
+
+  tip(day: CalendarDay): string {
+    const dict = TRANSLATIONS[this.language.lang()];
     const t = (key: string, params?: Record<string, string | number>) => interpolate(resolveKey(dict, key), params);
-    return `${formatLongDay(day.date, this.locale())} — ${dayTooltip(day, lang, this.locale(), t)}`;
+    const date = formatLongDay(day.date, this.locale());
+    switch (day.status) {
+      case 'present':
+        return `${date} — ${t('attendance.calendar.tipPresent', { h: this.hours(day) })}`;
+      case 'working':
+        return `${date} — ${t('attendance.status.working')}`;
+      case 'missingOut':
+        return `${date} — ${t('attendance.status.missingOut')}`;
+      case 'leave':
+        return `${date} — ${t('attendance.leaveTypes.' + day.leave!.type)}`;
+      default:
+        return date;
+    }
   }
 }

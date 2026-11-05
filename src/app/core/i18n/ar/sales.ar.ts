@@ -119,6 +119,8 @@ const sales: TranslationFile<'sales'> = {
       tableTitle: 'إدارة العقود',
       add: 'إضافة عقد جديد',
       searchPlaceholder: 'البحث بالعميل أو الشركة أو رقم الهاتف...',
+      salesPersonFilter: 'فلترة حسب مندوب المبيعات',
+      allSalesPeople: 'كل المناديب',
       empty: 'لا توجد عقود مطابقة.',
       loadFailed: 'تعذر تحميل العقود — يرجى المحاولة مجددًا.',
       expired: 'منتهٍ',

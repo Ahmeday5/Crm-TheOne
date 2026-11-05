@@ -1,0 +1,90 @@
+<section class="li card">
+  <header class="li-head">
+    <div class="min-w-0">
+      <h5 class="li-title"><i class="fa-solid fa-inbox"></i>{{ 'attendance.inbox.title' | translate }}</h5>
+      <p class="li-sub">{{ 'attendance.inbox.subtitle' | translate }}</p>
+    </div>
+    <select class="form-select form-select-sm li-year" [attr.aria-label]="'attendance.myRequests.year' | translate"
+            [value]="year()" (change)="yearChange.emit(+$any($event.target).value)">
+      @for (y of years(); track y) { <option [value]="y">{{ y }}</option> }
+    </select>
+  </header>
+
+  <div class="li-tabs" role="tablist">
+    @for (t of tabs; track t.label) {
+      <button type="button" role="tab" class="li-tab" [class.is-on]="status() === t.key"
+              [attr.aria-selected]="status() === t.key" (click)="statusChange.emit(t.key)">
+        <i [class]="t.icon"></i>{{ t.label | translate }}
+        @if (t.key === 'Pending' && pendingCount()) { <span class="li-badge">{{ pendingCount() }}</span> }
+      </button>
+    }
+  </div>
+
+  @if (error() !== null && !ready()) {
+    <app-load-error [message]="error() || ('attendance.loadFailed' | translate)" [loading]="loading()" (retry)="retry.emit()" />
+  } @else if (!ready()) {
+    <div class="li-list">@for (i of [1, 2, 3]; track i) { <div class="li-skel"></div> }</div>
+  } @else if (requests().length === 0) {
+    <app-empty-state [compact]="true"
+                     [icon]="status() === 'Pending' ? 'fa-solid fa-mug-hot' : 'fa-regular fa-folder-open'"
+                     [message]="(status() === 'Pending' ? 'attendance.inbox.emptyPending' : 'attendance.inbox.empty') | translate" />
+  } @else {
+    <ul class="li-list" [class.is-refreshing]="loading()">
+      @for (r of requests(); track r.id; let i = $index) {
+        <li class="li-item" [class.is-pending]="r.status === 'Pending'" [style.--i]="i">
+          <div class="li-who">
+            <app-user-avatar size="md" [name]="r.fullName || '?'" [userId]="r.userId" />
+            <div class="min-w-0">
+              <strong class="li-name">{{ r.fullName || '—' }}</strong>
+              <small class="text-muted">{{ 'attendance.inbox.submitted' | translate: { date: (r.createdAt | cairoDate: 'date') } }}</small>
+            </div>
+          </div>
+
+          <div class="li-what">
+            <span class="lv-type {{ typeClass(r.type) }}">
+              <i [class]="typeIcon[r.type]"></i>{{ 'attendance.leaveTypes.' + r.type | translate }}
+            </span>
+            <span class="li-period">
+              <i class="fa-regular fa-calendar"></i>
+              @if (r.startDate === r.endDate) {
+                {{ r.startDate | cairoDate: 'date' }}
+              } @else {
+                {{ r.startDate | cairoDate: 'date' }} – {{ r.endDate | cairoDate: 'date' }}
+              }
+              <b>· {{ (r.days === 1 ? 'attendance.units.oneDay' : 'attendance.units.days') | translate: { n: r.days } }}</b>
+            </span>
+            @if (r.reason) {
+              <p class="li-reason" appClampText="2" [clampTitle]="r.fullName || ''">{{ r.reason }}</p>
+            }
+          </div>
+
+          <div class="li-side">
+            @if (r.status === 'Pending') {
+              <div class="btn-row li-actions">
+                <button type="button" class="btn btn-sm btn-success" (click)="review.emit({ request: r, decision: 'approve' })">
+                  <i class="fa-solid fa-check"></i>{{ 'attendance.inbox.approve' | translate }}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="review.emit({ request: r, decision: 'reject' })">
+                  <i class="fa-solid fa-xmark"></i>{{ 'attendance.inbox.reject' | translate }}
+                </button>
+              </div>
+            } @else {
+              <span class="lv-status {{ statusClass(r.status) }}">
+                <i [class]="statusIcon[r.status]"></i>{{ 'attendance.leaveStatus.' + r.status | translate }}
+              </span>
+              @if (r.reviewedByName) {
+                <small class="text-muted">
+                  {{ 'attendance.myRequests.reviewedBy' | translate: { name: r.reviewedByName } }}
+                  @if (r.reviewedAt) { · {{ r.reviewedAt | cairoDate: 'date' }} }
+                </small>
+              }
+              @if (r.reviewNote) {
+                <small class="li-note" appClampText="2"><i class="fa-regular fa-comment-dots me-1"></i>{{ r.reviewNote }}</small>
+              }
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

@@ -117,6 +117,8 @@ const sales: TranslationFile<'sales'> = {
       tableTitle: 'Contracts management',
       add: 'New contract',
       searchPlaceholder: 'Search by customer, company or phone...',
+      salesPersonFilter: 'Filter by sales rep',
+      allSalesPeople: 'All sales reps',
       empty: 'No matching contracts.',
       loadFailed: 'Could not load contracts — please try again.',
       expired: 'Expired',

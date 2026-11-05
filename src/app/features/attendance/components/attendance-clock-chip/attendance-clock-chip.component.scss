@@ -1,0 +1,100 @@
+@use 'breakpoints' as bp;
+
+:host { display: contents; }
+
+.acc {
+  --acc: var(--brand-500);
+  --acc-soft: var(--brand-soft);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 38px;
+  padding: 0 0.85rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--acc-soft);
+  color: var(--acc);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-700);
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  animation: acc-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  &:is(a, button):hover:not(:disabled) { transform: translateY(-1px); }
+  &:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+
+  &.is-start {
+    background: var(--acc);
+    color: #fff;
+
+    &:hover:not(:disabled) { background: var(--brand-700); }
+  }
+
+  &.is-working { --acc: var(--success); --acc-soft: var(--success-soft); padding: 0; overflow: hidden; }
+  &.is-done    { --acc: var(--success); --acc-soft: var(--success-soft); }
+  &.is-leave   { --acc: var(--info);    --acc-soft: var(--info-soft); }
+}
+
+.acc-time,
+.acc-out {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 100%;
+  padding: 0 0.75rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+}
+
+.acc-time { font-variant-numeric: tabular-nums; }
+
+.acc-out {
+  background: var(--acc);
+  color: #fff;
+  transition: background-color 0.2s ease;
+
+  &:hover:not(:disabled) { filter: brightness(0.92); }
+}
+
+.acc-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--acc);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: inherit;
+    animation: acc-ping 1.6s ease-out infinite;
+  }
+}
+
+:host-context([dir='rtl']) .acc-flip { transform: scaleX(-1); }
+
+@keyframes acc-ping {
+  to { transform: scale(2.4); opacity: 0; }
+}
+
+@keyframes acc-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: none; }
+}
+
+// Phones: icon (+ timer) only — the header has little room.
+@include bp.down(md) {
+  .acc { height: 36px; padding: 0 0.6rem; }
+  .acc-label { display: none; }
+  .acc-time, .acc-out { padding: 0 0.55rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acc, .acc-dot::after { animation: none; }
+}

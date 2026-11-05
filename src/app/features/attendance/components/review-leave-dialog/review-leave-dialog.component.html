@@ -1,0 +1,52 @@
+@let r = request();
+@let approve = decision() === 'approve';
+<app-modal
+  [open]="true"
+  [title]="(approve ? 'attendance.inbox.approveTitle' : 'attendance.inbox.rejectTitle') | translate"
+  [icon]="approve ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'"
+  [iconTone]="approve ? 'success' : 'danger'"
+  size="md"
+  [closeOnBackdrop]="!busy()"
+  [closeOnEsc]="!busy()"
+  (closed)="close()">
+
+  <div class="rv-summary">
+    <strong>{{ r.fullName || '—' }}</strong>
+    <span>
+      {{ 'attendance.leaveTypes.' + r.type | translate }} ·
+      {{ r.startDate | cairoDate: 'date' }}@if (r.endDate !== r.startDate) { – {{ r.endDate | cairoDate: 'date' }} }
+      · {{ (r.days === 1 ? 'attendance.units.oneDay' : 'attendance.units.days') | translate: { n: r.days } }}
+    </span>
+    @if (r.reason) { <p class="rv-reason">{{ r.reason }}</p> }
+  </div>
+
+  <label class="form-label fw-600" for="rv-note">
+    {{ 'attendance.inbox.note' | translate }}
+    <small class="text-muted fw-normal">({{ 'attendance.inbox.optional' | translate }})</small>
+  </label>
+  <textarea id="rv-note" class="form-control" rows="3" [maxlength]="noteMax" [disabled]="busy()"
+            [placeholder]="(approve ? 'attendance.inbox.notePhApprove' : 'attendance.inbox.notePhReject') | translate"
+            [ngModel]="note()" (ngModelChange)="note.set($event)"></textarea>
+  <span class="rv-counter">{{ note().length }}/{{ noteMax }}</span>
+
+  @if (error()) {
+    <div class="alert alert-danger d-flex gap-2 align-items-start mt-2 mb-0" role="alert">
+      <i class="fa-solid fa-circle-exclamation mt-1"></i><span>{{ error() }}</span>
+    </div>
+  }
+
+  <div modal-footer class="btn-row justify-content-end w-100">
+    <button type="button" class="btn btn-light" [disabled]="busy()" (click)="close()">
+      {{ 'attendance.actions.cancel' | translate }}
+    </button>
+    <button type="button" class="btn" [class.btn-success]="approve" [class.btn-danger]="!approve"
+            [disabled]="busy()" (click)="confirm()">
+      @if (busy()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+      } @else {
+        <i class="fa-solid" [class.fa-check]="approve" [class.fa-xmark]="!approve"></i>
+      }
+      {{ (approve ? 'attendance.inbox.approve' : 'attendance.inbox.reject') | translate }}
+    </button>
+  </div>
+</app-modal>

@@ -1,8 +1,9 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
+import { APP_TIME_ZONE } from '../../core/constants/time-zone.const';
 import { LanguageService } from '../../core/services/language.service';
 
-/** The business runs on Egyptian time regardless of the viewer's device clock. */
-export const APP_TIME_ZONE = 'Africa/Cairo';
+// Re-exported for existing importers; new code imports it from core.
+export { APP_TIME_ZONE };
 
 export type CairoDateFormat = 'date' | 'datetime' | 'time';
 
