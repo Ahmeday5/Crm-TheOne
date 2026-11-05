@@ -1,0 +1,86 @@
+@let c = competitor();
+<article class="cc" [class.is-busy]="busy()">
+  <header class="cc-head">
+    <span class="cc-logo" aria-hidden="true">{{ initials(c.name) }}</span>
+    <div class="cc-titles">
+      <h6 class="cc-name" dir="auto">{{ c.name }}</h6>
+      @if (websiteHref(); as href) {
+        <a class="cc-site" [href]="href" target="_blank" rel="noopener noreferrer" dir="ltr">
+          <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>{{ websiteLabel() }}
+        </a>
+      }
+    </div>
+    <span class="cc-mentions-badge" [appTip]="'salesPlaybook.competitors.mentionsTip' | translate">
+      <i class="fa-solid fa-user-group" aria-hidden="true"></i>{{ c.mentions.length }}
+    </span>
+    <app-pb-favorite-button kind="competitors" [itemId]="c.id" />
+  </header>
+
+  <div class="cc-swot">
+    <section class="cc-col cc-col--plus">
+      <h6 class="cc-col__title"><i class="fa-solid fa-arrow-trend-up"></i>{{ 'salesPlaybook.competitors.strengths' | translate }}</h6>
+      <ul>
+        @for (s of c.strengths; track $index) {
+          <li dir="auto">{{ s }}</li>
+        } @empty {
+          <li class="is-empty">{{ 'salesPlaybook.competitors.none' | translate }}</li>
+        }
+      </ul>
+    </section>
+    <section class="cc-col cc-col--minus">
+      <h6 class="cc-col__title"><i class="fa-solid fa-arrow-trend-down"></i>{{ 'salesPlaybook.competitors.weaknesses' | translate }}</h6>
+      <ul>
+        @for (w of c.weaknesses; track $index) {
+          <li dir="auto">{{ w }}</li>
+        } @empty {
+          <li class="is-empty">{{ 'salesPlaybook.competitors.none' | translate }}</li>
+        }
+      </ul>
+    </section>
+  </div>
+
+  @if (c.howToWin) {
+    <div class="cc-win">
+      <div class="cc-win__head">
+        <span class="cc-win__title"><i class="fa-solid fa-trophy"></i>{{ 'salesPlaybook.competitors.howToWin' | translate }}</span>
+        <app-pb-copy-button [text]="c.howToWin" [compact]="true" />
+      </div>
+      <p dir="auto">{{ c.howToWin }}</p>
+    </div>
+  }
+
+  <section class="cc-people">
+    <h6 class="cc-col__title"><i class="fa-solid fa-comments"></i>{{ 'salesPlaybook.competitors.mentionedBy' | translate }}</h6>
+    @if (c.mentions.length) {
+      <ul class="cc-chips">
+        @for (m of visibleMentions(); track m.customerId; let i = $index) {
+          <li class="cc-chip" [style.--i]="i" [appTip]="m.company || m.name">
+            <span class="cc-chip__av" aria-hidden="true">{{ initials(m.name) }}</span>
+            <span class="cc-chip__name" dir="auto">{{ m.name }}</span>
+          </li>
+        }
+        @if (hiddenMentions() > 0) {
+          <li>
+            <button type="button" class="cc-more" (click)="showAllMentions.set(true)">
+              {{ 'salesPlaybook.competitors.more' | translate: { n: hiddenMentions() } }}
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="cc-muted">{{ 'salesPlaybook.competitors.noMentions' | translate }}</p>
+    }
+  </section>
+
+  @if (canManage()) {
+    <footer class="cc-foot">
+      <button type="button" class="btn btn-light btn-sm" [disabled]="busy()" (click)="edit.emit(c)">
+        <i class="fa-solid fa-pen me-1"></i>{{ 'salesPlaybook.actions.edit' | translate }}
+      </button>
+      <button type="button" class="btn btn-light btn-sm cc-del" [disabled]="busy()" (click)="remove.emit(c)">
+        @if (busy()) { <span class="spinner-border spinner-border-sm me-1"></span> } @else { <i class="fa-solid fa-trash-can me-1"></i> }
+        {{ 'salesPlaybook.actions.delete' | translate }}
+      </button>
+    </footer>
+  }
+</article>

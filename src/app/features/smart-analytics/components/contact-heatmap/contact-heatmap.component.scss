@@ -1,0 +1,258 @@
+@use 'breakpoints' as bp;
+
+/*
+ * Heat levels are solid tints of the brand colour mixed into the surface
+ * (one flat colour per cell — no gradients), so they follow light/dark and
+ * the brand-colour switch automatically.
+ */
+:host {
+  --hm-tone: var(--brand-500);
+  --hm-gap: 4px;
+  display: block;
+}
+
+.lv-0 { --cell-bg: color-mix(in srgb, var(--hm-tone) 12%, var(--surface-1)); --cell-fg: var(--text-2); }
+.lv-1 { --cell-bg: color-mix(in srgb, var(--hm-tone) 30%, var(--surface-1)); --cell-fg: var(--text-1); }
+.lv-2 { --cell-bg: color-mix(in srgb, var(--hm-tone) 50%, var(--surface-1)); --cell-fg: var(--text-1); }
+.lv-3 { --cell-bg: color-mix(in srgb, var(--hm-tone) 74%, var(--surface-1)); --cell-fg: #fff; }
+.lv-4 { --cell-bg: var(--hm-tone); --cell-fg: #fff; }
+.lv-na { --cell-bg: var(--surface-1); --cell-fg: var(--text-muted); }
+
+.hm {
+  display: grid;
+  grid-template-columns: auto repeat(var(--cols, 12), minmax(0, 1fr));
+  gap: var(--hm-gap);
+  align-items: center;
+}
+
+.hm-corner {
+  display: inline-flex;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.hm-hour,
+.hm-day {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+  color: var(--text-3);
+  white-space: nowrap;
+  transition: color 0.15s ease, transform 0.2s ease;
+
+  &.is-hot { color: var(--brand-500); }
+}
+
+.hm-hour {
+  text-align: center;
+  padding-bottom: 0.2rem;
+
+  &.is-hot { transform: translateY(-2px); }
+}
+
+.hm-day {
+  padding-inline-end: 0.5rem;
+
+  &.is-hot { transform: translateX(-2px); }
+}
+
+:host-context([dir='ltr']) .hm-day.is-hot { transform: translateX(2px); }
+
+.hm-day-short { display: none; }
+
+.hm-cell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  aspect-ratio: 1.35;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--cell-bg);
+  color: var(--cell-fg);
+  font-size: 0.72rem;
+  font-weight: var(--fw-700);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  animation: hm-reveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc((var(--r, 0) + var(--c, 0)) * 22ms);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease,
+    opacity 0.2s ease;
+
+  &.lv-na {
+    /* Hard-edged dot pattern: "not enough data". */
+    background-color: var(--surface-1);
+    background-image: radial-gradient(var(--border-strong, var(--border)) 1px, transparent 1.2px);
+    background-size: 6px 6px;
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
+
+  &:hover,
+  &:focus-visible {
+    z-index: 2;
+    transform: scale(1.18);
+    box-shadow: var(--shadow-lg), 0 0 0 2px var(--surface-0), 0 0 0 4px var(--hm-tone);
+    outline: none;
+  }
+
+  &.is-pinned {
+    z-index: 1;
+    box-shadow: 0 0 0 2px var(--surface-0), 0 0 0 4px var(--text-1);
+  }
+}
+
+/* Crosshair: dim everything off the hovered row/column. */
+.hm.has-cross .hm-cell:not(.is-cross):not(:hover):not(:focus-visible) { opacity: 0.45; }
+
+.hm-val {
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+.hm-rank {
+  position: absolute;
+  top: -7px;
+  inset-inline-end: -7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--warning);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: var(--fw-800, 800);
+  box-shadow: 0 0 0 2px var(--surface-0);
+  animation: hm-rank-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  animation-delay: calc(0.6s + (var(--r, 0) + var(--c, 0)) * 22ms);
+
+  /* Soft pulse ring around recommended times. */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 2px solid var(--warning);
+    opacity: 0;
+    animation: hm-pulse 2.4s 1.4s ease-out infinite;
+  }
+}
+
+/* ─────────── legend + readout ─────────── */
+
+.hm-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px dashed var(--border);
+}
+
+.hm-legend {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.hm-legend-label {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  margin-inline: 0.2rem;
+}
+
+.hm-swatch {
+  width: 22px;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--cell-bg);
+  transition: transform 0.2s ease;
+
+  &:hover { transform: scaleY(1.35); }
+
+  &.lv-na {
+    background-image: radial-gradient(var(--border-strong, var(--border)) 1px, transparent 1.2px);
+    background-size: 5px 5px;
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
+}
+
+.hm-readout {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  font-size: var(--fs-sm);
+  animation: hm-fade 0.25s ease backwards;
+}
+
+.hm-readout-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cell-bg);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.hm-readout-rate {
+  font-weight: var(--fw-700);
+  color: var(--brand-500);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes hm-reveal {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes hm-rank-in {
+  from { opacity: 0; transform: scale(0) rotate(-90deg); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes hm-pulse {
+  0%   { opacity: 0.7; transform: scale(1); }
+  70%  { opacity: 0; transform: scale(1.9); }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+
+@keyframes hm-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@include bp.down(lg) {
+  .hm-val { font-size: 0.65rem; }
+}
+
+/* Phones: short day names, every other hour label, no numbers in cells. */
+@include bp.down(md) {
+  :host { --hm-gap: 3px; }
+  .hm-day-long { display: none; }
+  .hm-day-short { display: inline; }
+  .hm-hour { font-size: 0.6rem; }
+  .hm-hour.is-odd { visibility: hidden; }
+  .hm-val { display: none; }
+  .hm-cell { aspect-ratio: 1; border-radius: 4px; }
+  .hm-cell:hover, .hm-cell:focus-visible { transform: scale(1.12); }
+  .hm-rank { width: 14px; height: 14px; font-size: 0.55rem; top: -5px; inset-inline-end: -5px; }
+  .hm-foot { justify-content: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-cell, .hm-rank, .hm-rank::after, .hm-readout, .hm-hour, .hm-day {
+    animation: none !important;
+    transition: none !important;
+  }
+  .hm-cell:hover, .hm-cell:focus-visible { transform: none; }
+}

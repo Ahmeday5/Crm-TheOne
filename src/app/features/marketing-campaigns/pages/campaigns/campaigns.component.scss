@@ -2,14 +2,6 @@
 
 :host { display: block; }
 
-.search-icon {
-  position: absolute;
-  inset-inline-end: 0.85rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-3);
-  pointer-events: none;
-}
 
 @include bp.down(lg) {
   /* Five KPI tiles two-per-row: the odd last one spans the row. */

@@ -6,7 +6,11 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { NAV_SECTIONS } from '../../../../core/constants/nav-sections.const';
+import {
+  NAV_SECTIONS,
+  canSeeNavItem,
+  flattenNavItems,
+} from '../../../../core/constants/nav-sections.const';
 import { roleLabel } from '../../../../core/constants/roles.const';
 import { UserRole } from '../../../../core/models/auth.model';
 import { LanguageService } from '../../../../core/services/language.service';
@@ -87,14 +91,9 @@ export class RolesPermissionsComponent {
 
   /** Nav modules reachable by a role (un-restricted items count for everyone). */
   private modulesFor(role: string): string[] {
-    const keys: string[] = [];
-    for (const section of NAV_SECTIONS) {
-      for (const item of section.items) {
-        if (!item.roles || item.roles.includes(role as UserRole)) {
-          keys.push(item.labelKey);
-        }
-      }
-    }
+    const keys = flattenNavItems(NAV_SECTIONS)
+      .filter((item) => canSeeNavItem(item, role as UserRole))
+      .map((item) => item.labelKey);
     return [...new Set(keys)];
   }
 }

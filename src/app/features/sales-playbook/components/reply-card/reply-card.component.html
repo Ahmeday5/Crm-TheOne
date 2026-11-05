@@ -1,0 +1,35 @@
+@let r = reply();
+<article class="rc tone-{{ meta().tone }}" [class.is-busy]="busy()">
+  <header class="rc-head">
+    <span class="rc-ic" aria-hidden="true"><i [class]="meta().icon"></i></span>
+    <div class="rc-titles">
+      <h6 class="rc-title" dir="auto">{{ r.title }}</h6>
+      <span class="rc-cat">{{ 'salesPlaybook.replyCategories.' + r.category | translate }}</span>
+    </div>
+    <app-pb-favorite-button kind="replies" [itemId]="r.id" />
+  </header>
+
+  <div class="rc-chat">
+    <p class="rc-bubble" dir="auto">{{ r.text }}</p>
+  </div>
+
+  <footer class="rc-foot">
+    @if (personalised()) {
+      <span class="rc-tag" [appTip]="'salesPlaybook.replies.placeholderTip' | translate">
+        <i class="fa-solid fa-user-pen" aria-hidden="true"></i>{{ 'salesPlaybook.replies.personalised' | translate }}
+      </span>
+    }
+    <span class="rc-spacer"></span>
+    @if (canManage()) {
+      <button type="button" class="rc-icon" [disabled]="busy()" (click)="edit.emit(r)"
+              [attr.aria-label]="'salesPlaybook.actions.edit' | translate" [appTip]="'salesPlaybook.actions.edit' | translate">
+        <i class="fa-solid fa-pen"></i>
+      </button>
+      <button type="button" class="rc-icon is-danger" [disabled]="busy()" (click)="remove.emit(r)"
+              [attr.aria-label]="'salesPlaybook.actions.delete' | translate" [appTip]="'salesPlaybook.actions.delete' | translate">
+        @if (busy()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="fa-solid fa-trash-can"></i> }
+      </button>
+    }
+    <app-pb-copy-button [text]="r.text" />
+  </footer>
+</article>

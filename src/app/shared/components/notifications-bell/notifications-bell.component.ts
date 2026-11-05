@@ -6,14 +6,17 @@ import {
   ElementRef,
   HostListener,
   OnInit,
+  computed,
+  effect,
   inject,
-  signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { timer } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
+import { NotificationsPanelService } from '../../../core/services/notifications-panel.service';
 import { NotificationsStore } from '../../../core/services/notifications.store';
 import { PushNotificationsService } from '../../../core/services/push-notifications.service';
 import { AppNotification } from '../../models';
@@ -44,7 +47,11 @@ export class NotificationsBellComponent implements OnInit {
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly open = signal(false);
+  private readonly panel = inject(NotificationsPanelService);
+  /** Shared so the mobile bottom bar can open the same panel. */
+  readonly open = this.panel.open;
+  /** The full notification center is an admin tool — others only get the bell. */
+  readonly canViewAll = computed(() => this.auth.currentRole() === 'Admin');
 
   readonly unreadCount = this.store.unreadCount;
   readonly items = this.store.items;
@@ -63,17 +70,23 @@ export class NotificationsBellComponent implements OnInit {
       .subscribe(() => this.store.loadUnreadCount());
   }
 
+  constructor() {
+    // Refresh whenever the panel opens, whoever opened it.
+    effect(() => {
+      if (!this.open()) return;
+      untracked(() => {
+        this.store.loadFirst();
+        this.store.loadUnreadCount();
+      });
+    });
+  }
+
   toggle(): void {
-    const next = !this.open();
-    this.open.set(next);
-    if (next) {
-      this.store.loadFirst();
-      this.store.loadUnreadCount();
-    }
+    this.panel.toggle();
   }
 
   close(): void {
-    this.open.set(false);
+    this.panel.close();
   }
 
   onScroll(event: Event): void {
@@ -122,7 +135,10 @@ export class NotificationsBellComponent implements OnInit {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (this.open() && !this.host.nativeElement.contains(event.target as Node)) {
+    const target = event.target as HTMLElement | null;
+    // Clicks on other openers (e.g. the bottom bar) manage the panel themselves.
+    if (target?.closest('[data-notifications-toggle]')) return;
+    if (this.open() && !this.host.nativeElement.contains(target)) {
       this.close();
     }
   }

@@ -1,14 +1,6 @@
 @use 'breakpoints' as bp;
 
 .resource-management {
-  .search-icon {
-    position: absolute;
-    top: 50%;
-    inset-inline-start: 0.85rem;
-    transform: translateY(-50%);
-    color: var(--text-3, #9ca3af);
-    pointer-events: none;
-  }
 
   // ── team overview rows ──
   .rm-row {

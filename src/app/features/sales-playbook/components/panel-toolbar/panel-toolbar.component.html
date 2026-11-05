@@ -1,0 +1,27 @@
+<div class="pt">
+  <div class="pt-row">
+    <div class="position-relative pt-search">
+      <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+      <input type="search" class="form-control"
+             [value]="search()"
+             [attr.aria-label]="placeholder()"
+             [placeholder]="placeholder()"
+             (input)="onSearch($event)" />
+    </div>
+
+    <button type="button" class="pt-fav" [class.is-on]="favoritesOnly()"
+            [attr.aria-pressed]="favoritesOnly()"
+            (click)="favoritesOnly.set(!favoritesOnly())">
+      <i class="fa-star" [class.fa-solid]="favoritesOnly()" [class.fa-regular]="!favoritesOnly()" aria-hidden="true"></i>
+      <span>{{ 'salesPlaybook.actions.favoritesOnly' | translate }}</span>
+    </button>
+
+    @if (canAdd()) {
+      <button type="button" class="btn btn-primary pt-add" (click)="add.emit()">
+        <i class="fa-solid fa-plus"></i><span>{{ addLabel() }}</span>
+      </button>
+    }
+  </div>
+
+  <ng-content />
+</div>

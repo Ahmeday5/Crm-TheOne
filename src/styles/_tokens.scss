@@ -48,7 +48,9 @@
   --radius-pill: 999px;
 
   /* ---------- Layout ---------- */
-  --header-h: 64px;
+  /* Visible bar height; --header-h adds the notch so every offset clears it. */
+  --header-bar-h: 64px;
+  --header-h: calc(var(--header-bar-h) + env(safe-area-inset-top, 0px));
   --sidebar-w: 264px;
   --sidebar-mini-w: 72px;
   --content-pad: 1.25rem;

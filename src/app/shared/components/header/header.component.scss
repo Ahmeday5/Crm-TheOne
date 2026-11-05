@@ -1,7 +1,12 @@
 @use 'breakpoints' as bp;
 
+/* Notch / status bar: the header grows by the safe area and pads its
+ * content below it, so in the installed app nothing hides under the clock. */
 .app-header {
   height: var(--header-h);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   background: var(--surface-0);
   z-index: 1030;
 }

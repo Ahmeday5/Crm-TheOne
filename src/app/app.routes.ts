@@ -17,6 +17,11 @@ import { WHATSAPP_ROUTES } from './features/whatsapp/whatsapp.routes';
 import { NOTIFICATIONS_ROUTES } from './features/notifications/notifications.routes';
 import { GOALS_ROUTES } from './features/goals/goals.routes';
 import { PROJECT_PROGRESS_ROUTES } from './features/project-progress/projectProgress.routes';
+import { ANNOUNCEMENTS_ROUTES } from './features/announcements/announcements.routes';
+import { TEAM_CHAT_ROUTES } from './features/team-chat/team-chat.routes';
+import { SMART_ANALYTICS_ROUTES } from './features/smart-analytics/smart-analytics.routes';
+import { SALES_PLAYBOOK_ROUTES } from './features/sales-playbook/sales-playbook.routes';
+import { ATTENDANCE_ROUTES } from './features/attendance/attendance.routes';
 
 
 export const routes: Routes = [
@@ -40,6 +45,11 @@ export const routes: Routes = [
       ...DAILY_REPORTS_ROUTES,
       ...WHATSAPP_ROUTES,
       ...NOTIFICATIONS_ROUTES,
+      ...ANNOUNCEMENTS_ROUTES,
+      ...TEAM_CHAT_ROUTES,
+      ...SMART_ANALYTICS_ROUTES,
+      ...SALES_PLAYBOOK_ROUTES,
+      ...ATTENDANCE_ROUTES,
       ...GOALS_ROUTES,
       ...PROJECT_PROGRESS_ROUTES,
       {
@@ -85,7 +95,8 @@ export const routes: Routes = [
       },
       {
         path: 'settings',
-        data: { roles: ['Admin'] },
+        // Per-tab roles live in SETTINGS_ROUTES (Marketing only sees Services).
+        data: { roles: ['Admin', 'Marketing'] },
         children: SETTINGS_ROUTES,
       },
       {

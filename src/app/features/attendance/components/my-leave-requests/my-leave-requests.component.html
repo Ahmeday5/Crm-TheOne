@@ -1,0 +1,87 @@
+<section class="mr card">
+  <header class="mr-head">
+    <h5 class="mr-title"><i class="fa-solid fa-file-signature"></i>{{ 'attendance.myRequests.title' | translate }}</h5>
+    <div class="mr-filters" role="tablist">
+      @for (f of filters; track f) {
+        <button type="button" role="tab" class="mr-filter" [class.is-on]="filter() === f"
+                [attr.aria-selected]="filter() === f" (click)="filter.set(f)">
+          {{ 'attendance.leaveStatus.' + f | translate }}
+          <span class="mr-count">{{ counts()[f] }}</span>
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (!loaded()) {
+    <div class="mr-skel-wrap">@for (i of [1, 2, 3]; track i) { <div class="mr-skel"></div> }</div>
+  } @else if (rows().length === 0) {
+    <app-empty-state icon="fa-solid fa-umbrella-beach" [compact]="true" [hasActions]="filter() === 'all'"
+                     [message]="(filter() === 'all' ? 'attendance.myRequests.empty' : 'attendance.myRequests.emptyFiltered') | translate">
+      @if (filter() === 'all') {
+        <button type="button" class="btn btn-primary btn-sm" (click)="create.emit()">
+          <i class="fa-solid fa-plus me-1"></i>{{ 'attendance.leave.new' | translate }}
+        </button>
+      }
+    </app-empty-state>
+  } @else {
+    <div class="table-responsive-md">
+      <table class="table align-middle mb-0 mr-table" appResponsiveTable [rtPrimaryCol]="0">
+        <thead>
+          <tr>
+            <th>{{ 'attendance.myRequests.type' | translate }}</th>
+            <th>{{ 'attendance.myRequests.period' | translate }}</th>
+            <th>{{ 'attendance.myRequests.days' | translate }}</th>
+            <th>{{ 'attendance.myRequests.status' | translate }}</th>
+            <th>{{ 'attendance.myRequests.reason' | translate }}</th>
+            <th>{{ 'attendance.myRequests.submitted' | translate }}</th>
+            <th class="rt-actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows(); track r.id; let i = $index) {
+            <tr class="mr-row" [style.--i]="i">
+              <td>
+                <span class="lv-type type-{{ r.type }}">
+                  <i [class]="typeIcon[r.type]"></i>{{ 'attendance.leaveTypes.' + r.type | translate }}
+                </span>
+              </td>
+              <td class="mr-period">
+                @if (r.from === r.to) {
+                  {{ r.from | cairoDate: 'date' }}
+                } @else {
+                  {{ r.from | cairoDate: 'date' }} <span class="text-muted">←</span> {{ r.to | cairoDate: 'date' }}
+                }
+                @if (r.halfDay) { <small class="d-block text-muted">{{ 'attendance.leave.halfDay' | translate }}</small> }
+              </td>
+              <td class="fw-700">{{ 'attendance.units.days' | translate: { n: r.days } }}</td>
+              <td>
+                <span class="lv-status status-{{ r.status }}">
+                  <i [class]="statusIcon[r.status]"></i>{{ 'attendance.leaveStatus.' + r.status | translate }}
+                </span>
+                @if (r.status === 'rejected' && r.rejectionReason) {
+                  <small class="d-block text-danger mt-1" appClampText="2">{{ r.rejectionReason }}</small>
+                }
+                @if (r.decidedBy && r.status !== 'cancelled') {
+                  <small class="d-block text-muted mt-1">{{ 'attendance.myRequests.decidedBy' | translate: { name: r.decidedBy.name } }}</small>
+                }
+              </td>
+              <td class="mr-reason"><span appClampText="2">{{ r.reason }}</span></td>
+              <td class="text-muted small">{{ r.createdAt | cairoDate: 'date' }}</td>
+              <td class="rt-actions">
+                @if (r.status === 'pending') {
+                  <button type="button" class="btn btn-sm btn-outline-danger mr-cancel"
+                          [disabled]="busyId() === r.id" (click)="cancelRequest.emit(r)"
+                          [appTip]="'attendance.myRequests.cancelTip' | translate">
+                    @if (busyId() === r.id) { <span class="spinner-border spinner-border-sm"></span> }
+                    @else { <i class="fa-solid fa-xmark"></i> }
+                    {{ 'attendance.actions.cancelRequest' | translate }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

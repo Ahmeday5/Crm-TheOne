@@ -1,0 +1,112 @@
+:host { display: block; }
+
+.lf {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  &.is-invalid .lf-empty { border-color: var(--danger); color: var(--danger); }
+}
+
+.lf-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  animation: lf-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lf-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.lf-bullet {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand-500);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-700);
+  font-variant-numeric: tabular-nums;
+
+  &--check { background: var(--info-soft); color: var(--info); }
+  &--plus  { background: var(--success-soft); color: var(--success); }
+  &--minus { background: var(--danger-soft); color: var(--danger); }
+}
+
+.lf-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  resize: vertical;
+  field-sizing: content;
+  max-height: 160px;
+}
+
+.lf-tools {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.lf-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 0.75rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover:not(:disabled) { background: var(--surface-2); color: var(--text-1); }
+  &--danger:hover:not(:disabled) { background: var(--danger-soft); color: var(--danger); }
+  &:disabled { opacity: 0.35; cursor: not-allowed; }
+}
+
+.lf-empty {
+  padding: 0.7rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.lf-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+  padding: 0.35rem 0.8rem;
+  border: 1px dashed var(--brand-500);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--brand-500);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+  transition: background-color 0.2s ease, transform 0.15s ease;
+
+  &:hover:not(:disabled) { background: var(--brand-soft); transform: translateY(-1px); }
+  &:disabled { opacity: 0.5; }
+}
+
+@media (max-width: 420px) {
+  .lf-tools { flex-direction: column; }
+  .lf-btn { width: 26px; height: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lf-row { animation: none; }
+}

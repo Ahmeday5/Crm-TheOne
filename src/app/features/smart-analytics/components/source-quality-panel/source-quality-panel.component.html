@@ -1,0 +1,139 @@
+<!-- Spotlight: best / worst / weighted average. Numbers tween when the range or dimension changes. -->
+<div class="sq-spot">
+  <article class="sq-spot-card tone-success" style="--i: 0">
+    <span class="sq-spot-ic"><i class="fa-solid fa-trophy"></i></span>
+    <div class="sq-spot-body">
+      <span class="sq-spot-label">{{ 'smartAnalytics.sources.spotlight.best' | translate }}</span>
+      @if (best(); as b) {
+        <strong class="sq-spot-name" [appTip]="b.label">{{ b.label }}</strong>
+        <span class="sq-spot-value" [appAnimatedNumber]="b.conversionRate" [decimals]="1" suffix="%"></span>
+        <span class="sq-spot-sub">
+          {{ 'smartAnalytics.sources.buyersOf' | translate: { buyers: b.buyers, customers: b.customers } }}
+        </span>
+      } @else {
+        <span class="sq-spot-sub">{{ 'smartAnalytics.sources.spotlight.none' | translate }}</span>
+      }
+    </div>
+  </article>
+
+  <article class="sq-spot-card tone-danger" style="--i: 1">
+    <span class="sq-spot-ic"><i class="fa-solid fa-arrow-trend-down"></i></span>
+    <div class="sq-spot-body">
+      <span class="sq-spot-label">{{ 'smartAnalytics.sources.spotlight.worst' | translate }}</span>
+      @if (worst(); as w) {
+        <strong class="sq-spot-name" [appTip]="w.label">{{ w.label }}</strong>
+        <span class="sq-spot-value" [appAnimatedNumber]="w.conversionRate" [decimals]="1" suffix="%"></span>
+        <span class="sq-spot-sub">
+          {{ 'smartAnalytics.sources.buyersOf' | translate: { buyers: w.buyers, customers: w.customers } }}
+        </span>
+      } @else {
+        <span class="sq-spot-sub">{{ 'smartAnalytics.sources.spotlight.none' | translate }}</span>
+      }
+    </div>
+  </article>
+
+  <article class="sq-spot-card tone-brand" style="--i: 2">
+    <span class="sq-spot-ic"><i class="fa-solid fa-scale-balanced"></i></span>
+    <div class="sq-spot-body">
+      <span class="sq-spot-label">{{ 'smartAnalytics.sources.spotlight.average' | translate }}</span>
+      <strong class="sq-spot-name">
+        <span [appAnimatedNumber]="summary().totalBuyers" [duration]="1200"></span>
+        <span class="sq-spot-of"> / <span [appAnimatedNumber]="summary().totalCustomers" [duration]="1200"></span></span>
+      </strong>
+      <span class="sq-spot-value" [appAnimatedNumber]="summary().averageConversion" [decimals]="1" suffix="%"></span>
+      <span class="sq-spot-sub">{{ 'smartAnalytics.sources.spotlight.averageHint' | translate }}</span>
+    </div>
+  </article>
+</div>
+
+<div class="card sq-card" [class.is-refreshing]="refreshing()">
+  <div class="card-header sq-head">
+    <div class="min-w-0">
+      <h5 class="mb-1 sq-title">
+        <i class="fa-solid fa-filter-circle-dollar"></i>{{ 'smartAnalytics.sources.title' | translate }}
+      </h5>
+      <p class="text-muted mb-0 sq-sub">{{ 'smartAnalytics.sources.subtitle' | translate }}</p>
+    </div>
+
+    <div class="sq-seg" role="radiogroup" [attr.aria-label]="'smartAnalytics.sources.dimension.label' | translate">
+      @for (d of dimensions; track d) {
+        <button type="button" class="sq-seg-btn" role="radio"
+                [class.is-on]="dimension() === d"
+                [attr.aria-checked]="dimension() === d"
+                (click)="dimensionChange.emit(d)">
+          <i [class]="d === 'source' ? 'fa-solid fa-diagram-project' : 'fa-solid fa-bullhorn'"></i>
+          {{ 'smartAnalytics.sources.dimension.' + d | translate }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    @if (rows().length) {
+      <table class="table sq-table mb-0" appResponsiveTable>
+        <thead>
+          <tr>
+            @for (col of columns; track col) {
+              <th scope="col" [class.text-center]="col === 'customers' || col === 'buyers'"
+                  [class.sq-conv-col]="col === 'conversionRate'" [attr.aria-sort]="ariaSort(col)">
+                <button type="button" class="sq-sort" [class.is-on]="sortKey() === col" (click)="sortBy(col)">
+                  {{ columnLabel(col) | translate }}
+                  <i class="fa-solid"
+                     [class.fa-arrow-up-short-wide]="sortKey() === col && sortDir() === 'asc'"
+                     [class.fa-arrow-down-wide-short]="sortKey() !== col || sortDir() === 'desc'"></i>
+                </button>
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.id; let i = $index) {
+            <tr class="sq-row" [class.is-best]="row.tag === 'best'" [class.is-worst]="row.tag === 'worst'" [style.--i]="i">
+              <td>
+                <div class="sq-name">
+                  <span class="sq-ch" [attr.data-ch]="row.channel"><i [class]="row.icon"></i></span>
+                  <div class="min-w-0">
+                    <div class="sq-name-line">
+                      <span class="sq-name-text">{{ row.label }}</span>
+                      @if (row.tag) {
+                        <span class="sq-tag" [class.is-best]="row.tag === 'best'" [class.is-worst]="row.tag === 'worst'">
+                          <i [class]="row.tag === 'best' ? 'fa-solid fa-crown' : 'fa-solid fa-triangle-exclamation'"></i>
+                          {{ 'smartAnalytics.sources.tags.' + row.tag | translate }}
+                        </span>
+                      }
+                    </div>
+                    <span class="sq-share">
+                      {{ 'smartAnalytics.sources.share' | translate: { share: (row.customerShare | number: '1.0-1') } }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+              <td class="text-center sq-num">{{ row.customers | number }}</td>
+              <td class="text-center sq-num">{{ row.buyers | number }}</td>
+              <td class="sq-conv-col">
+                <div class="sq-conv">
+                  <div class="sq-bar" role="presentation">
+                    <span class="sq-bar-fill" [style.--w]="row.relativeConversion"></span>
+                  </div>
+                  <strong class="sq-rate">{{ row.conversionRate | number: '1.0-1' }}%</strong>
+                  <span class="sq-delta" [class.is-up]="row.deltaVsAverage > 0" [class.is-down]="row.deltaVsAverage < 0"
+                        [appTip]="'smartAnalytics.sources.vsAverageTip' | translate">
+                    {{ row.deltaVsAverage > 0 ? '+' : '' }}{{ row.deltaVsAverage | number: '1.0-1' }}
+                  </span>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <app-empty-state icon="fa-solid fa-filter-circle-dollar" [compact]="true"
+                       [message]="'smartAnalytics.sources.empty' | translate" />
+    }
+  </div>
+
+  <div class="card-footer sq-foot">
+    <i class="fa-solid fa-circle-info"></i>
+    {{ 'smartAnalytics.sources.sampleNote' | translate: { n: minSample } }}
+  </div>
+</div>

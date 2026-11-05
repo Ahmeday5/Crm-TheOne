@@ -23,6 +23,14 @@ import notifications from './notifications.ar';
 import goals from './goals.ar';
 import projectProgress from './projectProgress.ar';
 import account from './account.ar';
+import pipeline from './pipeline.ar';
+import announcements from './announcements.ar';
+import teamChat from './teamChat.ar';
+import commandCenter from './commandCenter.ar';
+import smartAnalytics from './smartAnalytics.ar';
+import bottomNav from './bottomNav.ar';
+import salesPlaybook from './salesPlaybook.ar';
+import attendance from './attendance.ar';
 
 const ar: Translations = {
   ...common,
@@ -49,6 +57,14 @@ const ar: Translations = {
   ...goals,
   ...projectProgress,
   ...account,
+  ...pipeline,
+  ...announcements,
+  ...teamChat,
+  ...commandCenter,
+  ...smartAnalytics,
+  ...bottomNav,
+  ...salesPlaybook,
+  ...attendance,
 };
 
 export default ar;

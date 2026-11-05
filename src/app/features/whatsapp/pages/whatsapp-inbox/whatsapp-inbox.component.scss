@@ -9,7 +9,7 @@
 }
 
 @include bp.down(lg) {
-  :host { height: calc(100dvh - var(--header-h) - 2rem); }
+  :host { height: calc(100dvh - var(--header-h) - var(--bottom-offset, 0px) - 2rem); }
 }
 
 .wa-inbox {

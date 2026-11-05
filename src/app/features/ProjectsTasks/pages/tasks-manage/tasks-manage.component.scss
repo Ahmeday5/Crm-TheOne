@@ -205,17 +205,6 @@
   }
 }
 
-// ── Search icon alignment ─────────────────────────────────────────────────────
-
-.search-icon {
-  position: absolute;
-  inset-inline-start: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  pointer-events: none;
-  font-size: 0.85rem;
-}
 
 // ── Phones: the data table renders as cards — let cells use the full width ───
 

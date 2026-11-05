@@ -1,0 +1,73 @@
+@if (ui.paletteOpen()) {
+  <div class="cp-backdrop" (click)="ui.closePalette()" role="presentation">
+    <div class="cp" role="dialog" aria-modal="true" [attr.aria-label]="'commandCenter.palette.label' | translate"
+         (click)="$event.stopPropagation()">
+      <div class="cp-search">
+        <i class="fa-solid fa-magnifying-glass cp-search-ic"></i>
+        <input #input
+               type="text"
+               class="cp-input"
+               role="combobox"
+               aria-expanded="true"
+               aria-controls="cp-results"
+               [attr.aria-activedescendant]="'cp-item-' + activeIndex()"
+               autocomplete="off"
+               spellcheck="false"
+               [placeholder]="'commandCenter.palette.placeholder' | translate"
+               [value]="query()"
+               (input)="onQuery(input.value)"
+               (keydown)="onKeydown($event)" />
+        <kbd class="cp-esc" (click)="ui.closePalette()">Esc</kbd>
+      </div>
+
+      <div #list class="cp-results" id="cp-results" role="listbox">
+        @for (section of sections(); track section.group) {
+          <div class="cp-section" role="presentation">
+            <span class="cp-section-title">{{ 'commandCenter.groups.' + section.group | translate }}</span>
+            @for (row of section.items; track row.command.id) {
+              <button type="button"
+                      class="cp-item"
+                      role="option"
+                      [id]="'cp-item-' + row.flatIndex"
+                      [attr.data-index]="row.flatIndex"
+                      [attr.aria-selected]="row.flatIndex === activeIndex()"
+                      [class.is-active]="row.flatIndex === activeIndex()"
+                      [style.--i]="row.flatIndex"
+                      (mousemove)="activeIndex.set(row.flatIndex)"
+                      (click)="run(row.command)">
+                <span class="cp-item-ic" [class.is-action]="row.command.group === 'actions'">
+                  <i [class]="row.command.icon"></i>
+                </span>
+                <span class="cp-item-text">
+                  <span class="cp-item-label">{{ row.command.labelKey | translate }}</span>
+                  @if (context(row.command); as ctx) {
+                    <span class="cp-item-context">{{ ctx }}</span>
+                  }
+                </span>
+                @if (row.command.shortcut; as keys) {
+                  <span class="cp-keys">
+                    @for (k of keys; track $index) { <kbd>{{ k }}</kbd> }
+                  </span>
+                }
+                <i class="fa-solid fa-arrow-turn-down cp-enter" aria-hidden="true"></i>
+              </button>
+            }
+          </div>
+        } @empty {
+          <div class="cp-empty">
+            <span class="cp-empty-ic"><i class="fa-solid fa-magnifying-glass"></i></span>
+            <strong>{{ 'commandCenter.palette.noResults' | translate }}</strong>
+            <small>{{ 'commandCenter.palette.noResultsHint' | translate }}</small>
+          </div>
+        }
+      </div>
+
+      <footer class="cp-foot">
+        <span><kbd>↑</kbd><kbd>↓</kbd>{{ 'commandCenter.palette.navigate' | translate }}</span>
+        <span><kbd>↵</kbd>{{ 'commandCenter.palette.open' | translate }}</span>
+        <span><kbd>Esc</kbd>{{ 'commandCenter.palette.close' | translate }}</span>
+        <span class="cp-foot-end"><kbd>{{ isMac ? '⌘' : 'Ctrl' }}</kbd><kbd>K</kbd></span>
+      </footer>
+    </div>
+  </div>
+}

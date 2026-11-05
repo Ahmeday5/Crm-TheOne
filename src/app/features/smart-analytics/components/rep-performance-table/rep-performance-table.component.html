@@ -1,0 +1,89 @@
+<div class="card rp-card" [class.is-refreshing]="refreshing()">
+  <div class="card-body p-0">
+    <table class="table rp-table mb-0" appResponsiveTable>
+      <thead>
+        <tr>
+          <th scope="col">{{ 'smartAnalytics.performance.columns.rep' | translate }}</th>
+          <th scope="col">{{ 'smartAnalytics.performance.columns.calls' | translate }}</th>
+          <th scope="col">{{ 'smartAnalytics.performance.columns.answered' | translate }}</th>
+          <th scope="col">{{ 'smartAnalytics.performance.columns.buyers' | translate }}</th>
+          <th scope="col">{{ 'smartAnalytics.performance.columns.rating' | translate }}</th>
+          <th scope="col" class="rp-note-col">{{ 'smartAnalytics.performance.columns.note' | translate }}</th>
+          <th scope="col" class="rt-actions text-end">{{ 'common.actions' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of reps(); track r.repId; let i = $index) {
+          <tr class="rp-row" [class.is-top]="r.isTopSeller" [style.--i]="i">
+            <td>
+              <div class="rp-rep">
+                <span class="rp-avatar">
+                  <app-user-avatar [name]="r.repName" [imageUrl]="r.imageUrl" size="sm" />
+                  @if (r.isTopSeller) {
+                    <span class="rp-crown" [appTip]="'smartAnalytics.performance.topSeller' | translate">
+                      <i class="fa-solid fa-crown"></i>
+                    </span>
+                  }
+                </span>
+                <div class="min-w-0">
+                  <strong class="rp-name">{{ r.repName }}</strong>
+                  @if (r.isTopSeller) {
+                    <span class="rp-top">{{ 'smartAnalytics.performance.topSeller' | translate }}</span>
+                  }
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <div class="rp-metric">
+                <strong>{{ r.calls | number }}</strong>
+                <span class="rp-mini"><span [style.--w]="r.relativeCalls"></span></span>
+              </div>
+            </td>
+
+            <td>
+              <div class="rp-metric">
+                <strong>{{ r.answeredCalls | number }}</strong>
+                <span class="rp-rate">{{ 'smartAnalytics.performance.answerRate' | translate: { rate: (r.answerRate | number: '1.0-1') } }}</span>
+              </div>
+            </td>
+
+            <td>
+              <div class="rp-metric">
+                <strong class="rp-buyers">{{ r.buyers | number }}</strong>
+                <span class="rp-rate is-success">{{ 'smartAnalytics.performance.closeRate' | translate: { rate: (r.closeRate | number: '1.0-1') } }}</span>
+              </div>
+            </td>
+
+            <td>
+              @if (r.review; as rv) {
+                <app-rating-stars [value]="rv.rating" [readonly]="true" size="sm" />
+              } @else {
+                <span class="rp-pending"><i class="fa-regular fa-hourglass"></i>{{ 'smartAnalytics.performance.notRated' | translate }}</span>
+              }
+            </td>
+
+            <td class="rp-note-col">
+              @if (r.review?.note; as note) {
+                <p class="rp-note mb-0" appClampText="2" [clampTitle]="r.repName">{{ note }}</p>
+                <span class="rp-note-meta">
+                  {{ 'smartAnalytics.performance.reviewedBy' | translate: { name: r.review!.reviewedBy.name } }}
+                  · {{ r.review!.reviewedAt | cairoDate: 'date' }}
+                </span>
+              } @else {
+                <span class="text-muted">—</span>
+              }
+            </td>
+
+            <td class="rt-actions text-end">
+              <button type="button" class="btn btn-sm rp-action" [class.is-new]="!r.review" (click)="review.emit(r)">
+                <i [class]="r.review ? 'fa-solid fa-pen' : 'fa-solid fa-star'"></i>
+                {{ (r.review ? 'smartAnalytics.performance.edit' : 'smartAnalytics.performance.rate') | translate }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

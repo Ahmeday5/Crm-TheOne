@@ -1,21 +1,35 @@
+import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
+import { UserRole } from '../../core/models/auth.model';
+import { AuthService } from '../../core/services/auth.service';
+
+const ADMIN: UserRole[] = ['Admin'];
+/** Services master data is also maintained by Marketing. */
+export const SETTINGS_SERVICES_ROLES: UserRole[] = ['Admin', 'Marketing'];
 
 /**
- * Settings is Admin-only. The shell-level role guard catches the URL segment
- * `settings` (defined in `ROUTE_ROLE_MAP`) but we add `data.roles` here too
- * so the rule is co-located with the route definition.
+ * System settings.
+ *
+ * Every tab carries its own `data.roles` (checked by the shell's role guard on
+ * each child): everything is Admin-only except "Services management", which
+ * Marketing also maintains. The landing tab therefore depends on the role.
  */
 export const SETTINGS_ROUTES: Routes = [
   {
     path: '',
-    data: { roles: ['Admin'] },
+    data: { roles: SETTINGS_SERVICES_ROLES },
     loadComponent: () =>
       import('./settings.component').then((m) => m.SettingsComponent),
     children: [
-      { path: '', redirectTo: 'users', pathMatch: 'full' },
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: () => (inject(AuthService).currentRole() === 'Admin' ? 'users' : 'services'),
+      },
       {
         path: 'users',
         title: 'إدارة المستخدمين',
+        data: { roles: ADMIN },
         loadComponent: () =>
           import('./pages/user-management/user-management.component').then(
             (m) => m.UserManagementComponent,
@@ -28,7 +42,7 @@ export const SETTINGS_ROUTES: Routes = [
           import('./pages/roles-permissions/roles-permissions.component').then(
             (m) => m.RolesPermissionsComponent,
           ),
-        data: { titleKey: 'settings.tabs.roles', icon: 'fa-solid fa-shield-halved' },
+        data: { roles: ADMIN, titleKey: 'settings.tabs.roles', icon: 'fa-solid fa-shield-halved' },
       },
       {
         path: 'system',
@@ -37,7 +51,17 @@ export const SETTINGS_ROUTES: Routes = [
           import('./pages/company-settings/company-settings.component').then(
             (m) => m.CompanySettingsComponent,
           ),
-        data: { titleKey: 'settings.tabs.system', icon: 'fa-solid fa-gear' },
+        data: { roles: ADMIN, titleKey: 'settings.tabs.system', icon: 'fa-solid fa-gear' },
+      },
+      {
+        // Moved here from the top-level `/services` page (old URL redirects).
+        path: 'services',
+        title: 'إدارة الخدمات',
+        data: { roles: SETTINGS_SERVICES_ROLES, titleKey: 'settings.tabs.services', icon: 'fa-solid fa-screwdriver-wrench' },
+        loadComponent: () =>
+          import('../services/pages/services-list/services-list.component').then(
+            (m) => m.ServicesListComponent,
+          ),
       },
       // WhatsApp numbers moved next to the inbox; keep old bookmarks working.
       { path: 'whatsapp', redirectTo: '/whatsapp/numbers', pathMatch: 'full' },
@@ -48,7 +72,7 @@ export const SETTINGS_ROUTES: Routes = [
           import('./pages/placeholder/settings-placeholder.component').then(
             (m) => m.SettingsPlaceholderComponent,
           ),
-        data: { titleKey: 'settings.tabs.activity', icon: 'fa-solid fa-bolt' },
+        data: { roles: ADMIN, titleKey: 'settings.tabs.activity', icon: 'fa-solid fa-bolt' },
       },
       {
         path: 'audit',
@@ -57,7 +81,7 @@ export const SETTINGS_ROUTES: Routes = [
           import('./pages/placeholder/settings-placeholder.component').then(
             (m) => m.SettingsPlaceholderComponent,
           ),
-        data: { titleKey: 'settings.tabs.audit', icon: 'fa-solid fa-file-magnifying-glass' },
+        data: { roles: ADMIN, titleKey: 'settings.tabs.audit', icon: 'fa-solid fa-file-magnifying-glass' },
       },
       {
         path: 'notifications',
@@ -66,7 +90,7 @@ export const SETTINGS_ROUTES: Routes = [
           import('./pages/placeholder/settings-placeholder.component').then(
             (m) => m.SettingsPlaceholderComponent,
           ),
-        data: { titleKey: 'settings.tabs.notifications', icon: 'fa-solid fa-bell' },
+        data: { roles: ADMIN, titleKey: 'settings.tabs.notifications', icon: 'fa-solid fa-bell' },
       },
       {
         path: 'backup',
@@ -75,7 +99,7 @@ export const SETTINGS_ROUTES: Routes = [
           import('./pages/placeholder/settings-placeholder.component').then(
             (m) => m.SettingsPlaceholderComponent,
           ),
-        data: { titleKey: 'settings.tabs.backup', icon: 'fa-solid fa-database' },
+        data: { roles: ADMIN, titleKey: 'settings.tabs.backup', icon: 'fa-solid fa-database' },
       },
     ],
   },

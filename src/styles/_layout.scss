@@ -21,9 +21,6 @@ body {
 
 main { display: block; color: var(--text-1); }
 
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: var(--surface-2); }
-::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: var(--radius-pill); }
-::-webkit-scrollbar-thumb:hover { background: var(--brand); }
+/* Scrollbars: see _shell.scss (thin on desktop, hidden on touch). */
 
 .container-fluid { padding-inline: 1.25rem; }

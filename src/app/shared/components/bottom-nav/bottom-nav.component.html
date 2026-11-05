@@ -1,0 +1,33 @@
+<nav class="bn" [class.is-hidden]="keyboardOpen()" [attr.aria-label]="'bottomNav.label' | translate">
+  @for (item of items(); track item.id) {
+    @if (item.path) {
+      <a class="bn-item"
+         [routerLink]="item.path"
+         [class.is-active]="item.active"
+         [attr.aria-current]="item.active ? 'page' : null"
+         (click)="onNavigate()">
+        <ng-container *ngTemplateOutlet="content; context: { $implicit: item }" />
+      </a>
+    } @else {
+      <button type="button"
+              class="bn-item"
+              [class.is-active]="item.active"
+              [attr.aria-pressed]="item.active"
+              [attr.data-sidebar-toggle]="item.toggleAttr === 'data-sidebar-toggle' ? '' : null"
+              [attr.data-notifications-toggle]="item.toggleAttr === 'data-notifications-toggle' ? '' : null"
+              (click)="item.run?.()">
+        <ng-container *ngTemplateOutlet="content; context: { $implicit: item }" />
+      </button>
+    }
+  }
+</nav>
+
+<ng-template #content let-item>
+  <span class="bn-ic">
+    <i [class]="item.icon"></i>
+    @if (item.badge) {
+      <span class="bn-badge" [attr.aria-label]="item.badge">{{ badgeText(item.badge) }}</span>
+    }
+  </span>
+  <span class="bn-label">{{ item.labelKey | translate }}</span>
+</ng-template>

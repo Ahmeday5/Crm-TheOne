@@ -1,0 +1,62 @@
+<div class="qr" (appClickOutside)="open() && close()">
+  <button type="button" class="qr-trigger" [class.is-open]="open()" [disabled]="disabled()"
+          [attr.aria-expanded]="open()" aria-haspopup="dialog"
+          [title]="'salesPlaybook.picker.button' | translate"
+          [attr.aria-label]="'salesPlaybook.picker.button' | translate"
+          (click)="toggle()">
+    <i class="fa-solid fa-bolt"></i>
+  </button>
+
+  @if (open()) {
+    <div class="qr-pop" role="dialog" [attr.aria-label]="'salesPlaybook.picker.title' | translate" (keydown)="onKeydown($event)">
+      <header class="qr-head">
+        <span class="qr-title"><i class="fa-solid fa-bolt"></i>{{ 'salesPlaybook.picker.title' | translate }}</span>
+        <a class="qr-manage" [routerLink]="playbookPath" [queryParams]="{ tab: 'replies' }" (click)="close()">
+          {{ (isAdmin() ? 'salesPlaybook.picker.manage' : 'salesPlaybook.picker.browse') | translate }}
+        </a>
+      </header>
+
+      <div class="position-relative qr-search">
+        <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+        <input #searchBox type="search" class="form-control form-control-sm"
+               [value]="query()" (input)="onSearch($event)"
+               [placeholder]="'salesPlaybook.picker.search' | translate"
+               [attr.aria-label]="'salesPlaybook.picker.search' | translate" />
+      </div>
+
+      <ul #list class="qr-list" role="listbox">
+        @if (loading()) {
+          @for (i of [1, 2, 3]; track i) { <li class="qr-skel" aria-hidden="true"></li> }
+        } @else if (error()) {
+          <li class="qr-empty">
+            {{ 'salesPlaybook.messages.loadFailed' | translate }}
+            <button type="button" class="btn btn-link btn-sm p-0" (click)="retry()">{{ 'salesPlaybook.actions.retry' | translate }}</button>
+          </li>
+        } @else {
+          @for (r of results(); track r.id; let i = $index) {
+            <li role="option" [attr.aria-selected]="i === active()">
+              <button type="button" class="qr-item" [class.is-active]="i === active()" [style.--i]="i"
+                      (mouseenter)="active.set(i)" (click)="choose(r)">
+                <span class="qr-item__ic" aria-hidden="true"><i [class]="icon(r)"></i></span>
+                <span class="qr-item__body">
+                  <span class="qr-item__title" dir="auto">
+                    @if (isFavorite(r)) { <i class="fa-solid fa-star qr-star" aria-hidden="true"></i> }
+                    {{ r.title }}
+                  </span>
+                  <span class="qr-item__text" dir="auto">{{ r.text }}</span>
+                </span>
+                <i class="fa-solid fa-turn-down qr-item__enter" aria-hidden="true"></i>
+              </button>
+            </li>
+          } @empty {
+            <li class="qr-empty">
+              {{ (query() ? 'salesPlaybook.picker.noMatch' : 'salesPlaybook.picker.empty') | translate }}
+            </li>
+          }
+        }
+      </ul>
+
+      <footer class="qr-foot">{{ 'salesPlaybook.picker.hint' | translate }}</footer>
+    </div>
+  }
+</div>

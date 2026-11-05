@@ -1,0 +1,39 @@
+<app-pb-panel-toolbar
+  [(search)]="search"
+  [(favoritesOnly)]="favoritesOnly"
+  [placeholder]="'salesPlaybook.scripts.search' | translate"
+  [canAdd]="isAdmin()"
+  [addLabel]="'salesPlaybook.scripts.add' | translate"
+  (add)="editing.set(null)">
+  @if (chips().length) {
+    <app-pb-filter-chips [chips]="chips()" [(value)]="service" [label]="'salesPlaybook.form.service' | translate" />
+  }
+</app-pb-panel-toolbar>
+
+@if (filtered().length) {
+  <div class="pp-grid">
+    @for (s of filtered(); track s.id; let i = $index) {
+      <div class="pp-cell" [style.--i]="i">
+        <app-pb-script-card [script]="s" [canManage]="isAdmin()" [busy]="busyId() === s.id"
+                            (start)="calling.set($event)" (edit)="editing.set($event)" (remove)="remove($event)" />
+      </div>
+    }
+  </div>
+} @else {
+  <div class="pp-empty">
+    <app-empty-state icon="fa-solid fa-headset" [compact]="true" [hasActions]="hasAny()"
+                     [title]="(hasAny() ? 'salesPlaybook.emptyFilteredTitle' : 'salesPlaybook.scripts.emptyTitle') | translate"
+                     [message]="(hasAny() ? 'salesPlaybook.emptyFiltered' : (isAdmin() ? 'salesPlaybook.scripts.emptyAdmin' : 'salesPlaybook.scripts.empty')) | translate">
+      <button type="button" class="btn btn-light btn-sm" (click)="clearFilters()">
+        <i class="fa-solid fa-filter-circle-xmark me-1"></i>{{ 'salesPlaybook.actions.clearFilters' | translate }}
+      </button>
+    </app-empty-state>
+  </div>
+}
+
+@if (editing() !== undefined) {
+  <app-pb-script-form-dialog [script]="editing() ?? null" (closed)="editing.set(undefined)" />
+}
+@if (calling(); as c) {
+  <app-pb-call-mode-dialog [script]="c" (closed)="calling.set(null)" />
+}

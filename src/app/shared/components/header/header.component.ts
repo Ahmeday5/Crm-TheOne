@@ -12,11 +12,13 @@ import { NotificationsBellComponent } from '../notifications-bell/notifications-
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { UserAvatarComponent } from '../user-avatar/user-avatar.component';
 import { RouterLink } from "@angular/router";
+import { PwaService } from '../../../core/pwa/pwa.service';
+import { CommandCenterUiService, CommandTriggerComponent, TourService } from '../../../features/command-center';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, ThemeToggleComponent, LanguageToggleComponent, NotificationsBellComponent, TranslatePipe, RouterLink, UserAvatarComponent],
+  imports: [CommonModule, ThemeToggleComponent, LanguageToggleComponent, NotificationsBellComponent, TranslatePipe, RouterLink, UserAvatarComponent, CommandTriggerComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
 })
@@ -26,6 +28,12 @@ export class HeaderComponent {
   private language = inject(LanguageService);
   private readonly companySettings = inject(CompanySettingsService);
   private readonly push = inject(PushNotificationsService);
+  private readonly tour = inject(TourService);
+  private readonly commandUi = inject(CommandCenterUiService);
+  private readonly pwa = inject(PwaService);
+
+  /** Browser offered to install the PWA → show "Install app" in the menu. */
+  readonly canInstall = this.pwa.canInstall;
 
   /** White-label brand — dynamic logo + name from company settings. */
   readonly brandLogo = this.companySettings.logoUrl;
@@ -62,6 +70,18 @@ export class HeaderComponent {
 
   setLang(lang: Lang): void {
     this.language.setLang(lang);
+  }
+
+  startTour(): void {
+    this.tour.start();
+  }
+
+  openShortcuts(): void {
+    this.commandUi.openHelp();
+  }
+
+  installApp(): void {
+    void this.pwa.install();
   }
 
   toggleSidebar(): void {

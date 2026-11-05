@@ -52,6 +52,8 @@ export class WaThreadComponent {
   protected readonly store = inject(WhatsAppThreadStore);
 
   readonly source = input<ThreadSource | null>(null);
+  /** Customer's name — fills `{name}` in quick replies. */
+  readonly contactName = input<string | null>(null);
   /** i18n keys for the empty conversation state. */
   readonly emptyTitleKey = input('whatsapp.thread.empty');
   readonly emptyHintKey = input('whatsapp.thread.emptyHint');

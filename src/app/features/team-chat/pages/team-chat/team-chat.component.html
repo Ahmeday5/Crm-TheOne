@@ -1,0 +1,81 @@
+<section class="tc" [class.has-active]="hasActive()" [class.info-open]="infoOpen() && hasActive()">
+  <!-- Preview notice: mock data until the Firebase adapter is wired -->
+  <div class="tc-preview" role="note">
+    <i class="fa-solid fa-flask"></i>
+    <span>{{ 'teamChat.previewNotice' | translate }}</span>
+  </div>
+
+  <div class="tc-shell">
+    <aside class="tc-list">
+      <app-chat-conversation-list (select)="select($event)" (startDirect)="startDirect($event)" />
+    </aside>
+
+    <main class="tc-thread">
+      <app-chat-thread [infoOpen]="infoOpen()" (back)="backToList()" (toggleInfo)="toggleInfo()" />
+    </main>
+
+    @if (infoOpen() && store.active(); as c) {
+      <aside class="tc-info">
+        <header class="tc-info-head">
+          <h6>{{ 'teamChat.details' | translate }}</h6>
+          <button type="button" class="tc-close" (click)="toggleInfo()" [attr.aria-label]="'teamChat.close' | translate">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </header>
+
+        <div class="tc-info-hero">
+          @if (c.kind === 'channel') {
+            <span class="tc-hero-ic"><i [class]="c.icon || 'fa-solid fa-hashtag'"></i></span>
+          } @else {
+            <app-user-avatar [name]="c.title" [imageUrl]="store.peer()?.imageUrl" size="xl" />
+          }
+          <h5>{{ c.title }}</h5>
+          @if (c.kind === 'channel') {
+            <p>{{ c.topic }}</p>
+          } @else {
+            @if (store.peer(); as p) {
+              <p>{{ roleName(p) }} · <span [class.text-success]="p.presence === 'online'">{{ presenceText(p) }}</span></p>
+            }
+          }
+        </div>
+
+        @if (c.kind === 'channel') {
+          <div class="tc-info-section">
+            <span class="tc-info-label">{{ 'teamChat.membersTitle' | translate: { count: store.activeMembers().length } }}</span>
+            <ul class="tc-members">
+              @for (m of store.activeMembers(); track m.id) {
+                <li>
+                  <span class="tc-member-avatar">
+                    <app-user-avatar [name]="m.name" [imageUrl]="m.imageUrl" size="sm" />
+                    <span class="tc-presence is-{{ m.presence }}"></span>
+                  </span>
+                  <span class="tc-member-text">
+                    <strong>{{ m.name }} @if (m.id === store.me.id) { <small>({{ 'teamChat.you' | translate }})</small> }</strong>
+                    <small>{{ roleName(m) }}</small>
+                  </span>
+                  @if (m.id !== store.me.id) {
+                    <button type="button" class="tc-member-msg" (click)="startDirect(m.id)"
+                            [attr.aria-label]="'teamChat.message' | translate">
+                      <i class="fa-regular fa-comment"></i>
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        <div class="tc-info-section">
+          <span class="tc-info-label">{{ 'teamChat.settings' | translate }}</span>
+          <button type="button" class="tc-setting" (click)="store.togglePin(c)">
+            <i class="fa-solid fa-thumbtack"></i>{{ (c.isPinned ? 'teamChat.unpin' : 'teamChat.pin') | translate }}
+          </button>
+          <button type="button" class="tc-setting" (click)="store.toggleMute(c)">
+            <i class="fa-solid" [class.fa-bell]="c.isMuted" [class.fa-bell-slash]="!c.isMuted"></i>
+            {{ (c.isMuted ? 'teamChat.unmute' : 'teamChat.mute') | translate }}
+          </button>
+        </div>
+      </aside>
+    }
+  </div>
+</section>

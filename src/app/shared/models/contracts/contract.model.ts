@@ -2,35 +2,46 @@
  * Models for the `Contracts/*` endpoints.
  */
 
-/** Backend contract status — numeric codes accepted/returned by the API. */
-export enum ContractStatusCode {
-  Active = 1,
-  Expired = 2,
-  Cancelled = 3,
+/**
+ * Backend `ContractStatus` enum. The API (de)serialises it as a STRING
+ * (`"Active" | "Expired" | "Cancelled"`) — both in responses and in the
+ * create/update bodies.
+ */
+export type ContractStatus = 'Active' | 'Expired' | 'Cancelled';
+
+/** Kept as an alias for older imports. */
+export type ContractStatusName = ContractStatus;
+
+export const CONTRACT_STATUSES: ReadonlyArray<ContractStatus> = ['Active', 'Expired', 'Cancelled'];
+
+/**
+ * Reads a status from the API defensively: the documented string form
+ * (any casing), or a numeric code from older payloads (0- or 1-based is
+ * ambiguous, so numbers follow the enum's declaration order starting at 0,
+ * which is what ASP.NET emits without a string converter). Unknown → null.
+ */
+export function parseContractStatus(raw: unknown): ContractStatus | null {
+  if (typeof raw === 'string') {
+    const match = CONTRACT_STATUSES.find((s) => s.toLowerCase() === raw.trim().toLowerCase());
+    if (match) return match;
+    const n = Number(raw);
+    return Number.isInteger(n) ? CONTRACT_STATUSES[n] ?? null : null;
+  }
+  if (typeof raw === 'number' && Number.isInteger(raw)) return CONTRACT_STATUSES[raw] ?? null;
+  return null;
 }
-
-export type ContractStatusName = 'Active' | 'Expired' | 'Cancelled';
-
-export const CONTRACT_STATUSES: ReadonlyArray<{
-  code: ContractStatusCode;
-  name: ContractStatusName;
-}> = [
-  { code: ContractStatusCode.Active, name: 'Active' },
-  { code: ContractStatusCode.Expired, name: 'Expired' },
-  { code: ContractStatusCode.Cancelled, name: 'Cancelled' },
-];
 
 /** Body for `POST /Contracts/CreateContract`. */
 export interface CreateContractRequest {
   title: string;
   description: string;
   customerId: number;
-  status: ContractStatusCode;
+  status: ContractStatus;
   price: number;
   /** ISO date-time. */
   startDate: string;
-  /** ISO date-time. */
-  endDate: string;
+  /** ISO date-time; `null` = open-ended contract. */
+  endDate: string | null;
 }
 
 /**
@@ -42,12 +53,12 @@ export interface CreateContractRequest {
 export interface UpdateContractRequest {
   title: string;
   description: string;
-  status: ContractStatusCode;
+  status: ContractStatus;
   price: number;
   /** ISO date-time. */
   startDate: string;
-  /** ISO date-time. */
-  endDate: string;
+  /** ISO date-time; `null` = open-ended contract. */
+  endDate: string | null;
 }
 
 /**
@@ -68,11 +79,11 @@ export interface ContractDetail {
   address: string | null;
   createdById: string;
   createdByName: string;
-  status: ContractStatusCode;
-  statusName: ContractStatusName | string;
+  status: ContractStatus;
+  statusName?: string;
   price: number;
   startDate: string;
-  endDate: string;
+  endDate: string | null;
   createdAt: string;
 }
 
@@ -96,11 +107,11 @@ export interface ContractListItem {
   address: string | null;
   createdById: string;
   createdByName: string;
-  status: ContractStatusCode;
-  statusName: ContractStatusName | string;
+  status: ContractStatus;
+  statusName?: string;
   price: number;
   startDate: string;
-  endDate: string;
+  endDate: string | null;
   createdAt: string;
 }
 
@@ -108,4 +119,5 @@ export interface ContractListItem {
 export interface ContractListQuery {
   PageIndex?: number;
   PageSize?: number;
+  Search?: string;
 }

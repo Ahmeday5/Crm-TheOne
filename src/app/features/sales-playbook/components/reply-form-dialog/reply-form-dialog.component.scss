@@ -1,0 +1,34 @@
+.rf-phone {
+  display: flex;
+  min-height: 190px;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+.rf-bubble {
+  align-self: flex-start;
+  max-width: 100%;
+  margin-inline-start: auto;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-md);
+  border-start-end-radius: 2px;
+  background: var(--success-soft);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  box-shadow: var(--shadow-sm);
+  animation: rf-in 0.3s ease both;
+}
+
+@keyframes rf-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-bubble { animation: none; }
+}

@@ -1,0 +1,175 @@
+<app-modal
+  [open]="true"
+  [title]="(isEdit() ? 'announcements.form.editTitle' : 'announcements.form.createTitle') | translate"
+  icon="fa-solid fa-bullhorn"
+  iconTone="primary"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="close()">
+
+  <form class="af" [formGroup]="form" (ngSubmit)="submit()" novalidate id="announcement-form">
+    <div class="af-grid">
+      <!-- ── Content ─────────────────────────────── -->
+      <div class="af-main">
+        <div class="mb-3">
+          <label class="form-label fw-600" for="af-title">{{ 'announcements.form.title' | translate }}</label>
+          <input id="af-title" class="form-control" formControlName="title"
+                 [maxlength]="titleMax"
+                 [class.is-invalid]="form.controls.title.invalid && (form.controls.title.touched || submitAttempted())"
+                 [placeholder]="'announcements.form.titlePh' | translate" />
+          <div class="af-hint-row">
+            <app-form-error [control]="form.controls.title" [label]="'announcements.form.title' | translate" />
+            <span class="af-counter">{{ value().title?.length ?? 0 }}/{{ titleMax }}</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-600" for="af-body">{{ 'announcements.form.body' | translate }}</label>
+          <textarea id="af-body" class="form-control" rows="5" formControlName="body"
+                    [maxlength]="bodyMax"
+                    [class.is-invalid]="form.controls.body.invalid && (form.controls.body.touched || submitAttempted())"
+                    [placeholder]="'announcements.form.bodyPh' | translate"></textarea>
+          <div class="af-hint-row">
+            <app-form-error [control]="form.controls.body" [label]="'announcements.form.body' | translate" />
+            <span class="af-counter">{{ value().body?.length ?? 0 }}/{{ bodyMax }}</span>
+          </div>
+        </div>
+
+        <!-- Tone -->
+        <fieldset class="mb-3">
+          <legend class="form-label fw-600">{{ 'announcements.form.tone' | translate }}</legend>
+          <div class="af-tones" role="radiogroup">
+            @for (tone of tones; track tone) {
+              <button type="button" class="af-tone tone-{{ tone }}"
+                      role="radio"
+                      [attr.aria-checked]="value().tone === tone"
+                      [class.is-on]="value().tone === tone"
+                      (click)="setTone(tone)">
+                <i [class]="toneIcon(tone)"></i>
+                {{ 'announcements.tones.' + tone | translate }}
+              </button>
+            }
+          </div>
+        </fieldset>
+
+        <!-- Audience -->
+        <fieldset class="mb-3">
+          <legend class="form-label fw-600">{{ 'announcements.form.audience' | translate }}</legend>
+          <div class="af-seg" role="radiogroup">
+            <button type="button" role="radio" class="af-seg-btn"
+                    [attr.aria-checked]="value().audience === 'all'"
+                    [class.is-on]="value().audience === 'all'"
+                    (click)="setAudience('all')">
+              <i class="fa-solid fa-users"></i>{{ 'announcements.audience.all' | translate }}
+            </button>
+            <button type="button" role="radio" class="af-seg-btn"
+                    [attr.aria-checked]="value().audience === 'roles'"
+                    [class.is-on]="value().audience === 'roles'"
+                    (click)="setAudience('roles')">
+              <i class="fa-solid fa-sitemap"></i>{{ 'announcements.audience.roles' | translate }}
+            </button>
+          </div>
+
+          @if (value().audience === 'roles') {
+            <div class="af-deps">
+              @for (dep of departments; track dep) {
+                <button type="button" class="af-dep"
+                        [class.is-on]="value().roles?.includes(dep)"
+                        [attr.aria-pressed]="value().roles?.includes(dep)"
+                        (click)="toggleDepartment(dep)">
+                  <i class="fa-solid" [class.fa-square-check]="value().roles?.includes(dep)" [class.fa-square]="!value().roles?.includes(dep)"></i>
+                  {{ 'announcements.departments.' + dep | translate }}
+                </button>
+              }
+            </div>
+            @if (showRolesError()) {
+              <div class="af-error"><i class="fa-solid fa-circle-exclamation me-1"></i>{{ 'announcements.form.rolesRequired' | translate }}</div>
+            }
+          }
+        </fieldset>
+      </div>
+
+      <!-- ── Schedule + preview ─────────────────── -->
+      <aside class="af-side">
+        <fieldset class="af-card">
+          <legend class="af-card-title"><i class="fa-regular fa-calendar"></i>{{ 'announcements.form.period' | translate }}</legend>
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small" for="af-start">{{ 'announcements.form.startsOn' | translate }}</label>
+              <input id="af-start" type="date" class="form-control" formControlName="startsOn"
+                     [min]="isEdit() ? null : today" />
+            </div>
+            <div class="col-6">
+              <label class="form-label small" for="af-end">{{ 'announcements.form.endsOn' | translate }}</label>
+              <input id="af-end" type="date" class="form-control" formControlName="endsOn"
+                     [min]="value().startsOn || today" />
+            </div>
+          </div>
+
+          <div class="af-durations">
+            @for (d of durations; track d) {
+              <button type="button" class="af-dur" [class.is-on]="duration() === d" (click)="applyDuration(d)">
+                {{ (d === 1 ? 'announcements.form.oneDay' : 'announcements.form.nDays') | translate: { days: d } }}
+              </button>
+            }
+          </div>
+
+          @if (periodError(); as err) {
+            <div class="af-error"><i class="fa-solid fa-circle-exclamation me-1"></i>{{ err | translate }}</div>
+          } @else if (duration()) {
+            <p class="af-note">
+              <i class="fa-solid fa-circle-info"></i>
+              {{ 'announcements.form.periodNote' | translate: { days: duration() } }}
+            </p>
+          }
+        </fieldset>
+
+        <label class="af-switch">
+          <input type="checkbox" formControlName="isPinned" />
+          <span class="af-switch-track" aria-hidden="true"><span class="af-switch-thumb"></span></span>
+          <span>
+            <strong class="d-block">{{ 'announcements.form.pin' | translate }}</strong>
+            <small class="text-muted">{{ 'announcements.form.pinHint' | translate }}</small>
+          </span>
+        </label>
+
+        <!-- Live preview of the banner -->
+        <div class="af-preview-wrap">
+          <span class="af-card-title"><i class="fa-regular fa-eye"></i>{{ 'announcements.form.preview' | translate }}</span>
+          <div class="af-preview tone-{{ value().tone }}">
+            <span class="af-preview-ic"><i [class]="toneIcon(value().tone || 'info')"></i></span>
+            <div class="min-w-0">
+              <strong class="af-preview-title">
+                @if (value().isPinned) { <i class="fa-solid fa-thumbtack me-1"></i> }
+                {{ value().title || ('announcements.form.titlePh' | translate) }}
+              </strong>
+              <p class="af-preview-text">{{ value().body || ('announcements.form.bodyPh' | translate) }}</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    @if (serverError()) {
+      <div class="alert alert-danger d-flex gap-2 align-items-start mt-3 mb-0" role="alert">
+        <i class="fa-solid fa-circle-exclamation mt-1"></i><span>{{ serverError() }}</span>
+      </div>
+    }
+  </form>
+
+  <div modal-footer class="btn-row justify-content-end w-100">
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="close()">
+      {{ 'announcements.form.cancel' | translate }}
+    </button>
+    <button type="submit" form="announcement-form" class="btn btn-primary" [disabled]="submitting()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+        {{ (isEdit() ? 'announcements.form.saving' : 'announcements.form.publishing') | translate }}
+      } @else {
+        <i class="fa-solid" [class.fa-paper-plane]="!isEdit()" [class.fa-floppy-disk]="isEdit()"></i>
+        {{ (isEdit() ? 'announcements.form.save' : 'announcements.form.publish') | translate }}
+      }
+    </button>
+  </div>
+</app-modal>

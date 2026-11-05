@@ -1,0 +1,37 @@
+<app-pb-panel-toolbar
+  [(search)]="search"
+  [(favoritesOnly)]="favoritesOnly"
+  [placeholder]="'salesPlaybook.objections.search' | translate"
+  [canAdd]="isAdmin()"
+  [addLabel]="'salesPlaybook.objections.add' | translate"
+  (add)="editing.set(null)">
+  <app-pb-filter-chips [chips]="chips()" [(value)]="category" [label]="'salesPlaybook.form.category' | translate" />
+</app-pb-panel-toolbar>
+
+@if (filtered().length) {
+  <div class="pp-list">
+    @for (o of filtered(); track o.id; let i = $index) {
+      <div class="pp-cell" [style.--i]="i">
+        <app-pb-objection-item [objection]="o" [canManage]="isAdmin()" [busy]="busyId() === o.id"
+                               [expanded]="openId() === o.id || (filtered().length === 1)"
+                               (expandedChange)="toggle(o, $event)"
+                               (edit)="editing.set($event)" (remove)="remove($event)" />
+      </div>
+    }
+  </div>
+} @else {
+  <div class="pp-empty">
+    <app-empty-state icon="fa-solid fa-shield-halved" tone="warning" [compact]="true" [hasActions]="hasAny()"
+                     [title]="(hasAny() ? 'salesPlaybook.emptyFilteredTitle' : 'salesPlaybook.objections.emptyTitle') | translate"
+                     [message]="(hasAny() ? 'salesPlaybook.emptyFiltered' : (isAdmin() ? 'salesPlaybook.objections.emptyAdmin' : 'salesPlaybook.objections.empty')) | translate">
+      <button type="button" class="btn btn-light btn-sm" (click)="clearFilters()">
+        <i class="fa-solid fa-filter-circle-xmark me-1"></i>{{ 'salesPlaybook.actions.clearFilters' | translate }}
+      </button>
+    </app-empty-state>
+  </div>
+}
+
+@if (editing() !== undefined) {
+  <app-pb-objection-form-dialog [objection]="editing() ?? null" [defaultCategory]="defaultCategory()"
+                                (closed)="editing.set(undefined)" />
+}

@@ -1,0 +1,32 @@
+<app-pb-panel-toolbar
+  [(search)]="search"
+  [(favoritesOnly)]="favoritesOnly"
+  [placeholder]="'salesPlaybook.competitors.search' | translate"
+  [canAdd]="isAdmin()"
+  [addLabel]="'salesPlaybook.competitors.add' | translate"
+  (add)="editing.set(null)" />
+
+@if (filtered().length) {
+  <div class="pp-grid">
+    @for (c of filtered(); track c.id; let i = $index) {
+      <div class="pp-cell" [style.--i]="i">
+        <app-pb-competitor-card [competitor]="c" [canManage]="isAdmin()" [busy]="busyId() === c.id"
+                                (edit)="editing.set($event)" (remove)="remove($event)" />
+      </div>
+    }
+  </div>
+} @else {
+  <div class="pp-empty">
+    <app-empty-state icon="fa-solid fa-chess-knight" tone="info" [compact]="true" [hasActions]="hasAny()"
+                     [title]="(hasAny() ? 'salesPlaybook.emptyFilteredTitle' : 'salesPlaybook.competitors.emptyTitle') | translate"
+                     [message]="(hasAny() ? 'salesPlaybook.emptyFiltered' : (isAdmin() ? 'salesPlaybook.competitors.emptyAdmin' : 'salesPlaybook.competitors.empty')) | translate">
+      <button type="button" class="btn btn-light btn-sm" (click)="clearFilters()">
+        <i class="fa-solid fa-filter-circle-xmark me-1"></i>{{ 'salesPlaybook.actions.clearFilters' | translate }}
+      </button>
+    </app-empty-state>
+  </div>
+}
+
+@if (editing() !== undefined) {
+  <app-pb-competitor-form-dialog [competitor]="editing() ?? null" (closed)="editing.set(undefined)" />
+}

@@ -24,6 +24,7 @@
     <i class="fa-solid fa-paperclip"></i>
   </button>
   <input #picker type="file" class="d-none" [accept]="accept" (change)="onPick($event)" tabindex="-1" />
+  <app-quick-reply-picker [disabled]="disabled()" (picked)="insertReply($event)" />
 
   <textarea #box
             class="wa-compose__input"

@@ -1,0 +1,57 @@
+// Shared status palette of the attendance feature.
+//
+//   @use '../../styles/status' as st;
+//   @include st.tones;               // defines `.st-present { --st; --st-soft }` …
+//
+// Every status maps to a solid accent (`--st`) and its soft fill
+// (`--st-soft`); components decide where to apply them.
+
+@mixin tones {
+  .st-present  { --st: var(--success); --st-soft: var(--success-soft); --st-ink: var(--success); }
+  .st-late     { --st: var(--warning); --st-soft: var(--warning-soft); --st-ink: var(--warning); }
+  .st-absent   { --st: var(--danger);  --st-soft: var(--danger-soft);  --st-ink: var(--danger); }
+  .st-leave    { --st: var(--info);    --st-soft: var(--info-soft);    --st-ink: var(--info); }
+  .st-holiday  { --st: var(--brand-500); --st-soft: var(--brand-soft); --st-ink: var(--brand-500); }
+  .st-weekend  { --st: var(--text-3);  --st-soft: var(--surface-2);    --st-ink: var(--text-3); }
+  .st-pending  { --st: var(--border);  --st-soft: var(--surface-1);    --st-ink: var(--text-2); }
+  .st-upcoming { --st: var(--border);  --st-soft: transparent;         --st-ink: var(--text-3); }
+}
+
+// Leave type badge + request status chip, shared by "my requests" and the
+// admin inbox / history.
+@mixin leave-chips {
+  .lv-type,
+  .lv-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.22rem 0.65rem;
+    border-radius: var(--radius-pill);
+    background: var(--chip-soft);
+    color: var(--chip);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-700);
+    white-space: nowrap;
+    transition: transform 0.2s ease;
+  }
+
+  .type-annual    { --chip: var(--brand-500); --chip-soft: var(--brand-soft); }
+  .type-sick      { --chip: var(--danger);    --chip-soft: var(--danger-soft); }
+  .type-casual    { --chip: var(--warning);   --chip-soft: var(--warning-soft); }
+
+  .status-pending   { --chip: var(--warning); --chip-soft: var(--warning-soft); }
+  .status-approved  { --chip: var(--success); --chip-soft: var(--success-soft); }
+  .status-rejected  { --chip: var(--danger);  --chip-soft: var(--danger-soft); }
+  .status-cancelled { --chip: var(--text-3);  --chip-soft: var(--surface-2); }
+
+  .status-pending i { animation: lv-hourglass 2.4s ease-in-out infinite; }
+
+  @keyframes lv-hourglass {
+    0%, 70% { transform: rotate(0); }
+    85%, 100% { transform: rotate(180deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .status-pending i { animation: none; }
+  }
+}

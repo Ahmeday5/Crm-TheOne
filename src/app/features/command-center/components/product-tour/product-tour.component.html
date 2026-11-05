@@ -1,0 +1,49 @@
+@if (tour.active() && tour.step(); as step) {
+  <div class="pt" role="dialog" aria-modal="true" [attr.aria-label]="step.titleKey | translate">
+    <!-- Click-catcher: the page under the tour is not interactive -->
+    <div class="pt-catch"></div>
+
+    @if (hole(); as h) {
+      <div class="pt-hole"
+           [style.top.px]="h.top" [style.left.px]="h.left"
+           [style.width.px]="h.width" [style.height.px]="h.height"></div>
+    } @else {
+      <div class="pt-dim"></div>
+    }
+
+    <div #card class="pt-card" [class.is-center]="!hole()"
+         [style.top.px]="cardPos().top" [style.left.px]="cardPos().left">
+      @for (s of [step]; track s.id) {
+        <div class="pt-card-inner">
+          <div class="pt-head">
+            <span class="pt-ic"><i [class]="s.icon"></i></span>
+            <span class="pt-count">{{ 'commandCenter.tour.step' | translate: { n: tour.index() + 1, total: tour.steps().length } }}</span>
+            <button type="button" class="pt-skip" (click)="tour.finish()">{{ 'commandCenter.tour.skip' | translate }}</button>
+          </div>
+          <h5 class="pt-title">{{ s.titleKey | translate }}</h5>
+          <p class="pt-body">{{ s.bodyKey | translate }}</p>
+        </div>
+      }
+
+      <div class="pt-foot">
+        <div class="pt-dots" role="tablist">
+          @for (s of tour.steps(); track s.id; let i = $index) {
+            <button type="button" class="pt-dot" role="tab"
+                    [class.is-on]="i === tour.index()" [class.is-done]="i < tour.index()"
+                    [attr.aria-selected]="i === tour.index()"
+                    [attr.aria-label]="s.titleKey | translate"
+                    (click)="tour.goTo(i)"></button>
+          }
+        </div>
+        <div class="pt-actions">
+          @if (!tour.isFirst()) {
+            <button type="button" class="btn btn-sm btn-light" (click)="tour.prev()">{{ 'commandCenter.tour.prev' | translate }}</button>
+          }
+          <button type="button" class="btn btn-sm btn-primary" (click)="tour.next()">
+            {{ (tour.isLast() ? 'commandCenter.tour.finish' : 'commandCenter.tour.next') | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

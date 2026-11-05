@@ -1,0 +1,35 @@
+<div class="lb-grid">
+  @if (loading() && cards().length === 0) {
+    @for (i of [1, 2, 3]; track i) { <div class="lb-card lb-skel"></div> }
+  } @else {
+    @for (c of cards(); track c.type; let i = $index) {
+      <article class="lb-card tone-{{ c.tone }}" [style.--i]="i">
+        <header class="lb-head">
+          <span class="lb-ic"><i [class]="c.icon"></i></span>
+          <span class="lb-type">{{ 'attendance.leaveTypes.' + c.type | translate }}</span>
+        </header>
+
+        <div class="lb-value">
+          <strong>{{ c.available }}</strong>
+          <span>{{ 'attendance.balances.of' | translate: { n: c.entitled } }}</span>
+        </div>
+        <p class="lb-caption">{{ 'attendance.balances.available' | translate }}</p>
+
+        <div class="lb-bar" role="img"
+             [attr.aria-label]="'attendance.balances.barLabel' | translate: { used: c.used, pending: c.pending, available: c.available }">
+          <span class="lb-bar-used" [style.width.%]="c.usedPct"
+                [appTip]="'attendance.balances.used' | translate: { n: c.used }"></span>
+          <span class="lb-bar-pending" [style.width.%]="c.pendingPct"
+                [appTip]="'attendance.balances.pending' | translate: { n: c.pending }"></span>
+        </div>
+
+        <footer class="lb-foot">
+          <span><i class="lb-dot used"></i>{{ 'attendance.balances.used' | translate: { n: c.used } }}</span>
+          @if (c.pending > 0) {
+            <span><i class="lb-dot pending"></i>{{ 'attendance.balances.pending' | translate: { n: c.pending } }}</span>
+          }
+        </footer>
+      </article>
+    }
+  }
+</div>

@@ -1,0 +1,78 @@
+<app-modal
+  [open]="true"
+  [title]="(isEdit() ? 'salesPlaybook.form.editTitle.replies' : 'salesPlaybook.form.createTitle.replies') | translate"
+  icon="fa-solid fa-bolt"
+  iconTone="success"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="close()">
+
+  <form class="pf" [formGroup]="form" (ngSubmit)="submit()" novalidate id="pb-reply-form">
+    <div class="pf-grid">
+      <div class="pf-field pf-span">
+        <label class="form-label fw-600" for="pf-r-title">{{ 'salesPlaybook.form.replyTitle' | translate }}</label>
+        <input id="pf-r-title" class="form-control" formControlName="title" dir="auto"
+               [maxlength]="limits.title"
+               [class.is-invalid]="form.controls.title.invalid && form.controls.title.touched"
+               [placeholder]="'salesPlaybook.form.replyTitlePh' | translate" />
+        <app-form-error [control]="form.controls.title" [label]="'salesPlaybook.form.replyTitle' | translate" />
+      </div>
+
+      <fieldset class="pf-field pf-span">
+        <legend class="form-label fw-600">{{ 'salesPlaybook.form.category' | translate }}</legend>
+        <div class="pf-chips" role="radiogroup">
+          @for (c of categories; track c) {
+            <button type="button" class="pf-chip" role="radio"
+                    [class.is-on]="value().category === c" [attr.aria-checked]="value().category === c"
+                    (click)="form.controls.category.setValue(c)">
+              <i [class]="meta[c].icon" aria-hidden="true"></i>{{ 'salesPlaybook.replyCategories.' + c | translate }}
+            </button>
+          }
+        </div>
+      </fieldset>
+
+      <div class="pf-field">
+        <div class="pf-label-row">
+          <label class="form-label fw-600" for="pf-r-text">{{ 'salesPlaybook.form.replyText' | translate }}</label>
+          <button type="button" class="pf-insert" (click)="insertName()">
+            <i class="fa-solid fa-user-plus" aria-hidden="true"></i>{{ 'salesPlaybook.form.insertName' | translate }}
+          </button>
+        </div>
+        <textarea #textArea id="pf-r-text" class="form-control" rows="7" formControlName="text" dir="auto"
+                  [maxlength]="limits.text"
+                  [class.is-invalid]="form.controls.text.invalid && form.controls.text.touched"
+                  [placeholder]="'salesPlaybook.form.replyTextPh' | translate"></textarea>
+        <span class="pf-counter">{{ value().text?.length ?? 0 }}/{{ limits.text }}</span>
+        <app-form-error [control]="form.controls.text" [label]="'salesPlaybook.form.replyText' | translate" />
+        <small class="pf-hint">{{ 'salesPlaybook.form.nameHint' | translate }}</small>
+      </div>
+
+      <div class="pf-field">
+        <span class="form-label fw-600 d-block">{{ 'salesPlaybook.form.preview' | translate }}</span>
+        <div class="rf-phone">
+          <div class="rf-bubble" dir="auto">{{ value().text || ('salesPlaybook.form.replyTextPh' | translate) }}</div>
+        </div>
+      </div>
+    </div>
+
+    @if (serverError()) {
+      <div class="alert alert-danger d-flex gap-2 align-items-start mt-3 mb-0" role="alert">
+        <i class="fa-solid fa-circle-exclamation mt-1"></i><span>{{ serverError() }}</span>
+      </div>
+    }
+  </form>
+
+  <div modal-footer class="btn-row justify-content-end w-100">
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="close()">
+      {{ 'salesPlaybook.form.cancel' | translate }}
+    </button>
+    <button type="submit" form="pb-reply-form" class="btn btn-primary" [disabled]="submitting()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>{{ 'salesPlaybook.form.saving' | translate }}
+      } @else {
+        <i class="fa-solid fa-floppy-disk me-1"></i>{{ 'salesPlaybook.form.save' | translate }}
+      }
+    </button>
+  </div>
+</app-modal>

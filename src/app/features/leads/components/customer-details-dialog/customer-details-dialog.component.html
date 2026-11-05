@@ -21,6 +21,7 @@
       #waThread
       class="cd-whatsapp"
       [source]="whatsappSource()"
+      [contactName]="customer()?.fullName ?? null"
       emptyTitleKey="whatsapp.customer.empty"
       emptyHintKey="whatsapp.customer.emptyHint">
       @if (waThread.latestChatId(); as chatId) {

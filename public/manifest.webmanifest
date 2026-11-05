@@ -1,0 +1,26 @@
+{
+  "name": "TheOne CRM",
+  "short_name": "TheOne CRM",
+  "description": "نظام إدارة علاقات العملاء — TheOne System",
+  "lang": "ar",
+  "dir": "rtl",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#0066cc",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "مسار المبيعات", "short_name": "المسار", "url": "/leads/sales-pipeline", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "واتساب العملاء", "short_name": "واتساب", "url": "/whatsapp", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "إضافة عميل", "short_name": "عميل جديد", "url": "/leads/add-leadCustomer", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

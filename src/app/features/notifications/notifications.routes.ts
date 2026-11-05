@@ -1,15 +1,17 @@
 import { Routes } from '@angular/router';
 
 /**
- * Notification-center routes.
+ * Notification-center routes — Admin only.
  *
- * Open to every authenticated user — notifications are per-user. The admin-only
- * "send notification" action is gated inside the page by role, not by the route.
+ * The center (full history + manual "send notification") is an admin tool and
+ * lives next to the announcements board in the sidebar. Every other role still
+ * receives notifications through the header bell and the live toasts.
  */
 export const NOTIFICATIONS_ROUTES: Routes = [
   {
     path: 'notifications',
     title: 'مركز الإشعارات',
+    data: { roles: ['Admin'] },
     loadComponent: () =>
       import('./pages/notifications-center/notifications-center.component').then(
         (m) => m.NotificationsCenterComponent,

@@ -1,0 +1,52 @@
+import { TranslationFile } from '../i18n.types';
+
+const teamChat: TranslationFile<'teamChat'> = {
+  teamChat: {
+    title: 'Team chat',
+    previewNotice: 'Preview mode — sample data; live employee messaging (Firebase) is coming soon.',
+    search: 'Search conversations...',
+    newChat: 'New chat',
+    colleagues: 'Colleagues',
+    onlineCount: '{count} online now',
+    filters: {
+      all: 'All',
+      direct: 'Direct',
+      channel: 'Channels',
+      unread: 'Unread',
+    },
+    you: 'You',
+    yesterday: 'Yesterday',
+    today: 'Today',
+    typing: 'typing…',
+    noMessagesYet: 'No messages yet',
+    noConversations: 'No matching conversations',
+    members: 'members',
+    membersTitle: 'Members ({count})',
+    lastSeen: 'Last seen',
+    presence: {
+      online: 'Online',
+      away: 'Away',
+      offline: 'Offline',
+    },
+    pin: 'Pin conversation',
+    unpin: 'Unpin',
+    mute: 'Mute notifications',
+    unmute: 'Unmute',
+    details: 'Details',
+    settings: 'Settings',
+    message: 'Message',
+    close: 'Close',
+    back: 'Back',
+    composer: 'Write a message…',
+    send: 'Send',
+    emoji: 'Emoji',
+    attach: 'Attach file',
+    attachSoon: 'File attachments coming soon',
+    newMessages: '{count} new messages',
+    sayHello: 'Say hello to {name} 👋',
+    welcomeTitle: 'Welcome to team chat',
+    welcomeText: 'Pick a conversation or start a new one with any teammate.',
+  },
+};
+
+export default teamChat;

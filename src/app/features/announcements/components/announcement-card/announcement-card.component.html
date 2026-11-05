@@ -1,0 +1,100 @@
+@let a = announcement();
+<article class="ac tone-{{ a.tone }} phase-{{ phase() }}" [class.is-unread]="!a.isRead" [class.is-pinned]="a.isPinned"
+         [attr.id]="'announcement-' + a.id">
+  <header class="ac-head">
+    <span class="ac-ic"><i [class]="icon()"></i></span>
+
+    <div class="ac-head-text">
+      <div class="ac-title-row">
+        @if (a.isPinned) {
+          <i class="fa-solid fa-thumbtack ac-pin" [appTip]="'announcements.pinned' | translate"></i>
+        }
+        <h3 class="ac-title">{{ a.title }}</h3>
+        @if (!a.isRead && phase() !== 'expired') {
+          <span class="ac-new">{{ 'announcements.new' | translate }}</span>
+        }
+      </div>
+      <div class="ac-byline">
+        <span><i class="fa-regular fa-user"></i>{{ a.author.name || ('announcements.admin' | translate) }}</span>
+        <span><i class="fa-regular fa-clock"></i>{{ a.createdAt | cairoDate: 'datetime' }}</span>
+        @if (a.updatedAt) {
+          <span class="ac-edited">{{ 'announcements.edited' | translate }}</span>
+        }
+      </div>
+    </div>
+
+    <span class="ac-phase">
+      <span class="ac-phase-dot"></span>
+      {{ 'announcements.phase.' + phase() | translate }}
+    </span>
+  </header>
+
+  <p class="ac-body" appClampText="4" [clampTitle]="a.title" [clampText]="a.body">{{ a.body }}</p>
+
+  <div class="ac-audience">
+    @if (a.audience === 'all') {
+      <span class="ac-chip"><i class="fa-solid fa-users"></i>{{ 'announcements.audience.all' | translate }}</span>
+    } @else {
+      @for (dep of a.roles; track dep) {
+        <span class="ac-chip"><i class="fa-solid fa-sitemap"></i>{{ 'announcements.departments.' + dep | translate }}</span>
+      }
+    }
+  </div>
+
+  <!-- Timeline of the display window -->
+  <div class="ac-window">
+    <div class="ac-window-dates">
+      <span>{{ a.startsOn | cairoDate: 'date' }}</span>
+      <span class="ac-window-left">
+        @switch (phase()) {
+          @case ('scheduled') { {{ 'announcements.startsSoon' | translate }} }
+          @case ('active') {
+            {{ (daysLeft() <= 1 ? 'announcements.banner.lastDay' : 'announcements.banner.daysLeft') | translate: { days: daysLeft() } }}
+          }
+          @default { {{ 'announcements.ended' | translate }} }
+        }
+      </span>
+      <span>{{ a.endsOn | cairoDate: 'date' }}</span>
+    </div>
+    <div class="ac-track" role="progressbar" [attr.aria-valuenow]="elapsed()" aria-valuemin="0" aria-valuemax="100">
+      <span class="ac-track-fill" [style.width.%]="elapsed()"></span>
+    </div>
+  </div>
+
+  <footer class="ac-foot">
+    @if (a.isRead) {
+      <span class="ac-read">
+        <i class="fa-solid fa-check-double"></i>{{ 'announcements.read' | translate }}
+        @if (a.readAt) { <small>· {{ a.readAt | cairoDate: 'datetime' }}</small> }
+      </span>
+    } @else {
+      <button type="button" class="btn btn-sm btn-primary" (click)="markRead.emit(a)">
+        <i class="fa-solid fa-check"></i>{{ 'announcements.markRead' | translate }}
+      </button>
+    }
+
+    @if (canManage()) {
+      <div class="ac-stats" [appTip]="'announcements.readStatsTip' | translate">
+        <i class="fa-regular fa-eye"></i>
+        <span>{{ 'announcements.readStats' | translate: { read: a.readCount, total: a.recipientsCount } }}</span>
+        <span class="ac-stats-bar"><span [style.width.%]="readRate()"></span></span>
+      </div>
+
+      <div class="ac-actions">
+        <button type="button" class="ac-act" [disabled]="busy()" (click)="togglePin.emit(a)"
+                [appTip]="(a.isPinned ? 'announcements.unpin' : 'announcements.pin') | translate"
+                [attr.aria-label]="(a.isPinned ? 'announcements.unpin' : 'announcements.pin') | translate">
+          <i class="fa-solid fa-thumbtack" [class.fa-rotate-90]="a.isPinned"></i>
+        </button>
+        <button type="button" class="ac-act" [disabled]="busy()" (click)="edit.emit(a)"
+                [appTip]="'announcements.edit' | translate" [attr.aria-label]="'announcements.edit' | translate">
+          <i class="fa-solid fa-pen"></i>
+        </button>
+        <button type="button" class="ac-act is-danger" [disabled]="busy()" (click)="remove.emit(a)"
+                [appTip]="'announcements.delete' | translate" [attr.aria-label]="'announcements.delete' | translate">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </div>
+    }
+  </footer>
+</article>

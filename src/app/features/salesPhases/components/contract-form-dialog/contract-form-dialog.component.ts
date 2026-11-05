@@ -21,7 +21,7 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
 import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import {
   CONTRACT_STATUSES,
-  ContractStatusCode,
+  ContractStatus,
   CreateContractRequest,
   UpdateContractRequest,
 } from '../../../../shared/models';
@@ -80,7 +80,7 @@ export class ContractFormDialogComponent implements OnInit {
       null,
       Validators.required,
     ),
-    status: [ContractStatusCode.Active as number, Validators.required],
+    status: this.fb.nonNullable.control<ContractStatus>('Active', Validators.required),
     price: this.fb.nonNullable.control<number | null>(null, [
       Validators.required,
       Validators.min(0),
@@ -147,7 +147,7 @@ export class ContractFormDialogComponent implements OnInit {
       const payload: UpdateContractRequest = {
         title: (v.title ?? '').trim(),
         description: (v.description ?? '').trim(),
-        status: Number(v.status) as ContractStatusCode,
+        status: v.status,
         price: Number(v.price) || 0,
         startDate: this.toIso(v.startDate),
         endDate: this.toIso(v.endDate),
@@ -170,7 +170,7 @@ export class ContractFormDialogComponent implements OnInit {
       title: (v.title ?? '').trim(),
       description: (v.description ?? '').trim(),
       customerId: Number(v.customerId),
-      status: Number(v.status) as ContractStatusCode,
+      status: v.status,
       price: Number(v.price) || 0,
       startDate: this.toIso(v.startDate),
       endDate: this.toIso(v.endDate),

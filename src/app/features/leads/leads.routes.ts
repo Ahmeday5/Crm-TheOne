@@ -30,6 +30,17 @@ export const LEADS_ROUTES: Routes = [
           ),
       },
       {
+        // Kanban view of the same customers — `GET /Sales/Pipeline`.
+        path: 'sales-pipeline',
+        title: 'مسار المبيعات',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Sales'] },
+        loadComponent: () =>
+          import('./pages/sales-pipeline/sales-pipeline.component').then(
+            (m) => m.SalesPipelineComponent,
+          ),
+      },
+      {
         path: 'add-leadCustomer',
         title: 'إضافة عميل محتمل',
         canActivate: [roleGuard],

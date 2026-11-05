@@ -1,0 +1,33 @@
+<div class="mp" (appClickOutside)="open.set(false)" (keydown.escape)="open.set(false)">
+  <button type="button" class="mp-step" [disabled]="!canPrev()" (click)="step(-1)"
+          [attr.aria-label]="'smartAnalytics.performance.month.prev' | translate">
+    <i class="fa-solid fa-chevron-right mp-ic-prev"></i>
+  </button>
+
+  <button type="button" class="mp-current" [attr.aria-expanded]="open()" aria-haspopup="listbox"
+          (click)="open.set(!open())">
+    <i class="fa-regular fa-calendar"></i>
+    @for (m of [month()]; track m) {
+      <span class="mp-label" [class.from-next]="direction() === 1" [class.from-prev]="direction() === -1">{{ label() }}</span>
+    }
+    <i class="fa-solid fa-chevron-down mp-caret" [class.is-open]="open()"></i>
+  </button>
+
+  <button type="button" class="mp-step" [disabled]="!canNext()" (click)="step(1)"
+          [attr.aria-label]="'smartAnalytics.performance.month.next' | translate">
+    <i class="fa-solid fa-chevron-left mp-ic-next"></i>
+  </button>
+
+  @if (open()) {
+    <ul class="mp-menu" role="listbox" [attr.aria-label]="'smartAnalytics.performance.month.label' | translate">
+      @for (o of options(); track o.key; let i = $index) {
+        <li role="option" [attr.aria-selected]="o.key === month()">
+          <button type="button" class="mp-option" [class.is-on]="o.key === month()" [style.--i]="i" (click)="pick(o.key)">
+            {{ o.label }}
+            @if (i === 0) { <span class="mp-now">{{ 'smartAnalytics.performance.month.current' | translate }}</span> }
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

@@ -10,7 +10,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
   template: `
     <div class="dropdown">
       <button
-        class="btn-icon d-flex align-items-center gap-2"
+        class="btn-icon has-label"
         type="button"
         data-bs-toggle="dropdown"
         [attr.aria-label]="'header.language' | translate"

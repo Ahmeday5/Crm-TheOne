@@ -1,0 +1,47 @@
+@let s = script();
+<article class="sc" [class.is-busy]="busy()">
+  <header class="sc-head">
+    <span class="sc-ic" aria-hidden="true"><i class="fa-solid fa-headset"></i></span>
+    <div class="sc-titles">
+      <h6 class="sc-title" dir="auto">{{ s.title }}</h6>
+      @if (serviceName(); as name) {
+        <span class="sc-service" [appTip]="'salesPlaybook.scripts.linkedService' | translate">
+          <i class="fa-solid fa-link" aria-hidden="true"></i><span dir="auto">{{ name }}</span>
+        </span>
+      } @else {
+        <span class="sc-service is-generic">
+          <i class="fa-solid fa-globe" aria-hidden="true"></i>{{ 'salesPlaybook.scripts.generic' | translate }}
+        </span>
+      }
+    </div>
+    <app-pb-favorite-button kind="scripts" [itemId]="s.id" />
+  </header>
+
+  @if (s.summary) {
+    <p class="sc-summary" dir="auto" [appClampText]="2" [clampTitle]="s.title">{{ s.summary }}</p>
+  }
+
+  <ul class="sc-meta">
+    <li><i class="fa-solid fa-door-open" aria-hidden="true"></i>{{ 'salesPlaybook.call.stage.opening' | translate }}</li>
+    <li><i class="fa-solid fa-shoe-prints" aria-hidden="true"></i>{{ 'salesPlaybook.scripts.stepsCount' | translate: { n: s.steps.length } }}</li>
+    <li><i class="fa-solid fa-circle-question" aria-hidden="true"></i>{{ 'salesPlaybook.scripts.questionsCount' | translate: { n: s.questions.length } }}</li>
+  </ul>
+
+  <footer class="sc-foot">
+    <button type="button" class="btn btn-primary sc-start" (click)="start.emit(s)">
+      <i class="fa-solid fa-phone-volume"></i>{{ 'salesPlaybook.scripts.start' | translate }}
+    </button>
+    @if (canManage()) {
+      <span class="sc-admin">
+        <button type="button" class="sc-icon" [disabled]="busy()" (click)="edit.emit(s)"
+                [attr.aria-label]="'salesPlaybook.actions.edit' | translate" [appTip]="'salesPlaybook.actions.edit' | translate">
+          <i class="fa-solid fa-pen"></i>
+        </button>
+        <button type="button" class="sc-icon is-danger" [disabled]="busy()" (click)="remove.emit(s)"
+                [attr.aria-label]="'salesPlaybook.actions.delete' | translate" [appTip]="'salesPlaybook.actions.delete' | translate">
+          @if (busy()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="fa-solid fa-trash-can"></i> }
+        </button>
+      </span>
+    }
+  </footer>
+</article>

@@ -175,6 +175,8 @@ export const API_ENDPOINTS = {
     dashboardStatistics: 'Sales/SalesDashboardStatistics',
     customerStatusCount: 'Sales/SalesCustomerStatusCount',
     notBuyingReasons: 'Sales/NotBuyingReasons',
+    /** Kanban board — stats + one column per customer status. */
+    pipeline: 'Sales/Pipeline',
   },
   /** Resource-management board — team workload + per-developer distribution. */
   resourceManagement: {
@@ -212,6 +214,19 @@ export const API_ENDPOINTS = {
     active: 'Goals/active',
   },
   /** Per-user notification center + bell badge + FCM push registration. */
+  /**
+   * Announcements board — contract in `docs/api/announcements.md`.
+   * Not deployed yet: the app uses the mock repository until it is
+   * (see `announcements-repository.provider.ts`).
+   */
+  announcements: {
+    list: 'Announcements',
+    create: 'Announcements',
+    update: (id: string) => `Announcements/${id}`,
+    delete: (id: string) => `Announcements/${id}`,
+    pin: (id: string) => `Announcements/${id}/pin`,
+    read: (id: string) => `Announcements/${id}/read`,
+  },
   notifications: {
     list: 'Notifications',
     unreadCount: 'Notifications/unread-count',

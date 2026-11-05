@@ -1,0 +1,52 @@
+import { TranslationFile } from '../i18n.types';
+
+const teamChat: TranslationFile<'teamChat'> = {
+  teamChat: {
+    title: 'الدردشة الداخلية',
+    previewNotice: 'وضع المعاينة — البيانات تجريبية، والربط اللحظي بين الموظفين (Firebase) قريبًا.',
+    search: 'ابحث في المحادثات...',
+    newChat: 'محادثة جديدة',
+    colleagues: 'الزملاء',
+    onlineCount: '{count} متصل الآن',
+    filters: {
+      all: 'الكل',
+      direct: 'مباشرة',
+      channel: 'القنوات',
+      unread: 'غير مقروءة',
+    },
+    you: 'أنت',
+    yesterday: 'أمس',
+    today: 'اليوم',
+    typing: 'يكتب…',
+    noMessagesYet: 'لا توجد رسائل بعد',
+    noConversations: 'لا توجد محادثات مطابقة',
+    members: 'عضو',
+    membersTitle: 'الأعضاء ({count})',
+    lastSeen: 'آخر ظهور',
+    presence: {
+      online: 'متصل الآن',
+      away: 'بعيد',
+      offline: 'غير متصل',
+    },
+    pin: 'تثبيت المحادثة',
+    unpin: 'إلغاء التثبيت',
+    mute: 'كتم الإشعارات',
+    unmute: 'إلغاء الكتم',
+    details: 'التفاصيل',
+    settings: 'الإعدادات',
+    message: 'مراسلة',
+    close: 'إغلاق',
+    back: 'رجوع',
+    composer: 'اكتب رسالة…',
+    send: 'إرسال',
+    emoji: 'إيموجي',
+    attach: 'إرفاق ملف',
+    attachSoon: 'إرفاق الملفات قريبًا',
+    newMessages: '{count} رسائل جديدة',
+    sayHello: 'ابدأ المحادثة مع {name} 👋',
+    welcomeTitle: 'أهلًا بك في الدردشة الداخلية',
+    welcomeText: 'اختر محادثة من القائمة أو ابدأ محادثة جديدة مع أي زميل في الفريق.',
+  },
+};
+
+export default teamChat;

@@ -1,0 +1,155 @@
+<div class="row g-4">
+  <!-- ── Inbox ─────────────────────────────────────── -->
+  <section class="col-12 col-xxl-5">
+    <h5 class="la-section">
+      <i class="fa-solid fa-inbox"></i>{{ 'attendance.approvals.inbox' | translate }}
+      <span class="la-badge" [class.is-zero]="pending().length === 0">{{ pending().length }}</span>
+    </h5>
+
+    @if (!loaded()) {
+      <div class="la-stack">@for (i of [1, 2, 3]; track i) { <div class="la-skel"></div> }</div>
+    } @else if (pending().length === 0) {
+      <div class="card">
+        <app-empty-state icon="fa-solid fa-mug-hot" tone="success" [compact]="true"
+                         [title]="'attendance.approvals.inboxZeroTitle' | translate"
+                         [message]="'attendance.approvals.inboxZero' | translate" />
+      </div>
+    } @else {
+      <div class="la-stack">
+        @for (item of pending(); track item.request.id; let i = $index) {
+          @let r = item.request;
+          @let short = item.available < r.days;
+          <article class="la-card type-{{ r.type }}" [class.is-busy]="busyId() === r.id" [style.--i]="i">
+            <header class="la-card-head">
+              <app-user-avatar [name]="r.employeeName" [imageUrl]="r.employeeImageUrl" [userId]="r.userId" size="md" />
+              <div class="min-w-0 flex-grow-1">
+                <strong class="la-name">{{ r.employeeName }}</strong>
+                <small class="la-meta">
+                  {{ 'attendance.roles.' + r.employeeRole | translate }} ·
+                  {{ 'attendance.approvals.submitted' | translate: { date: (r.createdAt | cairoDate: 'datetime') } }}
+                </small>
+              </div>
+              <span class="lv-type type-{{ r.type }}"><i [class]="typeIcon[r.type]"></i>{{ 'attendance.leaveTypes.' + r.type | translate }}</span>
+            </header>
+
+            <div class="la-period">
+              <div>
+                <span>{{ 'attendance.leaveForm.from' | translate }}</span>
+                <strong>{{ r.from | cairoDate: 'date' }}</strong>
+              </div>
+              <i class="fa-solid fa-arrow-left la-arrow" aria-hidden="true"></i>
+              <div>
+                <span>{{ 'attendance.leaveForm.to' | translate }}</span>
+                <strong>{{ r.to | cairoDate: 'date' }}</strong>
+              </div>
+              <div class="la-days">
+                <strong>{{ r.days }}</strong>
+                <span>{{ (r.halfDay ? 'attendance.leave.halfDay' : 'attendance.approvals.workdays') | translate }}</span>
+              </div>
+            </div>
+
+            <p class="la-reason" appClampText="2">{{ r.reason }}</p>
+
+            <div class="la-signals">
+              <span class="la-signal" [class.is-bad]="short"
+                    [appTip]="'attendance.approvals.balanceTip' | translate">
+                <i class="fa-solid" [class.fa-scale-balanced]="!short" [class.fa-triangle-exclamation]="short"></i>
+                {{ 'attendance.approvals.balance' | translate: { available: item.available, after: item.available - r.days } }}
+              </span>
+              @if (item.colleaguesAway > 0) {
+                <span class="la-signal is-warn">
+                  <i class="fa-solid fa-people-group"></i>
+                  {{ 'attendance.approvals.colleaguesAway' | translate: { n: item.colleaguesAway } }}
+                </span>
+              }
+            </div>
+
+            <footer class="btn-row la-actions">
+              <button type="button" class="btn btn-outline-danger" [disabled]="busyId() === r.id" (click)="reject.emit(r)">
+                <i class="fa-solid fa-xmark"></i>{{ 'attendance.actions.reject' | translate }}
+              </button>
+              <button type="button" class="btn btn-success la-approve" [disabled]="busyId() === r.id" (click)="approve.emit(r)">
+                @if (busyId() === r.id) { <span class="spinner-border spinner-border-sm"></span> }
+                @else { <i class="fa-solid fa-check"></i> }
+                {{ 'attendance.actions.approve' | translate }}
+              </button>
+            </footer>
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- ── History ───────────────────────────────────── -->
+  <section class="col-12 col-xxl-7">
+    <h5 class="la-section"><i class="fa-solid fa-clock-rotate-left"></i>{{ 'attendance.approvals.history' | translate }}</h5>
+    <div class="card la-history">
+      <div class="la-toolbar">
+        <div class="la-filters" role="tablist">
+          @for (f of historyFilters; track f) {
+            <button type="button" role="tab" class="la-filter" [class.is-on]="historyFilter() === f"
+                    [attr.aria-selected]="historyFilter() === f" (click)="historyFilter.set(f)">
+              {{ 'attendance.leaveStatus.' + f | translate }}
+            </button>
+          }
+        </div>
+        <div class="position-relative la-search">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="search" class="form-control" [placeholder]="'attendance.approvals.search' | translate"
+                 [ngModel]="search()" (ngModelChange)="search.set($event)" />
+        </div>
+      </div>
+
+      @if (!loaded()) {
+        <div class="la-stack p-3">@for (i of [1, 2, 3]; track i) { <div class="la-skel short"></div> }</div>
+      } @else if (historyRows().length === 0) {
+        <app-empty-state icon="fa-regular fa-folder-open" [compact]="true" [message]="'attendance.approvals.historyEmpty' | translate" />
+      } @else {
+        <div class="la-scroll">
+          <table class="table align-middle mb-0 la-table" appResponsiveTable [rtPrimaryCol]="0">
+            <thead>
+              <tr>
+                <th>{{ 'attendance.matrix.employee' | translate }}</th>
+                <th>{{ 'attendance.myRequests.type' | translate }}</th>
+                <th>{{ 'attendance.myRequests.period' | translate }}</th>
+                <th>{{ 'attendance.myRequests.days' | translate }}</th>
+                <th>{{ 'attendance.myRequests.status' | translate }}</th>
+                <th>{{ 'attendance.approvals.decidedAt' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of historyRows(); track r.id) {
+                <tr class="la-row">
+                  <td>
+                    <span class="la-emp">
+                      <app-user-avatar [name]="r.employeeName" [imageUrl]="r.employeeImageUrl" [userId]="r.userId" size="xs" />
+                      <span class="min-w-0">
+                        <strong>{{ r.employeeName }}</strong>
+                        <small>{{ 'attendance.roles.' + r.employeeRole | translate }}</small>
+                      </span>
+                    </span>
+                  </td>
+                  <td><span class="lv-type type-{{ r.type }}"><i [class]="typeIcon[r.type]"></i>{{ 'attendance.leaveTypes.' + r.type | translate }}</span></td>
+                  <td class="text-nowrap small">
+                    {{ r.from | cairoDate: 'date' }}@if (r.to !== r.from) { – {{ r.to | cairoDate: 'date' }} }
+                  </td>
+                  <td class="fw-700">{{ r.days }}</td>
+                  <td>
+                    <span class="lv-status status-{{ r.status }}"><i [class]="statusIcon[r.status]"></i>{{ 'attendance.leaveStatus.' + r.status | translate }}</span>
+                    @if (r.rejectionReason) {
+                      <small class="d-block text-muted mt-1" appClampText="1">{{ r.rejectionReason }}</small>
+                    }
+                  </td>
+                  <td class="small text-muted">
+                    {{ r.decidedAt | cairoDate: 'date' }}
+                    @if (r.decidedBy) { <span class="d-block">{{ r.decidedBy.name }}</span> }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </section>
+</div>

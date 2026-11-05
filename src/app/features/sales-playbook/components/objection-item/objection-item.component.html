@@ -1,0 +1,44 @@
+@let o = objection();
+<article class="oi tone-{{ meta().tone }}" [class.is-open]="expanded()" [class.is-busy]="busy()">
+  <div class="oi-head">
+    <button type="button" class="oi-toggle" [attr.aria-expanded]="expanded()" [attr.aria-controls]="'oi-' + o.id"
+            (click)="expanded.set(!expanded())">
+      <span class="oi-ic" aria-hidden="true"><i [class]="meta().icon"></i></span>
+      <span class="oi-q">
+        <span class="oi-cat">{{ 'salesPlaybook.categories.' + o.category | translate }}</span>
+        <span class="oi-text" dir="auto">“{{ o.objection }}”</span>
+      </span>
+      <i class="fa-solid fa-chevron-down oi-chev" aria-hidden="true"></i>
+    </button>
+    <app-pb-favorite-button kind="objections" [itemId]="o.id" />
+  </div>
+
+  <div class="oi-body" [id]="'oi-' + o.id" role="region" [attr.inert]="expanded() ? null : ''">
+    <div class="oi-body__inner">
+      <div class="oi-answer">
+        <span class="oi-label"><i class="fa-solid fa-comment-dots"></i>{{ 'salesPlaybook.objections.bestAnswer' | translate }}</span>
+        <p class="oi-answer__text" dir="auto">{{ o.answer }}</p>
+      </div>
+
+      @if (o.tip) {
+        <p class="oi-tip" dir="auto"><i class="fa-solid fa-lightbulb"></i><span>{{ o.tip }}</span></p>
+      }
+
+      <div class="oi-actions">
+        <app-pb-copy-button [text]="o.answer" />
+        @if (canManage()) {
+          <span class="oi-admin">
+            <button type="button" class="oi-icon" [disabled]="busy()" (click)="edit.emit(o)"
+                    [attr.aria-label]="'salesPlaybook.actions.edit' | translate" [appTip]="'salesPlaybook.actions.edit' | translate">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button type="button" class="oi-icon is-danger" [disabled]="busy()" (click)="remove.emit(o)"
+                    [attr.aria-label]="'salesPlaybook.actions.delete' | translate" [appTip]="'salesPlaybook.actions.delete' | translate">
+              @if (busy()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="fa-solid fa-trash-can"></i> }
+            </button>
+          </span>
+        }
+      </div>
+    </div>
+  </div>
+</article>

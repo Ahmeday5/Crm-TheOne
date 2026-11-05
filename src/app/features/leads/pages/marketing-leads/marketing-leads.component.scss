@@ -2,17 +2,7 @@
 
 :host { display: block; }
 
-.marketing-customers-page .search-icon {
-  position: absolute;
-  inset-inline-end: 0.85rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-3);
-  pointer-events: none;
-}
 
-/* Reserve room for the icon on whichever side it sits (RTL + LTR). */
-.search-input { padding-inline-end: 2.5rem; }
 
 /* Address line under the identity — one clamped line, tap for the rest. */
 .crm-address {

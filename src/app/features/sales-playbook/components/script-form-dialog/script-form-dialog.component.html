@@ -1,0 +1,104 @@
+<app-modal
+  [open]="true"
+  [title]="(isEdit() ? 'salesPlaybook.form.editTitle.scripts' : 'salesPlaybook.form.createTitle.scripts') | translate"
+  icon="fa-solid fa-headset"
+  iconTone="primary"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="close()">
+
+  <form class="pf" [formGroup]="form" (ngSubmit)="submit()" novalidate id="pb-script-form">
+    <div class="pf-grid">
+      <div class="pf-field pf-span">
+        <label class="form-label fw-600" for="pf-s-title">{{ 'salesPlaybook.form.scriptTitle' | translate }}</label>
+        <input id="pf-s-title" class="form-control" formControlName="title" dir="auto"
+               [maxlength]="limits.title"
+               [class.is-invalid]="form.controls.title.invalid && form.controls.title.touched"
+               [placeholder]="'salesPlaybook.form.scriptTitlePh' | translate" />
+        <app-form-error [control]="form.controls.title" [label]="'salesPlaybook.form.scriptTitle' | translate" />
+      </div>
+
+      <div class="pf-field">
+        <label class="form-label fw-600" for="pf-s-service">{{ 'salesPlaybook.form.service' | translate }}</label>
+        <select id="pf-s-service" class="form-select" formControlName="serviceId">
+          <option [ngValue]="null">{{ 'salesPlaybook.scripts.generic' | translate }}</option>
+          @for (s of services(); track s.id) {
+            <option [ngValue]="s.id">{{ serviceLabel(s) }}</option>
+          }
+        </select>
+        <small class="pf-hint">
+          @if (servicesLoading()) {
+            <span class="spinner-border spinner-border-sm me-1"></span>{{ 'salesPlaybook.form.servicesLoading' | translate }}
+          } @else {
+            {{ 'salesPlaybook.form.serviceHint' | translate }}
+          }
+        </small>
+      </div>
+
+      <div class="pf-field">
+        <label class="form-label fw-600" for="pf-s-summary">
+          {{ 'salesPlaybook.form.summary' | translate }}
+          <span class="pf-optional">{{ 'salesPlaybook.form.optional' | translate }}</span>
+        </label>
+        <input id="pf-s-summary" class="form-control" formControlName="summary" dir="auto"
+               [maxlength]="limits.summary"
+               [placeholder]="'salesPlaybook.form.summaryPh' | translate" />
+        <app-form-error [control]="form.controls.summary" [label]="'salesPlaybook.form.summary' | translate" />
+      </div>
+
+      <section class="pf-section pf-span">
+        <h6 class="pf-section-title"><span class="pf-num">1</span>{{ 'salesPlaybook.call.stage.opening' | translate }}</h6>
+        <textarea class="form-control" rows="3" formControlName="opening" dir="auto"
+                  [maxlength]="limits.text"
+                  [class.is-invalid]="form.controls.opening.invalid && form.controls.opening.touched"
+                  [placeholder]="'salesPlaybook.form.openingPh' | translate"></textarea>
+        <app-form-error [control]="form.controls.opening" [label]="'salesPlaybook.call.stage.opening' | translate" />
+      </section>
+
+      <section class="pf-section pf-span">
+        <h6 class="pf-section-title"><span class="pf-num">2</span>{{ 'salesPlaybook.call.stage.steps' | translate }}</h6>
+        <app-pb-list-field formControlName="steps" bullet="number" [maxItems]="12"
+                           [invalid]="form.controls.steps.invalid && form.controls.steps.touched"
+                           [placeholder]="'salesPlaybook.form.stepPh' | translate"
+                           [addLabel]="'salesPlaybook.form.addStep' | translate" />
+        <app-form-error [control]="form.controls.steps" [label]="'salesPlaybook.call.stage.steps' | translate" [custom]="minLinesMsg" />
+      </section>
+
+      <section class="pf-section pf-span">
+        <h6 class="pf-section-title"><span class="pf-num">3</span>{{ 'salesPlaybook.call.stage.questions' | translate }}</h6>
+        <app-pb-list-field formControlName="questions" bullet="check" [maxItems]="15"
+                           [placeholder]="'salesPlaybook.form.questionPh' | translate"
+                           [addLabel]="'salesPlaybook.form.addQuestion' | translate" />
+      </section>
+
+      <section class="pf-section pf-span">
+        <h6 class="pf-section-title"><span class="pf-num">4</span>{{ 'salesPlaybook.call.stage.closing' | translate }}</h6>
+        <textarea class="form-control" rows="3" formControlName="closing" dir="auto"
+                  [maxlength]="limits.text"
+                  [class.is-invalid]="form.controls.closing.invalid && form.controls.closing.touched"
+                  [placeholder]="'salesPlaybook.form.closingPh' | translate"></textarea>
+        <app-form-error [control]="form.controls.closing" [label]="'salesPlaybook.call.stage.closing' | translate" />
+      </section>
+    </div>
+
+    @if (serverError()) {
+      <div class="alert alert-danger d-flex gap-2 align-items-start mt-3 mb-0" role="alert">
+        <i class="fa-solid fa-circle-exclamation mt-1"></i><span>{{ serverError() }}</span>
+      </div>
+    }
+  </form>
+
+  <div modal-footer class="btn-row justify-content-end w-100">
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="close()">
+      {{ 'salesPlaybook.form.cancel' | translate }}
+    </button>
+    <button type="submit" form="pb-script-form" class="btn btn-primary" [disabled]="submitting()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>{{ 'salesPlaybook.form.saving' | translate }}
+      } @else {
+        <i class="fa-solid fa-floppy-disk me-1"></i>{{ 'salesPlaybook.form.save' | translate }}
+      }
+    </button>
+  </div>
+</app-modal>

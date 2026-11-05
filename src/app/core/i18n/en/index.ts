@@ -23,6 +23,14 @@ import notifications from './notifications.en';
 import goals from './goals.en';
 import projectProgress from './projectProgress.en';
 import account from './account.en';
+import pipeline from './pipeline.en';
+import announcements from './announcements.en';
+import teamChat from './teamChat.en';
+import commandCenter from './commandCenter.en';
+import smartAnalytics from './smartAnalytics.en';
+import bottomNav from './bottomNav.en';
+import salesPlaybook from './salesPlaybook.en';
+import attendance from './attendance.en';
 
 const en: Translations = {
   ...common,
@@ -49,6 +57,14 @@ const en: Translations = {
   ...goals,
   ...projectProgress,
   ...account,
+  ...pipeline,
+  ...announcements,
+  ...teamChat,
+  ...commandCenter,
+  ...smartAnalytics,
+  ...bottomNav,
+  ...salesPlaybook,
+  ...attendance,
 };
 
 export default en;

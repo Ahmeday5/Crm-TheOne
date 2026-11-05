@@ -1,0 +1,86 @@
+<section class="dl card">
+  <header class="dl-head">
+    <h5 class="dl-title"><i class="fa-solid fa-list-check"></i>{{ 'attendance.log.title' | translate }}</h5>
+    <label class="dl-switch">
+      <input type="checkbox" class="form-check-input" [checked]="workdaysOnly()" (change)="workdaysOnly.set(!workdaysOnly())" />
+      {{ 'attendance.log.workdaysOnly' | translate }}
+    </label>
+  </header>
+
+  @if (!ready()) {
+    <div class="dl-skel-wrap">
+      @for (i of [1, 2, 3, 4, 5]; track i) { <div class="dl-skel"></div> }
+    </div>
+  } @else if (rows().length === 0) {
+    <app-empty-state icon="fa-regular fa-calendar-xmark" [compact]="true" [message]="'attendance.log.empty' | translate" />
+  } @else {
+    <div class="dl-scroll">
+      <table class="table align-middle mb-0 dl-table" appResponsiveTable [rtPrimaryCol]="0">
+        <thead>
+          <tr>
+            <th>{{ 'attendance.log.day' | translate }}</th>
+            <th>{{ 'attendance.log.status' | translate }}</th>
+            <th>{{ 'attendance.log.checkIn' | translate }}</th>
+            <th>{{ 'attendance.log.checkOut' | translate }}</th>
+            <th>{{ 'attendance.log.worked' | translate }}</th>
+            <th>{{ 'attendance.log.late' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows(); track r.day.date; let i = $index) {
+            <tr class="dl-row st-{{ r.day.status }}"
+                [attr.data-day]="r.day.date"
+                [class.is-selected]="selected() === r.day.date"
+                [class.is-today]="r.day.isToday"
+                [style.--i]="i"
+                (click)="select.emit(r.day.date)">
+              <td>
+                <div class="dl-date">
+                  <span class="dl-dnum">{{ r.day.dayOfMonth }}</span>
+                  <span class="min-w-0">
+                    <strong class="d-block">{{ r.weekday }}</strong>
+                    <small class="text-muted">{{ r.label }}</small>
+                  </span>
+                </div>
+              </td>
+              <td>
+                <span class="dl-chip">
+                  <i [class]="icons[r.day.status]"></i>
+                  {{ 'attendance.status.' + r.day.status | translate }}
+                  @if (r.day.leave?.halfDay) { · ½ }
+                </span>
+                @if (r.day.holidayName) { <small class="d-block text-muted mt-1">{{ holidayName(r.day) }}</small> }
+                @if (r.day.leave) { <small class="d-block text-muted mt-1">{{ 'attendance.leaveTypes.' + r.day.leave.type | translate }}</small> }
+                @if (r.day.isExtra) { <small class="d-block dl-extra mt-1">{{ 'attendance.log.extra' | translate }}</small> }
+              </td>
+              <td class="dl-num">{{ r.day.checkIn | cairoDate: 'time' }}</td>
+              <td class="dl-num">
+                @if (r.day.isOpen) {
+                  <span class="dl-live"><span class="dl-dot"></span>{{ 'attendance.clock.working' | translate }}</span>
+                } @else {
+                  {{ r.day.checkOut | cairoDate: 'time' }}
+                }
+              </td>
+              <td class="dl-num">
+                {{ r.day.workedMinutes | workDuration: '—' }}
+                @if (r.day.overtimeMinutes > 0) {
+                  <small class="dl-ot">+{{ r.day.overtimeMinutes | workDuration }}</small>
+                }
+              </td>
+              <td class="dl-num" [class.text-warning]="r.day.lateMinutes > 0">
+                {{ r.day.lateMinutes > 0 ? (r.day.lateMinutes | workDuration) : '—' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="dl-totals">
+      <span><i class="fa-solid fa-user-check"></i>{{ 'attendance.log.totalPresent' | translate: { n: summary().present } }}</span>
+      <span><i class="fa-solid fa-clock"></i>{{ 'attendance.log.totalLate' | translate: { n: summary().late } }}</span>
+      <span><i class="fa-solid fa-umbrella-beach"></i>{{ 'attendance.log.totalLeave' | translate: { n: summary().leaveDays } }}</span>
+      <span><i class="fa-solid fa-hourglass-half"></i>{{ 'attendance.log.totalHours' | translate: { t: (summary().totalMinutes | workDuration) } }}</span>
+    </footer>
+  }
+</section>

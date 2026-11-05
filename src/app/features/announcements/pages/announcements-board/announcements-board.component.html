@@ -1,0 +1,134 @@
+<section class="ab-page">
+  <!-- Header -->
+  <header class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3 min-w-0">
+      <span class="icon-tile xl tone-primary flex-shrink-0 ab-hero-ic"><i class="fa-solid fa-bullhorn"></i></span>
+      <div class="min-w-0">
+        <h3 class="fw-700 mb-1">{{ 'announcements.title' | translate }}</h3>
+        <p class="text-muted mb-0">
+          {{ (isAdmin() ? 'announcements.subtitleAdmin' : 'announcements.subtitle') | translate }}
+        </p>
+      </div>
+    </div>
+    @if (isAdmin()) {
+      <button type="button" class="btn btn-primary page-cta" (click)="openCreate()">
+        <i class="fa-solid fa-plus"></i>{{ 'announcements.new' | translate }}
+      </button>
+    }
+  </header>
+
+  <!-- KPIs -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <app-stat-card [label]="'announcements.stats.active' | translate" [value]="counts().active"
+                     icon="fa-solid fa-tower-broadcast" tone="success"></app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card [label]="'announcements.stats.unread' | translate" [value]="counts().unread"
+                     icon="fa-solid fa-envelope" tone="danger"></app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card [label]="'announcements.stats.pinned' | translate" [value]="counts().pinned"
+                     icon="fa-solid fa-thumbtack" tone="warning"></app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      @if (isAdmin()) {
+        <app-stat-card [label]="'announcements.stats.readRate' | translate" [value]="counts().readRate + '%'"
+                       [sub]="'announcements.stats.readRateHint' | translate"
+                       icon="fa-solid fa-eye" tone="info"></app-stat-card>
+      } @else {
+        <app-stat-card [label]="'announcements.stats.scheduled' | translate" [value]="counts().scheduled"
+                       icon="fa-regular fa-calendar" tone="info"></app-stat-card>
+      }
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="card mb-4">
+    <div class="card-body ab-toolbar">
+      <div class="ab-tabs" role="tablist">
+        @for (p of phases; track p) {
+          <button type="button" role="tab" class="ab-tab"
+                  [class.is-on]="phase() === p"
+                  [attr.aria-selected]="phase() === p"
+                  (click)="phase.set(p)">
+            {{ 'announcements.filters.' + p | translate }}
+            <span class="ab-tab-count">{{ counts()[p] }}</span>
+          </button>
+        }
+      </div>
+
+      <label class="ab-check">
+        <input type="checkbox" class="form-check-input" [ngModel]="unreadOnly()" (ngModelChange)="unreadOnly.set($event)" />
+        {{ 'announcements.filters.unreadOnly' | translate }}
+      </label>
+
+      <div class="ab-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" class="form-control" [placeholder]="'announcements.filters.search' | translate"
+               [ngModel]="search()" (ngModelChange)="search.set($event)" />
+      </div>
+    </div>
+  </div>
+
+  @if (error() && !loaded()) {
+    <app-load-error [message]="'announcements.messages.loadFailed' | translate" [loading]="loading()" (retry)="reload()" />
+  } @else if (!loaded()) {
+    <div class="row g-3">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="col-12 col-xl-6"><div class="ab-skeleton"></div></div>
+      }
+    </div>
+  } @else if (pinned().length === 0 && others().length === 0) {
+    <div class="card">
+      <app-empty-state
+        icon="fa-solid fa-bullhorn"
+        [message]="(hasFilters() ? 'announcements.emptyFiltered' : (isAdmin() ? 'announcements.emptyAdmin' : 'announcements.empty')) | translate"
+        [loading]="loading()"
+        (retry)="reload()" />
+      @if (hasFilters()) {
+        <div class="text-center pb-4">
+          <button type="button" class="btn btn-light btn-sm" (click)="clearFilters()">
+            <i class="fa-solid fa-filter-circle-xmark me-1"></i>{{ 'announcements.filters.clear' | translate }}
+          </button>
+        </div>
+      }
+    </div>
+  } @else {
+    @if (pinned().length) {
+      <h5 class="ab-section-title"><i class="fa-solid fa-thumbtack"></i>{{ 'announcements.pinnedSection' | translate }}</h5>
+      <div class="row g-3 mb-4">
+        @for (a of pinned(); track a.id; let i = $index) {
+          <div class="col-12 col-xl-6 ab-cell" [style.--i]="i">
+            <app-announcement-card
+              [announcement]="a" [today]="today()" [canManage]="isAdmin()"
+              [focused]="focusId() === a.id" [busy]="busyId() === a.id"
+              (markRead)="markRead($event)" (edit)="openEdit($event)"
+              (remove)="remove($event)" (togglePin)="togglePin($event)" />
+          </div>
+        }
+      </div>
+    }
+
+    @if (others().length) {
+      @if (pinned().length) {
+        <h5 class="ab-section-title"><i class="fa-solid fa-layer-group"></i>{{ 'announcements.othersSection' | translate }}</h5>
+      }
+      <div class="row g-3">
+        @for (a of others(); track a.id; let i = $index) {
+          <div class="col-12 col-xl-6 ab-cell" [style.--i]="i">
+            <app-announcement-card
+              [announcement]="a" [today]="today()" [canManage]="isAdmin()"
+              [focused]="focusId() === a.id" [busy]="busyId() === a.id"
+              (markRead)="markRead($event)" (edit)="openEdit($event)"
+              (remove)="remove($event)" (togglePin)="togglePin($event)" />
+          </div>
+        }
+      </div>
+    }
+  }
+</section>
+
+@if (editing() !== undefined) {
+  <app-announcement-form-dialog [announcement]="editing() ?? null" (saved)="closeForm()" (cancel)="closeForm()" />
+}

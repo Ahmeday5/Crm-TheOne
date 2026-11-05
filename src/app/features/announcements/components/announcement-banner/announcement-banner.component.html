@@ -1,0 +1,98 @@
+@if (current(); as a) {
+  <section class="ab tone-{{ a.tone }}"
+           [class.is-min]="minimized()"
+           role="region"
+           [attr.aria-label]="'announcements.banner.region' | translate"
+           (mouseenter)="paused.set(true)"
+           (mouseleave)="paused.set(false)"
+           (focusin)="paused.set(true)"
+           (focusout)="paused.set(false)">
+
+    @if (minimized()) {
+      <!-- Slim bar: still visible, never closable -->
+      <button type="button" class="ab-min" (click)="expand()" [attr.aria-expanded]="false">
+        <span class="ab-min-ic">
+          <i class="fa-solid fa-bullhorn"></i>
+          @if (unread()) { <span class="ab-dot" aria-hidden="true"></span> }
+        </span>
+        <span class="ab-min-text">
+          @if (items().length > 1) {
+            <strong>{{ 'announcements.banner.activeCount' | translate: { count: items().length } }}</strong>
+            <span class="ab-sep" aria-hidden="true">·</span>
+          }
+          <span class="ab-min-title">{{ a.title }}</span>
+        </span>
+        <span class="ab-min-cta">
+          {{ 'announcements.banner.expand' | translate }}
+          <i class="fa-solid fa-chevron-down"></i>
+        </span>
+      </button>
+    } @else {
+      <div class="ab-body">
+        <span class="ab-ic" aria-hidden="true"><i [class]="icon(a)"></i></span>
+
+        @for (item of [a]; track item.id) {
+          <div class="ab-content" aria-live="polite">
+            <div class="ab-title-row">
+              @if (a.isPinned) {
+                <i class="fa-solid fa-thumbtack ab-pin" [attr.aria-label]="'announcements.pinned' | translate"></i>
+              }
+              <strong class="ab-title">{{ a.title }}</strong>
+              @if (!a.isRead) {
+                <span class="ab-new">{{ 'announcements.new' | translate }}</span>
+              }
+            </div>
+            <p class="ab-text">{{ a.body }}</p>
+          </div>
+        }
+
+        <div class="ab-meta">
+          <span class="ab-chip">
+            <i class="fa-regular fa-clock"></i>
+            @if (daysLeft(a) <= 1) {
+              {{ 'announcements.banner.lastDay' | translate }}
+            } @else {
+              {{ 'announcements.banner.daysLeft' | translate: { days: daysLeft(a) } }}
+            }
+          </span>
+
+          @if (items().length > 1) {
+            <div class="ab-pager">
+              <button type="button" class="ab-btn" (click)="prev()" [attr.aria-label]="'announcements.banner.prev' | translate">
+                <i class="fa-solid fa-chevron-right ab-flip"></i>
+              </button>
+              <span class="ab-pos">{{ position() }}/{{ items().length }}</span>
+              <button type="button" class="ab-btn" (click)="next()" [attr.aria-label]="'announcements.banner.next' | translate">
+                <i class="fa-solid fa-chevron-left ab-flip"></i>
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="ab-actions">
+          @if (!a.isRead) {
+            <button type="button" class="ab-action" (click)="markRead(a)">
+              <i class="fa-solid fa-check"></i>
+              <span>{{ 'announcements.markRead' | translate }}</span>
+            </button>
+          }
+          <button type="button" class="ab-action is-ghost" (click)="openDetails(a)">
+            <span>{{ 'announcements.banner.details' | translate }}</span>
+          </button>
+          <button type="button" class="ab-btn" (click)="minimize()"
+                  [attr.aria-label]="'announcements.banner.minimize' | translate"
+                  [title]="'announcements.banner.minimize' | translate">
+            <i class="fa-solid fa-chevron-up"></i>
+          </button>
+        </div>
+      </div>
+
+      @if (rotating()) {
+        <!-- Restarts per slide thanks to the keyed @for -->
+        @for (item of [a]; track item.id) {
+          <span class="ab-progress" aria-hidden="true"></span>
+        }
+      }
+    }
+  </section>
+}

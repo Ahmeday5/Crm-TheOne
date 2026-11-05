@@ -1,0 +1,39 @@
+<app-pb-panel-toolbar
+  [(search)]="search"
+  [(favoritesOnly)]="favoritesOnly"
+  [placeholder]="'salesPlaybook.replies.search' | translate"
+  [canAdd]="isAdmin()"
+  [addLabel]="'salesPlaybook.replies.add' | translate"
+  (add)="editing.set(null)">
+  <app-pb-filter-chips [chips]="chips()" [(value)]="category" [label]="'salesPlaybook.form.category' | translate" />
+</app-pb-panel-toolbar>
+
+<p class="pp-hint">
+  <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>{{ 'salesPlaybook.replies.whatsappHint' | translate }}
+</p>
+
+@if (filtered().length) {
+  <div class="pp-grid">
+    @for (r of filtered(); track r.id; let i = $index) {
+      <div class="pp-cell" [style.--i]="i">
+        <app-pb-reply-card [reply]="r" [canManage]="isAdmin()" [busy]="busyId() === r.id"
+                           (edit)="editing.set($event)" (remove)="remove($event)" />
+      </div>
+    }
+  </div>
+} @else {
+  <div class="pp-empty">
+    <app-empty-state icon="fa-solid fa-bolt" tone="success" [compact]="true" [hasActions]="hasAny()"
+                     [title]="(hasAny() ? 'salesPlaybook.emptyFilteredTitle' : 'salesPlaybook.replies.emptyTitle') | translate"
+                     [message]="(hasAny() ? 'salesPlaybook.emptyFiltered' : (isAdmin() ? 'salesPlaybook.replies.emptyAdmin' : 'salesPlaybook.replies.empty')) | translate">
+      <button type="button" class="btn btn-light btn-sm" (click)="clearFilters()">
+        <i class="fa-solid fa-filter-circle-xmark me-1"></i>{{ 'salesPlaybook.actions.clearFilters' | translate }}
+      </button>
+    </app-empty-state>
+  </div>
+}
+
+@if (editing() !== undefined) {
+  <app-pb-reply-form-dialog [reply]="editing() ?? null" [defaultCategory]="defaultCategory()"
+                            (closed)="editing.set(undefined)" />
+}

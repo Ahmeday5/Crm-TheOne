@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { DialogService } from '../../../../core/services/dialog.service';
@@ -22,24 +21,45 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
-import {
-  ContractListItem,
-  ContractStatistics,
-  ContractStatusCode,
-} from '../../../../shared/models';
+import { ContractListItem } from '../../../../shared/models';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ContractFormDialogComponent } from '../../components/contract-form-dialog/contract-form-dialog.component';
 import { ContractsService } from '../../services/contracts.service';
+import {
+  ContractLifecycle,
+  contractLifecycle,
+  countContracts,
+  daysUntilEnd,
+} from '../../utils/contract-lifecycle.util';
 
 type ContractTab = 'all' | 'active' | 'expiring' | 'expired' | 'cancelled';
 
 const DEFAULT_PAGE_SIZE = 10;
-/** A contract counts as "expiring soon" when it's active and ends within… */
-const EXPIRING_WINDOW_DAYS = 90;
 
+const BADGES: Record<ContractLifecycle, string> = {
+  active: 'bg-success-subtle text-success',
+  expiring: 'bg-warning-subtle text-warning',
+  expired: 'bg-danger-subtle text-danger',
+  cancelled: 'bg-secondary-subtle text-secondary',
+};
+
+const LABELS: Record<ContractLifecycle, string> = {
+  active: 'active',
+  expiring: 'expiringSoon',
+  expired: 'expired',
+  cancelled: 'cancelled',
+};
+
+/**
+ * Contracts management.
+ *
+ * The API has no status filter, so the whole portfolio is loaded once and
+ * KPI tiles, tab badges, the table and pagination are all derived from that
+ * single list through `contractLifecycle()` — the numbers can't disagree.
+ */
 @Component({
   selector: 'app-contracts-management',
   standalone: true,
@@ -69,16 +89,13 @@ export class ContractsManagementComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly language = inject(LanguageService);
 
+  /** Every contract — tabs, counts, KPIs and pagination all derive from it. */
   readonly rows = signal<ContractListItem[]>([]);
-  readonly totalCount = signal(0);
   readonly pageIndex = signal(1);
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   readonly loading = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly busyId = signal<number | null>(null);
-
-  /** Server-side KPI summary (`GET /Contracts/ContractStatistics`). */
-  readonly statistics = signal<ContractStatistics | null>(null);
 
   readonly search = signal('');
   readonly activeTab = signal<ContractTab>('all');
@@ -95,100 +112,82 @@ export class ContractsManagementComponent implements OnInit {
     { key: 'cancelled', icon: 'fa-solid fa-ban' },
   ];
 
-  /** Rows after the search filter (used by both tab counts and the table). */
+  /** Rows after the search filter (feeds the tab badges and the table). */
   private readonly searched = computed(() => {
     const term = this.search().trim().toLowerCase();
     if (!term) return this.rows();
     return this.rows().filter((r) =>
-      [r.customerName, r.companyName, r.phone]
+      [r.customerName, r.companyName, r.phone, r.title, `cnt-${r.id}`]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(term)),
     );
   });
 
-  readonly visibleRows = computed(() =>
+  /** Search + active tab, across ALL contracts. */
+  readonly filteredRows = computed(() =>
     this.searched().filter((r) => this.matchesTab(r, this.activeTab())),
   );
 
-  readonly tabCounts = computed(() => {
-    const list = this.searched();
-    return {
-      all: list.length,
-      active: list.filter((r) => this.matchesTab(r, 'active')).length,
-      expiring: list.filter((r) => this.matchesTab(r, 'expiring')).length,
-      expired: list.filter((r) => this.matchesTab(r, 'expired')).length,
-      cancelled: list.filter((r) => this.matchesTab(r, 'cancelled')).length,
-    };
+  /** The current page of `filteredRows`. */
+  readonly visibleRows = computed(() => {
+    const start = (this.pageIndex() - 1) * this.pageSize();
+    return this.filteredRows().slice(start, start + this.pageSize());
   });
 
-  /**
-   * KPI tiles. Total / active / expiring / expired come from the server-side
-   * statistics endpoint; "cancelled" isn't in that payload so it's derived
-   * from the loaded page as a best-effort indicator.
-   */
+  /** Tab badges — same data as the table, so a badge always matches its tab. */
+  readonly tabCounts = computed(() => countContracts(this.searched()));
+
+  /** KPI tiles — the whole portfolio (unaffected by search). */
   readonly stats = computed(() => {
-    const s = this.statistics();
-    const cancelled = this.rows().filter(
-      (r) => r.status === ContractStatusCode.Cancelled,
-    ).length;
-    return {
-      total: s?.totalContracts ?? this.totalCount(),
-      active: s?.activeContracts ?? 0,
-      expiring: s?.expiringSoonContracts ?? 0,
-      expired: s?.expiredContracts ?? 0,
-      cancelled,
-    };
+    const c = countContracts(this.rows());
+    return { total: c.all, active: c.active, expiring: c.expiring, expired: c.expired, cancelled: c.cancelled };
   });
 
   ngOnInit(): void {
     this.reload();
-    this.loadStatistics();
   }
 
   reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
-    if (force) this.loadStatistics();
-    this.service
-      .list({ PageIndex: this.pageIndex(), PageSize: this.pageSize() }, force)
-      .subscribe({
-        next: (page) => {
-          this.rows.set(page.data ?? []);
-          this.totalCount.set(page.count ?? 0);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.loading.set(false);
-          this.loadError.set(this.t('sales.contractsMgmt.loadFailed'));
-        },
-      });
-  }
-
-  private loadStatistics(): void {
-    this.service.statistics().subscribe({
-      next: (s) => this.statistics.set(s),
+    this.service.listAll(force).subscribe({
+      next: (rows) => {
+        this.rows.set(rows);
+        this.clampPage();
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.loadError.set(this.t('sales.contractsMgmt.loadFailed'));
+      },
     });
   }
 
-  // ─────────── filters ───────────
+  // ─────────── filters / paging ───────────
 
   setTab(tab: ContractTab): void {
     this.activeTab.set(tab);
+    this.pageIndex.set(1);
   }
 
   onSearch(value: string): void {
     this.search.set(value);
+    this.pageIndex.set(1);
   }
 
   onPageChange(page: number): void {
     this.pageIndex.set(page);
-    this.reload();
   }
 
   onPageSizeChange(size: number): void {
     this.pageSize.set(size);
     this.pageIndex.set(1);
-    this.reload();
+  }
+
+  /** Keep the page in range after a delete. */
+  private clampPage(): void {
+    const pages = Math.max(1, Math.ceil(this.filteredRows().length / this.pageSize()));
+    if (this.pageIndex() > pages) this.pageIndex.set(pages);
   }
 
   // ─────────── create / edit ───────────
@@ -211,8 +210,7 @@ export class ContractsManagementComponent implements OnInit {
 
   onSaved(): void {
     this.closeForm();
-    this.reload();
-    this.loadStatistics();
+    this.reload(true);
   }
 
   /** Opens the printable One System sale-contract document (its own route). */
@@ -236,11 +234,7 @@ export class ContractsManagementComponent implements OnInit {
       next: () => {
         this.busyId.set(null);
         this.toast.success(this.t('sales.contractsMgmt.messages.deleted'));
-        if (this.rows().length === 1 && this.pageIndex() > 1) {
-          this.pageIndex.update((p) => p - 1);
-        }
-        this.reload();
-        this.loadStatistics();
+        this.reload(true);
       },
       error: (err: ApiError) => {
         this.busyId.set(null);
@@ -251,60 +245,30 @@ export class ContractsManagementComponent implements OnInit {
 
   // ─────────── row helpers ───────────
 
-  daysRemaining(row: ContractListItem): number {
-    const end = new Date(row.endDate);
-    if (Number.isNaN(end.getTime())) return 0;
-    const ms = end.getTime() - Date.now();
-    return Math.ceil(ms / 86_400_000);
+  /** Days left; null for open-ended contracts. */
+  daysRemaining(row: ContractListItem): number | null {
+    return daysUntilEnd(row.endDate);
   }
 
   isExpiringSoon(row: ContractListItem): boolean {
-    if (row.status !== ContractStatusCode.Active) return false;
-    const days = this.daysRemaining(row);
-    return days > 0 && days <= EXPIRING_WINDOW_DAYS;
+    return contractLifecycle(row) === 'expiring';
   }
 
   private matchesTab(row: ContractListItem, tab: ContractTab): boolean {
-    switch (tab) {
-      case 'all':
-        return true;
-      case 'active':
-        return row.status === ContractStatusCode.Active;
-      case 'expiring':
-        return this.isExpiringSoon(row);
-      case 'expired':
-        return (
-          row.status === ContractStatusCode.Expired || this.daysRemaining(row) < 0
-        );
-      case 'cancelled':
-        return row.status === ContractStatusCode.Cancelled;
-      default:
-        return true;
-    }
+    if (tab === 'all') return true;
+    const state = contractLifecycle(row);
+    // "Active" includes the ones expiring soon — they are still active.
+    if (tab === 'active') return state === 'active' || state === 'expiring';
+    return state === tab;
   }
 
+  /** Badge reflects the effective state (an "Active" contract past its end date shows as expired). */
   statusBadgeClass(row: ContractListItem): string {
-    switch (row.status) {
-      case ContractStatusCode.Active:
-        return 'bg-success-subtle text-success';
-      case ContractStatusCode.Expired:
-        return 'bg-danger-subtle text-danger';
-      case ContractStatusCode.Cancelled:
-        return 'bg-secondary-subtle text-secondary';
-      default:
-        return 'bg-secondary-subtle text-secondary';
-    }
+    return BADGES[contractLifecycle(row)];
   }
 
   statusKey(row: ContractListItem): string {
-    const code = row.status;
-    const name =
-      code === ContractStatusCode.Active
-        ? 'active'
-        : code === ContractStatusCode.Expired
-          ? 'expired'
-          : 'cancelled';
-    return `sales.contractsMgmt.status.${name}`;
+    return `sales.contractsMgmt.status.${LABELS[contractLifecycle(row)]}`;
   }
 
   formatMoney(value: number | null | undefined): string {
@@ -332,6 +296,7 @@ export class ContractsManagementComponent implements OnInit {
   /** Days-left label mirroring the table cell (expired ⇒ localized word). */
   daysLeftLabel(r: ContractListItem): string {
     const days = this.daysRemaining(r);
+    if (days === null) return '—';
     if (days < 0) return this.t('sales.contractsMgmt.expired');
     return `${days} ${this.t('sales.contractsMgmt.day')}`;
   }
@@ -339,48 +304,21 @@ export class ContractsManagementComponent implements OnInit {
   get exportColumns(): ExportColumn<ContractListItem>[] {
     return [
       { header: this.t('sales.contractsMgmt.table.number'), value: (r) => r.id },
-      {
-        header: this.t('sales.contractsMgmt.table.customer'),
-        value: (r) => r.customerName,
-      },
+      { header: this.t('sales.contractsMgmt.table.customer'), value: (r) => r.customerName },
       { header: this.t('customers.details.company'), value: (r) => r.companyName },
       { header: this.t('customers.table.phone'), value: (r) => r.phone },
       { header: this.t('sales.contractsMgmt.form.address'), value: (r) => r.address },
-      {
-        header: this.t('sales.contractsMgmt.table.contractTitle'),
-        value: (r) => r.title,
-      },
-      {
-        header: this.t('sales.contractsMgmt.table.status'),
-        value: (r) => this.t(this.statusKey(r)),
-      },
-      {
-        header: this.t('sales.contractsMgmt.table.startDate'),
-        value: (r) => this.formatDate(r.startDate),
-      },
-      {
-        header: this.t('sales.contractsMgmt.table.endDate'),
-        value: (r) => this.formatDate(r.endDate),
-      },
-      {
-        header: this.t('sales.contractsMgmt.table.createdAt'),
-        value: (r) => this.formatDate(r.createdAt),
-      },
+      { header: this.t('sales.contractsMgmt.table.contractTitle'), value: (r) => r.title },
+      { header: this.t('sales.contractsMgmt.table.status'), value: (r) => this.t(this.statusKey(r)) },
+      { header: this.t('sales.contractsMgmt.table.startDate'), value: (r) => this.formatDate(r.startDate) },
+      { header: this.t('sales.contractsMgmt.table.endDate'), value: (r) => this.formatDate(r.endDate) },
+      { header: this.t('sales.contractsMgmt.table.createdAt'), value: (r) => this.formatDate(r.createdAt) },
       {
         header: this.t('sales.contractsMgmt.table.createdByName'),
-        value: (r) =>
-          r.createdByName || this.t('sales.contractsMgmt.table.noCreator'),
+        value: (r) => r.createdByName || this.t('sales.contractsMgmt.table.noCreator'),
       },
-      {
-        header: this.t('sales.contractsMgmt.table.daysLeft'),
-        value: (r) => this.daysLeftLabel(r),
-        align: 'center',
-      },
-      {
-        header: this.t('sales.contractsMgmt.table.value'),
-        value: (r) => this.formatMoney(r.price),
-        align: 'end',
-      },
+      { header: this.t('sales.contractsMgmt.table.daysLeft'), value: (r) => this.daysLeftLabel(r), align: 'center' },
+      { header: this.t('sales.contractsMgmt.table.value'), value: (r) => this.formatMoney(r.price), align: 'end' },
     ];
   }
 
@@ -389,26 +327,8 @@ export class ContractsManagementComponent implements OnInit {
     return this.visibleRows();
   }
 
-  /** All pages, then re-apply the active search + tab filter. */
-  readonly fetchAllRows = async (): Promise<ContractListItem[]> => {
-    const page = await firstValueFrom(
-      this.service.list({
-        PageIndex: 1,
-        PageSize: this.totalCount() || this.pageSize(),
-      }),
-    );
-    const all = page.data ?? [];
-    const term = this.search().trim().toLowerCase();
-    const tab = this.activeTab();
-    return all.filter(
-      (r) =>
-        (!term ||
-          [r.customerName, r.companyName, r.phone]
-            .filter(Boolean)
-            .some((v) => String(v).toLowerCase().includes(term))) &&
-        this.matchesTab(r, tab),
-    );
-  };
+  /** Every matching contract (all pages) — already loaded, no extra request. */
+  readonly fetchAllRows = async (): Promise<ContractListItem[]> => this.filteredRows();
 
   private t(key: string): string {
     return resolveKey(TRANSLATIONS[this.language.lang()], key);

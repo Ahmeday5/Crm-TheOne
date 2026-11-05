@@ -41,7 +41,7 @@
       [columns]="exportColumns"
       [rows]="visibleExportRows"
       [fetchAll]="fetchAllRows"
-      [disabled]="loading() || visibleRows().length === 0"
+      [disabled]="loading() || filteredRows().length === 0"
       [showRefresh]="true"
       (refresh)="reload(true)">
     </app-table-tools>
@@ -133,15 +133,9 @@
               <span class="d-block" appClampText="1">{{ row.title }}</span>
             </td>
             <td>
-              @if (isExpiringSoon(row)) {
-              <span class="badge bg-warning-subtle text-warning">
-                {{ 'sales.contractsMgmt.status.expiringSoon' | translate }}
-              </span>
-              } @else {
               <span class="badge {{ statusBadgeClass(row) }}">
                 {{ statusKey(row) | translate }}
               </span>
-              }
             </td>
             <td class="text-nowrap">
               <i class="fa-regular fa-calendar text-muted me-1"></i>{{ formatDate(row.startDate) }}
@@ -156,13 +150,16 @@
               {{ row.createdByName || ('sales.contractsMgmt.table.noCreator' | translate) }}
             </td>
             <td class="text-nowrap">
-              @if (daysRemaining(row) < 0) { <span class="fw-500 text-danger">{{ 'sales.contractsMgmt.expired' |
-                translate }}</span>
-                } @else {
+              @let days = daysRemaining(row);
+              @if (days === null) {
+                <span class="text-muted">—</span>
+              } @else if (days < 0) {
+                <span class="fw-500 text-danger">{{ 'sales.contractsMgmt.expired' | translate }}</span>
+              } @else {
                 <span class="fw-500" [class.text-warning]="isExpiringSoon(row)">
-                  {{ daysRemaining(row) }} {{ 'sales.contractsMgmt.day' | translate }}
+                  {{ days }} {{ 'sales.contractsMgmt.day' | translate }}
                 </span>
-                }
+              }
             </td>
             <td class="fw-bold text-success text-nowrap">{{ row.price | money }}</td>
             <td class="text-end pe-3">
@@ -203,7 +200,7 @@
     </div>
 
     <div class="mt-3">
-      <app-pagination [pageIndex]="pageIndex()" [pageSize]="pageSize()" [count]="totalCount()" [disabled]="loading()"
+      <app-pagination [pageIndex]="pageIndex()" [pageSize]="pageSize()" [count]="filteredRows().length" [disabled]="loading()"
         (pageChange)="onPageChange($event)" (pageSizeChange)="onPageSizeChange($event)">
       </app-pagination>
     </div>

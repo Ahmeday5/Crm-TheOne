@@ -1,0 +1,80 @@
+@for (key of [dataKey()]; track key) {
+  <div class="hm" [style.--cols]="hours().length" (mouseleave)="hovered.set(null)"
+       [class.has-cross]="!!hovered()" role="group" [attr.aria-label]="'smartAnalytics.timing.heatmapTitle' | translate">
+    <!-- Hour axis -->
+    <span class="hm-corner" aria-hidden="true"><i class="fa-regular fa-clock"></i></span>
+    @for (h of hours(); track h; let c = $index) {
+      <span class="hm-hour" [class.is-hot]="hovered()?.hour === h" [class.is-odd]="c % 2 === 1" aria-hidden="true">
+        {{ h | hourLabel }}
+      </span>
+    }
+
+    <!-- Rows -->
+    @for (row of rows(); track row[0].day; let r = $index) {
+      <span class="hm-day" [class.is-hot]="hovered()?.day === row[0].day" aria-hidden="true">
+        <span class="hm-day-long">{{ 'smartAnalytics.days.' + row[0].day | translate }}</span>
+        <span class="hm-day-short">{{ 'smartAnalytics.daysShort.' + row[0].day | translate }}</span>
+      </span>
+
+      @for (cell of row; track cell.hour; let c = $index) {
+        @let dayName = 'smartAnalytics.days.' + cell.day | translate;
+        @let hourName = cell.hour | hourLabel: true;
+        @let label = cell.level === -1
+          ? ('smartAnalytics.timing.cellLow' | translate: { day: dayName, hour: hourName, calls: cell.calls })
+          : ('smartAnalytics.timing.cell' | translate: { day: dayName, hour: hourName, rate: (cell.rate | number: '1.0-0'), answered: cell.answered, calls: cell.calls });
+        <button type="button"
+                [class]="'hm-cell lv-' + (cell.level === -1 ? 'na' : cell.level)"
+                [class.is-top]="cell.rank > 0"
+                [class.is-cross]="!!hovered() && (hovered()!.day === cell.day || hovered()!.hour === cell.hour)"
+                [class.is-pinned]="isSame(pinned(), cell)"
+                [style.--r]="r" [style.--c]="c"
+                [attr.aria-label]="label"
+                [attr.aria-pressed]="isSame(pinned(), cell)"
+                [appTip]="label"
+                (mouseenter)="hovered.set(cell)"
+                (focus)="hovered.set(cell)"
+                (blur)="hovered.set(null)"
+                (click)="pin(cell)">
+          @if (cell.level !== -1) {
+            <span class="hm-val">{{ cell.rate | number: '1.0-0' }}</span>
+          }
+          @if (cell.rank > 0) {
+            <span class="hm-rank">{{ cell.rank }}</span>
+          }
+        </button>
+      }
+    }
+  </div>
+}
+
+<!-- Legend + readout -->
+<div class="hm-foot">
+  <div class="hm-legend" aria-hidden="true">
+    <span class="hm-legend-label">{{ 'smartAnalytics.timing.legend.low' | translate }}</span>
+    @for (lv of levels; track lv) {
+      <span class="hm-swatch lv-{{ lv }}"
+            [appTip]="lv === 0
+              ? ('smartAnalytics.timing.legend.below' | translate: { n: thresholds[0] })
+              : lv === levels.length - 1
+                ? ('smartAnalytics.timing.legend.above' | translate: { n: thresholds[lv - 1] })
+                : ('smartAnalytics.timing.legend.between' | translate: { from: thresholds[lv - 1], to: thresholds[lv] })"></span>
+    }
+    <span class="hm-legend-label">{{ 'smartAnalytics.timing.legend.high' | translate }}</span>
+    <span class="hm-swatch lv-na ms-2"></span>
+    <span class="hm-legend-label">{{ 'smartAnalytics.timing.legend.noData' | translate: { n: minCalls } }}</span>
+  </div>
+
+  @if (readout(); as cell) {
+    <div class="hm-readout" aria-live="polite">
+      <span class="hm-readout-dot lv-{{ cell.level === -1 ? 'na' : cell.level }}"></span>
+      <strong>{{ 'smartAnalytics.days.' + cell.day | translate }}</strong>
+      <span class="text-muted">{{ cell.hour | hourLabel: true }}</span>
+      @if (cell.level === -1) {
+        <span class="hm-readout-rate text-muted">{{ 'smartAnalytics.timing.calls' | translate: { n: cell.calls } }}</span>
+      } @else {
+        <span class="hm-readout-rate">{{ cell.rate | number: '1.0-1' }}%</span>
+        <span class="text-muted">{{ 'smartAnalytics.timing.answeredOf' | translate: { answered: cell.answered, calls: cell.calls } }}</span>
+      }
+    </div>
+  }
+</div>

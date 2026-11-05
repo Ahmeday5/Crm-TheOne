@@ -1,0 +1,137 @@
+/* Shared layout for the four playbook form dialogs. */
+@use 'breakpoints' as bp;
+
+.pf-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.1rem;
+
+  @include bp.down(md) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.pf-span { grid-column: 1 / -1; }
+
+.pf-field { min-width: 0; }
+
+.pf-hint {
+  display: flex;
+  align-items: center;
+  margin-top: 0.3rem;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.pf-optional {
+  margin-inline-start: 0.35rem;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-500, 500);
+}
+
+.pf-section {
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  animation: pf-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pf-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-700);
+
+  i { color: var(--brand-500); }
+}
+
+.pf-num {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--brand-500);
+  color: #fff;
+  font-size: var(--fs-xs);
+}
+
+.pf-counter {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.pf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pf-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 34px;
+  padding: 0 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-0);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+  transition: all 0.2s ease;
+
+  &:hover { border-color: var(--brand-500); color: var(--brand-500); }
+  &.is-on {
+    border-color: var(--brand-500);
+    background: var(--brand-500);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.pf-insert {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border: 1px dashed var(--brand-500);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--brand-500);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+  transition: background-color 0.2s ease;
+
+  &:hover { background: var(--brand-soft); }
+}
+
+.pf-label-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+
+  .form-label { margin: 0; }
+}
+
+@keyframes pf-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-section { animation: none; }
+  .pf-chip { transition: none; }
+}

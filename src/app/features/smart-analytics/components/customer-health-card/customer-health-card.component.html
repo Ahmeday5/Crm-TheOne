@@ -1,0 +1,65 @@
+@let c = customer();
+<article class="hc cls-{{ c.healthClass }}" [class.is-open]="expanded()" [style.--i]="index()">
+  <div class="hc-main">
+    <app-health-ring [score]="c.score" [healthClass]="c.healthClass" size="md" [delay]="index() * 40"
+                     [label]="('smartAnalytics.health.score' | translate) + ': ' + c.score + '/100'" />
+
+    <div class="hc-info">
+      <div class="hc-name-line">
+        <strong class="hc-name" [appTip]="c.customerName">{{ c.customerName }}</strong>
+        <span class="hc-badge">{{ 'smartAnalytics.health.classes.' + c.healthClass | translate }}</span>
+      </div>
+      <div class="hc-sub">
+        @if (c.phone) {
+          <span class="hc-phone" dir="ltr"><i class="fa-solid fa-phone"></i>{{ c.phone }}</span>
+        }
+        <span class="hc-owner">
+          <i class="fa-solid fa-user-tie"></i>{{ c.ownerName || ('smartAnalytics.health.noOwner' | translate) }}
+        </span>
+      </div>
+      <div class="hc-chips">
+        <span class="hc-chip">
+          <i class="fa-solid fa-ticket"></i>{{ 'smartAnalytics.health.tickets' | translate: { n: c.totalTickets } }}
+        </span>
+        @if (c.openTickets > 0) {
+          <span class="hc-chip is-warn">
+            <i class="fa-solid fa-envelope-open"></i>{{ 'smartAnalytics.health.open' | translate: { n: c.openTickets } }}
+          </span>
+          <span class="hc-chip" [class.is-danger]="c.oldestOpenDays > 14">
+            <i class="fa-regular fa-clock"></i>{{ 'smartAnalytics.health.oldest' | translate: { n: c.oldestOpenDays } }}
+          </span>
+        }
+      </div>
+    </div>
+
+    <button type="button" class="hc-toggle" (click)="toggle()"
+            [attr.aria-expanded]="expanded()"
+            [attr.aria-controls]="'hc-breakdown-' + c.customerId"
+            [appTip]="(expanded() ? 'smartAnalytics.health.hideBreakdown' : 'smartAnalytics.health.breakdown') | translate">
+      <i class="fa-solid fa-chevron-down"></i>
+      <span class="visually-hidden">{{ 'smartAnalytics.health.breakdown' | translate }}</span>
+    </button>
+  </div>
+
+  <!-- Breakdown (grid-rows trick: animates height without measuring) -->
+  <div class="hc-drawer" [id]="'hc-breakdown-' + c.customerId" [attr.aria-hidden]="!expanded()">
+    <div class="hc-drawer-inner">
+      <h6 class="hc-drawer-title">{{ 'smartAnalytics.health.breakdown' | translate }}</h6>
+      @for (p of c.penalties; track p.factor; let i = $index) {
+        <div class="hc-factor" [style.--i]="i">
+          <span class="hc-factor-ic"><i [class]="factorIcons[p.factor]"></i></span>
+          <div class="hc-factor-body">
+            <div class="hc-factor-head">
+              <span class="hc-factor-name">{{ 'smartAnalytics.health.factors.' + p.factor | translate }}</span>
+              <span class="hc-factor-pts">−{{ p.points }}</span>
+            </div>
+            <div class="hc-factor-bar"><span [style.--w]="p.points / p.cap"></span></div>
+            <span class="hc-factor-hint">{{ 'smartAnalytics.health.factorHints.' + p.factor | translate: { n: p.count } }}</span>
+          </div>
+        </div>
+      } @empty {
+        <p class="hc-clean"><i class="fa-solid fa-circle-check"></i>{{ 'smartAnalytics.health.noPenalty' | translate }}</p>
+      }
+    </div>
+  </div>
+</article>

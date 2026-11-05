@@ -2,17 +2,6 @@
 
 :host { display: block; }
 
-.daily-reports {
-  .search-icon {
-    position: absolute;
-    inset-inline-start: 0.85rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    pointer-events: none;
-  }
-}
-
 /* ─── period filter ─── */
 .filters-card {
   .period-pills .btn {

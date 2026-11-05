@@ -1,0 +1,88 @@
+@use 'breakpoints' as bp;
+
+:host { display: block; }
+
+.pt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-0);
+  box-shadow: var(--shadow-sm);
+}
+
+.pt-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Icon placement comes from the global `.search-icon` rule. */
+.pt-search {
+  flex: 1 1 260px;
+  min-width: 0;
+
+  .form-control {
+    height: 40px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-1);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+
+    &:focus { background: var(--surface-0); }
+  }
+}
+
+.pt-fav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 40px;
+  padding: 0 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-0);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+  white-space: nowrap;
+  transition: all 0.2s ease;
+
+  i { color: var(--text-3); transition: transform 0.3s ease, color 0.2s ease; }
+
+  &:hover { border-color: var(--warning); color: var(--text-1); i { color: var(--warning); } }
+
+  &.is-on {
+    border-color: var(--warning);
+    background: var(--warning-soft);
+    color: var(--text-1);
+
+    i { color: var(--warning); transform: rotate(72deg); }
+  }
+}
+
+.pt-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 40px;
+  white-space: nowrap;
+  border-radius: var(--radius-pill);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+
+  &:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  &:active { transform: none; }
+}
+
+@include bp.down(md) {
+  .pt { padding: 0.7rem; }
+  .pt-search { flex-basis: 100%; }
+  .pt-fav, .pt-add { flex: 1 1 0; justify-content: center; min-width: 0; }
+  .pt-fav span, .pt-add span { overflow: hidden; text-overflow: ellipsis; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pt-fav i, .pt-add { transition: none; }
+}

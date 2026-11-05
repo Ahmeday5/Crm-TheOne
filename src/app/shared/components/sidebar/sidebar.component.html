@@ -1,69 +1,118 @@
-<aside class="sidebar"
-       [class.is-open]="isSidebarOpen && isMobile"
-       [class.is-mini]="isCollapsed && !isMobile">
+<aside class="sidebar" data-tour="sidebar"
+       [class.is-open]="isOpen() && isMobile()"
+       [class.is-mini]="isMini()"
+       [attr.aria-label]="'sidebar.navLabel' | translate">
 
   <!-- Brand: dynamic tenant logo + trade name -->
-  <a class="sidebar-brand" routerLink="/" (click)="onLinkClicked()">
-    <img [src]="brandLogo() || fallbackLogo" class="sidebar-brand-logo" alt="logo"
-         (error)="onLogoError($event)" />
-    @if (!(isCollapsed && !isMobile)) {
-      <span class="sidebar-brand-name text-truncate">{{ brandName() || ('header.app' | translate) }}</span>
-    }
+  <a class="sb-brand" routerLink="/" (click)="onLinkClicked()">
+    <img [src]="brandLogo() || fallbackLogo" class="sb-brand-logo" alt="" (error)="onLogoError($event)" />
+    <span class="sb-brand-name">{{ brandName() || ('header.app' | translate) }}</span>
   </a>
 
-  <!-- Header: search + collapse / close button -->
-  <div class="sidebar-head d-flex align-items-center gap-2">
-    <div class="search-wrap flex-grow-1">
-      <i class="fa-solid fa-magnifying-glass"></i>
-      <input #searchInput type="text" class="form-control form-control-sm"
-             [placeholder]="'sidebar.search' | translate" />
-    </div>
+  <!-- Search + collapse / close -->
+  <div class="sb-head">
+    <label class="sb-search">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <input #searchInput type="search"
+             [placeholder]="'sidebar.search' | translate"
+             [attr.aria-label]="'sidebar.search' | translate"
+             (input)="onSearch(searchInput.value)"
+             (keydown.escape)="clearSearch(searchInput)" />
+      @if (query()) {
+        <button type="button" class="sb-search-clear" [attr.aria-label]="'sidebar.clearSearch' | translate"
+                (click)="clearSearch(searchInput)">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      }
+    </label>
 
-    @if (isMobile) {
-      <button class="btn-icon flex-shrink-0" type="button"
-              (click)="closeSidebar()" aria-label="close">
-        <i class="fa-solid fa-xmark fs-5"></i>
+    @if (isMobile()) {
+      <button class="sb-icon-btn" type="button" (click)="closeSidebar()" [attr.aria-label]="'sidebar.close' | translate">
+        <i class="fa-solid fa-xmark"></i>
       </button>
     } @else {
-      <button class="btn-icon flex-shrink-0" type="button"
-              (click)="toggleCollapse()"
-              [title]="(isCollapsed ? 'sidebar.expand' : 'sidebar.collapse') | translate"
-              [attr.aria-label]="(isCollapsed ? 'sidebar.expand' : 'sidebar.collapse') | translate">
-        <i class="fa-solid fs-5"
-           [class.fa-angles-right]="!isCollapsed"
-           [class.fa-angles-left]="isCollapsed"></i>
+      <button class="sb-icon-btn" type="button" (click)="toggleCollapse()"
+              [title]="(isCollapsed() ? 'sidebar.expand' : 'sidebar.collapse') | translate"
+              [attr.aria-label]="(isCollapsed() ? 'sidebar.expand' : 'sidebar.collapse') | translate"
+              [attr.aria-expanded]="!isCollapsed()">
+        <i class="fa-solid fa-angles-right sb-collapse-ic"></i>
       </button>
     }
   </div>
 
   <!-- Nav -->
-  <nav class="sidebar-nav">
-    @for (section of visibleSections(); track section.titleKey) {
-      <div class="nav-section">
-        <h6 class="nav-section-title">{{ section.titleKey | translate }}</h6>
-        <ul class="list-unstyled nav-list">
-          @for (item of section.items; track item.path) {
-            <li class="nav-item">
-              <a class="nav-link"
-                 [routerLink]="item.path"
-                 routerLinkActive="active"
-                 [routerLinkActiveOptions]="{ exact: !item.matchSubroutes }"
-                 [title]="item.labelKey | translate"
-                 (click)="onLinkClicked()">
-                <i [class]="item.icon"></i>
-                <span class="nav-label">{{ item.labelKey | translate }}</span>
-                @if (badges.get(item.path); as count) {
-                  <span class="nav-badge" [attr.aria-label]="count">{{ count > 99 ? '99+' : count }}</span>
-                }
-              </a>
-            </li>
+  <nav class="sb-nav">
+    @for (section of sections(); track section.titleKey) {
+      <div class="sb-section">
+        <h6 class="sb-section-title">{{ section.titleKey | translate }}</h6>
+
+        <ul class="sb-list" role="list">
+          @for (entry of section.entries; track $index) {
+            @if (entry.kind === 'link') {
+              <li [style.--i]="$index" [attr.data-tour]="'nav-' + (entry.groupId || entry.item.path)">
+                <ng-container *ngTemplateOutlet="linkTpl; context: { $implicit: entry.item, nested: false }" />
+              </li>
+            } @else {
+              @let open = isGroupOpen(entry.group.id);
+              @let groupActive = activeGroupId() === entry.group.id;
+              @let groupCount = groupBadge(entry);
+              <li class="sb-group" [attr.data-tour]="'nav-' + entry.group.id" [class.is-open]="open" [class.is-active]="groupActive" [style.--i]="$index">
+                <button type="button"
+                        class="sb-link sb-group-btn"
+                        [attr.aria-expanded]="open"
+                        [attr.aria-controls]="'sb-group-' + entry.group.id"
+                        [title]="entry.group.labelKey | translate"
+                        (click)="toggleGroup(entry.group.id)">
+                  <span class="sb-ic"><i [class]="entry.group.icon"></i></span>
+                  <span class="sb-label">{{ entry.group.labelKey | translate }}</span>
+                  @if (groupCount && !open) {
+                    <span class="sb-badge">{{ groupCount > 99 ? '99+' : groupCount }}</span>
+                  }
+                  <i class="fa-solid fa-chevron-down sb-chevron" aria-hidden="true"></i>
+                </button>
+
+                <div class="sb-collapse" [id]="'sb-group-' + entry.group.id">
+                  <ul class="sb-sublist" role="list">
+                    @for (child of entry.children; track child.path) {
+                      <li [style.--j]="$index">
+                        <ng-container *ngTemplateOutlet="linkTpl; context: { $implicit: child, nested: true }" />
+                      </li>
+                    }
+                  </ul>
+                </div>
+              </li>
+            }
           }
         </ul>
       </div>
+    } @empty {
+      @if (query()) {
+        <div class="sb-empty">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          {{ 'sidebar.noResults' | translate }}
+        </div>
+      }
     }
   </nav>
 </aside>
 
-@if (isSidebarOpen && isMobile) {
-  <div class="sidebar-backdrop" (click)="closeSidebar()"></div>
+<ng-template #linkTpl let-item let-nested="nested">
+  @let count = badges.get(item.path);
+  <a class="sb-link"
+     [class.sb-sublink]="nested"
+     [class.active]="isActive(item)"
+     [attr.aria-current]="isActive(item) ? 'page' : null"
+     [routerLink]="item.path"
+     [title]="item.labelKey | translate"
+     (click)="onLinkClicked()">
+    <span class="sb-ic"><i [class]="item.icon"></i></span>
+    <span class="sb-label">{{ item.labelKey | translate }}</span>
+    @if (count) {
+      <span class="sb-badge">{{ count > 99 ? '99+' : count }}</span>
+    }
+  </a>
+</ng-template>
+
+@if (isOpen() && isMobile()) {
+  <div class="sb-backdrop" (click)="closeSidebar()"></div>
 }

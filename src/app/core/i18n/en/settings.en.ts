@@ -12,6 +12,7 @@ const settings: TranslationFile<'settings'> = {
     tabs: {
       users: 'User management',
       roles: 'Roles & permissions',
+      services: 'Services management',
       system: 'System settings',
       activity: 'Activity log',
       audit: 'Audit log',

@@ -1,0 +1,43 @@
+<ol class="lf" [class.is-invalid]="invalid()">
+  @for (row of rows(); track row.key; let i = $index, first = $first, last = $last) {
+    <li class="lf-row">
+      <span class="lf-bullet lf-bullet--{{ bullet() }}" aria-hidden="true">
+        @switch (bullet()) {
+          @case ('number') { {{ i + 1 }} }
+          @case ('check') { <i class="fa-solid fa-check"></i> }
+          @case ('plus') { <i class="fa-solid fa-plus"></i> }
+          @case ('minus') { <i class="fa-solid fa-minus"></i> }
+        }
+      </span>
+      <textarea #field class="form-control lf-input" rows="1" dir="auto"
+                [value]="row.text" [placeholder]="placeholder()"
+                [attr.maxlength]="maxLength()"
+                [disabled]="disabled()"
+                (input)="edit(i, $event)"
+                (keydown)="onKeydown(i, $event)"
+                (blur)="blur()"></textarea>
+      <span class="lf-tools">
+        <button type="button" class="lf-btn" [disabled]="first || disabled()" (click)="move(i, -1)"
+                [attr.aria-label]="'salesPlaybook.list.moveUp' | translate" [title]="'salesPlaybook.list.moveUp' | translate">
+          <i class="fa-solid fa-arrow-up"></i>
+        </button>
+        <button type="button" class="lf-btn" [disabled]="last || disabled()" (click)="move(i, 1)"
+                [attr.aria-label]="'salesPlaybook.list.moveDown' | translate" [title]="'salesPlaybook.list.moveDown' | translate">
+          <i class="fa-solid fa-arrow-down"></i>
+        </button>
+        <button type="button" class="lf-btn lf-btn--danger" [disabled]="disabled()" (click)="remove(i)"
+                [attr.aria-label]="'salesPlaybook.list.remove' | translate" [title]="'salesPlaybook.list.remove' | translate">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </span>
+    </li>
+  } @empty {
+    <li class="lf-empty">{{ 'salesPlaybook.list.empty' | translate }}</li>
+  }
+</ol>
+
+@if (rows().length < maxItems()) {
+  <button type="button" class="lf-add" [disabled]="disabled()" (click)="add()">
+    <i class="fa-solid fa-plus"></i>{{ addLabel() || ('salesPlaybook.list.add' | translate) }}
+  </button>
+}

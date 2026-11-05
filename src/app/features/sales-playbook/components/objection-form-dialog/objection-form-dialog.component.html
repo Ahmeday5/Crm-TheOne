@@ -1,0 +1,75 @@
+<app-modal
+  [open]="true"
+  [title]="(isEdit() ? 'salesPlaybook.form.editTitle.objections' : 'salesPlaybook.form.createTitle.objections') | translate"
+  icon="fa-solid fa-shield-halved"
+  iconTone="warning"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="close()">
+
+  <form class="pf" [formGroup]="form" (ngSubmit)="submit()" novalidate id="pb-objection-form">
+    <div class="pf-grid">
+      <fieldset class="pf-field pf-span">
+        <legend class="form-label fw-600">{{ 'salesPlaybook.form.category' | translate }}</legend>
+        <div class="pf-chips" role="radiogroup">
+          @for (c of categories; track c) {
+            <button type="button" class="pf-chip" role="radio"
+                    [class.is-on]="value().category === c" [attr.aria-checked]="value().category === c"
+                    (click)="form.controls.category.setValue(c)">
+              <i [class]="meta[c].icon" aria-hidden="true"></i>{{ 'salesPlaybook.categories.' + c | translate }}
+            </button>
+          }
+        </div>
+      </fieldset>
+
+      <div class="pf-field pf-span">
+        <label class="form-label fw-600" for="pf-o-text">{{ 'salesPlaybook.form.objection' | translate }}</label>
+        <input id="pf-o-text" class="form-control" formControlName="objection" dir="auto"
+               [maxlength]="limits.objection"
+               [class.is-invalid]="form.controls.objection.invalid && form.controls.objection.touched"
+               [placeholder]="'salesPlaybook.form.objectionPh' | translate" />
+        <app-form-error [control]="form.controls.objection" [label]="'salesPlaybook.form.objection' | translate" />
+      </div>
+
+      <div class="pf-field pf-span">
+        <label class="form-label fw-600" for="pf-o-answer">{{ 'salesPlaybook.objections.bestAnswer' | translate }}</label>
+        <textarea id="pf-o-answer" class="form-control" rows="5" formControlName="answer" dir="auto"
+                  [maxlength]="limits.answer"
+                  [class.is-invalid]="form.controls.answer.invalid && form.controls.answer.touched"
+                  [placeholder]="'salesPlaybook.form.answerPh' | translate"></textarea>
+        <span class="pf-counter">{{ value().answer?.length ?? 0 }}/{{ limits.answer }}</span>
+        <app-form-error [control]="form.controls.answer" [label]="'salesPlaybook.objections.bestAnswer' | translate" />
+      </div>
+
+      <div class="pf-field pf-span">
+        <label class="form-label fw-600" for="pf-o-tip">
+          {{ 'salesPlaybook.form.tip' | translate }}
+          <span class="pf-optional">{{ 'salesPlaybook.form.optional' | translate }}</span>
+        </label>
+        <input id="pf-o-tip" class="form-control" formControlName="tip" dir="auto"
+               [maxlength]="limits.tip"
+               [placeholder]="'salesPlaybook.form.tipPh' | translate" />
+      </div>
+    </div>
+
+    @if (serverError()) {
+      <div class="alert alert-danger d-flex gap-2 align-items-start mt-3 mb-0" role="alert">
+        <i class="fa-solid fa-circle-exclamation mt-1"></i><span>{{ serverError() }}</span>
+      </div>
+    }
+  </form>
+
+  <div modal-footer class="btn-row justify-content-end w-100">
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="close()">
+      {{ 'salesPlaybook.form.cancel' | translate }}
+    </button>
+    <button type="submit" form="pb-objection-form" class="btn btn-primary" [disabled]="submitting()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>{{ 'salesPlaybook.form.saving' | translate }}
+      } @else {
+        <i class="fa-solid fa-floppy-disk me-1"></i>{{ 'salesPlaybook.form.save' | translate }}
+      }
+    </button>
+  </div>
+</app-modal>

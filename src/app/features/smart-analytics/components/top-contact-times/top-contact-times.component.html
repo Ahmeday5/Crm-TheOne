@@ -1,0 +1,29 @@
+<ol class="tt-list">
+  @for (slot of slots(); track slot.day + ':' + slot.hour; let i = $index) {
+    <li class="tt-item rank-{{ slot.rank }}" [style.--i]="i">
+      <span class="tt-medal" [attr.aria-label]="'smartAnalytics.timing.rank.' + slot.rank | translate">
+        @if (slot.rank === 1) { <i class="fa-solid fa-crown"></i> } @else { {{ slot.rank }} }
+      </span>
+
+      <div class="tt-main">
+        <div class="tt-when">
+          <strong>{{ 'smartAnalytics.days.' + slot.day | translate }}</strong>
+          <span class="tt-hour"><i class="fa-regular fa-clock"></i>{{ slot.hour | hourLabel: true }}</span>
+        </div>
+        <div class="tt-bar" role="presentation">
+          <span class="tt-bar-fill" [style.--w]="slot.rate / 100"></span>
+        </div>
+        <span class="tt-meta">
+          {{ 'smartAnalytics.timing.answeredOf' | translate: { answered: slot.answered, calls: slot.calls } }}
+        </span>
+      </div>
+
+      <div class="tt-rate">
+        <strong>{{ slot.rate | number: '1.0-0' }}<small>%</small></strong>
+        <span>{{ 'smartAnalytics.timing.answerRate' | translate }}</span>
+      </div>
+    </li>
+  } @empty {
+    <li class="tt-empty">{{ 'smartAnalytics.timing.noTop' | translate }}</li>
+  }
+</ol>

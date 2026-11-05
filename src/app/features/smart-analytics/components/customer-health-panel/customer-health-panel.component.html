@@ -1,0 +1,131 @@
+@let dist = distribution();
+
+<!-- Overview -->
+<div class="hp-overview">
+  <section class="card hp-avg">
+    <app-health-ring [score]="dist.averageScore" [healthClass]="averageClass()" size="lg"
+                     [label]="('smartAnalytics.health.averageScore' | translate) + ': ' + dist.averageScore" />
+    <div class="hp-avg-text">
+      <span class="hp-avg-label">{{ 'smartAnalytics.health.averageScore' | translate }}</span>
+      <strong class="hp-avg-total">
+        {{ 'smartAnalytics.health.customersCount' | translate: { n: dist.total } }}
+      </strong>
+      <span class="hp-avg-class cls-{{ averageClass() }}">
+        {{ 'smartAnalytics.health.classes.' + averageClass() | translate }}
+      </span>
+    </div>
+  </section>
+
+  <section class="card hp-dist">
+    <div class="hp-dist-head">
+      <h6 class="mb-0">{{ 'smartAnalytics.health.distribution' | translate }}</h6>
+      @if (filter() !== 'all') {
+        <button type="button" class="btn btn-link btn-sm p-0 hp-clear" (click)="filter.set('all')">
+          <i class="fa-solid fa-xmark"></i>{{ 'smartAnalytics.health.all' | translate }}
+        </button>
+      }
+    </div>
+
+    <!-- Stacked share bar -->
+    <div class="hp-stack" role="img" [attr.aria-label]="'smartAnalytics.health.distribution' | translate">
+      @for (cls of classes; track cls; let i = $index) {
+        @if (dist.shares[cls] > 0) {
+          <span class="hp-seg cls-{{ cls }}" [class.is-dim]="filter() !== 'all' && filter() !== cls"
+                [style.flex-grow]="dist.shares[cls]" [style.--i]="i"></span>
+        }
+      }
+    </div>
+
+    <!-- Class tiles (also filters) -->
+    <div class="hp-tiles" role="radiogroup" [attr.aria-label]="'smartAnalytics.health.filterLabel' | translate">
+      @for (cls of classes; track cls; let i = $index) {
+        <button type="button" class="hp-tile cls-{{ cls }}" role="radio"
+                [class.is-on]="filter() === cls"
+                [attr.aria-checked]="filter() === cls"
+                [style.--i]="i"
+                (click)="toggleClass(cls)">
+          <span class="hp-tile-ic"><i [class]="classIcons[cls]"></i></span>
+          <span class="hp-tile-body">
+            <span class="hp-tile-name">{{ 'smartAnalytics.health.classes.' + cls | translate }}</span>
+            <span class="hp-tile-range">{{ 'smartAnalytics.health.classRanges.' + cls | translate }}</span>
+          </span>
+          <span class="hp-tile-num">
+            <strong [appAnimatedNumber]="dist.counts[cls]" [duration]="1000" [delay]="i * 120"></strong>
+            <small>{{ dist.shares[cls] | number: '1.0-0' }}%</small>
+          </span>
+        </button>
+      }
+    </div>
+  </section>
+</div>
+
+<!-- Formula explainer -->
+<details class="hp-formula">
+  <summary>
+    <i class="fa-solid fa-calculator"></i>
+    {{ 'smartAnalytics.health.formula.title' | translate }}
+    <i class="fa-solid fa-chevron-down hp-formula-caret"></i>
+  </summary>
+  <div class="hp-formula-body">
+    <p>{{ 'smartAnalytics.health.formula.intro' | translate }}</p>
+    <ul>
+      <li><i class="fa-solid fa-layer-group"></i>{{ 'smartAnalytics.health.formula.volume' | translate }}</li>
+      <li><i class="fa-solid fa-envelope-open-text"></i>{{ 'smartAnalytics.health.formula.open' | translate }}</li>
+      <li><i class="fa-solid fa-fire"></i>{{ 'smartAnalytics.health.formula.priority' | translate }}</li>
+      <li><i class="fa-solid fa-hourglass-half"></i>{{ 'smartAnalytics.health.formula.age' | translate }}</li>
+    </ul>
+    <p class="mb-0 text-muted">{{ 'smartAnalytics.health.formula.classes' | translate }}</p>
+  </div>
+</details>
+
+<!-- Toolbar -->
+<div class="hp-toolbar">
+  <div class="hp-search">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="search" class="form-control" [placeholder]="'smartAnalytics.health.search' | translate"
+           [attr.aria-label]="'smartAnalytics.health.search' | translate"
+           [ngModel]="search()" (ngModelChange)="search.set($event)" />
+  </div>
+  <label class="hp-sort">
+    <span>{{ 'smartAnalytics.health.sort.label' | translate }}</span>
+    <select class="form-select" [ngModel]="sort()" (ngModelChange)="sort.set($event)">
+      @for (s of sorts; track s) {
+        <option [ngValue]="s">{{ 'smartAnalytics.health.sort.' + s | translate }}</option>
+      }
+    </select>
+  </label>
+  <span class="hp-count">
+    {{ 'smartAnalytics.health.showing' | translate: { shown: visible().length, total: total() } }}
+  </span>
+</div>
+
+<!-- Cards -->
+@if (visible().length) {
+  <div class="row g-3 hp-grid" [class.is-refreshing]="refreshing()">
+    @for (c of visible(); track c.customerId; let i = $index) {
+      <div class="col-12 col-md-6 col-xxl-4">
+        <app-customer-health-card [customer]="c" [index]="i % 12" />
+      </div>
+    }
+  </div>
+
+  @if (visible().length < total()) {
+    <div class="text-center mt-3">
+      <button type="button" class="btn btn-light hp-more" (click)="showMore()">
+        <i class="fa-solid fa-angles-down"></i>
+        {{ 'smartAnalytics.health.showMore' | translate: { n: total() - visible().length } }}
+      </button>
+    </div>
+  }
+} @else {
+  <div class="card">
+    <app-empty-state icon="fa-solid fa-heart-pulse" [compact]="true" [hasActions]="hasFilters()"
+                     [message]="(hasFilters() ? 'smartAnalytics.health.emptyFiltered' : 'smartAnalytics.health.empty') | translate">
+      @if (hasFilters()) {
+        <button type="button" class="btn btn-sm btn-light" (click)="clearFilters()">
+          <i class="fa-solid fa-filter-circle-xmark me-1"></i>{{ 'smartAnalytics.health.clearFilters' | translate }}
+        </button>
+      }
+    </app-empty-state>
+  </div>
+}

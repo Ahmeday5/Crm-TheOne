@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, of, switchMap } from 'rxjs';
 import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
@@ -19,6 +19,7 @@ import {
   CustomerDropdownItem,
   PagedResult,
   UpdateContractRequest,
+  parseContractStatus,
 } from '../../../shared/models';
 
 /**
@@ -26,8 +27,13 @@ import {
  * add-contract dialog.
  *
  * The list endpoint returns the generic `{ pageIndex, pageSize, count, data }`
- * envelope. Search by customer / company / phone is applied client-side on
- * the loaded page — the backend exposes no search query for this endpoint.
+ * envelope but has no status filter, so the management page loads the whole
+ * set once (`listAll`) and filters / counts / paginates it client-side —
+ * otherwise tab counts would only reflect the current page.
+ *
+ * `status` arrives as a string enum ("Active" | "Expired" | "Cancelled");
+ * rows are normalised through `parseContractStatus` so the UI never sees an
+ * unexpected shape.
  *
  * `create()` invalidates every cached `Contracts` URL so the list refetches.
  */
@@ -39,13 +45,26 @@ import {
  */
 const PRICE_KEYS = ['price', 'totalPrice', 'contractPrice', 'contractValue', 'value', 'amount', 'totalAmount'] as const;
 
-function normalizeContractRow(row: ContractListItem): ContractListItem {
+/** Page size for the "load everything" request; refetched with `count` if exceeded. */
+const ALL_PAGE_SIZE = 1000;
+
+function normalizePrice(row: ContractListItem): number {
   const raw = row as unknown as Record<string, unknown>;
   for (const key of PRICE_KEYS) {
     const n = typeof raw[key] === 'string' ? Number(raw[key]) : raw[key];
-    if (typeof n === 'number' && Number.isFinite(n) && n !== 0) return { ...row, price: n };
+    if (typeof n === 'number' && Number.isFinite(n) && n !== 0) return n;
   }
-  return { ...row, price: Number(row.price) || 0 };
+  return Number(row.price) || 0;
+}
+
+function normalizeContractRow(row: ContractListItem): ContractListItem {
+  return {
+    ...row,
+    price: normalizePrice(row),
+    // Unknown / missing status is treated as active rather than silently
+    // shown as "cancelled".
+    status: parseContractStatus(row.status ?? row.statusName) ?? 'Active',
+  };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -65,10 +84,23 @@ export class ContractsService {
       .pipe(map((page) => ({ ...page, data: (page?.data ?? []).map(normalizeContractRow) })));
   }
 
+  /** Every contract (newest first) — for client-side filtering and counts. */
+  listAll(force = false): Observable<ContractListItem[]> {
+    return this.list({ PageIndex: 1, PageSize: ALL_PAGE_SIZE }, force).pipe(
+      switchMap((page) =>
+        (page.count ?? 0) > page.data.length
+          ? this.list({ PageIndex: 1, PageSize: page.count }, force).pipe(map((all) => all.data))
+          : of(page.data),
+      ),
+    );
+  }
+
   getById(id: number): Observable<ContractDetail> {
-    return this.api.get<ContractDetail>(API_ENDPOINTS.contracts.byId(id), {
-      context: withSkipLoader(withCache({ ttlMs: CACHE_TTL.SHORT })),
-    });
+    return this.api
+      .get<ContractDetail>(API_ENDPOINTS.contracts.byId(id), {
+        context: withSkipLoader(withCache({ ttlMs: CACHE_TTL.SHORT })),
+      })
+      .pipe(map((c) => ({ ...c, status: parseContractStatus(c?.status ?? c?.statusName) ?? 'Active' })));
   }
 
   statistics(): Observable<ContractStatistics> {

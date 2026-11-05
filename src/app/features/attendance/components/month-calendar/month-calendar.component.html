@@ -1,0 +1,71 @@
+<section class="mc card">
+  <header class="mc-head">
+    <div class="min-w-0">
+      <h5 class="mc-title"><i class="fa-regular fa-calendar-days"></i>{{ 'attendance.calendar.title' | translate }}</h5>
+      <p class="mc-sub">{{ 'attendance.calendar.subtitle' | translate }}</p>
+    </div>
+    <div class="mc-nav" role="group" [attr.aria-label]="'attendance.calendar.navigate' | translate">
+      <button type="button" class="mc-nav-btn" [disabled]="!canPrev() || loading()" (click)="prev.emit()"
+              [attr.aria-label]="'attendance.calendar.prev' | translate" [appTip]="'attendance.calendar.prev' | translate">
+        <i class="fa-solid fa-chevron-right mc-flip"></i>
+      </button>
+      <span class="mc-month">
+        {{ monthLabel() }}
+        @if (loading() && ready()) { <span class="spinner-border spinner-border-sm ms-1"></span> }
+      </span>
+      <button type="button" class="mc-nav-btn" [disabled]="!canNext() || loading()" (click)="next.emit()"
+              [attr.aria-label]="'attendance.calendar.next' | translate" [appTip]="'attendance.calendar.next' | translate">
+        <i class="fa-solid fa-chevron-left mc-flip"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="mc-grid mc-weekdays" aria-hidden="true">
+    @for (w of weekdays(); track w.key) {
+      <span class="mc-wd" [class.is-weekend]="w.isWeekend">{{ w.short }}</span>
+    }
+  </div>
+
+  @if (!ready()) {
+    <div class="mc-grid">
+      @for (i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]; track i) {
+        <span class="mc-skel"></span>
+      }
+    </div>
+  } @else {
+    <div class="mc-grid" role="grid" [attr.aria-label]="monthLabel()">
+      @for (b of blanks(); track b) { <span class="mc-blank" aria-hidden="true"></span> }
+      @for (d of days(); track d.date; let i = $index) {
+        <button type="button" role="gridcell"
+                class="mc-day st-{{ d.status }}"
+                [class.is-today]="d.isToday"
+                [class.is-selected]="selected() === d.date"
+                [class.is-open]="d.isOpen"
+                [style.--i]="i"
+                [attr.aria-selected]="selected() === d.date"
+                [attr.aria-label]="tip(d)"
+                [appTip]="tip(d)"
+                (click)="select.emit(d.date)">
+          <span class="mc-num">{{ d.dayOfMonth }}</span>
+          <i class="mc-ic" [class]="icons[d.status]" aria-hidden="true"></i>
+          @if (d.checkIn) {
+            <span class="mc-time">{{ d.checkIn | cairoDate: 'time' }}</span>
+          } @else if (d.leave?.halfDay) {
+            <span class="mc-time">½</span>
+          }
+          @if (d.isExtra) { <span class="mc-extra" aria-hidden="true"></span> }
+        </button>
+      }
+    </div>
+  }
+
+  <ul class="mc-legend">
+    @for (s of legend; track s) {
+      <li class="st-{{ s }}">
+        <span class="mc-swatch" aria-hidden="true"></span>
+        {{ 'attendance.status.' + s | translate }}
+        <b>{{ counts()[s] ?? 0 }}</b>
+      </li>
+    }
+  </ul>
+</section>

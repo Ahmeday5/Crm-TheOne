@@ -1,0 +1,322 @@
+<section class="sp-page">
+  <!-- Header + view switch -->
+  <header class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3 min-w-0">
+      <span class="icon-tile xl tone-primary flex-shrink-0"><i class="fa-solid fa-table-columns"></i></span>
+      <div class="min-w-0">
+        <h3 class="fw-700 mb-1">{{ 'pipeline.title' | translate }}</h3>
+        <p class="text-muted mb-0">
+          {{ (isAdmin() ? 'pipeline.subtitleAdmin' : 'pipeline.subtitleSales') | translate }}
+        </p>
+      </div>
+    </div>
+
+    <div class="sp-view-switch" role="group" [attr.aria-label]="'pipeline.view.label' | translate">
+      <a class="sp-view-btn" routerLink="/leads/sales-leadsCustomer">
+        <i class="fa-solid fa-table-list"></i>{{ 'pipeline.view.table' | translate }}
+      </a>
+      <span class="sp-view-btn is-active" aria-current="page">
+        <i class="fa-solid fa-table-columns"></i>{{ 'pipeline.view.kanban' | translate }}
+      </span>
+    </div>
+  </header>
+
+  <!-- KPIs -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <app-stat-card
+        [label]="'pipeline.stats.total' | translate"
+        [value]="stats()?.totalCustomers ?? '—'"
+        icon="fa-solid fa-users"
+        tone="primary">
+      </app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card
+        [label]="'pipeline.stats.inProgress' | translate"
+        [value]="stats()?.inProgress ?? '—'"
+        icon="fa-solid fa-hourglass-half"
+        tone="warning">
+      </app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card
+        [label]="'pipeline.stats.buyers' | translate"
+        [value]="stats()?.buyers ?? '—'"
+        icon="fa-solid fa-circle-check"
+        tone="success">
+      </app-stat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card
+        [label]="'pipeline.stats.closeRate' | translate"
+        [value]="stats() ? (stats()!.closeRate | number: '1.0-1') + '%' : '—'"
+        [sub]="'pipeline.stats.closeRateHint' | translate"
+        icon="fa-solid fa-trophy"
+        tone="info">
+      </app-stat-card>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-12 col-md-6" [class.col-xl-3]="isAdmin()" [class.col-xl-4]="!isAdmin()">
+          <div class="position-relative">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input class="form-control search-input"
+                   type="search"
+                   [placeholder]="'pipeline.filters.search' | translate"
+                   [ngModel]="searchTerm"
+                   (ngModelChange)="onSearchInput($event)" />
+          </div>
+        </div>
+        <div class="col-12 col-md-6" [class.col-xl-3]="isAdmin()" [class.col-xl-4]="!isAdmin()">
+          <select class="form-select" [ngModel]="sourceId() ?? ''" (ngModelChange)="onSourceChange($event)">
+            <option value="">{{ 'pipeline.filters.allSources' | translate }}</option>
+            @for (s of sources(); track s.id) {
+              <option [value]="s.id">{{ s.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-12 col-md-6" [class.col-xl-3]="isAdmin()" [class.col-xl-4]="!isAdmin()">
+          <select class="form-select" [ngModel]="serviceId() ?? ''" (ngModelChange)="onServiceChange($event)">
+            <option value="">{{ 'pipeline.filters.allServices' | translate }}</option>
+            @for (s of services(); track s.id) {
+              <option [value]="s.id">{{ s.name }}</option>
+            }
+          </select>
+        </div>
+        @if (isAdmin()) {
+          <div class="col-12 col-md-6 col-xl-3">
+            <select class="form-select" [ngModel]="salesPersonId() ?? ''" (ngModelChange)="onSalesPersonChange($event)">
+              <option value="">{{ 'pipeline.filters.allSales' | translate }}</option>
+              @for (p of salesTeam(); track p.id) {
+                <option [value]="p.id">{{ p.name }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="sp-toolbar mb-3">
+    <button type="button"
+            class="sp-overdue"
+            [class.is-on]="overdueOnly()"
+            [attr.aria-pressed]="overdueOnly()"
+            (click)="toggleOverdue()">
+      <i class="fa-solid fa-bell"></i>
+      {{ 'pipeline.toolbar.overdueOnly' | translate }}
+      <span class="sp-overdue-count">{{ overdueCount() }}</span>
+    </button>
+
+    <label class="sp-inline-field">
+      <i class="fa-solid fa-arrow-down-wide-short"></i>
+      <span>{{ 'pipeline.toolbar.sort' | translate }}</span>
+      <select class="form-select form-select-sm" [ngModel]="sort()" (ngModelChange)="onSortChange($event)">
+        @for (s of sortOptions; track s) {
+          <option [ngValue]="s">{{ sortLabelKey(s) | translate }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="sp-inline-field" [appTip]="'pipeline.toolbar.staleHint' | translate">
+      <i class="fa-solid fa-hourglass-end"></i>
+      <span>{{ 'pipeline.toolbar.stale' | translate }}</span>
+      <select class="form-select form-select-sm" [ngModel]="staleDays() ?? ''" (ngModelChange)="onStaleDaysChange($event)">
+        @for (d of staleOptions; track d) {
+          <option [value]="d ?? ''">
+            {{ d === null ? ('pipeline.toolbar.staleDefault' | translate) : ('pipeline.toolbar.staleDays' | translate: { days: d }) }}
+          </option>
+        }
+      </select>
+    </label>
+
+    @if (hasFilters()) {
+      <button type="button" class="btn btn-sm btn-link text-decoration-none px-1" (click)="clearFilters()">
+        <i class="fa-solid fa-filter-circle-xmark me-1"></i>{{ 'pipeline.toolbar.clear' | translate }}
+      </button>
+    }
+
+    <span class="sp-hint d-none d-lg-inline-flex">
+      <i class="fa-solid fa-hand-pointer"></i>{{ 'pipeline.toolbar.dragHint' | translate }}
+    </span>
+
+    <button type="button" class="btn btn-sm btn-outline-secondary sp-refresh" [disabled]="loading()" (click)="reload(true)">
+      <i class="fa-solid fa-rotate-right" [class.fa-spin]="loading()"></i>
+      {{ 'pipeline.toolbar.refresh' | translate }}
+    </button>
+  </div>
+
+  @if (loadError()) {
+    <div class="mb-3">
+      <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload(true)"></app-load-error>
+    </div>
+  }
+
+  @if (!loading() && isPartial()) {
+    <div class="sp-partial mb-3" role="status">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      {{ 'pipeline.partial' | translate: { shown: loadedCount(), total: totalCount() } }}
+    </div>
+  }
+
+  <!-- Board -->
+  @if (loading() && !board()) {
+    <div class="text-center py-5"><span class="spinner-border text-primary" role="status"></span></div>
+  } @else if (board() && columns().length === 0) {
+    <div class="card">
+      <app-empty-state
+        [compact]="true"
+        icon="fa-solid fa-inbox"
+        [message]="(hasFilters() ? 'pipeline.emptyFiltered' : 'pipeline.empty') | translate"
+        [loading]="loading()"
+        (retry)="reload(true)" />
+    </div>
+  } @else if (board()) {
+    <div class="sp-board" [class.is-loading]="loading()">
+      @for (col of columns(); track col.statusId) {
+        @let look = columnLook(col.status);
+        <div class="sp-col tone-{{ look.tone }}"
+             [class.is-drop-target]="dropTarget() === col.statusId"
+             [class.is-drag-source]="dragging()?.statusId === col.statusId"
+             (dragover)="onDragOver($event, col)"
+             (dragleave)="onDragLeave($event, col)"
+             (drop)="onDrop($event, col)">
+          <div class="sp-col-head">
+            <span class="sp-col-icon"><i [class]="look.icon"></i></span>
+            <span class="sp-col-title">{{ columnLabel(col.status) }}</span>
+            <span class="sp-col-count">{{ col.count }}</span>
+          </div>
+
+          <div class="sp-col-body">
+            @for (card of col.items; track card.id) {
+              <article class="sp-card"
+                       [class.is-stale]="card.isStale"
+                       [class.is-saving]="savingIds().has(card.id)"
+                       [class.is-dragging]="dragging()?.id === card.id"
+                       draggable="true"
+                       (dragstart)="onDragStart($event, card)"
+                       (dragend)="onDragEnd()">
+                <div class="sp-card-top">
+                  <span class="sp-avatar" aria-hidden="true">{{ initials(card.fullName) }}</span>
+                  <div class="min-w-0 flex-grow-1">
+                    <button type="button" class="sp-name" [title]="card.fullName" (click)="openDetails(card)">
+                      {{ card.fullName }}
+                    </button>
+                    <div class="sp-line">
+                      <i class="fa-solid fa-phone"></i><span dir="ltr">{{ card.phone || '—' }}</span>
+                    </div>
+                  </div>
+                  @if (savingIds().has(card.id)) {
+                    <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                  }
+                </div>
+
+                <div class="sp-line" [class.is-danger]="card.isStale">
+                  <i class="fa-solid fa-hourglass-half"></i>
+                  {{ daysLabel(card) }}
+                  @if (card.isStale) {
+                    · {{ 'pipeline.card.stale' | translate }}
+                  }
+                </div>
+
+                @if (card.nextFollowUpDate) {
+                  <div class="sp-line" [class.is-danger]="card.isFollowUpOverdue">
+                    <i class="fa-solid fa-calendar-day"></i>
+                    {{ (card.isFollowUpOverdue ? 'pipeline.card.followUpOverdue' : 'pipeline.card.followUp') | translate }}:
+                    {{ card.nextFollowUpDate | cairoDate: 'date' }}
+                  </div>
+                }
+
+                @if (card.services.length || card.source) {
+                  <div class="sp-chips">
+                    @for (svc of card.services; track svc.id) {
+                      <span class="crm-chip tone-brand">{{ svc.name }}</span>
+                    }
+                    @if (card.source) {
+                      <span class="crm-chip tone-info">{{ card.source }}</span>
+                    }
+                  </div>
+                }
+
+                @if (card.notBuyingReason) {
+                  <div class="sp-reason" appClampText="2" [clampTitle]="card.fullName" [clampText]="card.notBuyingReason">
+                    <i class="fa-solid fa-circle-exclamation"></i>{{ card.notBuyingReason }}
+                  </div>
+                }
+
+                <div class="sp-line">
+                  <i class="fa-solid fa-user-tie"></i>
+                  {{ card.salesPersonName || ('pipeline.card.unassigned' | translate) }}
+                </div>
+
+                <div class="sp-actions">
+                  <button type="button" class="sp-act" [appTip]="'pipeline.card.changeStatus' | translate"
+                          [attr.aria-label]="'pipeline.card.changeStatus' | translate"
+                          (click)="openChangeStatus(card)">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                  </button>
+                  <button type="button" class="sp-act is-wa" [appTip]="'pipeline.card.whatsapp' | translate"
+                          [attr.aria-label]="'pipeline.card.whatsapp' | translate"
+                          (click)="openDetails(card, 'whatsapp')">
+                    <i class="fa-brands fa-whatsapp"></i>
+                  </button>
+                  @if (telHref(card.phone); as tel) {
+                    <a class="sp-act" [href]="tel" [appTip]="'pipeline.card.call' | translate"
+                       [attr.aria-label]="'pipeline.card.call' | translate">
+                      <i class="fa-solid fa-phone"></i>
+                    </a>
+                  }
+                  <button type="button" class="sp-act" [appTip]="'pipeline.card.view' | translate"
+                          [attr.aria-label]="'pipeline.card.view' | translate"
+                          (click)="openDetails(card)">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                </div>
+              </article>
+            } @empty {
+              <div class="sp-col-empty">
+                <i class="fa-regular fa-folder-open"></i>
+                {{ 'pipeline.columnEmpty' | translate }}
+              </div>
+            }
+
+            @if (col.hasMore) {
+              <button type="button" class="sp-more" [disabled]="loadingMore() !== null" (click)="loadMore(col)">
+                @if (loadingMore() === col.statusId) {
+                  <span class="spinner-border spinner-border-sm"></span>
+                } @else {
+                  <i class="fa-solid fa-angles-down"></i>
+                }
+                {{ 'pipeline.loadMore' | translate: { left: col.count - col.items.length } }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>
+
+@if (detailsDialog(); as id) {
+  <app-customer-details-dialog
+    [customerId]="id"
+    [initialTab]="detailsTab()"
+    (closed)="closeDetails()">
+  </app-customer-details-dialog>
+}
+
+@if (changeStatusDialog(); as dlg) {
+  <app-change-status-dialog
+    [customerId]="dlg.card.id"
+    [customerName]="dlg.card.fullName"
+    [currentStatus]="dlg.preset"
+    (changed)="onStatusChanged()"
+    (cancel)="closeChangeStatus()">
+  </app-change-status-dialog>
+}

@@ -157,13 +157,36 @@ body.app-modal-open { overflow: hidden; }
   color: var(--brand);
 }
 
+// ── Search fields — ONE rule for every page ─────────────────────────────────
+// Markup: `<div class="position-relative"><i class="… search-icon"></i>
+// <input class="form-control …"></div>`. The icon always sits at the reading
+// start (right in Arabic, left in English) and the input reserves exactly that
+// side, overriding physical helpers such as Bootstrap's `.ps-5` that used to
+// put the padding on the wrong side in RTL (icon on top of the text).
 .search-icon {
   position: absolute;
-  inset-inline-start: 1rem;
+  inset-inline-start: 0.9rem;
+  inset-inline-end: auto;
   inset-block-start: 50%;
+  z-index: 2;
   transform: translateY(-50%);
   color: var(--text-3, #94a3b8);
+  font-size: 0.9rem;
+  line-height: 1;
   pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.search-icon ~ .form-control,
+.search-icon ~ input,
+:has(> .search-icon) > .form-control {
+  padding-inline-start: 2.5rem !important;
+  padding-inline-end: 0.85rem !important;
+}
+
+/* Icon lights up while its field has focus. */
+.search-icon:has(~ .form-control:focus) {
+  color: var(--brand-500);
 }
 
 // ── Global tooltip — rendered by TipDirective ────────────────────────────────

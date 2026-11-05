@@ -1,0 +1,32 @@
+@if (readonly()) {
+  <span class="rs rs-{{ size() }} is-readonly" role="img"
+        [attr.aria-label]="'smartAnalytics.performance.starsAria' | translate: { n: value() }">
+    @for (s of stars; track s) {
+      <i class="rs-star fa-star" [class.fa-solid]="s <= value()" [class.fa-regular]="s > value()"
+         [class.is-on]="s <= value()" [style.--i]="s"></i>
+    }
+  </span>
+} @else {
+  <span class="rs rs-{{ size() }}" role="radiogroup"
+        [attr.aria-label]="'smartAnalytics.performance.ratingLabel' | translate"
+        (mouseleave)="hover.set(0)" (keydown)="onKeydown($event)">
+    @for (s of stars; track s) {
+      <button type="button" class="rs-btn" role="radio"
+              [attr.aria-checked]="value() === s"
+              [attr.aria-label]="('smartAnalytics.performance.starsAria' | translate: { n: s }) + ' — ' + ('smartAnalytics.performance.stars.' + s | translate)"
+              [attr.tabindex]="(value() || 1) === s ? 0 : -1"
+              [style.--i]="s"
+              (mouseenter)="hover.set(s)"
+              (click)="choose(s)">
+        <i class="rs-star fa-star" [class.fa-solid]="s <= shown()" [class.fa-regular]="s > shown()"
+           [class.is-on]="s <= shown()"
+           [class.is-preview]="hover() > 0 && s <= hover()"
+           [class.is-picked]="hover() === 0 && s === value()"></i>
+      </button>
+    }
+  </span>
+}
+
+@if (showLabel() && shown() > 0) {
+  <span class="rs-word">{{ 'smartAnalytics.performance.stars.' + shown() | translate }}</span>
+}

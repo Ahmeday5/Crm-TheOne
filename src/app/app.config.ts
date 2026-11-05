@@ -1,4 +1,5 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, isDevMode, provideZoneChangeDetection } from '@angular/core';
+import { provideServiceWorker } from '@angular/service-worker';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
@@ -39,5 +40,12 @@ export const appConfig: ApplicationConfig = {
     ),
     provideAnimations(),
     provideWhatsApp(),
+    // PWA — production builds only; registers once the app is idle so it
+    // never competes with the first render. API calls are never cached
+    // (ngsw-config.json has no dataGroups).
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
   ],
 };

@@ -1,0 +1,114 @@
+@if (store.active(); as c) {
+  <div class="ct">
+    <!-- Header -->
+    <header class="ct-head">
+      <button type="button" class="ct-icon-btn ct-back" (click)="back.emit()" [attr.aria-label]="'teamChat.back' | translate">
+        <i class="fa-solid fa-arrow-right ct-flip"></i>
+      </button>
+
+      <span class="ct-avatar">
+        @if (c.kind === 'channel') {
+          <span class="ct-channel-ic"><i [class]="c.icon || 'fa-solid fa-hashtag'"></i></span>
+        } @else {
+          <app-user-avatar [name]="c.title" [imageUrl]="store.peer()?.imageUrl" size="md" />
+          @if (store.peer(); as p) { <span class="ct-presence is-{{ p.presence }}"></span> }
+        }
+      </span>
+
+      <div class="ct-head-text">
+        <h5 class="ct-title">{{ c.title }}</h5>
+        @if (store.typingNames().length) {
+          <span class="ct-sub is-typing">
+            {{ store.typingNames()[0] }} {{ 'teamChat.typing' | translate }}
+          </span>
+        } @else {
+          <span class="ct-sub" [class.is-online]="store.peer()?.presence === 'online'">{{ subtitle() }}</span>
+        }
+      </div>
+
+      <div class="ct-head-actions">
+        <button type="button" class="ct-icon-btn" [class.is-on]="c.isPinned" (click)="store.togglePin(c)"
+                [appTip]="(c.isPinned ? 'teamChat.unpin' : 'teamChat.pin') | translate"
+                [attr.aria-label]="(c.isPinned ? 'teamChat.unpin' : 'teamChat.pin') | translate">
+          <i class="fa-solid fa-thumbtack"></i>
+        </button>
+        <button type="button" class="ct-icon-btn" [class.is-on]="c.isMuted" (click)="store.toggleMute(c)"
+                [appTip]="(c.isMuted ? 'teamChat.unmute' : 'teamChat.mute') | translate"
+                [attr.aria-label]="(c.isMuted ? 'teamChat.unmute' : 'teamChat.mute') | translate">
+          <i class="fa-solid" [class.fa-bell-slash]="c.isMuted" [class.fa-bell]="!c.isMuted"></i>
+        </button>
+        <button type="button" class="ct-icon-btn" [class.is-on]="infoOpen()" (click)="toggleInfo.emit()"
+                [appTip]="'teamChat.details' | translate" [attr.aria-label]="'teamChat.details' | translate">
+          <i class="fa-solid fa-circle-info"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Messages -->
+    <div #scroller class="ct-scroll" (scroll)="onScroll()" role="log" [attr.aria-label]="c.title">
+      @for (group of store.dayGroups(); track group.day) {
+        <div class="ct-day"><span>{{ dayLabel(group.rows[0].message.sentAt) }}</span></div>
+
+        @for (row of group.rows; track row.message.id) {
+          <div class="ct-row" [class.is-mine]="row.mine" [class.run-start]="row.runStart" [class.run-end]="row.runEnd">
+            @if (!row.mine) {
+              <span class="ct-row-avatar">
+                @if (row.runEnd) {
+                  <app-user-avatar [name]="row.sender?.name" [imageUrl]="row.sender?.imageUrl" size="sm" />
+                }
+              </span>
+            }
+            <div class="ct-bubble">
+              @if (row.runStart && !row.mine && c.kind === 'channel') {
+                <span class="ct-sender">{{ row.sender?.name }}</span>
+              }
+              <p class="ct-text">{{ row.message.text }}</p>
+              <span class="ct-meta">
+                {{ clock(row.message) }}
+                @if (row.mine) {
+                  <i class="ct-status status-{{ row.message.status }} {{ statusIcon(row.message) }}"></i>
+                }
+              </span>
+            </div>
+          </div>
+        }
+      } @empty {
+        <div class="ct-empty">
+          <span class="ct-empty-ic"><i class="fa-regular fa-hand"></i></span>
+          <p>{{ 'teamChat.sayHello' | translate: { name: c.title } }}</p>
+        </div>
+      }
+
+      @if (store.typingNames().length) {
+        <div class="ct-row run-start run-end">
+          <span class="ct-row-avatar"></span>
+          <div class="ct-bubble ct-typing" [attr.aria-label]="'teamChat.typing' | translate">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (pendingNew() && !atBottom()) {
+      <button type="button" class="ct-jump" (click)="jumpToLatest()">
+        <i class="fa-solid fa-arrow-down"></i>
+        {{ 'teamChat.newMessages' | translate: { count: pendingNew() } }}
+      </button>
+    }
+
+    <app-chat-composer
+      [placeholder]="'teamChat.composer' | translate"
+      (send)="onSend($event)"
+      (typing)="store.setTyping($event)" />
+  </div>
+} @else {
+  <div class="ct-placeholder">
+    <div class="ct-placeholder-art" aria-hidden="true">
+      <span class="ct-bubble-art a"><i class="fa-solid fa-comment"></i></span>
+      <span class="ct-bubble-art b"><i class="fa-solid fa-comment-dots"></i></span>
+      <span class="ct-bubble-art c"><i class="fa-solid fa-user-group"></i></span>
+    </div>
+    <h4>{{ 'teamChat.welcomeTitle' | translate }}</h4>
+    <p>{{ 'teamChat.welcomeText' | translate }}</p>
+  </div>
+}

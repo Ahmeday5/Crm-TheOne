@@ -1,0 +1,70 @@
+<app-modal [open]="open()" [title]="'smartAnalytics.performance.dialog.title' | translate"
+           icon="fa-solid fa-star-half-stroke" iconTone="warning" size="md"
+           [closeOnBackdrop]="!saving()" [closeOnEsc]="!saving()"
+           (closed)="close()">
+  @if (rep(); as r) {
+    <form class="rv" (ngSubmit)="submit()" id="rep-review-form" novalidate>
+      <!-- Who + month + their numbers -->
+      <div class="rv-head">
+        <app-user-avatar [name]="r.repName" [imageUrl]="r.imageUrl" size="lg" />
+        <div class="min-w-0">
+          <strong class="rv-name">{{ r.repName }}</strong>
+          <span class="rv-month"><i class="fa-regular fa-calendar"></i>{{ monthLabel() }}</span>
+        </div>
+      </div>
+
+      <div class="rv-stats">
+        <div class="rv-stat" style="--i: 0">
+          <span>{{ 'smartAnalytics.performance.columns.calls' | translate }}</span>
+          <strong>{{ r.calls | number }}</strong>
+        </div>
+        <div class="rv-stat" style="--i: 1">
+          <span>{{ 'smartAnalytics.performance.columns.answered' | translate }}</span>
+          <strong>{{ r.answeredCalls | number }} <small>{{ r.answerRate | number: '1.0-1' }}%</small></strong>
+        </div>
+        <div class="rv-stat is-success" style="--i: 2">
+          <span>{{ 'smartAnalytics.performance.columns.buyers' | translate }}</span>
+          <strong>{{ r.buyers | number }} <small>{{ r.closeRate | number: '1.0-1' }}%</small></strong>
+        </div>
+      </div>
+
+      <!-- Rating -->
+      <div class="rv-field">
+        <label class="form-label fw-600" id="rv-rating-label">{{ 'smartAnalytics.performance.dialog.rating' | translate }}</label>
+        <div class="rv-stars" [class.is-invalid]="touched() && ratingInvalid()" aria-labelledby="rv-rating-label">
+          <app-rating-stars [value]="rating()" size="lg" [showLabel]="true" (valueChange)="rating.set($event)" />
+        </div>
+        @if (touched() && ratingInvalid()) {
+          <div class="rv-error"><i class="fa-solid fa-circle-exclamation"></i>{{ 'smartAnalytics.performance.dialog.ratingRequired' | translate }}</div>
+        }
+      </div>
+
+      <!-- Note -->
+      <div class="rv-field mb-0">
+        <label class="form-label fw-600" for="rv-note">{{ 'smartAnalytics.performance.dialog.note' | translate }}</label>
+        <textarea id="rv-note" name="note" class="form-control rv-note" rows="4"
+                  [maxlength]="noteMax"
+                  [class.is-invalid]="noteLength() > noteMax"
+                  [placeholder]="'smartAnalytics.performance.dialog.placeholder' | translate"
+                  [ngModel]="note()" (ngModelChange)="note.set($event)"></textarea>
+        <div class="rv-counter" [class.is-near]="noteLength() > noteMax * 0.9">
+          {{ 'smartAnalytics.performance.dialog.counter' | translate: { n: noteLength(), max: noteMax } }}
+        </div>
+      </div>
+    </form>
+  }
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" (click)="close()" [disabled]="saving()">
+      {{ 'smartAnalytics.performance.dialog.cancel' | translate }}
+    </button>
+    <button type="submit" form="rep-review-form" class="btn btn-primary rv-save" [disabled]="saving() || !dirty()">
+      @if (saving()) {
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-check"></i>
+      }
+      {{ 'smartAnalytics.performance.dialog.save' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

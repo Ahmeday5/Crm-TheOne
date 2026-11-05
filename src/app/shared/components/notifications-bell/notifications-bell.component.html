@@ -45,11 +45,13 @@
         }
       </div>
 
-      <footer class="nb-foot">
-        <button type="button" class="btn btn-light btn-sm w-100" (click)="viewAll()">
-          {{ 'notifications.viewAll' | translate }}
-        </button>
-      </footer>
+      @if (canViewAll()) {
+        <footer class="nb-foot">
+          <button type="button" class="btn btn-light btn-sm w-100" (click)="viewAll()">
+            {{ 'notifications.viewAll' | translate }}
+          </button>
+        </footer>
+      }
     </div>
   }
 </div>

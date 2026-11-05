@@ -1,0 +1,339 @@
+@use 'breakpoints' as bp;
+
+.cm {
+  /* +1 = next stage slides in from the reading end; mirrored in RTL and when going back. */
+  --flow: 1;
+  --slide: 1;
+  &.is-back { --slide: -1; }
+}
+
+:host-context([dir='rtl']) .cm { --flow: -1; }
+
+/* ─────────── progress rail ─────────── */
+
+.cm-rail {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.6rem;
+  padding: 10px 2px; /* room for the active dot's halo */
+  /* Long scripts scroll inside the rail, never the page. */
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.cm-rail__track {
+  position: absolute;
+  inset-inline: 18px;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.cm-rail__fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: calc(var(--p, 0) * 100%);
+  border-radius: inherit;
+  background: var(--success);
+  transition: inline-size 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cm-dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface-0);
+  color: var(--text-3);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+
+  &:hover { transform: scale(1.1); border-color: var(--brand-500); color: var(--brand-500); }
+  &:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 2px; }
+
+  &.is-done {
+    border-color: var(--success);
+    background: var(--success);
+    color: #fff;
+  }
+
+  &.is-on {
+    border-color: var(--brand-500);
+    background: var(--brand-500);
+    color: #fff;
+    transform: scale(1.15);
+    box-shadow: 0 0 0 5px var(--brand-soft);
+    animation: cm-pulse 2s ease-in-out infinite;
+  }
+}
+
+@keyframes cm-pulse {
+  0%, 100% { box-shadow: 0 0 0 5px var(--brand-soft); }
+  50% { box-shadow: 0 0 0 9px var(--brand-soft); }
+}
+
+.cm-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.cm-counter.is-done { color: var(--success); font-weight: var(--fw-600); }
+.cm-pct { font-weight: var(--fw-700); color: var(--text-2); }
+
+/* ─────────── stage ─────────── */
+
+.cm-stage-wrap {
+  min-height: 260px;
+  overflow: hidden;
+}
+
+.cm-stage {
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface-1);
+  animation: cm-slide 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes cm-slide {
+  from { opacity: 0; transform: translateX(calc(var(--flow) * var(--slide) * 40px)); }
+  to   { opacity: 1; transform: none; }
+}
+
+.cm-stage__head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.cm-stage__ic {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  background: var(--brand-soft);
+  color: var(--brand-500);
+  font-size: 1.2rem;
+  animation: cm-ic 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both 0.1s;
+}
+
+.cm-stage--opening .cm-stage__ic { background: var(--info-soft); color: var(--info); }
+.cm-stage--questions .cm-stage__ic { background: var(--warning-soft); color: var(--warning); }
+.cm-stage--closing .cm-stage__ic { background: var(--success-soft); color: var(--success); }
+
+@keyframes cm-ic {
+  from { transform: scale(0.4) rotate(-20deg); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+.cm-stage__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-700);
+  color: var(--text-1);
+}
+
+.cm-text {
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--fs-2xl);
+  line-height: 1.85;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.cm-hint {
+  margin: 0 0 0.75rem;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+/* ─────────── questions checklist ─────────── */
+
+.cm-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li { animation: cm-q-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: calc(var(--i, 0) * 60ms + 120ms); }
+}
+
+@keyframes cm-q-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.cm-q {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-0);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+
+  input { position: absolute; opacity: 0; pointer-events: none; }
+  input:focus-visible + .cm-q__box { outline: 2px solid var(--brand-500); outline-offset: 2px; }
+
+  &:hover { border-color: var(--brand-500); transform: translateX(calc(var(--flow) * 3px)); }
+
+  &.is-on {
+    border-color: var(--success);
+    background: var(--success-soft);
+
+    .cm-q__box { border-color: var(--success); background: var(--success); color: #fff; i { transform: scale(1); } }
+    .cm-q__text { color: var(--text-2); text-decoration: line-through; text-decoration-color: var(--success); }
+  }
+}
+
+.cm-q__box {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  margin-top: 2px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+
+  i { font-size: 0.75rem; transform: scale(0); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+}
+
+.cm-q__text {
+  font-size: var(--fs-lg);
+  line-height: 1.7;
+  color: var(--text-1);
+  transition: color 0.2s ease;
+  overflow-wrap: anywhere;
+}
+
+/* ─────────── done ─────────── */
+
+.cm-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.cm-done__ic {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  margin-bottom: 0.9rem;
+  border-radius: 50%;
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: 2rem;
+  animation: cm-trophy 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes cm-trophy {
+  0% { transform: scale(0) rotate(-30deg); }
+  70% { transform: scale(1.12) rotate(6deg); }
+  100% { transform: none; }
+}
+
+.cm-done__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+
+  i { color: var(--success); }
+}
+
+.cm-kbd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0.9rem 0 0;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+
+  kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 0.3rem;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-1);
+    color: var(--text-2);
+    font-size: 0.65rem;
+  }
+}
+
+.cm-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cm-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 120px;
+  justify-content: center;
+}
+
+/* Chevrons point along the reading direction. */
+:host-context([dir='rtl']) .cm-flip { transform: scaleX(-1); }
+
+@include bp.down(md) {
+  .cm-stage { padding: 1rem; }
+  .cm-text { font-size: var(--fs-xl); }
+  .cm-q__text { font-size: var(--fs-md); }
+  .cm-dot { width: 28px; height: 28px; font-size: 0.65rem; }
+  .cm-rail__track { inset-inline: 14px; }
+  .cm-kbd { display: none; }
+  .cm-nav { flex: 1; min-width: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-stage, .cm-stage__ic, .cm-questions li, .cm-done__ic, .cm-dot.is-on { animation: none !important; }
+  .cm-rail__fill, .cm-dot, .cm-q, .cm-q__box i { transition: none; }
+}

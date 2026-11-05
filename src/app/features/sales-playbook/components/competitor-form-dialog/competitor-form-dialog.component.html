@@ -1,0 +1,96 @@
+<app-modal
+  [open]="true"
+  [title]="(isEdit() ? 'salesPlaybook.form.editTitle.competitors' : 'salesPlaybook.form.createTitle.competitors') | translate"
+  icon="fa-solid fa-chess-knight"
+  iconTone="info"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="close()">
+
+  <form class="pf" [formGroup]="form" (ngSubmit)="submit()" novalidate id="pb-competitor-form">
+    <div class="pf-grid">
+      <div class="pf-field">
+        <label class="form-label fw-600" for="pf-c-name">{{ 'salesPlaybook.form.competitorName' | translate }}</label>
+        <input id="pf-c-name" class="form-control" formControlName="name" dir="auto"
+               [maxlength]="limits.name"
+               [class.is-invalid]="form.controls.name.invalid && form.controls.name.touched"
+               [placeholder]="'salesPlaybook.form.competitorNamePh' | translate" />
+        <app-form-error [control]="form.controls.name" [label]="'salesPlaybook.form.competitorName' | translate" />
+      </div>
+
+      <div class="pf-field">
+        <label class="form-label fw-600" for="pf-c-site">
+          {{ 'salesPlaybook.form.website' | translate }}
+          <span class="pf-optional">{{ 'salesPlaybook.form.optional' | translate }}</span>
+        </label>
+        <input id="pf-c-site" class="form-control" formControlName="website" dir="ltr" inputmode="url"
+               [maxlength]="limits.website" placeholder="example.com" />
+      </div>
+
+      <section class="pf-section">
+        <h6 class="pf-section-title"><i class="fa-solid fa-arrow-trend-up"></i>{{ 'salesPlaybook.competitors.strengths' | translate }}</h6>
+        <app-pb-list-field formControlName="strengths" bullet="plus" [maxItems]="10"
+                           [placeholder]="'salesPlaybook.form.strengthPh' | translate"
+                           [addLabel]="'salesPlaybook.form.addPoint' | translate" />
+      </section>
+
+      <section class="pf-section">
+        <h6 class="pf-section-title"><i class="fa-solid fa-arrow-trend-down"></i>{{ 'salesPlaybook.competitors.weaknesses' | translate }}</h6>
+        <app-pb-list-field formControlName="weaknesses" bullet="minus" [maxItems]="10"
+                           [placeholder]="'salesPlaybook.form.weaknessPh' | translate"
+                           [addLabel]="'salesPlaybook.form.addPoint' | translate" />
+      </section>
+
+      <div class="pf-field pf-span">
+        <label class="form-label fw-600" for="pf-c-win">
+          {{ 'salesPlaybook.competitors.howToWin' | translate }}
+          <span class="pf-optional">{{ 'salesPlaybook.form.optional' | translate }}</span>
+        </label>
+        <textarea id="pf-c-win" class="form-control" rows="3" formControlName="howToWin" dir="auto"
+                  [maxlength]="limits.howToWin"
+                  [placeholder]="'salesPlaybook.form.howToWinPh' | translate"></textarea>
+      </div>
+
+      <div class="pf-field pf-span">
+        <label class="form-label fw-600">{{ 'salesPlaybook.competitors.mentionedBy' | translate }}</label>
+        <app-multi-select formControlName="mentionIds"
+                          [options]="customerOptions()"
+                          [loading]="customersLoading()"
+                          [maxVisibleChips]="4"
+                          [showBulkActions]="false"
+                          [placeholder]="'salesPlaybook.form.mentionsPh' | translate"
+                          [searchPlaceholder]="'salesPlaybook.form.searchCustomers' | translate"
+                          [emptyText]="'salesPlaybook.form.noCustomers' | translate"
+                          [loadingLabel]="'salesPlaybook.form.loading' | translate"
+                          [selectedSuffix]="'salesPlaybook.form.selectedSuffix' | translate" />
+        <small class="pf-hint">
+          @if (customersFailed()) {
+            <i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i>{{ 'salesPlaybook.form.customersFailed' | translate }}
+          } @else {
+            {{ 'salesPlaybook.form.mentionsHint' | translate }}
+          }
+        </small>
+      </div>
+    </div>
+
+    @if (serverError()) {
+      <div class="alert alert-danger d-flex gap-2 align-items-start mt-3 mb-0" role="alert">
+        <i class="fa-solid fa-circle-exclamation mt-1"></i><span>{{ serverError() }}</span>
+      </div>
+    }
+  </form>
+
+  <div modal-footer class="btn-row justify-content-end w-100">
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="close()">
+      {{ 'salesPlaybook.form.cancel' | translate }}
+    </button>
+    <button type="submit" form="pb-competitor-form" class="btn btn-primary" [disabled]="submitting()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>{{ 'salesPlaybook.form.saving' | translate }}
+      } @else {
+        <i class="fa-solid fa-floppy-disk me-1"></i>{{ 'salesPlaybook.form.save' | translate }}
+      }
+    </button>
+  </div>
+</app-modal>

@@ -72,6 +72,7 @@
     @if (source(); as src) {
       <app-wa-thread
         [source]="src"
+        [contactName]="activeChat()?.customerName || activeChat()?.contactName || null"
         [showSender]="true"
         [canReconnect]="!!relinkTarget() || !isAdmin()"
         (read)="onRead($event)"

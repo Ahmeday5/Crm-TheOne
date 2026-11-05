@@ -107,6 +107,7 @@
 }
 
 <app-wa-composer
+  [contactName]="contactName()"
   [sending]="sending()"
   [disabled]="!!store.blockReason() || !source()"
   (submitted)="onSubmit($event)" />

@@ -14,6 +14,7 @@ import { TRANSLATIONS, interpolate, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { QuickReplyPickerComponent, fillReplyPlaceholders } from '../../../sales-playbook';
 import {
   AttachmentProblem,
   WHATSAPP_ACCEPT,
@@ -53,7 +54,7 @@ const MAX_TEXTAREA_PX = 140;
 @Component({
   selector: 'app-wa-composer',
   standalone: true,
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, QuickReplyPickerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './wa-composer.component.html',
   styleUrl: './wa-composer.component.scss',
@@ -66,6 +67,8 @@ export class WaComposerComponent implements OnDestroy {
   readonly sending = input(false);
   /** The thread can't send (no permission, number disconnected). */
   readonly disabled = input(false);
+  /** Customer's name — fills `{name}` in quick replies when known. */
+  readonly contactName = input<string | null>(null);
 
   readonly submitted = output<WaComposerSubmit>();
 
@@ -121,6 +124,23 @@ export class WaComposerComponent implements OnDestroy {
     if (!pasted || this.disabled()) return;
     event.preventDefault();
     this.attach(pasted);
+  }
+
+  /** A sales-playbook quick reply goes in at the caret (replacing any selection) — never auto-sent. */
+  protected insertReply(raw: string): void {
+    const el = this.textarea()?.nativeElement;
+    const snippet = fillReplyPlaceholders(raw, { name: this.contactName() });
+    const current = this.text();
+    const start = el?.selectionStart ?? current.length;
+    const end = el?.selectionEnd ?? current.length;
+    const next = (current.slice(0, start) + snippet + current.slice(end)).slice(0, this.maxLength());
+    const caret = Math.min(start + snippet.length, next.length);
+    this.text.set(next);
+    if (!el) return;
+    el.value = next;
+    this.autoGrow(el);
+    el.focus();
+    el.setSelectionRange(caret, caret);
   }
 
   // ─────────────── attachment ───────────────

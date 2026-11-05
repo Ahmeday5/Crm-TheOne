@@ -63,8 +63,11 @@ export class PushNotificationsService {
             appId: cfg.appId,
           });
 
+      // Own scope: the root scope `/` belongs to the PWA service worker
+      // (ngsw). Push delivery doesn't depend on scope.
       const registration = await navigator.serviceWorker.register(
         '/firebase-messaging-sw.js',
+        { scope: '/firebase-cloud-messaging-push-scope' },
       );
 
       if (Notification.permission === 'denied') {

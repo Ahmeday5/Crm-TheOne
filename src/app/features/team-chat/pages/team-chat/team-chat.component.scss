@@ -1,0 +1,246 @@
+@use 'breakpoints' as bp;
+
+/*
+ * Three-pane chat: list | thread | details.
+ * Desktop: list + thread side by side, details slides in on demand.
+ * Tablet/phone: one pane at a time — the URL decides list vs. thread.
+ */
+
+.tc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  height: calc(100dvh - var(--header-h) - 3rem);
+  min-height: 520px;
+}
+
+.tc-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: var(--info-soft);
+  color: var(--info);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+}
+
+.tc-shell {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface-0);
+  box-shadow: var(--shadow-sm);
+  transition: grid-template-columns 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.info-open .tc-shell { grid-template-columns: 340px minmax(0, 1fr) 300px; }
+
+.tc-list {
+  min-width: 0;
+  min-height: 0;
+  border-inline-end: 1px solid var(--border);
+}
+
+.tc-thread { min-width: 0; min-height: 0; }
+
+/* ─────────── details panel ─────────── */
+
+.tc-info {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  border-inline-start: 1px solid var(--border);
+  background: var(--surface-0);
+  animation: tc-slide 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes tc-slide {
+  from { opacity: 0; transform: translateX(var(--tc-shift, -16px)); }
+  to   { opacity: 1; transform: none; }
+}
+:host-context([dir='ltr']) .tc-info { --tc-shift: 16px; }
+
+.tc-info-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+
+  h6 { margin: 0; font-weight: var(--fw-700); }
+}
+
+.tc-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-3);
+
+  &:hover { background: var(--surface-2); color: var(--text-1); }
+}
+
+.tc-info-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 1.5rem 1rem 1rem;
+  text-align: center;
+
+  h5 { margin: 0.4rem 0 0; font-weight: var(--fw-700); }
+  p { margin: 0; color: var(--text-3); font-size: var(--fs-sm); }
+}
+
+.tc-hero-ic {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-xl);
+  background: var(--brand-soft);
+  color: var(--brand-500);
+  font-size: 1.8rem;
+}
+
+.tc-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.85rem 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.tc-info-label {
+  margin-bottom: 0.3rem;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-700);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.tc-members {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.3rem;
+    border-radius: var(--radius-md);
+    transition: background-color 0.2s ease;
+
+    &:hover { background: var(--surface-2); }
+    &:hover .tc-member-msg { opacity: 1; }
+  }
+}
+
+.tc-member-avatar { position: relative; display: inline-flex; }
+
+.tc-presence {
+  position: absolute;
+  bottom: -1px;
+  inset-inline-end: -1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--surface-0);
+  background: var(--text-muted);
+
+  &.is-online { background: var(--success); }
+  &.is-away { background: var(--warning); }
+}
+
+.tc-member-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+
+  strong { font-size: var(--fs-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  small { color: var(--text-3); font-size: var(--fs-xs); }
+}
+
+.tc-member-msg {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand-500);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+
+  @media (hover: none) { opacity: 1; }
+}
+
+.tc-setting {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.4rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  text-align: start;
+
+  i { width: 18px; color: var(--text-3); }
+  &:hover { background: var(--surface-2); }
+}
+
+/* ─────────── responsive ─────────── */
+
+@include bp.down(xl) {
+  .info-open .tc-shell { grid-template-columns: 300px minmax(0, 1fr); }
+
+  /* Details become an overlay drawer on narrower screens. */
+  .tc-info {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0;
+    z-index: 3;
+    width: min(320px, 90%);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+@include bp.down(lg) {
+  .tc { height: calc(100dvh - var(--header-h) - var(--bottom-offset, 0px) - 2rem); }
+
+  .tc-shell,
+  .info-open .tc-shell { grid-template-columns: minmax(0, 1fr); }
+
+  .tc-thread { display: none; }
+  .has-active .tc-list { display: none; }
+  .has-active .tc-thread { display: block; animation: tc-page 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+}
+
+@keyframes tc-page {
+  from { opacity: 0; transform: translateX(var(--tc-shift, -24px)); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-shell { transition: none; }
+  .tc-info, .has-active .tc-thread { animation: none !important; }
+}

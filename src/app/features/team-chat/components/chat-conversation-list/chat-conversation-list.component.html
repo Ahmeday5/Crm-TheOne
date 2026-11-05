@@ -1,0 +1,110 @@
+<div class="cl">
+  <header class="cl-head">
+    <div class="cl-title">
+      <h4>{{ 'teamChat.title' | translate }}</h4>
+      @if (store.totalUnread()) {
+        <span class="cl-total">{{ store.totalUnread() }}</span>
+      }
+    </div>
+    <button type="button" class="cl-icon-btn" [class.is-on]="showPeople()"
+            [attr.aria-pressed]="showPeople()"
+            [attr.aria-label]="'teamChat.newChat' | translate"
+            [title]="'teamChat.newChat' | translate"
+            (click)="showPeople.set(!showPeople())">
+      <i class="fa-solid fa-pen-to-square"></i>
+    </button>
+  </header>
+
+  <label class="cl-search">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="search" [placeholder]="'teamChat.search' | translate"
+           [value]="store.search()" (input)="store.search.set($any($event.target).value)" />
+  </label>
+
+  <!-- People strip: start a direct chat -->
+  <div class="cl-people" [class.is-open]="showPeople()">
+    <div class="cl-people-inner">
+      <span class="cl-people-label">
+        {{ 'teamChat.colleagues' | translate }}
+        <small>· {{ 'teamChat.onlineCount' | translate: { count: store.onlineCount() } }}</small>
+      </span>
+      <div class="cl-people-row">
+        @for (u of store.colleagues(); track u.id) {
+          <button type="button" class="cl-person" (click)="startDirect.emit(u.id); showPeople.set(false)" [title]="u.name">
+            <span class="cl-avatar">
+              <app-user-avatar [name]="u.name" [imageUrl]="u.imageUrl" size="md" />
+              <span class="cl-presence is-{{ u.presence }}"></span>
+            </span>
+            <span class="cl-person-name">{{ u.name.split(' ')[0] }}</span>
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="cl-tabs" role="tablist">
+    @for (f of filters; track f) {
+      <button type="button" role="tab" class="cl-tab" [class.is-on]="store.filter() === f"
+              [attr.aria-selected]="store.filter() === f" (click)="store.filter.set(f)">
+        {{ 'teamChat.filters.' + f | translate }}
+      </button>
+    }
+  </div>
+
+  <ul class="cl-list" role="list">
+    @for (c of store.visibleConversations(); track c.id; let i = $index) {
+      @let p = peer(c);
+      <li [style.--i]="i">
+        <button type="button" class="cl-item"
+                [class.is-active]="store.activeId() === c.id"
+                [class.is-unread]="c.unreadCount > 0"
+                (click)="select.emit(c.id)">
+          <span class="cl-avatar">
+            @if (c.kind === 'channel') {
+              <span class="cl-channel-ic"><i [class]="c.icon || 'fa-solid fa-hashtag'"></i></span>
+            } @else {
+              <app-user-avatar [name]="c.title" [imageUrl]="p?.imageUrl" size="md" />
+              @if (p) { <span class="cl-presence is-{{ p.presence }}"></span> }
+            }
+          </span>
+
+          <span class="cl-body">
+            <span class="cl-row">
+              <span class="cl-name">
+                {{ c.title }}
+                @if (c.isMuted) { <i class="fa-solid fa-bell-slash cl-muted"></i> }
+              </span>
+              <span class="cl-time">{{ time(c) }}</span>
+            </span>
+            <span class="cl-row">
+              @if (store.typingIn().has(c.id)) {
+                <span class="cl-typing">
+                  <span class="cl-dots"><i></i><i></i><i></i></span>{{ 'teamChat.typing' | translate }}
+                </span>
+              } @else {
+                <span class="cl-preview">
+                  @if (isMineLast(c)) {
+                    <i class="fa-solid cl-tick"
+                       [class.fa-check]="c.lastMessage?.status === 'sent' || c.lastMessage?.status === 'sending'"
+                       [class.fa-check-double]="c.lastMessage?.status === 'delivered' || c.lastMessage?.status === 'read'"
+                       [class.is-read]="c.lastMessage?.status === 'read'"></i>
+                  }
+                  {{ preview(c) }}
+                </span>
+              }
+              @if (c.isPinned) { <i class="fa-solid fa-thumbtack cl-pin"></i> }
+              @if (c.unreadCount) {
+                <span class="cl-badge" [class.is-muted]="c.isMuted">{{ c.unreadCount }}</span>
+              }
+            </span>
+          </span>
+        </button>
+      </li>
+    } @empty {
+      <li class="cl-empty">
+        <i class="fa-regular fa-comments"></i>
+        {{ 'teamChat.noConversations' | translate }}
+      </li>
+    }
+  </ul>
+</div>

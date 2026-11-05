@@ -2,39 +2,19 @@ import { Routes } from '@angular/router';
 
 export const SALES_PHASES_ROUTES: Routes = [
   {
-    path: '',
+    // Formerly the "sales line" shell with price-offers / contracts /
+    // follow-ups tabs — it is now the price-offers page on its own.
+    path: 'price-offers',
+    title: 'عروض الأسعار',
+    data: { roles: ['Admin', 'Sales'] },
     loadComponent: () =>
-      import('./pages/sales-phase/sales-phase.component').then(
-        (m) => m.SalesPhaseComponent,
+      import('./pages/price-offers/price-offers.component').then(
+        (m) => m.PriceOffersComponent,
       ),
-    children: [
-      { path: '', redirectTo: 'price-offers', pathMatch: 'full' },
-      {
-        path: 'price-offers',
-        title: 'عروض الاسعار',
-        loadComponent: () =>
-          import('./pages/price-offers/price-offers.component').then(
-            (m) => m.PriceOffersComponent,
-          ),
-      },
-      {
-        path: 'contracts',
-        title: 'العقود',
-        loadComponent: () =>
-          import('./pages/contracts/contracts.component').then(
-            (m) => m.ContractsComponent,
-          ),
-      },
-      {
-        path: 'follow-ups',
-        title: 'المتابعات',
-        loadComponent: () =>
-          import('./pages/follow-ups/follow-ups.component').then(
-            (m) => m.FollowUpsComponent,
-          ),
-      },
-    ],
   },
+  // Old tab URLs (bookmarks, notification links) → their current home.
+  { path: 'contracts', redirectTo: 'contracts-management', pathMatch: 'full' },
+  { path: 'follow-ups', redirectTo: 'price-offers', pathMatch: 'full' },
   {
     path: 'view-details-deal',
     title: 'تفاصيل الصفقة',

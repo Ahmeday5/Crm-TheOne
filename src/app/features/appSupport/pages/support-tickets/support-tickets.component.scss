@@ -4,16 +4,6 @@
   display: block;
 }
 
-/* search field affix */
-.search-icon {
-  position: absolute;
-  top: 50%;
-  inset-inline-start: 0.9rem;
-  transform: translateY(-50%);
-  color: var(--text-3);
-  font-size: 0.85rem;
-  pointer-events: none;
-}
 
 .tkt-table {
   .table > thead th {

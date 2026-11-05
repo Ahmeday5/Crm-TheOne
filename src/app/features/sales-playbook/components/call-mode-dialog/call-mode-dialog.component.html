@@ -1,0 +1,97 @@
+@let s = script();
+<app-modal [open]="true" [title]="s.title" icon="fa-solid fa-phone-volume" iconTone="success" size="xl"
+           (closed)="closed.emit()">
+  <div class="cm" [class.is-back]="direction() === -1">
+    <!-- Progress rail -->
+    <div class="cm-rail" role="tablist" [attr.aria-label]="'salesPlaybook.call.title' | translate">
+      <span class="cm-rail__track" aria-hidden="true">
+        <span class="cm-rail__fill" [style.--p]="progress() / 100"></span>
+      </span>
+      @for (st of stages(); track st.key; let i = $index) {
+        <button #dot type="button" class="cm-dot" role="tab"
+                [class.is-done]="i < index()" [class.is-on]="i === index()"
+                [attr.aria-selected]="i === index()"
+                [attr.aria-label]="stageLabel(st)" [title]="stageLabel(st)"
+                (click)="go(i)">
+          @if (i < index()) { <i class="fa-solid fa-check"></i> } @else { <i [class]="icon(st.kind)"></i> }
+        </button>
+      }
+    </div>
+
+    <div class="cm-meta">
+      @if (!finished()) {
+        <span class="cm-counter">{{ 'salesPlaybook.call.stageOf' | translate: { n: index() + 1, total: total() } }}</span>
+      } @else {
+        <span class="cm-counter is-done"><i class="fa-solid fa-circle-check me-1"></i>{{ 'salesPlaybook.call.finished' | translate }}</span>
+      }
+      <span class="cm-pct">{{ progress() }}%</span>
+    </div>
+
+    <!-- Stage -->
+    <div class="cm-stage-wrap" aria-live="polite">
+      @for (st of current(); track st.key) {
+        <section class="cm-stage cm-stage--{{ st.kind }}">
+          <header class="cm-stage__head">
+            <span class="cm-stage__ic" aria-hidden="true"><i [class]="icon(st.kind)"></i></span>
+            <h4 class="cm-stage__title">{{ stageLabel(st) }}</h4>
+            @if (st.text) { <app-pb-copy-button [text]="st.text" [compact]="true" /> }
+          </header>
+
+          @if (st.kind === 'questions') {
+            <p class="cm-hint">{{ 'salesPlaybook.call.questionsHint' | translate: { n: asked().size, total: s.questions.length } }}</p>
+            <ul class="cm-questions">
+              @for (q of s.questions; track $index; let qi = $index) {
+                <li [style.--i]="qi">
+                  <label class="cm-q" [class.is-on]="asked().has(qi)">
+                    <input type="checkbox" [checked]="asked().has(qi)" (change)="toggleAsked(qi)" />
+                    <span class="cm-q__box" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                    <span class="cm-q__text" dir="auto">{{ q }}</span>
+                  </label>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="cm-text" dir="auto">{{ st.text }}</p>
+          }
+        </section>
+      } @empty {
+        <section class="cm-stage cm-done">
+          <span class="cm-done__ic" aria-hidden="true"><i class="fa-solid fa-trophy"></i></span>
+          <h4 class="cm-stage__title">{{ 'salesPlaybook.call.doneTitle' | translate }}</h4>
+          <p class="cm-hint mb-3">{{ 'salesPlaybook.call.doneHint' | translate }}</p>
+          @if (s.questions.length) {
+            <span class="cm-done__stat">
+              <i class="fa-solid fa-list-check"></i>
+              {{ 'salesPlaybook.call.questionsHint' | translate: { n: asked().size, total: s.questions.length } }}
+            </span>
+          }
+        </section>
+      }
+    </div>
+
+    <p class="cm-kbd" aria-hidden="true">
+      <kbd><i class="fa-solid" [class.fa-arrow-right]="isRtl()" [class.fa-arrow-left]="!isRtl()"></i></kbd>
+      <kbd><i class="fa-solid" [class.fa-arrow-left]="isRtl()" [class.fa-arrow-right]="!isRtl()"></i></kbd>
+      {{ 'salesPlaybook.call.keyboardHint' | translate }}
+    </p>
+  </div>
+
+  <div modal-footer class="cm-foot w-100">
+    @if (finished()) {
+      <button type="button" class="btn btn-light" (click)="restart()">
+        <i class="fa-solid fa-rotate-left me-1"></i>{{ 'salesPlaybook.call.restart' | translate }}
+      </button>
+      <button type="button" class="btn btn-success" (click)="closed.emit()">
+        <i class="fa-solid fa-check me-1"></i>{{ 'salesPlaybook.call.close' | translate }}
+      </button>
+    } @else {
+      <button type="button" class="btn btn-light cm-nav" [disabled]="index() === 0" (click)="prev()">
+        <i class="fa-solid cm-flip fa-chevron-left"></i>{{ 'salesPlaybook.call.prev' | translate }}
+      </button>
+      <button type="button" class="btn btn-primary cm-nav" (click)="next()">
+        {{ (index() === total() - 1 ? 'salesPlaybook.call.finish' : 'salesPlaybook.call.next') | translate }}
+        <i class="fa-solid cm-flip fa-chevron-right"></i>
+      </button>
+    }
+  </div>
+</app-modal>

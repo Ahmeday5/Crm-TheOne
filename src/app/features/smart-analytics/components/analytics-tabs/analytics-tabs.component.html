@@ -1,0 +1,22 @@
+<nav class="sa-tabs" role="tablist" [attr.aria-label]="'smartAnalytics.sectionsLabel' | translate">
+  @for (tab of tabs(); track tab.id; let i = $index) {
+    <button type="button" class="sa-tab" role="tab"
+            [id]="'sa-tab-' + tab.id"
+            [attr.aria-controls]="'sa-panel-' + tab.id"
+            [attr.aria-selected]="active() === tab.id"
+            [attr.tabindex]="active() === tab.id ? 0 : -1"
+            [class.is-on]="active() === tab.id"
+            [style.--i]="i"
+            (click)="tabChange.emit(tab.id)"
+            (keydown)="onKeydown($event, i)">
+      <span class="sa-tab-ic"><i [class]="tab.icon"></i></span>
+      <span class="sa-tab-text">
+        <span class="sa-tab-label">{{ 'smartAnalytics.tabs.' + tab.id | translate }}</span>
+        <span class="sa-tab-hint">
+          @if (tab.restricted) { <i class="fa-solid fa-lock"></i> }
+          {{ 'smartAnalytics.tabHints.' + tab.id | translate }}
+        </span>
+      </span>
+    </button>
+  }
+</nav>

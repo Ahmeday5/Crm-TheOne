@@ -66,9 +66,9 @@
           <span class="text-danger">*</span>
         </label>
         <select class="form-select" formControlName="status">
-          @for (s of statuses; track s.code) {
-            <option [ngValue]="s.code">
-              {{ 'sales.contractsMgmt.status.' + s.name.toLowerCase() | translate }}
+          @for (s of statuses; track s) {
+            <option [ngValue]="s">
+              {{ 'sales.contractsMgmt.status.' + s.toLowerCase() | translate }}
             </option>
           }
         </select>

@@ -4,6 +4,8 @@
   <app-sidebar></app-sidebar>
 
   <main class="app-main" [@fadeIn]>
+    <!-- Live announcements: sticky above every page, minimisable, never closable -->
+    <app-announcement-banner></app-announcement-banner>
     <div class="container-fluid py-3 py-lg-4">
       <router-outlet></router-outlet>
     </div>
@@ -13,3 +15,9 @@
 
 <!-- Real-time notification toasts (global, bottom-right) -->
 <app-notification-toasts></app-notification-toasts>
+
+<!-- Phones & tablets: Home · workspace · chat · notifications · menu -->
+<app-bottom-nav></app-bottom-nav>
+
+<!-- Ctrl+K, keyboard shortcuts, onboarding tour, PWA update prompt -->
+<app-command-center></app-command-center>

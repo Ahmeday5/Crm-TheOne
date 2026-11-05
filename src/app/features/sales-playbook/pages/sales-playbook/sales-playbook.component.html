@@ -1,0 +1,121 @@
+<section class="pb-page">
+  <!-- Hero -->
+  <header class="pb-hero">
+    <div class="pb-hero__main">
+      <span class="icon-tile xl tone-primary flex-shrink-0 pb-hero__ic"><i class="fa-solid fa-book-open-reader"></i></span>
+      <div class="min-w-0">
+        <h3 class="fw-700 mb-1">{{ 'salesPlaybook.title' | translate }}</h3>
+        <p class="text-muted mb-0">{{ (isAdmin() ? 'salesPlaybook.subtitleAdmin' : 'salesPlaybook.subtitle') | translate }}</p>
+      </div>
+    </div>
+    @if (isAdmin()) {
+      <button type="button" class="btn btn-primary pb-ready" [disabled]="importing() || !loaded()"
+              [appTip]="'salesPlaybook.readyContent.tip' | translate"
+              (click)="loadReadyContent()">
+        @if (importing()) {
+          <span class="spinner-border spinner-border-sm"></span>{{ 'salesPlaybook.readyContent.loading' | translate }}
+        } @else {
+          <i class="fa-solid fa-wand-magic-sparkles"></i>{{ 'salesPlaybook.readyContent.button' | translate }}
+        }
+      </button>
+    }
+  </header>
+
+  <!-- KPIs -->
+  <div class="pb-stats">
+    <app-stat-card [label]="'salesPlaybook.tabs.scripts' | translate" [value]="counts().scripts"
+                   [icon]="kindIcon.scripts" tone="primary" />
+    <app-stat-card [label]="'salesPlaybook.tabs.objections' | translate" [value]="counts().objections"
+                   [icon]="kindIcon.objections" tone="warning" />
+    <app-stat-card [label]="'salesPlaybook.tabs.competitors' | translate" [value]="counts().competitors"
+                   [icon]="kindIcon.competitors" tone="info" />
+    <app-stat-card [label]="'salesPlaybook.tabs.replies' | translate" [value]="counts().replies"
+                   [icon]="kindIcon.replies" tone="success" />
+  </div>
+
+  <!-- Tabs -->
+  <div class="pb-tabs" role="tablist" [attr.aria-label]="'salesPlaybook.title' | translate"
+       [style.--idx]="tabIndex()" (keydown)="onTabKey($event)">
+    <span class="pb-tabs__ink" aria-hidden="true"></span>
+    @for (k of kinds; track k) {
+      <button type="button" role="tab" class="pb-tab" [id]="'pb-tab-' + k"
+              [class.is-on]="tab() === k"
+              [attr.aria-selected]="tab() === k"
+              [attr.aria-controls]="'pb-panel'"
+              [attr.tabindex]="tab() === k ? 0 : -1"
+              (click)="selectTab(k)">
+        <i [class]="kindIcon[k]" aria-hidden="true"></i>
+        <span class="pb-tab__label">{{ 'salesPlaybook.tabs.' + k | translate }}</span>
+        <span class="pb-tab__count">{{ counts()[k] }}</span>
+      </button>
+    }
+  </div>
+
+  <div id="pb-panel" role="tabpanel" [attr.aria-labelledby]="'pb-tab-' + tab()" class="pb-panel">
+    @if (error() && !loaded()) {
+      <app-load-error [message]="'salesPlaybook.messages.loadFailed' | translate" [loading]="loading()" (retry)="reload()" />
+    } @else if (!loaded()) {
+      <div class="pb-skeletons">
+        @for (i of [1, 2, 3]; track i) { <div class="pb-skeleton" [style.--i]="i"></div> }
+      </div>
+    } @else {
+      @if (isEmpty() && isAdmin()) {
+        <div class="pb-onboard">
+          <span class="pb-onboard__ic" aria-hidden="true"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+          <div class="min-w-0">
+            <strong class="d-block">{{ 'salesPlaybook.readyContent.onboardTitle' | translate }}</strong>
+            <span class="text-muted small">{{ 'salesPlaybook.readyContent.onboardText' | translate }}</span>
+          </div>
+          <button type="button" class="btn btn-sm btn-primary" [disabled]="importing()" (click)="loadReadyContent()">
+            {{ 'salesPlaybook.readyContent.button' | translate }}
+          </button>
+        </div>
+      }
+      @switch (tab()) {
+        @case ('scripts') { <app-pb-scripts-panel class="pb-switch" /> }
+        @case ('objections') { <app-pb-objections-panel class="pb-switch" /> }
+        @case ('competitors') { <app-pb-competitors-panel class="pb-switch" /> }
+        @case ('replies') { <app-pb-replies-panel class="pb-switch" /> }
+      }
+    }
+  </div>
+</section>
+
+@if (importResult(); as r) {
+  <app-modal [open]="true" [title]="'salesPlaybook.readyContent.resultTitle' | translate"
+             [icon]="importAdded() ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-info'"
+             [iconTone]="importAdded() ? 'success' : 'info'" size="md" (closed)="importResult.set(null)">
+    <p class="text-muted mb-3">
+      {{ (importAdded() ? 'salesPlaybook.readyContent.resultIntro' : 'salesPlaybook.readyContent.nothingNew') | translate }}
+    </p>
+    <ul class="pb-result">
+      <li style="--i: 0">
+        <span class="pb-result__ic tone-primary"><i [class]="kindIcon.scripts"></i></span>
+        <span>{{ 'salesPlaybook.readyContent.addedScripts' | translate: { n: r.added.scripts } }}</span>
+      </li>
+      <li style="--i: 1">
+        <span class="pb-result__ic tone-warning"><i [class]="kindIcon.objections"></i></span>
+        <span>{{ 'salesPlaybook.readyContent.addedObjections' | translate: { n: r.added.objections } }}</span>
+      </li>
+      <li style="--i: 2">
+        <span class="pb-result__ic tone-success"><i [class]="kindIcon.replies"></i></span>
+        <span>{{ 'salesPlaybook.readyContent.addedReplies' | translate: { n: r.added.replies } }}</span>
+      </li>
+      <li style="--i: 3">
+        <span class="pb-result__ic tone-muted"><i class="fa-solid fa-clone"></i></span>
+        <span>{{ 'salesPlaybook.readyContent.skipped' | translate: { n: r.skipped } }}</span>
+      </li>
+    </ul>
+    @if (r.unlinkedScripts > 0) {
+      <p class="pb-result__warn">
+        <i class="fa-solid fa-link-slash"></i>
+        <span>{{ 'salesPlaybook.readyContent.unlinked' | translate: { n: r.unlinkedScripts } }}</span>
+      </p>
+    }
+    <ng-container modal-footer>
+      <button type="button" class="btn btn-primary" (click)="importResult.set(null)">
+        {{ 'salesPlaybook.readyContent.done' | translate }}
+      </button>
+    </ng-container>
+  </app-modal>
+}

@@ -4,15 +4,6 @@
 @include report.page;
 
 .sales-analysis {
-  /* ─────────── Search field icon (RTL/LTR aware) ─────────── */
-  .search-icon {
-    position: absolute;
-    inset-inline-start: 0.85rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-3);
-    pointer-events: none;
-  }
 
   /* ─────────── Info / how-data-flows card ─────────── */
   .info-card {

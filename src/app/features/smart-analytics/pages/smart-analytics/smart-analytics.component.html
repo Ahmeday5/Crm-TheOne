@@ -1,0 +1,247 @@
+<section class="sa-page">
+  <!-- Header -->
+  <header class="sa-header">
+    <div class="d-flex align-items-center gap-3 min-w-0">
+      <span class="icon-tile xl tone-primary flex-shrink-0 sa-hero-ic"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+      <div class="min-w-0">
+        <h3 class="fw-700 mb-1 sa-title">
+          {{ 'smartAnalytics.title' | translate }}
+          @if (store.isDemo) {
+            <span class="sa-demo" [appTip]="'smartAnalytics.demoTip' | translate">
+              <i class="fa-solid fa-flask"></i>{{ 'smartAnalytics.demo' | translate }}
+            </span>
+          }
+        </h3>
+        <p class="text-muted mb-0">
+          {{ (store.isAdmin() ? 'smartAnalytics.subtitleAdmin' : 'smartAnalytics.subtitle') | translate }}
+        </p>
+      </div>
+    </div>
+
+    <div class="sa-header-tools">
+      @if (showRange()) {
+        <div class="sa-range" role="radiogroup" [attr.aria-label]="'smartAnalytics.range.label' | translate">
+          <i class="fa-regular fa-calendar-days sa-range-ic" aria-hidden="true"></i>
+          @for (r of ranges; track r) {
+            <button type="button" class="sa-range-btn" role="radio"
+                    [class.is-on]="store.range() === r"
+                    [attr.aria-checked]="store.range() === r"
+                    (click)="store.range.set(r)">
+              {{ 'smartAnalytics.range.' + r | translate }}
+            </button>
+          }
+        </div>
+      }
+      <button type="button" class="btn btn-light sa-refresh" (click)="refresh()" [disabled]="refreshing()"
+              [appTip]="'smartAnalytics.refresh' | translate" [attr.aria-label]="'smartAnalytics.refresh' | translate">
+        <i class="fa-solid fa-rotate" [class.fa-spin]="refreshing()"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Section navigation -->
+  <app-analytics-tabs class="mb-4" [tabs]="tabs()" [active]="active()" (tabChange)="selectTab($event)" />
+
+  <div class="sa-panel" role="tabpanel" [id]="'sa-panel-' + active()" [attr.aria-labelledby]="'sa-tab-' + active()">
+    @switch (active()) {
+      <!-- ───────────── 1. Source quality ───────────── -->
+      @case ('sources') {
+        @if (store.sources.error() && !store.sources.loaded()) {
+          <app-load-error [message]="'smartAnalytics.sources.loadFailed' | translate"
+                          [loading]="store.sources.loading()" (retry)="refresh()" />
+        } @else if (!store.sources.loaded()) {
+          <div class="sa-skel-row three mb-3">
+            @for (i of [1, 2, 3]; track i) { <div class="sa-skel h-110"></div> }
+          </div>
+          <div class="sa-skel h-420"></div>
+        } @else {
+          <app-source-quality-panel
+            [summary]="store.sourceSummary()"
+            [dimension]="store.dimension()"
+            [refreshing]="refreshing()"
+            (dimensionChange)="store.dimension.set($event)" />
+        }
+      }
+
+      <!-- ───────────── 2. Best time to contact ───────────── -->
+      @case ('timing') {
+        @if (store.contact.error() && !store.contact.loaded()) {
+          <app-load-error [message]="'smartAnalytics.timing.loadFailed' | translate"
+                          [loading]="store.contact.loading()" (retry)="refresh()" />
+        } @else if (!store.contact.loaded()) {
+          <div class="sa-skel-row four mb-3">
+            @for (i of [1, 2, 3, 4]; track i) { <div class="sa-skel h-90"></div> }
+          </div>
+          <div class="row g-3">
+            <div class="col-xl-8"><div class="sa-skel h-420"></div></div>
+            <div class="col-xl-4"><div class="sa-skel h-420"></div></div>
+          </div>
+        } @else {
+          @let summary = store.contactSummary();
+          <div class="row g-3 mb-3 sa-stagger">
+            <div class="col-6 col-lg-3" style="--i: 0">
+              <app-stat-card [label]="'smartAnalytics.timing.totalCalls' | translate"
+                             [value]="(summary.totalCalls | number) ?? 0"
+                             icon="fa-solid fa-phone" tone="primary" />
+            </div>
+            <div class="col-6 col-lg-3" style="--i: 1">
+              <app-stat-card [label]="'smartAnalytics.timing.overallRate' | translate"
+                             [value]="(summary.overallRate | number: '1.0-1') + '%'"
+                             [sub]="'smartAnalytics.timing.answeredOf' | translate: { answered: (summary.totalAnswered | number), calls: (summary.totalCalls | number) }"
+                             icon="fa-solid fa-phone-volume" tone="info" />
+            </div>
+            <div class="col-6 col-lg-3" style="--i: 2">
+              <app-stat-card [label]="'smartAnalytics.timing.bestDay' | translate"
+                             [value]="summary.bestDay ? ('smartAnalytics.days.' + summary.bestDay.day | translate) : '—'"
+                             [sub]="summary.bestDay ? ('smartAnalytics.timing.rateValue' | translate: { rate: (summary.bestDay.rate | number: '1.0-1') }) : null"
+                             icon="fa-solid fa-calendar-check" tone="success" />
+            </div>
+            <div class="col-6 col-lg-3" style="--i: 3">
+              <app-stat-card [label]="'smartAnalytics.timing.bestHour' | translate"
+                             [value]="summary.bestHour ? (summary.bestHour.hour | hourLabel: true) : '—'"
+                             [sub]="summary.bestHour ? ('smartAnalytics.timing.rateValue' | translate: { rate: (summary.bestHour.rate | number: '1.0-1') }) : null"
+                             icon="fa-solid fa-business-time" tone="warning" />
+            </div>
+          </div>
+
+          <div class="row g-3" [class.sa-dim]="refreshing()">
+            <div class="col-xl-8">
+              <div class="card h-100 sa-card">
+                <div class="card-header sa-card-head">
+                  <div class="min-w-0">
+                    <h5 class="mb-1"><i class="fa-solid fa-table-cells"></i>{{ 'smartAnalytics.timing.heatmapTitle' | translate }}</h5>
+                    <p class="text-muted mb-0">{{ 'smartAnalytics.timing.subtitle' | translate }}</p>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <app-contact-heatmap [rows]="store.heatmap()" />
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-4">
+              <div class="card h-100 sa-card">
+                <div class="card-header sa-card-head">
+                  <div class="min-w-0">
+                    <h5 class="mb-1"><i class="fa-solid fa-medal"></i>{{ 'smartAnalytics.timing.topTitle' | translate }}</h5>
+                    <p class="text-muted mb-0">{{ 'smartAnalytics.timing.topHint' | translate }}</p>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <app-top-contact-times [slots]="store.topSlots()" />
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      }
+
+      <!-- ───────────── 3. Customer health ───────────── -->
+      @case ('health') {
+        @if (store.health.error() && !store.health.loaded()) {
+          <app-load-error [message]="'smartAnalytics.health.loadFailed' | translate"
+                          [loading]="store.health.loading()" (retry)="refresh()" />
+        } @else if (!store.health.loaded()) {
+          <div class="sa-skel-row two mb-3">
+            <div class="sa-skel h-160"></div>
+            <div class="sa-skel h-160"></div>
+          </div>
+          <div class="sa-skel-row three">
+            @for (i of [1, 2, 3, 4, 5, 6]; track i) { <div class="sa-skel h-110"></div> }
+          </div>
+        } @else {
+          <div class="sa-section-head">
+            <h5 class="mb-1"><i class="fa-solid fa-heart-pulse"></i>{{ 'smartAnalytics.health.title' | translate }}</h5>
+            <p class="text-muted mb-0">{{ 'smartAnalytics.health.subtitle' | translate }}</p>
+          </div>
+          <app-customer-health-panel
+            [customers]="store.customers()"
+            [distribution]="store.distribution()"
+            [refreshing]="refreshing()" />
+        }
+      }
+
+      <!-- ───────────── 4. Monthly performance (Admin) ───────────── -->
+      @case ('performance') {
+        <div class="sa-perf-bar">
+          <div class="sa-section-head mb-0 min-w-0">
+            <h5 class="mb-1">
+              <i class="fa-solid fa-ranking-star"></i>{{ 'smartAnalytics.performance.title' | translate }}
+              <span class="sa-admin-chip"><i class="fa-solid fa-lock"></i>{{ 'smartAnalytics.performance.adminOnly' | translate }}</span>
+            </h5>
+            <p class="text-muted mb-0">{{ 'smartAnalytics.performance.subtitle' | translate }}</p>
+          </div>
+          <div class="sa-perf-tools">
+            @if (store.monthInProgress()) {
+              <span class="sa-live"><span class="sa-live-dot"></span>{{ 'smartAnalytics.performance.month.inProgress' | translate }}</span>
+            }
+            <app-month-picker [month]="store.month()" [min]="store.minMonth" [max]="store.maxMonth"
+                              (monthChange)="store.setMonth($event)" />
+          </div>
+        </div>
+
+        @if (store.performance.error() && !store.performance.loaded()) {
+          <app-load-error [message]="'smartAnalytics.performance.loadFailed' | translate"
+                          [loading]="store.performance.loading()" (retry)="refresh()" />
+        } @else if (!store.performance.loaded()) {
+          <div class="sa-skel-row four mb-3">
+            @for (i of [1, 2, 3, 4]; track i) { <div class="sa-skel h-90"></div> }
+          </div>
+          <div class="sa-skel h-320 mb-3"></div>
+          <div class="sa-skel h-320"></div>
+        } @else {
+          @let team = store.team();
+          <div class="row g-3 mb-3 sa-stagger">
+            <div class="col-6 col-lg-3" style="--i: 0">
+              <app-stat-card [label]="'smartAnalytics.performance.stats.calls' | translate"
+                             [value]="(team.calls | number) ?? 0" icon="fa-solid fa-phone" tone="primary" />
+            </div>
+            <div class="col-6 col-lg-3" style="--i: 1">
+              <app-stat-card [label]="'smartAnalytics.performance.stats.answered' | translate"
+                             [value]="(team.answeredCalls | number) ?? 0"
+                             [sub]="'smartAnalytics.performance.answerRate' | translate: { rate: (team.answerRate | number: '1.0-1') }"
+                             icon="fa-solid fa-phone-volume" tone="info" />
+            </div>
+            <div class="col-6 col-lg-3" style="--i: 2">
+              <app-stat-card [label]="'smartAnalytics.performance.stats.buyers' | translate"
+                             [value]="(team.buyers | number) ?? 0"
+                             [sub]="'smartAnalytics.performance.closeRate' | translate: { rate: (team.closeRate | number: '1.0-1') }"
+                             icon="fa-solid fa-cart-shopping" tone="success" />
+            </div>
+            <div class="col-6 col-lg-3" style="--i: 3">
+              <app-stat-card [label]="'smartAnalytics.performance.stats.reviewed' | translate"
+                             [value]="team.reviewed + ' / ' + team.reps"
+                             [sub]="(team.reviewed === team.reps ? 'smartAnalytics.performance.stats.allReviewed' : 'smartAnalytics.performance.stats.pending') | translate: { n: team.reps - team.reviewed }"
+                             icon="fa-solid fa-star" tone="warning" />
+            </div>
+          </div>
+
+          @if (store.reps().length) {
+            <div class="card sa-card mb-3" [class.sa-dim]="refreshing()">
+              <div class="card-header sa-card-head">
+                <div class="min-w-0">
+                  <h5 class="mb-1"><i class="fa-solid fa-chart-column"></i>{{ 'smartAnalytics.performance.chart.title' | translate }}</h5>
+                  <p class="text-muted mb-0">{{ monthText() }}</p>
+                </div>
+              </div>
+              <div class="card-body">
+                <app-performance-chart [reps]="store.reps()" />
+              </div>
+            </div>
+
+            <app-rep-performance-table [reps]="store.reps()" [refreshing]="refreshing()" (review)="openReview($event)" />
+          } @else {
+            <div class="card">
+              <div class="card-body text-center text-muted py-5">
+                <i class="fa-solid fa-users-slash fa-2x mb-2 d-block"></i>
+                {{ 'smartAnalytics.performance.empty' | translate }}
+              </div>
+            </div>
+          }
+        }
+
+        <app-rep-review-dialog [rep]="reviewing()" [monthLabel]="monthText()" [saving]="saving()"
+                               (closed)="closeReview()" (save)="saveReview($event)" />
+      }
+    }
+  </div>
+</section>

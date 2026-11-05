@@ -35,17 +35,6 @@
   .kpi-card .kpi-value { font-size: 1.3rem; }
 }
 
-.search-icon {
-  position: absolute;
-  inset-inline-end: 0.85rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-3);
-  pointer-events: none;
-}
-/* When the input is in LTR (placeholder is RTL but icon should be on the right
- * inline-end side regardless), we anchor the icon at the inline-end edge and
- * pad the start. Bootstrap's `ps-5` adds the start padding. */
 
 .row-menu {
   position: absolute;

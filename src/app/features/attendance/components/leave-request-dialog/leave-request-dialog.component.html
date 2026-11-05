@@ -1,0 +1,119 @@
+<app-modal
+  [open]="true"
+  [title]="'attendance.leaveForm.title' | translate"
+  icon="fa-solid fa-umbrella-beach"
+  iconTone="info"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="close()">
+
+  <form class="lf" [formGroup]="form" (ngSubmit)="submit()" novalidate id="leave-request-form">
+    <!-- Type -->
+    <fieldset class="mb-3">
+      <legend class="form-label fw-600">{{ 'attendance.leaveForm.type' | translate }}</legend>
+      <div class="lf-types" role="radiogroup">
+        @for (type of types; track type) {
+          <button type="button" role="radio" class="lf-type type-{{ type }}"
+                  [class.is-on]="value().type === type"
+                  [attr.aria-checked]="value().type === type"
+                  (click)="setType(type)">
+            <span class="lf-type-ic"><i [class]="typeIcon[type]"></i></span>
+            <span class="min-w-0">
+              <strong class="d-block">{{ 'attendance.leaveTypes.' + type | translate }}</strong>
+              <small>{{ 'attendance.leaveForm.availableN' | translate: { n: availableOf(type) } }}</small>
+            </span>
+            <i class="fa-solid fa-circle-check lf-type-check" aria-hidden="true"></i>
+          </button>
+        }
+      </div>
+    </fieldset>
+
+    <!-- Dates -->
+    <fieldset class="lf-card mb-3">
+      <legend class="lf-card-title"><i class="fa-regular fa-calendar"></i>{{ 'attendance.leaveForm.period' | translate }}</legend>
+
+      <label class="lf-switch">
+        <input type="checkbox" [checked]="value().halfDay" (change)="toggleHalfDay()" />
+        <span class="lf-switch-track" aria-hidden="true"><span class="lf-switch-thumb"></span></span>
+        <span>
+          <strong class="d-block">{{ 'attendance.leave.halfDay' | translate }}</strong>
+          <small class="text-muted">{{ 'attendance.leaveForm.halfDayHint' | translate }}</small>
+        </span>
+      </label>
+
+      <div class="row g-2 mt-1">
+        <div [class]="value().halfDay ? 'col-12' : 'col-6'">
+          <label class="form-label small" for="lf-from">
+            {{ (value().halfDay ? 'attendance.leaveForm.date' : 'attendance.leaveForm.from') | translate }}
+          </label>
+          <input id="lf-from" type="date" class="form-control" formControlName="from"
+                 [min]="minFrom()" (change)="onFromChange()"
+                 [class.is-invalid]="form.controls.from.invalid && (form.controls.from.touched || submitAttempted())" />
+          <app-form-error [control]="form.controls.from" [label]="'attendance.leaveForm.from' | translate" />
+        </div>
+        @if (!value().halfDay) {
+          <div class="col-6">
+            <label class="form-label small" for="lf-to">{{ 'attendance.leaveForm.to' | translate }}</label>
+            <input id="lf-to" type="date" class="form-control" formControlName="to"
+                   [min]="value().from || minFrom()"
+                   [class.is-invalid]="form.controls.to.invalid && (form.controls.to.touched || submitAttempted())" />
+            <app-form-error [control]="form.controls.to" [label]="'attendance.leaveForm.to' | translate" />
+          </div>
+        }
+      </div>
+
+      @if (ruleError(); as err) {
+        <div class="lf-error" role="alert"><i class="fa-solid fa-circle-exclamation"></i>{{ err | translate }}</div>
+      }
+
+      <!-- Live summary -->
+      <div class="lf-summary" [class.is-bad]="(balanceAfter() ?? 0) < 0">
+        <div>
+          <span>{{ 'attendance.leaveForm.daysCharged' | translate }}</span>
+          <strong>{{ days() }}</strong>
+        </div>
+        <div>
+          <span>{{ 'attendance.leaveForm.balanceNow' | translate }}</span>
+          <strong>{{ balance()?.available ?? '—' }}</strong>
+        </div>
+        <div>
+          <span>{{ 'attendance.leaveForm.balanceAfter' | translate }}</span>
+          <strong>{{ balanceAfter() ?? '—' }}</strong>
+        </div>
+      </div>
+      <p class="lf-note"><i class="fa-solid fa-circle-info"></i>{{ 'attendance.leaveForm.weekendNote' | translate }}</p>
+    </fieldset>
+
+    <!-- Reason -->
+    <div>
+      <label class="form-label fw-600" for="lf-reason">{{ 'attendance.leaveForm.reason' | translate }}</label>
+      <textarea id="lf-reason" class="form-control" rows="3" formControlName="reason" [maxlength]="reasonMax"
+                [placeholder]="'attendance.leaveForm.reasonPh' | translate"
+                [class.is-invalid]="form.controls.reason.invalid && (form.controls.reason.touched || submitAttempted())"></textarea>
+      <div class="lf-hint-row">
+        <app-form-error [control]="form.controls.reason" [label]="'attendance.leaveForm.reason' | translate" />
+        <span class="lf-counter">{{ value().reason?.length ?? 0 }}/{{ reasonMax }}</span>
+      </div>
+    </div>
+
+    @if (serverError()) {
+      <div class="alert alert-danger d-flex gap-2 align-items-start mt-3 mb-0" role="alert">
+        <i class="fa-solid fa-circle-exclamation mt-1"></i><span>{{ serverError() }}</span>
+      </div>
+    }
+  </form>
+
+  <div modal-footer class="btn-row justify-content-end w-100">
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="close()">
+      {{ 'attendance.actions.cancel' | translate }}
+    </button>
+    <button type="submit" form="leave-request-form" class="btn btn-primary" [disabled]="submitting()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>{{ 'attendance.leaveForm.submitting' | translate }}
+      } @else {
+        <i class="fa-solid fa-paper-plane"></i>{{ 'attendance.leaveForm.submit' | translate }}
+      }
+    </button>
+  </div>
+</app-modal>
