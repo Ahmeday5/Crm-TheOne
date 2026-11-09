@@ -110,6 +110,8 @@
           <thead>
             <tr>
               <th>{{ 'customers.table.fullName' | translate }}</th>
+              <th>{{ 'customers.details.company' | translate }}</th>
+              <th>{{ 'customers.table.address' | translate }}</th>
               <th>{{ 'customers.table.source' | translate }} / {{ 'customers.table.campaign' | translate }}</th>
               <th>{{ 'customers.table.services' | translate }}</th>
               <th>{{ 'customers.table.status' | translate }}</th>
@@ -132,19 +134,31 @@
                   </span>
                   <div class="crm-identity-text">
                     <div class="crm-name" [title]="row.fullName">{{ row.fullName }}</div>
-                    @if (row.campanyName) {
-                    <div class="crm-company" appClampText="1" [clampTitle]="row.fullName" [clampText]="row.campanyName">
-                      <i class="fa-solid fa-building me-1 opacity-75"></i>{{ row.campanyName }}
-                    </div>
-                    }
                     <div class="crm-phone">{{ row.phone || '—' }}</div>
-                    @if (row.address) {
-                    <div class="crm-address" appClampText="1" [clampTitle]="row.fullName" [clampText]="row.address">
-                      <i class="fa-solid fa-location-dot me-1 opacity-75"></i>{{ row.address }}
-                    </div>
-                    }
                   </div>
                 </div>
+              </td>
+
+              <!-- Company -->
+              <td>
+                @if (row.campanyName) {
+                <div class="crm-company" appClampText="2" [clampTitle]="row.fullName" [clampText]="row.campanyName">
+                  <i class="fa-solid fa-building me-1 opacity-75"></i>{{ row.campanyName }}
+                </div>
+                } @else {
+                <span class="text-muted">—</span>
+                }
+              </td>
+
+              <!-- Address -->
+              <td>
+                @if (row.address) {
+                <div class="crm-address" appClampText="2" [clampTitle]="row.fullName" [clampText]="row.address">
+                  <i class="fa-solid fa-location-dot me-1 opacity-75"></i>{{ row.address }}
+                </div>
+                } @else {
+                <span class="text-muted">—</span>
+                }
               </td>
 
               <!-- Source / Campaign -->
