@@ -516,6 +516,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   get exportColumns(): ExportColumn<CustomerListItem>[] {
     return [
       { header: this.t('customers.table.fullName'), value: (r) => r.fullName },
+      { header: this.t('customers.details.company'), value: (r) => r.campanyName },
       { header: this.t('customers.table.phone'), value: (r) => r.phone },
       { header: this.t('customers.table.address'), value: (r) => r.address },
       { header: this.t('customers.table.source'), value: (r) => r.source },

@@ -18,6 +18,8 @@ export interface CustomerListItem {
   fullName: string;
   phone: string;
   address: string | null;
+  /** Company name — serialized as `campanyName` (sic), same as the details endpoint. */
+  campanyName?: string | null;
   source: string | null;
   campaignName: string | null;
   services: CustomerServiceRef[];

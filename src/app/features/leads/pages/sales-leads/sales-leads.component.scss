@@ -5,7 +5,8 @@
 
 
 /* Address line under the identity — one clamped line, tap for the rest. */
-.crm-address {
+.crm-address,
+.crm-company {
   max-width: 14rem;
   margin-top: 2px;
   font-size: var(--fs-xs);

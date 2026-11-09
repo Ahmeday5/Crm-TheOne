@@ -23,35 +23,23 @@
   <!-- KPIs -->
   <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
-      <app-stat-card
-        [label]="'customers.kpi.total' | translate"
-        [value]="kpis().total"
-        icon="fa-solid fa-users"
+      <app-stat-card [label]="'customers.kpi.total' | translate" [value]="kpis().total" icon="fa-solid fa-users"
         tone="primary">
       </app-stat-card>
     </div>
     <div class="col-6 col-lg-3">
-      <app-stat-card
-        [label]="'customers.kpi.newLeads' | translate"
-        [value]="kpis().newLeads"
-        icon="fa-solid fa-user-plus"
-        tone="info">
+      <app-stat-card [label]="'customers.kpi.newLeads' | translate" [value]="kpis().newLeads"
+        icon="fa-solid fa-user-plus" tone="info">
       </app-stat-card>
     </div>
     <div class="col-6 col-lg-3">
-      <app-stat-card
-        [label]="'customers.kpi.pendingFollowUp' | translate"
-        [value]="kpis().pendingFollowUp"
-        icon="fa-solid fa-calendar-check"
-        tone="warning">
+      <app-stat-card [label]="'customers.kpi.pendingFollowUp' | translate" [value]="kpis().pendingFollowUp"
+        icon="fa-solid fa-calendar-check" tone="warning">
       </app-stat-card>
     </div>
     <div class="col-6 col-lg-3">
-      <app-stat-card
-        [label]="'customers.kpi.transferredToSupport' | translate"
-        [value]="kpis().transferredToSupport"
-        icon="fa-solid fa-headset"
-        tone="success">
+      <app-stat-card [label]="'customers.kpi.transferredToSupport' | translate" [value]="kpis().transferredToSupport"
+        icon="fa-solid fa-headset" tone="success">
       </app-stat-card>
     </div>
   </div>
@@ -63,29 +51,23 @@
         <div class="col-12 col-md-4">
           <div class="position-relative">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
-            <input class="form-control search-input"
-                   [placeholder]="'customers.filters.searchPlaceholder' | translate"
-                   [ngModel]="searchTerm"
-                   (ngModelChange)="onSearchInput($event)" />
+            <input class="form-control search-input" [placeholder]="'customers.filters.searchPlaceholder' | translate"
+              [ngModel]="searchTerm" (ngModelChange)="onSearchInput($event)" />
           </div>
         </div>
         <div class="col-12 col-md-4">
-          <select class="form-select"
-                  [ngModel]="selectedStatusId() ?? ''"
-                  (ngModelChange)="onStatusChange($event)">
+          <select class="form-select" [ngModel]="selectedStatusId() ?? ''" (ngModelChange)="onStatusChange($event)">
             <option value="">{{ 'customers.filters.allStatuses' | translate }}</option>
             @for (s of statuses(); track s.id) {
-              <option [value]="s.id">{{ localizeStatusName(s.name) }}</option>
+            <option [value]="s.id">{{ localizeStatusName(s.name) }}</option>
             }
           </select>
         </div>
         <div class="col-12 col-md-4">
-          <select class="form-select"
-                  [ngModel]="selectedSourceId() ?? ''"
-                  (ngModelChange)="onSourceChange($event)">
+          <select class="form-select" [ngModel]="selectedSourceId() ?? ''" (ngModelChange)="onSourceChange($event)">
             <option value="">{{ 'customers.filters.allSources' | translate }}</option>
             @for (src of sources(); track src.id) {
-              <option [value]="src.id">{{ src.name }}</option>
+            <option [value]="src.id">{{ src.name }}</option>
             }
           </select>
         </div>
@@ -101,334 +83,284 @@
         {{ 'customers.sales.title' | translate }}
         <span class="text-muted small">({{ count() }})</span>
       </h5>
-      <app-table-tools
-        class="ms-auto"
-        [reportTitle]="'customers.sales.title' | translate"
-        [columns]="exportColumns"
-        [rows]="rows()"
-        [fetchAll]="fetchAllRows"
-        [disabled]="loading() || rows().length === 0"
-        [showRefresh]="true"
+      <app-table-tools class="ms-auto" [reportTitle]="'customers.sales.title' | translate" [columns]="exportColumns"
+        [rows]="rows()" [fetchAll]="fetchAllRows" [disabled]="loading() || rows().length === 0" [showRefresh]="true"
         (refresh)="reload(true)">
       </app-table-tools>
     </div>
 
     @if (loadError()) {
-      <div class="m-3 mb-0">
-        <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
-      </div>
+    <div class="m-3 mb-0">
+      <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload()"></app-load-error>
+    </div>
     }
 
     <div class="card-body p-0">
       @if (loading()) {
-        <div class="text-center py-5">
-          <span class="spinner-border text-primary" role="status"></span>
-        </div>
+      <div class="text-center py-5">
+        <span class="spinner-border text-primary" role="status"></span>
+      </div>
       } @else if (rows().length === 0) {
-        <app-empty-state
-          [compact]="true"
-          icon="fa-solid fa-inbox"
-          [message]="searchSignal() || selectedStatusId() || selectedSourceId()
+      <app-empty-state [compact]="true" icon="fa-solid fa-inbox" [message]="searchSignal() || selectedStatusId() || selectedSourceId()
             ? ('customers.table.emptyFiltered' | translate)
-            : (emptyMessageKey() | translate)"
-          [loading]="loading()"
-          (retry)="reload()" />
+            : (emptyMessageKey() | translate)" [loading]="loading()" (retry)="reload()" />
       } @else {
-        <div class="crm-table-scroll">
-          <table class="table table-hover align-middle" appResponsiveTable>
-            <thead>
-              <tr>
-                <th>{{ 'customers.table.fullName' | translate }}</th>
-                <th>{{ 'customers.table.source' | translate }} / {{ 'customers.table.campaign' | translate }}</th>
-                <th>{{ 'customers.table.services' | translate }}</th>
-                <th>{{ 'customers.table.status' | translate }}</th>
-                <th>{{ 'customers.table.assignment' | translate }}</th>
-                <th>{{ 'customers.table.notes' | translate }}</th>
-                <th>{{ 'customers.consultation.column' | translate }}</th>
-                <th>{{ 'customers.table.followUpHeader' | translate }}</th>
-                <th>{{ 'customers.table.createdAt' | translate }}</th>
-                <th class="crm-actions-col text-center">{{ 'customers.table.actions' | translate }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of rows(); track trackById($index, row)) {
-                <tr>
-                  <!-- Identity -->
-                  <td>
-                    <div class="crm-identity">
-                      <span class="crm-avatar" [attr.aria-hidden]="true">
-                        {{ initials(row.fullName) }}
-                      </span>
-                      <div class="crm-identity-text">
-                        <div class="crm-name" [title]="row.fullName">{{ row.fullName }}</div>
-                        <div class="crm-phone">{{ row.phone || '—' }}</div>
-                        @if (row.address) {
-                          <div class="crm-address" appClampText="1" [clampTitle]="row.fullName"
-                            [clampText]="row.address">
-                            <i class="fa-solid fa-location-dot me-1 opacity-75"></i>{{ row.address }}
-                          </div>
-                        }
-                      </div>
+      <div class="crm-table-scroll">
+        <table class="table table-hover align-middle" appResponsiveTable>
+          <thead>
+            <tr>
+              <th>{{ 'customers.table.fullName' | translate }}</th>
+              <th>{{ 'customers.table.source' | translate }} / {{ 'customers.table.campaign' | translate }}</th>
+              <th>{{ 'customers.table.services' | translate }}</th>
+              <th>{{ 'customers.table.status' | translate }}</th>
+              <th>{{ 'customers.table.assignment' | translate }}</th>
+              <th>{{ 'customers.table.notes' | translate }}</th>
+              <th>{{ 'customers.consultation.column' | translate }}</th>
+              <th>{{ 'customers.table.followUpHeader' | translate }}</th>
+              <th>{{ 'customers.table.createdAt' | translate }}</th>
+              <th class="crm-actions-col text-center">{{ 'customers.table.actions' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track trackById($index, row)) {
+            <tr>
+              <!-- Identity -->
+              <td>
+                <div class="crm-identity">
+                  <span class="crm-avatar" [attr.aria-hidden]="true">
+                    {{ initials(row.fullName) }}
+                  </span>
+                  <div class="crm-identity-text">
+                    <div class="crm-name" [title]="row.fullName">{{ row.fullName }}</div>
+                    @if (row.campanyName) {
+                    <div class="crm-company" appClampText="1" [clampTitle]="row.fullName" [clampText]="row.campanyName">
+                      <i class="fa-solid fa-building me-1 opacity-75"></i>{{ row.campanyName }}
                     </div>
-                  </td>
-
-                  <!-- Source / Campaign -->
-                  <td>
-                    @if (row.source) {
-                      <span class="crm-chip tone-info">{{ row.source }}</span>
-                    } @else {
-                      <span class="text-muted">—</span>
                     }
-                    @if (row.campaignName) {
-                      <div class="campaign-clip" [appTip]="row.campaignName">
-                        {{ row.campaignName }}
-                      </div>
-                    }
-                  </td>
-
-                  <!-- Services -->
-                  <td>
-                    @if (row.services && row.services.length) {
-                      <div class="crm-chip-row">
-                        @for (svc of row.services; track svc.id) {
-                          <span class="crm-chip tone-brand">{{ svc.name }}</span>
-                        }
-                      </div>
-                    } @else {
-                      <span class="text-muted">—</span>
-                    }
-                  </td>
-
-                  <!-- Status -->
-                  <td>
-                    <span class="badge {{ statusBadgeClass(row.status) }}">
-                      {{ resolveStatus(row.status) }}
-                    </span>
-                  </td>
-
-                  <!-- Assignment (sales + support + transfer chips) -->
-                  <td>
-                    <div class="crm-assignment">
-                      <div class="crm-role-line">
-                        <span class="crm-role-icon is-sales"><i class="fa-solid fa-user-tie"></i></span>
-                        @if (row.salesPersonName) {
-                          <span class="crm-person-name" [title]="row.salesPersonName">{{ row.salesPersonName }}</span>
-                        } @else {
-                          <span class="crm-person-empty">{{ 'customers.table.notAssigned' | translate }}</span>
-                        }
-                      </div>
-                      <div class="crm-role-line">
-                        <span class="crm-role-icon is-support"><i class="fa-solid fa-headset"></i></span>
-                        @if (row.supportPersonName) {
-                          <span class="crm-person-name" [title]="row.supportPersonName">{{ row.supportPersonName }}</span>
-                        } @else {
-                          <span class="crm-person-empty">{{ 'customers.table.notAssigned' | translate }}</span>
-                        }
-                      </div>
-                      @if (buildJourney(row); as steps) {
-                        @if (steps.length) {
-                          <div class="crm-stepper" role="list">
-                            @for (step of steps; track $index; let first = $first) {
-                              @if (!first) {
-                                <div class="crm-stepper-line {{ stepConnectorClass(steps, $index) }}"
-                                     aria-hidden="true"></div>
-                              }
-                              <div class="crm-stepper-item" role="listitem">
-                                <div class="crm-stepper-dot role-{{ step.role }} is-{{ step.state }}"
-                                     [title]="step.labelKey | translate">
-                                  @if (step.state === 'passed') {
-                                    <i class="fa-solid fa-check" aria-hidden="true"></i>
-                                  } @else if (step.state === 'active') {
-                                    <i [class]="step.icon" aria-hidden="true"></i>
-                                  }
-                                </div>
-                                <span class="crm-stepper-label role-{{ step.role }} is-{{ step.state }}">
-                                  {{ step.labelKey | translate }}
-                                </span>
-                              </div>
-                            }
-                          </div>
-                        }
-                      }
+                    <div class="crm-phone">{{ row.phone || '—' }}</div>
+                    @if (row.address) {
+                    <div class="crm-address" appClampText="1" [clampTitle]="row.fullName" [clampText]="row.address">
+                      <i class="fa-solid fa-location-dot me-1 opacity-75"></i>{{ row.address }}
                     </div>
-                  </td>
-
-                  <!-- Notes -->
-                  <td>
-                    <app-customer-notes-cell
-                      [noteMarketing]="row.noteMarketing"
-                      [noteSales]="row.noteSales"
-                      [noteSupport]="row.noteSupport">
-                    </app-customer-notes-cell>
-                  </td>
-
-                  <!-- Consultation status -->
-                  <td>
-                    @if (row.isConsulted) {
-                      <span class="badge cns-badge cns-badge--done">
-                        <i class="fa-solid fa-circle-check"></i>{{ 'customers.consultation.badgeDone' | translate }}
-                      </span>
-                    } @else {
-                      <span class="badge cns-badge cns-badge--pending">
-                        <i class="fa-solid fa-hourglass-half"></i>{{ 'customers.consultation.badgePending' | translate }}
-                      </span>
                     }
-                  </td>
+                  </div>
+                </div>
+              </td>
 
-                  <!-- Follow-up -->
-                  <td [class]="followUpTdClass(row)">
-                    <div class="crm-followup">
-                      @if (followUpState(row); as fus) {
-                        @if (fus.type) {
-                          <span class="fu-badge"
-                                [class.fu-badge--overdue]="fus.type === 'overdue'"
-                                [class.fu-badge--today]="fus.type === 'today'"
-                                [class.fu-badge--tomorrow]="fus.type === 'tomorrow'">
-                            @if (fus.type === 'overdue') {
-                              <i class="fa-solid fa-circle-exclamation"></i>
-                              {{ 'customers.table.fuOverdue' | translate }}
-                              @if (fus.daysAgo === 1) {
-                                &nbsp;·&nbsp;{{ 'customers.table.fuYesterday' | translate }}
-                              } @else {
-                                &nbsp;·&nbsp;{{ fus.daysAgo }}&nbsp;{{ 'customers.table.fuDays' | translate }}
-                              }
-                            } @else if (fus.type === 'today') {
-                              <i class="fa-solid fa-clock"></i>
-                              {{ 'customers.table.fuToday' | translate }}
-                            } @else if (fus.type === 'tomorrow') {
-                              <i class="fa-solid fa-calendar-plus"></i>
-                              {{ 'customers.table.fuTomorrow' | translate }}
-                            }
-                          </span>
-                        }
-                      }
-                      <div class="crm-followup-row">
-                        <i class="fa-solid fa-clock-rotate-left text-muted"></i>
-                        @if (row.lastFollowUpDate) {
-                          {{ formatDate(row.lastFollowUpDate) }}
-                        } @else {
-                          <span class="crm-followup-empty">{{ 'customers.table.lastFollowUp' | translate }}</span>
+              <!-- Source / Campaign -->
+              <td>
+                @if (row.source) {
+                <span class="crm-chip tone-info">{{ row.source }}</span>
+                } @else {
+                <span class="text-muted">—</span>
+                }
+                @if (row.campaignName) {
+                <div class="campaign-clip" [appTip]="row.campaignName">
+                  {{ row.campaignName }}
+                </div>
+                }
+              </td>
+
+              <!-- Services -->
+              <td>
+                @if (row.services && row.services.length) {
+                <div class="crm-chip-row">
+                  @for (svc of row.services; track svc.id) {
+                  <span class="crm-chip tone-brand">{{ svc.name }}</span>
+                  }
+                </div>
+                } @else {
+                <span class="text-muted">—</span>
+                }
+              </td>
+
+              <!-- Status -->
+              <td>
+                <span class="badge {{ statusBadgeClass(row.status) }}">
+                  {{ resolveStatus(row.status) }}
+                </span>
+              </td>
+
+              <!-- Assignment (sales + support + transfer chips) -->
+              <td>
+                <div class="crm-assignment">
+                  <div class="crm-role-line">
+                    <span class="crm-role-icon is-sales"><i class="fa-solid fa-user-tie"></i></span>
+                    @if (row.salesPersonName) {
+                    <span class="crm-person-name" [title]="row.salesPersonName">{{ row.salesPersonName }}</span>
+                    } @else {
+                    <span class="crm-person-empty">{{ 'customers.table.notAssigned' | translate }}</span>
+                    }
+                  </div>
+                  <div class="crm-role-line">
+                    <span class="crm-role-icon is-support"><i class="fa-solid fa-headset"></i></span>
+                    @if (row.supportPersonName) {
+                    <span class="crm-person-name" [title]="row.supportPersonName">{{ row.supportPersonName }}</span>
+                    } @else {
+                    <span class="crm-person-empty">{{ 'customers.table.notAssigned' | translate }}</span>
+                    }
+                  </div>
+                  @if (buildJourney(row); as steps) {
+                  @if (steps.length) {
+                  <div class="crm-stepper" role="list">
+                    @for (step of steps; track $index; let first = $first) {
+                    @if (!first) {
+                    <div class="crm-stepper-line {{ stepConnectorClass(steps, $index) }}" aria-hidden="true"></div>
+                    }
+                    <div class="crm-stepper-item" role="listitem">
+                      <div class="crm-stepper-dot role-{{ step.role }} is-{{ step.state }}"
+                        [title]="step.labelKey | translate">
+                        @if (step.state === 'passed') {
+                        <i class="fa-solid fa-check" aria-hidden="true"></i>
+                        } @else if (step.state === 'active') {
+                        <i [class]="step.icon" aria-hidden="true"></i>
                         }
                       </div>
-                      <div class="crm-followup-row"
-                           [class.is-overdue]="followUpState(row).type === 'overdue'"
-                           [class.is-today]="followUpState(row).type === 'today'"
-                           [class.is-tomorrow]="followUpState(row).type === 'tomorrow'">
-                        <i class="fa-solid fa-calendar-day"></i>
-                        @if (row.nextFollowUpDate) {
-                          {{ formatDate(row.nextFollowUpDate) }}
-                        } @else {
-                          <span class="crm-followup-empty">{{ 'customers.table.nextFollowUp' | translate }}</span>
-                        }
-                      </div>
+                      <span class="crm-stepper-label role-{{ step.role }} is-{{ step.state }}">
+                        {{ step.labelKey | translate }}
+                      </span>
                     </div>
-                  </td>
+                    }
+                  </div>
+                  }
+                  }
+                </div>
+              </td>
 
-                  <!-- Created at -->
-                  <td class="small text-muted text-nowrap">{{ formatDate(row.createdAt) }}</td>
+              <!-- Notes -->
+              <td>
+                <app-customer-notes-cell [noteMarketing]="row.noteMarketing" [noteSales]="row.noteSales"
+                  [noteSupport]="row.noteSupport">
+                </app-customer-notes-cell>
+              </td>
 
-                  <!-- Actions (sticky) -->
-                  <td class="crm-actions-col">
-                    <app-customer-actions-menu
-                      [phone]="row.phone"
-                      [actions]="actionsConfig"
-                      [activitiesCount]="(row.activities ?? []).length"
-                      (view)="openDetails(row)"
-                      (note)="openNote(row)"
-                      (whatsapp)="openWhatsApp(row)"
-                      (assignSupport)="openAssignSupport(row)"
-                      (changeStatus)="openChangeStatus(row)"
-                      (followUp)="openFollowUp(row)"
-                      (logContact)="openLogContact(row)"
-                      (activities)="openActivities(row)">
-                    </app-customer-actions-menu>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+              <!-- Consultation status -->
+              <td>
+                @if (row.isConsulted) {
+                <span class="badge cns-badge cns-badge--done">
+                  <i class="fa-solid fa-circle-check"></i>{{ 'customers.consultation.badgeDone' | translate }}
+                </span>
+                } @else {
+                <span class="badge cns-badge cns-badge--pending">
+                  <i class="fa-solid fa-hourglass-half"></i>{{ 'customers.consultation.badgePending' | translate }}
+                </span>
+                }
+              </td>
+
+              <!-- Follow-up -->
+              <td [class]="followUpTdClass(row)">
+                <div class="crm-followup">
+                  @if (followUpState(row); as fus) {
+                  @if (fus.type) {
+                  <span class="fu-badge" [class.fu-badge--overdue]="fus.type === 'overdue'"
+                    [class.fu-badge--today]="fus.type === 'today'" [class.fu-badge--tomorrow]="fus.type === 'tomorrow'">
+                    @if (fus.type === 'overdue') {
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    {{ 'customers.table.fuOverdue' | translate }}
+                    @if (fus.daysAgo === 1) {
+                    &nbsp;·&nbsp;{{ 'customers.table.fuYesterday' | translate }}
+                    } @else {
+                    &nbsp;·&nbsp;{{ fus.daysAgo }}&nbsp;{{ 'customers.table.fuDays' | translate }}
+                    }
+                    } @else if (fus.type === 'today') {
+                    <i class="fa-solid fa-clock"></i>
+                    {{ 'customers.table.fuToday' | translate }}
+                    } @else if (fus.type === 'tomorrow') {
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    {{ 'customers.table.fuTomorrow' | translate }}
+                    }
+                  </span>
+                  }
+                  }
+                  <div class="crm-followup-row">
+                    <i class="fa-solid fa-clock-rotate-left text-muted"></i>
+                    @if (row.lastFollowUpDate) {
+                    {{ formatDate(row.lastFollowUpDate) }}
+                    } @else {
+                    <span class="crm-followup-empty">{{ 'customers.table.lastFollowUp' | translate }}</span>
+                    }
+                  </div>
+                  <div class="crm-followup-row" [class.is-overdue]="followUpState(row).type === 'overdue'"
+                    [class.is-today]="followUpState(row).type === 'today'"
+                    [class.is-tomorrow]="followUpState(row).type === 'tomorrow'">
+                    <i class="fa-solid fa-calendar-day"></i>
+                    @if (row.nextFollowUpDate) {
+                    {{ formatDate(row.nextFollowUpDate) }}
+                    } @else {
+                    <span class="crm-followup-empty">{{ 'customers.table.nextFollowUp' | translate }}</span>
+                    }
+                  </div>
+                </div>
+              </td>
+
+              <!-- Created at -->
+              <td class="small text-muted text-nowrap">{{ formatDate(row.createdAt) }}</td>
+
+              <!-- Actions (sticky) -->
+              <td class="crm-actions-col">
+                <app-customer-actions-menu [phone]="row.phone" [actions]="actionsConfig"
+                  [activitiesCount]="(row.activities ?? []).length" (view)="openDetails(row)" (note)="openNote(row)"
+                  (whatsapp)="openWhatsApp(row)" (assignSupport)="openAssignSupport(row)"
+                  (changeStatus)="openChangeStatus(row)" (followUp)="openFollowUp(row)"
+                  (logContact)="openLogContact(row)" (activities)="openActivities(row)">
+                </app-customer-actions-menu>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
       }
     </div>
 
     @if (count() > 0) {
-      <div class="card-footer">
-        <app-pagination
-          [pageIndex]="pageIndex()"
-          [pageSize]="pageSize()"
-          [count]="count()"
-          [disabled]="loading()"
-          (pageChange)="onPageChange($event)"
-          (pageSizeChange)="onPageSizeChange($event)">
-        </app-pagination>
-      </div>
+    <div class="card-footer">
+      <app-pagination [pageIndex]="pageIndex()" [pageSize]="pageSize()" [count]="count()" [disabled]="loading()"
+        (pageChange)="onPageChange($event)" (pageSizeChange)="onPageSizeChange($event)">
+      </app-pagination>
+    </div>
     }
   </div>
 </section>
 
 @if (detailsDialog(); as id) {
-  <app-customer-details-dialog
-    [customerId]="id"
-    [initialTab]="detailsTab()"
-    (closed)="closeDetails()">
-  </app-customer-details-dialog>
+<app-customer-details-dialog [customerId]="id" [initialTab]="detailsTab()" (closed)="closeDetails()">
+</app-customer-details-dialog>
 }
 
 @if (assignSupportDialog(); as row) {
-  <app-assign-support-dialog
-    [customerId]="row.id"
-    [customerName]="row.fullName"
-    (assigned)="onSupportAssigned($event)"
-    (cancel)="closeAssignSupport()">
-  </app-assign-support-dialog>
+<app-assign-support-dialog [customerId]="row.id" [customerName]="row.fullName" (assigned)="onSupportAssigned($event)"
+  (cancel)="closeAssignSupport()">
+</app-assign-support-dialog>
 }
 
 @if (changeStatusDialog(); as row) {
-  <app-change-status-dialog
-    [customerId]="row.id"
-    [customerName]="row.fullName"
-    [currentStatus]="row.status"
-    (changed)="onStatusChanged($event)"
-    (cancel)="closeChangeStatus()">
-  </app-change-status-dialog>
+<app-change-status-dialog [customerId]="row.id" [customerName]="row.fullName" [currentStatus]="row.status"
+  (changed)="onStatusChanged($event)" (cancel)="closeChangeStatus()">
+</app-change-status-dialog>
 }
 
 @if (followUpDialog(); as row) {
-  <app-follow-up-dialog
-    [customerId]="row.id"
-    [customerName]="row.fullName"
-    [lastFollowUpDate]="row.lastFollowUpDate"
-    [nextFollowUpDate]="row.nextFollowUpDate"
-    (updated)="onFollowUpUpdated($event)"
-    (cancel)="closeFollowUp()">
-  </app-follow-up-dialog>
+<app-follow-up-dialog [customerId]="row.id" [customerName]="row.fullName" [lastFollowUpDate]="row.lastFollowUpDate"
+  [nextFollowUpDate]="row.nextFollowUpDate" (updated)="onFollowUpUpdated($event)" (cancel)="closeFollowUp()">
+</app-follow-up-dialog>
 }
 
 @if (logContactDialog(); as row) {
-  <app-log-contact-dialog
-    [customerId]="row.id"
-    [customerName]="row.fullName"
-    (logged)="onContactLogged($event)"
-    (cancel)="closeLogContact()">
-  </app-log-contact-dialog>
+<app-log-contact-dialog [customerId]="row.id" [customerName]="row.fullName" (logged)="onContactLogged($event)"
+  (cancel)="closeLogContact()">
+</app-log-contact-dialog>
 }
 
 @if (activitiesDialog(); as row) {
-  <app-customer-activities-dialog
-    [customerName]="row.fullName"
-    [activities]="row.activities ?? []"
-    (close)="closeActivities()">
-  </app-customer-activities-dialog>
+<app-customer-activities-dialog [customerName]="row.fullName" [activities]="row.activities ?? []"
+  (close)="closeActivities()">
+</app-customer-activities-dialog>
 }
 
 @if (noteDialog(); as row) {
-  <app-customer-note-dialog
-    [customerId]="row.id"
-    [customerName]="row.fullName"
-    [noteMarketing]="row.noteMarketing ?? null"
-    [noteSales]="row.noteSales ?? null"
-    [noteSupport]="row.noteSupport ?? null"
-    (saved)="onNoteSaved($event)"
-    (cancel)="closeNote()">
-  </app-customer-note-dialog>
+<app-customer-note-dialog [customerId]="row.id" [customerName]="row.fullName"
+  [noteMarketing]="row.noteMarketing ?? null" [noteSales]="row.noteSales ?? null"
+  [noteSupport]="row.noteSupport ?? null" (saved)="onNoteSaved($event)" (cancel)="closeNote()">
+</app-customer-note-dialog>
 }
