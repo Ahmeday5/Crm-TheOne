@@ -49,7 +49,7 @@ export class QuickReplyPickerComponent {
 
   protected readonly loading = computed(() => this.store.loading() && !this.store.loaded());
   protected readonly error = computed(() => this.store.error() && !this.store.loaded());
-  protected readonly isAdmin = this.store.isAdmin;
+  protected readonly isAdmin = this.store.canManage;
   protected readonly playbookPath = SALES_PLAYBOOK_PATH;
 
   protected readonly results = computed(() => {

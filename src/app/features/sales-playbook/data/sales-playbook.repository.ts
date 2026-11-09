@@ -16,11 +16,20 @@ import {
  * `SALES_PLAYBOOK_REPOSITORY` in `sales-playbook-repository.provider.ts`.
  *
  * Contract every adapter honours (see `docs/api/sales-playbook.md`):
- *   - Reads are open to Admin / Sales / Support.
- *   - `create` / `update` / `remove` / `importContent` are Admin-only.
+ *   - Reads are open to Admin / Marketing / Sales.
+ *   - `create` / `update` / `remove` / `importContent` are limited to
+ *     `PLAYBOOK_MANAGER_ROLES`.
  *   - `importContent` is idempotent: items whose normalised title / text
  *     already exist are skipped and counted in `skipped`.
  */
+
+/** Roles that can add / edit / delete / import playbook content. */
+export const PLAYBOOK_MANAGER_ROLES: readonly string[] = ['Admin', 'Marketing'];
+
+export function canManagePlaybook(role: string | null | undefined): boolean {
+  return !!role && PLAYBOOK_MANAGER_ROLES.includes(role);
+}
+
 export abstract class SalesPlaybookRepository {
   abstract load(): Observable<PlaybookSnapshot>;
 

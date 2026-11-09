@@ -6,6 +6,7 @@ import { PlaybookFavoritesService } from '../data/playbook-favorites.service';
 import { PlaybookLookupsService } from '../data/playbook-lookups.service';
 import { SEED_OBJECTIONS, SEED_REPLIES, SEED_SCRIPTS } from '../data/playbook-seed-content';
 import { SALES_PLAYBOOK_REPOSITORY } from '../data/sales-playbook-repository.provider';
+import { canManagePlaybook } from '../data/sales-playbook.repository';
 import {
   EMPTY_SNAPSHOT,
   PlaybookEntityMap,
@@ -44,7 +45,8 @@ export class SalesPlaybookStore {
   readonly loaded = this.loadedSig.asReadonly();
   readonly error = this.errorSig.asReadonly();
 
-  readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
+  /** Can add / edit / delete / import — see `PLAYBOOK_MANAGER_ROLES`. */
+  readonly canManage = computed(() => canManagePlaybook(this.auth.currentRole()));
 
   readonly scripts = computed(() => this.sorted('scripts'));
   readonly objections = computed(() => this.sorted('objections'));

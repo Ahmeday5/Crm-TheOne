@@ -27,7 +27,7 @@ export class CompetitorsPanelComponent {
   private readonly store = inject(SalesPlaybookStore);
   private readonly actions = inject(PlaybookActionsService);
 
-  readonly isAdmin = this.store.isAdmin;
+  readonly isAdmin = this.store.canManage;
   readonly busyId = this.actions.busyId;
 
   readonly search = signal('');

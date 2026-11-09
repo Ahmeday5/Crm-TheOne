@@ -37,7 +37,7 @@ export class ScriptsPanelComponent {
   private readonly actions = inject(PlaybookActionsService);
   private readonly language = inject(LanguageService);
 
-  readonly isAdmin = this.store.isAdmin;
+  readonly isAdmin = this.store.canManage;
   readonly busyId = this.actions.busyId;
 
   readonly search = signal('');

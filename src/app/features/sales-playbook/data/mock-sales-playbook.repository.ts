@@ -14,7 +14,7 @@ import {
 } from '../models/sales-playbook.models';
 import { planImport } from '../utils/playbook-dedupe.util';
 import { newId } from '../utils/playbook.util';
-import { SalesPlaybookRepository } from './sales-playbook.repository';
+import { SalesPlaybookRepository, canManagePlaybook } from './sales-playbook.repository';
 
 const STORAGE_KEY = 'crm.salesPlaybook.mock.v1';
 /** Small artificial latency so loading states are exercised like the real API. */
@@ -99,11 +99,11 @@ export class MockSalesPlaybookRepository extends SalesPlaybookRepository {
 
   // ─────────── internals ───────────
 
-  /** Admin check + latency + thrown objects surfaced as `{ message }` errors. */
+  /** Manager-role check + latency + thrown objects surfaced as `{ message }` errors. */
   private guarded<T>(work: () => T): Observable<T> {
     return defer(() => {
-      if (this.auth.currentRole() !== 'Admin') {
-        return throwError(() => ({ message: 'Only admins can manage the sales playbook.' }));
+      if (!canManagePlaybook(this.auth.currentRole())) {
+        return throwError(() => ({ message: 'You are not allowed to manage the sales playbook.' }));
       }
       try {
         return of(work());

@@ -66,7 +66,7 @@ export class SalesPlaybookComponent implements OnInit {
   readonly kinds = PLAYBOOK_KINDS;
   readonly kindIcon = KIND_ICON;
 
-  readonly isAdmin = this.store.isAdmin;
+  readonly isAdmin = this.store.canManage;
   readonly loading = this.store.loading;
   readonly loaded = this.store.loaded;
   readonly error = this.store.error;
