@@ -9,7 +9,7 @@ export const SALES_PLAYBOOK_ROUTES: Routes = [
   {
     path: 'sales-playbook',
     title: 'دليل المبيعات',
-    data: { roles: ['Admin', 'Sales', 'Support'] },
+    data: { roles: ['Admin', 'Marketing', 'Sales'] },
     loadComponent: () =>
       import('./pages/sales-playbook/sales-playbook.component').then((m) => m.SalesPlaybookComponent),
   },

@@ -173,7 +173,7 @@ export const NAV_SECTIONS: NavSection[] = [
             labelKey: 'sidebar.items.salesPlaybook',
             path: '/sales-playbook',
             icon: 'fa-solid fa-book-open-reader',
-            roles: ['Admin', 'Sales', 'Support'],
+            roles: ['Admin', 'Marketing', 'Sales'],
           },
           {
             labelKey: 'sidebar.items.goals',
@@ -397,7 +397,7 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   'marketing-campaigns': ['Admin', 'Marketing'],
   'sales-analysis': ['Admin', 'Marketing'],
   'smart-analytics': ['Admin', 'Marketing', 'Sales'],
-  'sales-playbook': ['Admin', 'Sales', 'Support'],
+  'sales-playbook': ['Admin', 'Marketing', 'Sales'],
 
   // Sales-only modules
   line: ['Admin', 'Sales'],
