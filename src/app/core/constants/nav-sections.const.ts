@@ -136,6 +136,13 @@ export const NAV_SECTIONS: NavSection[] = [
             icon: 'fa-solid fa-rectangle-ad',
             roles: ['Admin', 'Marketing'],
           },
+          // Read-only for Marketing; Admin already sees it under Sales.
+          {
+            labelKey: 'sidebar.items.salesPlaybook',
+            path: '/sales-playbook',
+            icon: 'fa-solid fa-book-open-reader',
+            roles: ['Marketing'],
+          },
         ],
       },
       {
@@ -173,7 +180,8 @@ export const NAV_SECTIONS: NavSection[] = [
             labelKey: 'sidebar.items.salesPlaybook',
             path: '/sales-playbook',
             icon: 'fa-solid fa-book-open-reader',
-            roles: ['Admin', 'Marketing', 'Sales'],
+            // Marketing gets the same page under its own group (below).
+            roles: ['Admin', 'Sales', 'Support'],
           },
           {
             labelKey: 'sidebar.items.goals',
@@ -397,7 +405,7 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   'marketing-campaigns': ['Admin', 'Marketing'],
   'sales-analysis': ['Admin', 'Marketing'],
   'smart-analytics': ['Admin', 'Marketing', 'Sales'],
-  'sales-playbook': ['Admin', 'Marketing', 'Sales'],
+  'sales-playbook': ['Admin', 'Sales', 'Support', 'Marketing'],
 
   // Sales-only modules
   line: ['Admin', 'Sales'],

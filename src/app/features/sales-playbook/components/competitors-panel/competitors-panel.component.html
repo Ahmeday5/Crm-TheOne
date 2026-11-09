@@ -10,8 +10,10 @@
   <div class="pp-grid">
     @for (c of filtered(); track c.id; let i = $index) {
       <div class="pp-cell" [style.--i]="i">
-        <app-pb-competitor-card [competitor]="c" [canManage]="isAdmin()" [busy]="busyId() === c.id"
-                                (edit)="editing.set($event)" (remove)="remove($event)" />
+        <app-pb-competitor-card [competitor]="c" [canManage]="isAdmin()" [canMention]="canMention()"
+                                [busy]="busyId() === c.id" [busyMentionId]="busyId()"
+                                (edit)="editing.set($event)" (remove)="remove($event)"
+                                (addMention)="mentioning.set($event)" (removeMention)="removeMention(c, $event)" />
       </div>
     }
   </div>
@@ -29,4 +31,7 @@
 
 @if (editing() !== undefined) {
   <app-pb-competitor-form-dialog [competitor]="editing() ?? null" (closed)="editing.set(undefined)" />
+}
+@if (mentioningLive(); as c) {
+  <app-pb-mention-form-dialog [competitor]="c" (closed)="mentioning.set(null)" />
 }

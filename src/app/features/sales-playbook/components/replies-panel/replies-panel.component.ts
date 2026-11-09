@@ -3,17 +3,18 @@ import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { QuickReply, REPLY_CATEGORIES, ReplyCategory } from '../../models/sales-playbook.models';
+import { QuickReply } from '../../models/sales-playbook.models';
 import { PlaybookActionsService } from '../../state/playbook-actions.service';
 import { SalesPlaybookStore } from '../../state/sales-playbook.store';
 import { matchesQuery } from '../../utils/arabic-text.util';
-import { REPLY_META } from '../../utils/playbook.util';
+import { categoryMeta } from '../../utils/playbook.util';
 import { FilterChip, FilterChipsComponent } from '../filter-chips/filter-chips.component';
 import { PanelToolbarComponent } from '../panel-toolbar/panel-toolbar.component';
 import { ReplyCardComponent } from '../reply-card/reply-card.component';
 import { ReplyFormDialogComponent } from '../reply-form-dialog/reply-form-dialog.component';
 
-const ALL = 'all';
+const ALL = '\u0000all';
+const NONE = '\u0000none';
 
 @Component({
   selector: 'app-pb-replies-panel',
@@ -43,17 +44,18 @@ export class RepliesPanelComponent {
   readonly category = signal<string>(ALL);
   readonly editing = signal<QuickReply | null | undefined>(undefined);
 
+  /** One chip per category in the data, plus "uncategorised" when some replies have none. */
   readonly chips = computed<FilterChip[]>(() => {
     const rows = this.store.replies();
-    const count = (c: ReplyCategory) => rows.filter((r) => r.category === c).length;
+    const categories = this.store.replyCategories();
+    if (!categories.length) return [];
+    const uncategorised = rows.filter((r) => !r.category).length;
     return [
       { value: ALL, label: this.t('salesPlaybook.filters.all'), count: rows.length, icon: 'fa-solid fa-layer-group' },
-      ...REPLY_CATEGORIES.filter((c) => count(c) > 0 || c !== 'other').map((c) => ({
-        value: c,
-        label: this.t(`salesPlaybook.replyCategories.${c}`),
-        icon: REPLY_META[c].icon,
-        count: count(c),
-      })),
+      ...categories.map((c) => ({ value: c.category, label: c.category, icon: categoryMeta(c.category).icon, count: c.count })),
+      ...(uncategorised
+        ? [{ value: NONE, label: this.t('salesPlaybook.replies.uncategorised'), icon: 'fa-solid fa-ellipsis', count: uncategorised }]
+        : []),
     ];
   });
 
@@ -62,16 +64,17 @@ export class RepliesPanelComponent {
     const category = this.category();
     return this.store
       .replies()
-      .filter((r) => category === ALL || r.category === category)
+      .filter((r) => category === ALL || (category === NONE ? !r.category : r.category === category))
       .filter((r) => !this.favoritesOnly() || this.store.isFavorite('replies', r.id))
-      .filter((r) => matchesQuery(q, r.title, r.text));
+      .filter((r) => matchesQuery(q, r.title, r.text, r.category));
   });
 
   readonly hasAny = computed(() => this.store.replies().length > 0);
 
-  readonly defaultCategory = computed<ReplyCategory>(() =>
-    this.category() === ALL ? 'greeting' : (this.category() as ReplyCategory),
-  );
+  readonly defaultCategory = computed(() => {
+    const c = this.category();
+    return c === ALL || c === NONE ? '' : c;
+  });
 
   clearFilters(): void {
     this.search.set('');

@@ -19,25 +19,59 @@
         <app-form-error [control]="form.controls.title" [label]="'salesPlaybook.form.replyTitle' | translate" />
       </div>
 
-      <fieldset class="pf-field pf-span">
-        <legend class="form-label fw-600">{{ 'salesPlaybook.form.category' | translate }}</legend>
-        <div class="pf-chips" role="radiogroup">
-          @for (c of categories; track c) {
-            <button type="button" class="pf-chip" role="radio"
-                    [class.is-on]="value().category === c" [attr.aria-checked]="value().category === c"
-                    (click)="form.controls.category.setValue(c)">
-              <i [class]="meta[c].icon" aria-hidden="true"></i>{{ 'salesPlaybook.replyCategories.' + c | translate }}
-            </button>
+      <div class="pf-field">
+        <label class="form-label fw-600" for="pf-r-cat">
+          {{ 'salesPlaybook.form.category' | translate }}
+          <span class="pf-optional">{{ 'salesPlaybook.form.optional' | translate }}</span>
+        </label>
+        <input id="pf-r-cat" class="form-control" formControlName="category" dir="auto" list="pf-r-cats"
+               autocomplete="off"
+               [maxlength]="limits.category"
+               [placeholder]="'salesPlaybook.form.replyCategoryPh' | translate" />
+        <datalist id="pf-r-cats">
+          @for (c of suggestions(); track c) { <option [value]="c"></option> }
+        </datalist>
+        @if (suggestions().length) {
+          <div class="pf-chips mt-2">
+            @for (c of suggestions(); track c) {
+              <button type="button" class="pf-chip" [class.is-on]="value().category?.trim() === c"
+                      [attr.aria-pressed]="value().category?.trim() === c" (click)="pickCategory(c)">
+                <i [class]="metaOf(c).icon" aria-hidden="true"></i><span dir="auto">{{ c }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="pf-field">
+        <label class="form-label fw-600" for="pf-r-service">
+          {{ 'salesPlaybook.form.service' | translate }}
+          <span class="pf-optional">{{ 'salesPlaybook.form.optional' | translate }}</span>
+        </label>
+        <select id="pf-r-service" class="form-select" formControlName="serviceId">
+          <option [ngValue]="null">{{ 'salesPlaybook.form.anyService' | translate }}</option>
+          @for (s of services(); track s.id) {
+            <option [ngValue]="s.id">{{ serviceLabel(s) }}</option>
           }
-        </div>
-      </fieldset>
+        </select>
+        @if (servicesLoading()) {
+          <small class="pf-hint">
+            <span class="spinner-border spinner-border-sm me-1"></span>{{ 'salesPlaybook.form.servicesLoading' | translate }}
+          </small>
+        }
+      </div>
 
       <div class="pf-field">
         <div class="pf-label-row">
           <label class="form-label fw-600" for="pf-r-text">{{ 'salesPlaybook.form.replyText' | translate }}</label>
-          <button type="button" class="pf-insert" (click)="insertName()">
-            <i class="fa-solid fa-user-plus" aria-hidden="true"></i>{{ 'salesPlaybook.form.insertName' | translate }}
-          </button>
+          <span class="d-inline-flex gap-1 flex-wrap">
+            <button type="button" class="pf-insert" (click)="insertToken(customerToken)">
+              <i class="fa-solid fa-user-plus" aria-hidden="true"></i>{{ 'salesPlaybook.form.insertName' | translate }}
+            </button>
+            <button type="button" class="pf-insert" (click)="insertToken(agentToken)">
+              <i class="fa-solid fa-user-tie" aria-hidden="true"></i>{{ 'salesPlaybook.form.insertAgent' | translate }}
+            </button>
+          </span>
         </div>
         <textarea #textArea id="pf-r-text" class="form-control" rows="7" formControlName="text" dir="auto"
                   [maxlength]="limits.text"
@@ -45,13 +79,13 @@
                   [placeholder]="'salesPlaybook.form.replyTextPh' | translate"></textarea>
         <span class="pf-counter">{{ value().text?.length ?? 0 }}/{{ limits.text }}</span>
         <app-form-error [control]="form.controls.text" [label]="'salesPlaybook.form.replyText' | translate" />
-        <small class="pf-hint">{{ 'salesPlaybook.form.nameHint' | translate }}</small>
+        <small class="pf-hint" dir="auto">{{ 'salesPlaybook.form.nameHint' | translate: { customer: customerToken, agent: agentToken } }}</small>
       </div>
 
       <div class="pf-field">
         <span class="form-label fw-600 d-block">{{ 'salesPlaybook.form.preview' | translate }}</span>
         <div class="rf-phone">
-          <div class="rf-bubble" dir="auto">{{ value().text || ('salesPlaybook.form.replyTextPh' | translate) }}</div>
+          <div class="rf-bubble" dir="auto">{{ preview() || ('salesPlaybook.form.replyTextPh' | translate) }}</div>
         </div>
       </div>
     </div>

@@ -17,8 +17,8 @@
     <app-pb-favorite-button kind="scripts" [itemId]="s.id" />
   </header>
 
-  @if (s.summary) {
-    <p class="sc-summary" dir="auto" [appClampText]="2" [clampTitle]="s.title">{{ s.summary }}</p>
+  @if (s.opening) {
+    <p class="sc-summary" dir="auto" [appClampText]="2" [clampTitle]="s.title">{{ s.opening }}</p>
   }
 
   <ul class="sc-meta">

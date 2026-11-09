@@ -11,7 +11,7 @@
       }
     </div>
     <span class="cc-mentions-badge" [appTip]="'salesPlaybook.competitors.mentionsTip' | translate">
-      <i class="fa-solid fa-user-group" aria-hidden="true"></i>{{ c.mentions.length }}
+      <i class="fa-solid fa-user-group" aria-hidden="true"></i>{{ c.mentionsCount }}
     </span>
     <app-pb-favorite-button kind="competitors" [itemId]="c.id" />
   </header>
@@ -50,13 +50,31 @@
   }
 
   <section class="cc-people">
-    <h6 class="cc-col__title"><i class="fa-solid fa-comments"></i>{{ 'salesPlaybook.competitors.mentionedBy' | translate }}</h6>
+    <div class="cc-people__head">
+      <h6 class="cc-col__title"><i class="fa-solid fa-comments"></i>{{ 'salesPlaybook.competitors.mentionedBy' | translate }}</h6>
+      @if (canMention()) {
+        <button type="button" class="cc-link" (click)="addMention.emit(c)">
+          <i class="fa-solid fa-user-plus" aria-hidden="true"></i>{{ 'salesPlaybook.mentions.add' | translate }}
+        </button>
+      }
+    </div>
     @if (c.mentions.length) {
       <ul class="cc-chips">
-        @for (m of visibleMentions(); track m.customerId; let i = $index) {
-          <li class="cc-chip" [style.--i]="i" [appTip]="m.company || m.name">
-            <span class="cc-chip__av" aria-hidden="true">{{ initials(m.name) }}</span>
-            <span class="cc-chip__name" dir="auto">{{ m.name }}</span>
+        @for (m of visibleMentions(); track m.id; let i = $index) {
+          <li class="cc-chip" [style.--i]="i" [appTip]="mentionTip(m)">
+            <span class="cc-chip__av" aria-hidden="true">{{ initials(m.customerName) }}</span>
+            <span class="cc-chip__name" dir="auto">{{ m.customerName }}</span>
+            @if (canMention()) {
+              <button type="button" class="cc-chip__x" [disabled]="busyMentionId() === m.id"
+                      [attr.aria-label]="('salesPlaybook.mentions.remove' | translate) + ' — ' + m.customerName"
+                      (click)="removeMention.emit(m)">
+                @if (busyMentionId() === m.id) {
+                  <span class="spinner-border spinner-border-sm"></span>
+                } @else {
+                  <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                }
+              </button>
+            }
           </li>
         }
         @if (hiddenMentions() > 0) {

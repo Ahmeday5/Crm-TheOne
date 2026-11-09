@@ -20,9 +20,10 @@
   gap: 0.65rem;
 }
 
+/* `backwards` fill: no lingering stacking context (see `.pb-switch`). */
 .pp-cell {
   min-width: 0;
-  animation: pp-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: pp-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   animation-delay: calc(min(var(--i, 0), 12) * 55ms);
 }
 
@@ -35,7 +36,7 @@
   border: 1px dashed var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface-0);
-  animation: pp-in 0.4s ease both;
+  animation: pp-in 0.4s ease backwards;
 }
 
 .pp-section-title {

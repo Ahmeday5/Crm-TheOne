@@ -247,6 +247,54 @@
 
 .cc-muted { margin: 0; color: var(--text-3); font-size: var(--fs-sm); }
 
+.cc-people__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+
+  .cc-col__title { margin: 0; }
+}
+
+.cc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.5rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--brand-500);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+  transition: background-color 0.2s ease;
+
+  &:hover { background: var(--surface-2); }
+  &:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 1px; }
+}
+
+.cc-chip__x {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-inline-start: 0.1rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 0.65rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+
+  .spinner-border { width: 0.65rem; height: 0.65rem; border-width: 0.1em; }
+  &:hover:not(:disabled) { background: var(--danger); color: #fff; }
+  &:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 1px; }
+}
+
+.cc-chip:has(.cc-chip__x) { padding-inline-end: 0.2rem; }
+
 .cc-foot {
   display: flex;
   justify-content: flex-end;

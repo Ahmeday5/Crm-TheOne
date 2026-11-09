@@ -45,7 +45,8 @@ export class ScriptFormDialogComponent implements OnInit {
   private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly limits = { title: 140, summary: 240, text: 1200 };
+  /** Backend limits (`CallScripts`): title 200, texts 4000, ≤30 list items × 500. */
+  readonly limits = { title: 200, text: 4000, items: 30, item: 500 };
 
   readonly submitting = signal(false);
   readonly serverError = signal<string | null>(null);
@@ -56,7 +57,6 @@ export class ScriptFormDialogComponent implements OnInit {
   readonly form = this.fb.nonNullable.group({
     title: ['', textRules(this.limits.title)],
     serviceId: this.fb.control<number | null>(null),
-    summary: ['', textRules(this.limits.summary, false)],
     opening: ['', textRules(this.limits.text)],
     steps: this.fb.nonNullable.control<string[]>([''], minLines(1)),
     questions: this.fb.nonNullable.control<string[]>([]),
@@ -71,7 +71,6 @@ export class ScriptFormDialogComponent implements OnInit {
       this.form.setValue({
         title: s.title,
         serviceId: s.service?.id ?? null,
-        summary: s.summary,
         opening: s.opening,
         steps: s.steps.length ? [...s.steps] : [''],
         questions: [...s.questions],
@@ -107,7 +106,6 @@ export class ScriptFormDialogComponent implements OnInit {
     const payload: CallScriptInput = {
       title: v.title.trim(),
       service,
-      summary: v.summary.trim(),
       opening: v.opening.trim(),
       steps: cleanLines(v.steps),
       questions: cleanLines(v.questions),

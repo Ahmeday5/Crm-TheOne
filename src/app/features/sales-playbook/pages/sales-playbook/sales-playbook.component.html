@@ -9,7 +9,7 @@
       </div>
     </div>
     @if (isAdmin()) {
-      <button type="button" class="btn btn-primary pb-ready" [disabled]="importing() || !loaded()"
+      <button type="button" class="btn btn-primary pb-ready" [disabled]="importing() || migrating() || !loaded()"
               [appTip]="'salesPlaybook.readyContent.tip' | translate"
               (click)="loadReadyContent()">
         @if (importing()) {
@@ -59,14 +59,29 @@
         @for (i of [1, 2, 3]; track i) { <div class="pb-skeleton" [style.--i]="i"></div> }
       </div>
     } @else {
-      @if (isEmpty() && isAdmin()) {
+      @if (localPending() > 0) {
+        <div class="pb-onboard pb-migrate" role="status">
+          <span class="pb-onboard__ic" aria-hidden="true"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+          <div class="min-w-0">
+            <strong class="d-block">{{ 'salesPlaybook.migration.bannerTitle' | translate: { n: localPending() } }}</strong>
+            <span class="text-muted small">{{ 'salesPlaybook.migration.bannerText' | translate }}</span>
+          </div>
+          <button type="button" class="btn btn-sm btn-primary" [disabled]="migrating() || importing()" (click)="moveLocalContent()">
+            @if (migrating()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>{{ 'salesPlaybook.migration.moving' | translate }}
+            } @else {
+              <i class="fa-solid fa-cloud-arrow-up me-1"></i>{{ 'salesPlaybook.migration.button' | translate }}
+            }
+          </button>
+        </div>
+      } @else if (isEmpty() && isAdmin()) {
         <div class="pb-onboard">
           <span class="pb-onboard__ic" aria-hidden="true"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
           <div class="min-w-0">
             <strong class="d-block">{{ 'salesPlaybook.readyContent.onboardTitle' | translate }}</strong>
             <span class="text-muted small">{{ 'salesPlaybook.readyContent.onboardText' | translate }}</span>
           </div>
-          <button type="button" class="btn btn-sm btn-primary" [disabled]="importing()" (click)="loadReadyContent()">
+          <button type="button" class="btn btn-sm btn-primary" [disabled]="importing() || migrating()" (click)="loadReadyContent()">
             {{ 'salesPlaybook.readyContent.button' | translate }}
           </button>
         </div>
@@ -114,6 +129,46 @@
     }
     <ng-container modal-footer>
       <button type="button" class="btn btn-primary" (click)="importResult.set(null)">
+        {{ 'salesPlaybook.readyContent.done' | translate }}
+      </button>
+    </ng-container>
+  </app-modal>
+}
+
+@if (migrationReport(); as m) {
+  <app-modal [open]="true" [title]="'salesPlaybook.migration.resultTitle' | translate"
+             [icon]="m.failed ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-check'"
+             [iconTone]="m.failed ? 'warning' : 'success'" size="md" (closed)="migrationReport.set(null)">
+    <p class="text-muted mb-3">{{ 'salesPlaybook.migration.resultIntro' | translate }}</p>
+    <ul class="pb-result">
+      <li style="--i: 0">
+        <span class="pb-result__ic tone-primary"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+        <span>{{ 'salesPlaybook.migration.defaultsAdded' | translate: {
+          n: m.defaults.added.scripts + m.defaults.added.objections + m.defaults.added.replies } }}</span>
+      </li>
+      <li style="--i: 1">
+        <span class="pb-result__ic tone-success"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+        <span>{{ 'salesPlaybook.migration.moved' | translate: { n: migrationMoved() } }}</span>
+      </li>
+      @if (m.moved.mentions) {
+        <li style="--i: 2">
+          <span class="pb-result__ic tone-primary"><i class="fa-solid fa-user-group"></i></span>
+          <span>{{ 'salesPlaybook.migration.mentions' | translate: { n: m.moved.mentions } }}</span>
+        </li>
+      }
+      <li style="--i: 3">
+        <span class="pb-result__ic tone-muted"><i class="fa-solid fa-clone"></i></span>
+        <span>{{ 'salesPlaybook.migration.skipped' | translate: { n: m.skipped } }}</span>
+      </li>
+    </ul>
+    @if (m.failed) {
+      <p class="pb-result__warn">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>{{ 'salesPlaybook.migration.failedItems' | translate: { n: m.failed } }}</span>
+      </p>
+    }
+    <ng-container modal-footer>
+      <button type="button" class="btn btn-primary" (click)="migrationReport.set(null)">
         {{ 'salesPlaybook.readyContent.done' | translate }}
       </button>
     </ng-container>

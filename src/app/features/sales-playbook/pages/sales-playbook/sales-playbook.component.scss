@@ -76,6 +76,8 @@
 .pb-tabs {
   --count: 4;
   position: relative;
+  /* The tabs' z-index stays inside the bar — it can never paint over a dialog. */
+  isolation: isolate;
   display: grid;
   grid-template-columns: repeat(var(--count), minmax(0, 1fr));
   padding: 4px;
@@ -164,8 +166,13 @@
 
 .pb-panel { min-width: 0; }
 
+/*
+ * `backwards`, not `both`: a fill that outlives the animation keeps a
+ * transform → stacking context on the panel, which traps the dialogs opened
+ * from it (position: fixed) underneath the tabs and the app header.
+ */
 .pb-switch {
-  animation: pb-panel-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: pb-panel-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 @keyframes pb-panel-in {

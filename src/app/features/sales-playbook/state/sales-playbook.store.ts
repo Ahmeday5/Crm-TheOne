@@ -1,38 +1,36 @@
-import { DestroyRef, Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Observable, Subscription, finalize, switchMap, tap } from 'rxjs';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Observable, Subscription, finalize, map, tap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { PlaybookFavoritesService } from '../data/playbook-favorites.service';
-import { PlaybookLookupsService } from '../data/playbook-lookups.service';
-import { SEED_OBJECTIONS, SEED_REPLIES, SEED_SCRIPTS } from '../data/playbook-seed-content';
 import { SALES_PLAYBOOK_REPOSITORY } from '../data/sales-playbook-repository.provider';
-import { canManagePlaybook } from '../data/sales-playbook.repository';
 import {
+  Competitor,
+  CompetitorMention,
+  CompetitorMentionInput,
   EMPTY_SNAPSHOT,
   PlaybookEntityMap,
-  PlaybookImportBundle,
   PlaybookImportResult,
   PlaybookInputMap,
   PlaybookKind,
   PlaybookRecord,
-  PlaybookServiceRef,
   PlaybookSnapshot,
 } from '../models/sales-playbook.models';
-import { findSimilarService } from '../utils/service-matching.util';
+import { canManagePlaybook, canMentionCompetitors } from '../sales-playbook.permissions';
+import { categoryCounts } from '../utils/playbook.util';
 
 /**
  * App-wide sales playbook state — shared by the playbook page and the
  * WhatsApp quick-reply picker, so an edit shows up everywhere at once.
  *
+ * Mutations go to the server first and only then patch the local snapshot
+ * (pessimistic), so the UI never shows something the backend rejected.
  * `start()` is idempotent: the first consumer loads, later ones reuse.
  */
 @Injectable({ providedIn: 'root' })
 export class SalesPlaybookStore {
   private readonly repo = inject(SALES_PLAYBOOK_REPOSITORY);
   private readonly auth = inject(AuthService);
-  private readonly lookups = inject(PlaybookLookupsService);
   private readonly favorites = inject(PlaybookFavoritesService);
-  private readonly destroyRef = inject(DestroyRef);
 
   private readonly snapshot = signal<PlaybookSnapshot>(EMPTY_SNAPSHOT);
   private readonly loadingSig = signal(false);
@@ -45,13 +43,21 @@ export class SalesPlaybookStore {
   readonly loaded = this.loadedSig.asReadonly();
   readonly error = this.errorSig.asReadonly();
 
-  /** Can add / edit / delete / import — see `PLAYBOOK_MANAGER_ROLES`. */
+  /** Add / edit / delete content, load the ready-made content. */
   readonly canManage = computed(() => canManagePlaybook(this.auth.currentRole()));
+  /** Link customers to competitors. */
+  readonly canMention = computed(() => canMentionCompetitors(this.auth.currentRole()));
 
   readonly scripts = computed(() => this.sorted('scripts'));
   readonly objections = computed(() => this.sorted('objections'));
   readonly competitors = computed(() => this.sorted('competitors'));
   readonly replies = computed(() => this.sorted('replies'));
+
+  /** Raw server order — for diffing against other data (e.g. the local-content migration). */
+  readonly snapshotView = this.snapshot.asReadonly();
+
+  readonly objectionCategories = computed(() => categoryCounts(this.snapshot().objections.map((o) => o.category)));
+  readonly replyCategories = computed(() => categoryCounts(this.snapshot().replies.map((r) => r.category)));
 
   readonly counts = computed<Record<PlaybookKind, number>>(() => {
     const s = this.snapshot();
@@ -85,9 +91,6 @@ export class SalesPlaybookStore {
     }
     this.started = true;
     this.refresh();
-    this.repo.externalChanges$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.refresh(true));
   }
 
   /** `quiet` keeps the current content on screen (no skeleton). */
@@ -107,6 +110,18 @@ export class SalesPlaybookStore {
       });
   }
 
+  /** Re-reads the server and resolves once the snapshot is fresh. */
+  reload(): Observable<PlaybookSnapshot> {
+    this.loadSub?.unsubscribe();
+    return this.repo.load().pipe(
+      tap((s) => {
+        this.snapshot.set(s);
+        this.loadedSig.set(true);
+        this.errorSig.set(false);
+      }),
+    );
+  }
+
   // ─────────── favourites ───────────
 
   isFavorite(kind: PlaybookKind, id: string): boolean {
@@ -117,7 +132,7 @@ export class SalesPlaybookStore {
     return this.favorites.toggle(kind, id);
   }
 
-  // ─────────── mutations (admin) ───────────
+  // ─────────── content (Admin) ───────────
 
   save<K extends PlaybookKind>(
     kind: K,
@@ -125,7 +140,10 @@ export class SalesPlaybookStore {
     id?: string | null,
   ): Observable<PlaybookEntityMap[K]> {
     const request$ = id ? this.repo.update(kind, id, input) : this.repo.create(kind, input);
-    return request$.pipe(tap((saved) => this.upsert(kind, saved)));
+    return request$.pipe(
+      map((saved) => this.withKeptMentions(kind, saved)),
+      tap((saved) => this.upsert(kind, saved)),
+    );
   }
 
   remove(kind: PlaybookKind, id: string): Observable<void> {
@@ -139,26 +157,49 @@ export class SalesPlaybookStore {
     );
   }
 
-  /**
-   * Loads the website's ready-made content: links each program script to the
-   * most similar service, then lets the repository add only what's missing.
-   */
+  /** The backend's ready-made content (idempotent), then a quiet refresh. */
   importReadyContent(): Observable<PlaybookImportResult> {
-    return this.lookups.services().pipe(
-      switchMap((services) => this.repo.importContent(buildSeedBundle(services))),
-      tap(() => this.refresh(true)),
+    return this.repo.loadDefaultContent().pipe(tap(() => this.refresh(true)));
+  }
+
+  // ─────────── competitor mentions (Admin / Sales / Support) ───────────
+
+  addMention(competitorId: string, input: CompetitorMentionInput): Observable<CompetitorMention> {
+    return this.repo.addMention(competitorId, input).pipe(
+      tap((mention) =>
+        this.patchCompetitor(competitorId, (c) => {
+          // Re-linking the same customer updates the existing mention server-side.
+          const others = c.mentions.filter((m) => m.id !== mention.id && m.customerId !== mention.customerId);
+          const mentions = [mention, ...others];
+          const added = mentions.length - c.mentions.length;
+          return { ...c, mentions, mentionsCount: Math.max(0, c.mentionsCount + added) };
+        }),
+      ),
+    );
+  }
+
+  removeMention(competitorId: string, mentionId: string): Observable<void> {
+    return this.repo.removeMention(mentionId).pipe(
+      tap(() =>
+        this.patchCompetitor(competitorId, (c) => ({
+          ...c,
+          mentions: c.mentions.filter((m) => m.id !== mentionId),
+          mentionsCount: Math.max(0, c.mentionsCount - 1),
+        })),
+      ),
     );
   }
 
   // ─────────── internals ───────────
 
-  /** Favourites first, then newest. */
+  /** Favourites first; otherwise the server's order (title / category / name / sortOrder). */
   private sorted<K extends PlaybookKind>(kind: K): PlaybookEntityMap[K][] {
     const rows = this.snapshot()[kind] as PlaybookEntityMap[K][];
     const fav = (r: PlaybookRecord) => (this.favorites.has(kind, r.id) ? 0 : 1);
-    return [...rows].sort(
-      (a, b) => fav(a) - fav(b) || (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0),
-    );
+    return rows
+      .map((row, index) => ({ row, index }))
+      .sort((a, b) => fav(a.row) - fav(b.row) || a.index - b.index)
+      .map(({ row }) => row);
   }
 
   private upsert<K extends PlaybookKind>(kind: K, saved: PlaybookEntityMap[K]): void {
@@ -166,25 +207,24 @@ export class SalesPlaybookStore {
       const rows = s[kind] as PlaybookEntityMap[K][];
       const next = rows.some((r) => r.id === saved.id)
         ? rows.map((r) => (r.id === saved.id ? saved : r))
-        : [saved, ...rows];
+        : [...rows, saved];
       return { ...s, [kind]: next };
     });
   }
-}
 
-/** Seed content → import bundle, scripts linked to their similar service. */
-function buildSeedBundle(services: readonly PlaybookServiceRef[]): PlaybookImportBundle {
-  return {
-    scripts: SEED_SCRIPTS.map(({ serviceAliases, ...script }) => {
-      const match = findSimilarService(serviceAliases, services);
-      return {
-        ...script,
-        steps: [...script.steps],
-        questions: [...script.questions],
-        service: match ? { id: match.id, nameAr: match.nameAr, nameEn: match.nameEn } : null,
-      };
-    }),
-    objections: SEED_OBJECTIONS.map((o) => ({ ...o })),
-    replies: SEED_REPLIES.map((r) => ({ ...r })),
-  };
+  /** PUT/POST responses for competitors carry no mentions — keep the ones we have. */
+  private withKeptMentions<K extends PlaybookKind>(kind: K, saved: PlaybookEntityMap[K]): PlaybookEntityMap[K] {
+    if (kind !== 'competitors') return saved;
+    const c = saved as Competitor;
+    if (c.mentions.length) return saved;
+    const current = this.snapshot().competitors.find((x) => x.id === c.id);
+    return (current ? { ...c, mentions: current.mentions, mentionsCount: current.mentionsCount } : c) as PlaybookEntityMap[K];
+  }
+
+  private patchCompetitor(id: string, patch: (c: Competitor) => Competitor): void {
+    this.snapshot.update((s) => ({
+      ...s,
+      competitors: s.competitors.map((c) => (c.id === id ? patch(c) : c)),
+    }));
+  }
 }

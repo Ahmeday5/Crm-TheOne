@@ -11,6 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { TRANSLATIONS, interpolate, resolveKey } from '../../../../core/i18n';
+import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -62,12 +63,13 @@ const MAX_TEXTAREA_PX = 140;
 export class WaComposerComponent implements OnDestroy {
   private readonly toast = inject(ToastService);
   private readonly language = inject(LanguageService);
+  private readonly auth = inject(AuthService);
 
   /** At least one message is still on its way — shows the anti-ban delay hint. */
   readonly sending = input(false);
   /** The thread can't send (no permission, number disconnected). */
   readonly disabled = input(false);
-  /** Customer's name — fills `{name}` in quick replies when known. */
+  /** Customer's name — fills `{{customerName}}` in quick replies when known. */
   readonly contactName = input<string | null>(null);
 
   readonly submitted = output<WaComposerSubmit>();
@@ -129,7 +131,10 @@ export class WaComposerComponent implements OnDestroy {
   /** A sales-playbook quick reply goes in at the caret (replacing any selection) — never auto-sent. */
   protected insertReply(raw: string): void {
     const el = this.textarea()?.nativeElement;
-    const snippet = fillReplyPlaceholders(raw, { name: this.contactName() });
+    const snippet = fillReplyPlaceholders(raw, {
+      name: this.contactName(),
+      agent: this.auth.currentUser()?.fullName,
+    });
     const current = this.text();
     const start = el?.selectionStart ?? current.length;
     const end = el?.selectionEnd ?? current.length;

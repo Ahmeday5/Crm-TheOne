@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, model, output } fr
 import { TipDirective } from '../../../../shared/directives/tip.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { Objection } from '../../models/sales-playbook.models';
-import { OBJECTION_META } from '../../utils/playbook.util';
+import { categoryMeta } from '../../utils/playbook.util';
 import { CopyButtonComponent } from '../copy-button/copy-button.component';
 import { FavoriteButtonComponent } from '../favorite-button/favorite-button.component';
 
@@ -24,5 +24,5 @@ export class ObjectionItemComponent {
   readonly edit = output<Objection>();
   readonly remove = output<Objection>();
 
-  protected readonly meta = computed(() => OBJECTION_META[this.objection().category] ?? OBJECTION_META.other);
+  protected readonly meta = computed(() => categoryMeta(this.objection().category));
 }

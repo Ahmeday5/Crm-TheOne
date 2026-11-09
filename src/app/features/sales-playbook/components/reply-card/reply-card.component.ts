@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { LanguageService } from '../../../../core/services/language.service';
 import { TipDirective } from '../../../../shared/directives/tip.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { QuickReply } from '../../models/sales-playbook.models';
-import { REPLY_META, hasNamePlaceholder } from '../../utils/playbook.util';
+import { categoryMeta, hasNamePlaceholder } from '../../utils/playbook.util';
 import { CopyButtonComponent } from '../copy-button/copy-button.component';
 import { FavoriteButtonComponent } from '../favorite-button/favorite-button.component';
 
@@ -23,6 +24,12 @@ export class ReplyCardComponent {
   readonly edit = output<QuickReply>();
   readonly remove = output<QuickReply>();
 
-  protected readonly meta = computed(() => REPLY_META[this.reply().category] ?? REPLY_META.other);
+  private readonly language = inject(LanguageService);
+
+  protected readonly meta = computed(() => categoryMeta(this.reply().category));
   protected readonly personalised = computed(() => hasNamePlaceholder(this.reply().text));
+  protected readonly serviceName = computed(() => {
+    const s = this.reply().service;
+    return s ? (this.language.lang() === 'en' ? s.nameEn || s.nameAr : s.nameAr || s.nameEn) : '';
+  });
 }

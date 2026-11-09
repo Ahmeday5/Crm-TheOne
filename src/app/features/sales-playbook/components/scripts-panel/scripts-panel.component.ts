@@ -80,7 +80,7 @@ export class ScriptsPanelComponent {
       .filter((s) => service === ALL || (s.service ? String(s.service.id) : GENERIC) === service)
       .filter((s) => !this.favoritesOnly() || this.store.isFavorite('scripts', s.id))
       .filter((s) =>
-        matchesQuery(q, s.title, s.summary, s.service?.nameAr, s.service?.nameEn, s.opening, s.closing, ...s.steps),
+        matchesQuery(q, s.title, s.service?.nameAr, s.service?.nameEn, s.opening, s.closing, ...s.steps),
       );
   });
 

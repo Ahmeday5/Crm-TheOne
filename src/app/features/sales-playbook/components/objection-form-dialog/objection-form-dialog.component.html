@@ -10,18 +10,29 @@
 
   <form class="pf" [formGroup]="form" (ngSubmit)="submit()" novalidate id="pb-objection-form">
     <div class="pf-grid">
-      <fieldset class="pf-field pf-span">
-        <legend class="form-label fw-600">{{ 'salesPlaybook.form.category' | translate }}</legend>
-        <div class="pf-chips" role="radiogroup">
-          @for (c of categories; track c) {
-            <button type="button" class="pf-chip" role="radio"
-                    [class.is-on]="value().category === c" [attr.aria-checked]="value().category === c"
-                    (click)="form.controls.category.setValue(c)">
-              <i [class]="meta[c].icon" aria-hidden="true"></i>{{ 'salesPlaybook.categories.' + c | translate }}
-            </button>
-          }
-        </div>
-      </fieldset>
+      <div class="pf-field pf-span">
+        <label class="form-label fw-600" for="pf-o-cat">{{ 'salesPlaybook.form.category' | translate }}</label>
+        <input id="pf-o-cat" class="form-control" formControlName="category" dir="auto" list="pf-o-cats"
+               autocomplete="off"
+               [maxlength]="limits.category"
+               [class.is-invalid]="form.controls.category.invalid && form.controls.category.touched"
+               [placeholder]="'salesPlaybook.form.categoryPh' | translate" />
+        <datalist id="pf-o-cats">
+          @for (c of suggestions(); track c) { <option [value]="c"></option> }
+        </datalist>
+        <app-form-error [control]="form.controls.category" [label]="'salesPlaybook.form.category' | translate" />
+        @if (suggestions().length) {
+          <div class="pf-chips mt-2" role="group" [attr.aria-label]="'salesPlaybook.form.categoryHint' | translate">
+            @for (c of suggestions(); track c) {
+              <button type="button" class="pf-chip" [class.is-on]="value().category?.trim() === c"
+                      [attr.aria-pressed]="value().category?.trim() === c" (click)="pickCategory(c)">
+                <i [class]="metaOf(c).icon" aria-hidden="true"></i><span dir="auto">{{ c }}</span>
+              </button>
+            }
+          </div>
+        }
+        <small class="pf-hint">{{ 'salesPlaybook.form.categoryHint' | translate }}</small>
+      </div>
 
       <div class="pf-field pf-span">
         <label class="form-label fw-600" for="pf-o-text">{{ 'salesPlaybook.form.objection' | translate }}</label>
@@ -34,22 +45,12 @@
 
       <div class="pf-field pf-span">
         <label class="form-label fw-600" for="pf-o-answer">{{ 'salesPlaybook.objections.bestAnswer' | translate }}</label>
-        <textarea id="pf-o-answer" class="form-control" rows="5" formControlName="answer" dir="auto"
+        <textarea id="pf-o-answer" class="form-control" rows="6" formControlName="answer" dir="auto"
                   [maxlength]="limits.answer"
                   [class.is-invalid]="form.controls.answer.invalid && form.controls.answer.touched"
                   [placeholder]="'salesPlaybook.form.answerPh' | translate"></textarea>
         <span class="pf-counter">{{ value().answer?.length ?? 0 }}/{{ limits.answer }}</span>
         <app-form-error [control]="form.controls.answer" [label]="'salesPlaybook.objections.bestAnswer' | translate" />
-      </div>
-
-      <div class="pf-field pf-span">
-        <label class="form-label fw-600" for="pf-o-tip">
-          {{ 'salesPlaybook.form.tip' | translate }}
-          <span class="pf-optional">{{ 'salesPlaybook.form.optional' | translate }}</span>
-        </label>
-        <input id="pf-o-tip" class="form-control" formControlName="tip" dir="auto"
-               [maxlength]="limits.tip"
-               [placeholder]="'salesPlaybook.form.tipPh' | translate" />
       </div>
     </div>
 

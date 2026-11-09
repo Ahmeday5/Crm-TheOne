@@ -4,7 +4,10 @@
     <span class="rc-ic" aria-hidden="true"><i [class]="meta().icon"></i></span>
     <div class="rc-titles">
       <h6 class="rc-title" dir="auto">{{ r.title }}</h6>
-      <span class="rc-cat">{{ 'salesPlaybook.replyCategories.' + r.category | translate }}</span>
+      <span class="rc-cat" dir="auto">
+        {{ r.category || ('salesPlaybook.replies.uncategorised' | translate) }}
+        @if (r.service) { · {{ serviceName() }} }
+      </span>
     </div>
     <app-pb-favorite-button kind="replies" [itemId]="r.id" />
   </header>

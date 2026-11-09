@@ -2,6 +2,10 @@
  * Sales playbook domain — call scripts, objection handling, competitor
  * intelligence and canned WhatsApp replies.
  *
+ * These are the shapes the UI works with. The backend's DTOs differ in
+ * naming and structure; `data/sales-playbook.mappers.ts` is the only place
+ * that knows both, so an API rename never ripples into components.
+ *
  * Every record shares the same envelope (`PlaybookRecord`); the four
  * collections are addressed generically through `PlaybookKind` so the
  * repository, store and favourites never need a switch per type.
@@ -17,109 +21,101 @@ export const PLAYBOOK_KINDS: ReadonlyArray<PlaybookKind> = [
 ];
 
 export interface PlaybookRecord {
+  /** Server id, stringified so it can key favourites and DOM ids. */
   id: string;
-  createdAt: string;
-  updatedAt: string | null;
 }
 
-// ─────────── call scripts ───────────
-
-/** The service a script sells (snapshot of `Services management`). */
+/** A service from "Services management" that content can be linked to. */
 export interface PlaybookServiceRef {
   id: number;
   nameAr: string;
   nameEn: string;
 }
 
+// ─────────── call scripts ───────────
+
 export interface CallScriptInput {
   title: string;
-  /** Linked service — `null` when the script is generic. */
+  /** `null` = generic script (not tied to a service). */
   service: PlaybookServiceRef | null;
-  /** One-line pitch shown on the card. */
-  summary: string;
   opening: string;
   steps: string[];
   questions: string[];
   closing: string;
 }
 
-export interface CallScript extends PlaybookRecord, CallScriptInput {}
+export interface CallScript extends PlaybookRecord, CallScriptInput {
+  /** Came from "load ready content". */
+  isDefaultContent: boolean;
+  createdAt: string;
+  updatedAt: string | null;
+}
 
 // ─────────── objections ───────────
 
-export type ObjectionCategory =
-  | 'price'
-  | 'timing'
-  | 'trust'
-  | 'competitor'
-  | 'need'
-  | 'decisionMaker'
-  | 'other';
-
-export const OBJECTION_CATEGORIES: ReadonlyArray<ObjectionCategory> = [
-  'price',
-  'timing',
-  'trust',
-  'competitor',
-  'need',
-  'decisionMaker',
-  'other',
-];
-
 export interface ObjectionInput {
-  category: ObjectionCategory;
+  /** Free text ("السعر", "التأجيل"…) — the list comes from the data, never hard-coded. */
+  category: string;
   /** What the customer says. */
   objection: string;
   /** The best answer — copied verbatim by reps. */
   answer: string;
-  /** Optional coaching note for the rep (never sent to the customer). */
-  tip: string;
 }
 
-export interface Objection extends PlaybookRecord, ObjectionInput {}
+export interface Objection extends PlaybookRecord, ObjectionInput {
+  isDefaultContent: boolean;
+}
 
 // ─────────── competitors ───────────
-
-/** A customer who mentioned the competitor (snapshot from the customers dropdown). */
-export interface CompetitorMention {
-  customerId: number;
-  name: string;
-  company: string | null;
-}
 
 export interface CompetitorInput {
   name: string;
   website: string;
   strengths: string[];
+  /** Their weak spots — where we beat them. */
   weaknesses: string[];
   /** How we win against them — the rep's talk track. */
   howToWin: string;
+}
+
+/** A customer who brought the competitor up. */
+export interface CompetitorMention {
+  id: string;
+  customerId: number;
+  customerName: string;
+  customerPhone: string | null;
+  note: string | null;
+  createdByName: string | null;
+  createdAt: string;
+}
+
+export interface Competitor extends PlaybookRecord, CompetitorInput {
+  mentionsCount: number;
+  /** Newest first. */
   mentions: CompetitorMention[];
 }
 
-export interface Competitor extends PlaybookRecord, CompetitorInput {}
+export interface CompetitorMentionInput {
+  customerId: number;
+  note: string;
+}
 
 // ─────────── quick replies ───────────
 
-export type ReplyCategory = 'greeting' | 'info' | 'followUp' | 'closing' | 'support' | 'other';
-
-export const REPLY_CATEGORIES: ReadonlyArray<ReplyCategory> = [
-  'greeting',
-  'info',
-  'followUp',
-  'closing',
-  'support',
-  'other',
-];
-
 export interface QuickReplyInput {
   title: string;
-  category: ReplyCategory;
-  /** WhatsApp text; may contain the `{name}` placeholder. */
+  /** Free text ("ترحيب", "متابعة"…); `null` = uncategorised. */
+  category: string | null;
+  /** WhatsApp text; may contain `{{customerName}}` / `{{agentName}}`. */
   text: string;
+  service: PlaybookServiceRef | null;
+  /** Position in the list (ascending). */
+  sortOrder: number;
 }
 
-export interface QuickReply extends PlaybookRecord, QuickReplyInput {}
+export interface QuickReply extends PlaybookRecord, QuickReplyInput {
+  isDefaultContent: boolean;
+}
 
 // ─────────── generic addressing ───────────
 
@@ -146,19 +142,13 @@ export const EMPTY_SNAPSHOT: PlaybookSnapshot = {
   replies: [],
 };
 
-// ─────────── ready-made content import ───────────
+// ─────────── ready-made content ───────────
 
-/** What the "load ready content" action sends (services already resolved). */
-export interface PlaybookImportBundle {
-  scripts: CallScriptInput[];
-  objections: ObjectionInput[];
-  replies: QuickReplyInput[];
-}
-
+/** Outcome of `LoadDefaultContent` (idempotent — re-running adds nothing). */
 export interface PlaybookImportResult {
   added: { scripts: number; objections: number; replies: number };
-  /** Items already present (matched by normalised title / text). */
+  /** Items that already existed and were skipped. */
   skipped: number;
-  /** Scripts that found no similar service in Services management. */
+  /** Ready-made scripts that found no matching service (saved as generic). */
   unlinkedScripts: number;
 }

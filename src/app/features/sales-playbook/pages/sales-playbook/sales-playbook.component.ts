@@ -24,7 +24,9 @@ import { ObjectionsPanelComponent } from '../../components/objections-panel/obje
 import { RepliesPanelComponent } from '../../components/replies-panel/replies-panel.component';
 import { ScriptsPanelComponent } from '../../components/scripts-panel/scripts-panel.component';
 import { PLAYBOOK_KINDS, PlaybookImportResult, PlaybookKind } from '../../models/sales-playbook.models';
+import { MigrationReport, PlaybookMigrationService } from '../../state/playbook-migration.service';
 import { SalesPlaybookStore } from '../../state/sales-playbook.store';
+import { playbookErrorMessage } from '../../utils/playbook-errors.util';
 import { KIND_ICON } from '../../utils/playbook.util';
 
 function isKind(value: string | null): value is PlaybookKind {
@@ -33,7 +35,8 @@ function isKind(value: string | null): value is PlaybookKind {
 
 /**
  * دليل المبيعات — call scripts, objection handling, competitor intel and
- * WhatsApp quick replies. Everyone in Sales/Support reads; Admin curates.
+ * WhatsApp quick replies. Every role reads; Admin curates; Sales / Support
+ * also link customers to competitors (see `sales-playbook.permissions.ts`).
  * The active tab lives in `?tab=` so links (e.g. from the WhatsApp picker)
  * open the right section.
  */
@@ -57,6 +60,7 @@ function isKind(value: string | null): value is PlaybookKind {
 })
 export class SalesPlaybookComponent implements OnInit {
   private readonly store = inject(SalesPlaybookStore);
+  private readonly migration = inject(PlaybookMigrationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialog = inject(DialogService);
@@ -84,6 +88,15 @@ export class SalesPlaybookComponent implements OnInit {
   readonly importAdded = computed(() => {
     const r = this.importResult();
     return r ? r.added.scripts + r.added.objections + r.added.replies : 0;
+  });
+
+  /** Content saved in this browser before the backend existed, not on the server yet. */
+  readonly localPending = computed(() => (this.isAdmin() ? this.migration.pendingCount() : 0));
+  readonly migrating = signal(false);
+  readonly migrationReport = signal<MigrationReport | null>(null);
+  readonly migrationMoved = computed(() => {
+    const m = this.migrationReport()?.moved;
+    return m ? m.scripts + m.objections + m.competitors + m.replies : 0;
   });
 
   ngOnInit(): void {
@@ -148,7 +161,31 @@ export class SalesPlaybookComponent implements OnInit {
       },
       error: (err: ApiError) => {
         this.importing.set(false);
-        this.toast.error(err?.message?.trim() || this.t('salesPlaybook.readyContent.failed'));
+        this.toast.error(err?.status ? playbookErrorMessage(err, (k) => this.t(k)) : this.t('salesPlaybook.readyContent.failed'));
+      },
+    });
+  }
+
+  async moveLocalContent(): Promise<void> {
+    if (this.migrating()) return;
+    const ok = await this.dialog.confirm({
+      title: this.t('salesPlaybook.migration.confirmTitle'),
+      message: this.t('salesPlaybook.migration.confirmMessage'),
+      confirmText: this.t('salesPlaybook.migration.confirm'),
+      cancelText: this.t('salesPlaybook.form.cancel'),
+      type: 'info',
+    });
+    if (!ok) return;
+
+    this.migrating.set(true);
+    this.migration.migrate().subscribe({
+      next: (report) => {
+        this.migrating.set(false);
+        this.migrationReport.set(report);
+      },
+      error: (err: ApiError) => {
+        this.migrating.set(false);
+        this.toast.error(err?.status ? playbookErrorMessage(err, (k) => this.t(k)) : this.t('salesPlaybook.migration.failed'));
       },
     });
   }

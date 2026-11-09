@@ -5,7 +5,9 @@
   [canAdd]="isAdmin()"
   [addLabel]="'salesPlaybook.objections.add' | translate"
   (add)="editing.set(null)">
-  <app-pb-filter-chips [chips]="chips()" [(value)]="category" [label]="'salesPlaybook.form.category' | translate" />
+  @if (chips().length) {
+    <app-pb-filter-chips [chips]="chips()" [(value)]="category" [label]="'salesPlaybook.form.category' | translate" />
+  }
 </app-pb-panel-toolbar>
 
 @if (filtered().length) {

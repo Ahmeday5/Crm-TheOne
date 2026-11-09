@@ -15,7 +15,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { QuickReply } from '../../models/sales-playbook.models';
 import { SalesPlaybookStore } from '../../state/sales-playbook.store';
 import { matchesQuery } from '../../utils/arabic-text.util';
-import { REPLY_META } from '../../utils/playbook.util';
+import { categoryMeta } from '../../utils/playbook.util';
 
 export const SALES_PLAYBOOK_PATH = '/sales-playbook';
 
@@ -54,11 +54,11 @@ export class QuickReplyPickerComponent {
 
   protected readonly results = computed(() => {
     const q = this.query();
-    return this.store.replies().filter((r) => matchesQuery(q, r.title, r.text));
+    return this.store.replies().filter((r) => matchesQuery(q, r.title, r.text, r.category));
   });
 
   protected icon(r: QuickReply): string {
-    return (REPLY_META[r.category] ?? REPLY_META.other).icon;
+    return categoryMeta(r.category).icon;
   }
 
   protected isFavorite(r: QuickReply): boolean {

@@ -1,7 +1,8 @@
 import { Observable } from 'rxjs';
 import {
+  CompetitorMention,
+  CompetitorMentionInput,
   PlaybookEntityMap,
-  PlaybookImportBundle,
   PlaybookImportResult,
   PlaybookInputMap,
   PlaybookKind,
@@ -11,32 +12,18 @@ import {
 /**
  * Persistence port for the sales playbook.
  *
- * The store and UI depend only on this contract; the concrete adapter
- * (mock today, HTTP once the backend ships) is chosen in exactly one place:
- * `SALES_PLAYBOOK_REPOSITORY` in `sales-playbook-repository.provider.ts`.
+ * The store and UI depend only on this contract; the concrete adapter is
+ * bound in exactly one place — `SALES_PLAYBOOK_REPOSITORY`. Errors surface
+ * as the app's `ApiError` (`{ status, message }`), never raw HTTP errors.
  *
- * Contract every adapter honours (see `docs/api/sales-playbook.md`):
- *   - Reads are open to Admin / Marketing / Sales.
- *   - `create` / `update` / `remove` / `importContent` are limited to
- *     `PLAYBOOK_MANAGER_ROLES`.
- *   - `importContent` is idempotent: items whose normalised title / text
- *     already exist are skipped and counted in `skipped`.
+ * Authorisation is the backend's job (see `sales-playbook.permissions.ts`
+ * for the roles the UI mirrors).
  */
-
-/** Roles that can add / edit / delete / import playbook content. */
-export const PLAYBOOK_MANAGER_ROLES: readonly string[] = ['Admin', 'Marketing'];
-
-export function canManagePlaybook(role: string | null | undefined): boolean {
-  return !!role && PLAYBOOK_MANAGER_ROLES.includes(role);
-}
-
 export abstract class SalesPlaybookRepository {
+  /** Every tab's content in one snapshot. */
   abstract load(): Observable<PlaybookSnapshot>;
 
-  abstract create<K extends PlaybookKind>(
-    kind: K,
-    input: PlaybookInputMap[K],
-  ): Observable<PlaybookEntityMap[K]>;
+  abstract create<K extends PlaybookKind>(kind: K, input: PlaybookInputMap[K]): Observable<PlaybookEntityMap[K]>;
 
   abstract update<K extends PlaybookKind>(
     kind: K,
@@ -46,11 +33,11 @@ export abstract class SalesPlaybookRepository {
 
   abstract remove(kind: PlaybookKind, id: string): Observable<void>;
 
-  abstract importContent(bundle: PlaybookImportBundle): Observable<PlaybookImportResult>;
+  /** Server-side ready-made content; idempotent. */
+  abstract loadDefaultContent(): Observable<PlaybookImportResult>;
 
-  /**
-   * Fires when data changed somewhere else (another tab, a push event…) so
-   * the store can refetch. Adapters without such a signal return `EMPTY`.
-   */
-  abstract readonly externalChanges$: Observable<void>;
+  /** Links a customer to a competitor — re-linking the same customer updates the note. */
+  abstract addMention(competitorId: string, input: CompetitorMentionInput): Observable<CompetitorMention>;
+
+  abstract removeMention(mentionId: string): Observable<void>;
 }

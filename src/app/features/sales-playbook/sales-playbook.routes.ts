@@ -1,15 +1,16 @@
 import { Routes } from '@angular/router';
+import { PLAYBOOK_READER_ROLES } from './sales-playbook.permissions';
 
 /**
- * Sales playbook — Admin / Sales / Support can browse; create, edit,
- * delete and "load ready content" are gated to Admin inside the page and in
- * the repository (the backend enforces it too).
+ * Sales playbook — every role can browse (the shell's `roleGuard` reads
+ * `data.roles`). Finer rights (content = Admin, competitor mentions =
+ * Admin / Sales / Support) live in `sales-playbook.permissions.ts`.
  */
 export const SALES_PLAYBOOK_ROUTES: Routes = [
   {
     path: 'sales-playbook',
     title: 'دليل المبيعات',
-    data: { roles: ['Admin', 'Marketing', 'Sales'] },
+    data: { roles: PLAYBOOK_READER_ROLES },
     loadComponent: () =>
       import('./pages/sales-playbook/sales-playbook.component').then((m) => m.SalesPlaybookComponent),
   },

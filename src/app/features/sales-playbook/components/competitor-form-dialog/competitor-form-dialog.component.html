@@ -30,14 +30,14 @@
 
       <section class="pf-section">
         <h6 class="pf-section-title"><i class="fa-solid fa-arrow-trend-up"></i>{{ 'salesPlaybook.competitors.strengths' | translate }}</h6>
-        <app-pb-list-field formControlName="strengths" bullet="plus" [maxItems]="10"
+        <app-pb-list-field formControlName="strengths" bullet="plus" [maxItems]="limits.items" [maxLength]="limits.item"
                            [placeholder]="'salesPlaybook.form.strengthPh' | translate"
                            [addLabel]="'salesPlaybook.form.addPoint' | translate" />
       </section>
 
       <section class="pf-section">
         <h6 class="pf-section-title"><i class="fa-solid fa-arrow-trend-down"></i>{{ 'salesPlaybook.competitors.weaknesses' | translate }}</h6>
-        <app-pb-list-field formControlName="weaknesses" bullet="minus" [maxItems]="10"
+        <app-pb-list-field formControlName="weaknesses" bullet="minus" [maxItems]="limits.items" [maxLength]="limits.item"
                            [placeholder]="'salesPlaybook.form.weaknessPh' | translate"
                            [addLabel]="'salesPlaybook.form.addPoint' | translate" />
       </section>
@@ -50,27 +50,6 @@
         <textarea id="pf-c-win" class="form-control" rows="3" formControlName="howToWin" dir="auto"
                   [maxlength]="limits.howToWin"
                   [placeholder]="'salesPlaybook.form.howToWinPh' | translate"></textarea>
-      </div>
-
-      <div class="pf-field pf-span">
-        <label class="form-label fw-600">{{ 'salesPlaybook.competitors.mentionedBy' | translate }}</label>
-        <app-multi-select formControlName="mentionIds"
-                          [options]="customerOptions()"
-                          [loading]="customersLoading()"
-                          [maxVisibleChips]="4"
-                          [showBulkActions]="false"
-                          [placeholder]="'salesPlaybook.form.mentionsPh' | translate"
-                          [searchPlaceholder]="'salesPlaybook.form.searchCustomers' | translate"
-                          [emptyText]="'salesPlaybook.form.noCustomers' | translate"
-                          [loadingLabel]="'salesPlaybook.form.loading' | translate"
-                          [selectedSuffix]="'salesPlaybook.form.selectedSuffix' | translate" />
-        <small class="pf-hint">
-          @if (customersFailed()) {
-            <i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i>{{ 'salesPlaybook.form.customersFailed' | translate }}
-          } @else {
-            {{ 'salesPlaybook.form.mentionsHint' | translate }}
-          }
-        </small>
       </div>
     </div>
 

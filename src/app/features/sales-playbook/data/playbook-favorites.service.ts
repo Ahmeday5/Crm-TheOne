@@ -38,6 +38,17 @@ export class PlaybookFavoritesService {
     return added;
   }
 
+  /** Carries a favourite over when an item gets a new id (e.g. moved to the server). */
+  remap(kind: PlaybookKind, fromId: string, toId: string): void {
+    const from = this.key(kind, fromId);
+    if (fromId === toId || !this.keys().has(from)) return;
+    const next = new Set(this.keys());
+    next.delete(from);
+    next.add(this.key(kind, toId));
+    this.keys.set(next);
+    this.write(next);
+  }
+
   private key(kind: PlaybookKind, id: string): string {
     return `${kind}:${id}`;
   }

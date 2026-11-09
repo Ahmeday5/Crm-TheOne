@@ -231,6 +231,38 @@ export const API_ENDPOINTS = {
     /** GET (Admin): `[{ userId, fullName, hasRead, readAt }]`. */
     readers: (id: number) => `Announcements/${id}/Readers`,
   },
+  /**
+   * Sales playbook (`/sales-playbook`). Reads are open to every role; content
+   * writes are Admin-only; competitor mentions are Admin / Sales / Support.
+   * Mention endpoints answer 401 "Unauthorized access." for a customer the
+   * caller doesn't own — a permission error, not an expired session.
+   */
+  salesPlaybook: {
+    /** GET `?serviceId=&search=` → `CallScriptDto[]` (not paged). POST (Admin). */
+    scripts: 'SalesPlaybook/CallScripts',
+    script: (id: number | string) => `SalesPlaybook/CallScripts/${id}`,
+    /** GET `?pageIndex=&pageSize=(≤100)&search=&category=` → paged. POST (Admin). */
+    objections: 'SalesPlaybook/Objections',
+    objection: (id: number | string) => `SalesPlaybook/Objections/${id}`,
+    /** GET → `[{ category, count }]`. */
+    objectionCategories: 'SalesPlaybook/Objections/Categories',
+    /** GET `?search=` → `CompetitorDto[]` with `mentions = null`. POST (Admin). */
+    competitors: 'SalesPlaybook/Competitors',
+    /** GET → the competitor with its `mentions`. PUT / DELETE (Admin). */
+    competitor: (id: number | string) => `SalesPlaybook/Competitors/${id}`,
+    /** POST `{ customerId, note }` — upserts the customer's mention. */
+    competitorMentions: (id: number | string) => `SalesPlaybook/Competitors/${id}/Mentions`,
+    mention: (mentionId: number | string) => `SalesPlaybook/Mentions/${mentionId}`,
+    /** GET → `CompetitorMentionDto[]` for one customer. */
+    customerCompetitors: (customerId: number) => `SalesPlaybook/Customers/${customerId}/Competitors`,
+    /** GET `?search=&category=&serviceId=` → `QuickReplyDto[]` (not paged). POST (Admin). */
+    quickReplies: 'SalesPlaybook/QuickReplies',
+    quickReply: (id: number | string) => `SalesPlaybook/QuickReplies/${id}`,
+    /** GET `?customerId=` → `{ id, text }` with placeholders filled server-side. */
+    renderQuickReply: (id: number | string) => `SalesPlaybook/QuickReplies/${id}/Render`,
+    /** POST (Admin), no body — idempotent. */
+    loadDefaultContent: 'SalesPlaybook/LoadDefaultContent',
+  },
   /** Attendance & leave (`docs/api/attendance.md`). Times are Cairo wall-clock. */
   attendance: {
     today: 'Attendance/Today',

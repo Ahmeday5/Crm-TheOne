@@ -3,17 +3,17 @@ import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { OBJECTION_CATEGORIES, Objection, ObjectionCategory } from '../../models/sales-playbook.models';
+import { Objection } from '../../models/sales-playbook.models';
 import { PlaybookActionsService } from '../../state/playbook-actions.service';
 import { SalesPlaybookStore } from '../../state/sales-playbook.store';
 import { matchesQuery } from '../../utils/arabic-text.util';
-import { OBJECTION_META } from '../../utils/playbook.util';
+import { categoryMeta } from '../../utils/playbook.util';
 import { FilterChip, FilterChipsComponent } from '../filter-chips/filter-chips.component';
 import { ObjectionFormDialogComponent } from '../objection-form-dialog/objection-form-dialog.component';
 import { ObjectionItemComponent } from '../objection-item/objection-item.component';
 import { PanelToolbarComponent } from '../panel-toolbar/panel-toolbar.component';
 
-const ALL = 'all';
+const ALL = '\u0000all';
 
 @Component({
   selector: 'app-pb-objections-panel',
@@ -45,17 +45,18 @@ export class ObjectionsPanelComponent {
   readonly openId = signal<string | null>(null);
   readonly editing = signal<Objection | null | undefined>(undefined);
 
+  /** One chip per category in the data ("All" = the sum). */
   readonly chips = computed<FilterChip[]>(() => {
-    const rows = this.store.objections();
-    const count = (c: ObjectionCategory) => rows.filter((o) => o.category === c).length;
+    const categories = this.store.objectionCategories();
+    if (!categories.length) return [];
     return [
-      { value: ALL, label: this.t('salesPlaybook.filters.all'), count: rows.length, icon: 'fa-solid fa-layer-group' },
-      ...OBJECTION_CATEGORIES.filter((c) => count(c) > 0 || c !== 'other').map((c) => ({
-        value: c,
-        label: this.t(`salesPlaybook.categories.${c}`),
-        icon: OBJECTION_META[c].icon,
-        count: count(c),
-      })),
+      {
+        value: ALL,
+        label: this.t('salesPlaybook.filters.all'),
+        count: categories.reduce((sum, c) => sum + c.count, 0),
+        icon: 'fa-solid fa-layer-group',
+      },
+      ...categories.map((c) => ({ value: c.category, label: c.category, icon: categoryMeta(c.category).icon, count: c.count })),
     ];
   });
 
@@ -66,15 +67,13 @@ export class ObjectionsPanelComponent {
       .objections()
       .filter((o) => category === ALL || o.category === category)
       .filter((o) => !this.favoritesOnly() || this.store.isFavorite('objections', o.id))
-      .filter((o) => matchesQuery(q, o.objection, o.answer, o.tip, this.t(`salesPlaybook.categories.${o.category}`)));
+      .filter((o) => matchesQuery(q, o.objection, o.answer, o.category));
   });
 
   readonly hasAny = computed(() => this.store.objections().length > 0);
 
   /** New objections land in the category the admin is looking at. */
-  readonly defaultCategory = computed<ObjectionCategory>(() =>
-    this.category() === ALL ? 'price' : (this.category() as ObjectionCategory),
-  );
+  readonly defaultCategory = computed(() => (this.category() === ALL ? '' : this.category()));
 
   toggle(o: Objection, open: boolean): void {
     this.openId.set(open ? o.id : null);

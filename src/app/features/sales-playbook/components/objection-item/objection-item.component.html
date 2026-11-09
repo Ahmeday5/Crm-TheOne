@@ -5,7 +5,7 @@
             (click)="expanded.set(!expanded())">
       <span class="oi-ic" aria-hidden="true"><i [class]="meta().icon"></i></span>
       <span class="oi-q">
-        <span class="oi-cat">{{ 'salesPlaybook.categories.' + o.category | translate }}</span>
+        <span class="oi-cat" dir="auto">{{ o.category }}</span>
         <span class="oi-text" dir="auto">“{{ o.objection }}”</span>
       </span>
       <i class="fa-solid fa-chevron-down oi-chev" aria-hidden="true"></i>
@@ -19,10 +19,6 @@
         <span class="oi-label"><i class="fa-solid fa-comment-dots"></i>{{ 'salesPlaybook.objections.bestAnswer' | translate }}</span>
         <p class="oi-answer__text" dir="auto">{{ o.answer }}</p>
       </div>
-
-      @if (o.tip) {
-        <p class="oi-tip" dir="auto"><i class="fa-solid fa-lightbulb"></i><span>{{ o.tip }}</span></p>
-      }
 
       <div class="oi-actions">
         <app-pb-copy-button [text]="o.answer" />
