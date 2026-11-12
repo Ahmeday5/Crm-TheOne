@@ -64,7 +64,7 @@ export const SETTINGS_ROUTES: Routes = [
           ),
       },
       // WhatsApp numbers moved next to the inbox; keep old bookmarks working.
-      { path: 'whatsapp', redirectTo: '/whatsapp/numbers', pathMatch: 'full' },
+      { path: 'whatsapp', redirectTo: '/whatsapp/settings', pathMatch: 'full' },
       {
         path: 'activity',
         title: 'سجل الأنشطة',

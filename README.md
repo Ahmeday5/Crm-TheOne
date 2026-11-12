@@ -24,43 +24,45 @@ Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To u
 
 ## WhatsApp module
 
-In-CRM WhatsApp for **Admin, Sales and Support** (`src/app/features/whatsapp`). The browser only talks to our backend (`/api/WhatsApp/*` + the `/hubs/whatsapp` SignalR hub). It never talks to Wavex and holds no Wavex key. The backend enforces every permission. The UI just doesn't offer actions the user can't take.
+In-CRM **WhatsApp + Facebook Messenger** for **Admin, Sales and Support** (`src/app/features/whatsapp`). The backend talks to **Mihwar** (official WhatsApp Business API + Messenger). The browser only talks to our backend (`/api/WhatsApp/*` + the `/hubs/whatsapp` SignalR hub) and holds no provider key. The backend enforces every permission; the UI just doesn't offer actions the user can't take.
+
+A **channel** is a WhatsApp number (`whatsapp_cloud`) or a Messenger page (`messenger`). The API still calls its id `instanceId`. Channels are connected in the **Mihwar dashboard**, never in the CRM (there is no QR / pairing code anymore). Admins see every channel; an employee has at most one WhatsApp number and one Messenger page.
 
 **Routes**
 | Route | Who | What |
 |---|---|---|
-| `/whatsapp` | Admin · Sales · Support | Inbox: channels (admin) or own number card (employee), chats, conversation |
+| `/whatsapp` | Admin · Sales · Support | Inbox: channels (admin) or own channels card (employee), chats, conversation |
 | `/whatsapp/chats/:chatId` | same | Inbox with that chat open (notification deep links) |
-| `/whatsapp/numbers` | Admin | Numbers table: assign/unassign employees, request pairing codes. The **Diagnostics** tab (`?tab=diagnostics`, `GET /diagnostics`) shows config alerts, CRM numbers vs. the Wavex account, and webhook queue health |
+| `/whatsapp/settings` | Admin | Channels table (assign / unassign employees), **Import past conversations** (`POST /import`), **Diagnostics** tab (`?tab=diagnostics`) |
 
-Old links keep working: `/whatsapp/:id` and `/settings/whatsapp` redirect.
+Old links keep working: `/whatsapp/:id`, `/whatsapp/numbers` and `/settings/whatsapp` redirect.
 
 **Architecture**
 | Piece | Scope | Role |
 |---|---|---|
-| `WhatsAppApiService` | root | Typed HTTP calls, unwraps `data`. Every call is `withInlineHandling` + `withUnauthorizedAsForbidden` |
-| `WhatsAppRealtimeService` | root | One SignalR connection. Starts after login for WhatsApp roles, stops on logout, restarts on token refresh. Reconnects forever. Lazy-loads `@microsoft/signalr`. Exposes `message$`, `messageStatus$`, `chatUpdated$`, `instanceStatus$`, `reconnected$` |
-| `WhatsAppSessionStore` | root | Own status (`GET /status`), channels (`GET /instances`), unread totals. Publishes the sidebar badge through `NavBadgesService` |
-| `WhatsAppInboxStore` | inbox page | Chat list: channel, search (300 ms debounce), All/Unread, infinite scroll (30 per page), live upserts |
-| `WhatsAppThreadStore` | per thread | History (`take=50`, `beforeId` paging), live append and ticks, optimistic sends, mark-read |
-| `provideWhatsApp()` | `app.config.ts` | Starts the two root services at boot |
-
-Components are presentational and read the stores.
+| `WhatsAppApiService` | root | One method per endpoint, unwraps `data`. Every call is `withInlineHandling` + `withUnauthorizedAsForbidden`. `sendMedia` streams upload progress |
+| `WhatsAppAssignmentService` | root | Assign / unassign on top of `PUT /users/{id}/number` (see below) |
+| `WhatsAppRealtimeService` | root | One SignalR connection. Starts after login for WhatsApp roles, stops on logout, restarts on token refresh, reconnects forever. Lazy-loads `@microsoft/signalr`. Exposes `message$`, `messageStatus$`, `chatUpdated$`, `instanceStatus$`, `reconnected$` |
+| `WhatsAppSessionStore` | root | Own status (`GET /status`), channels (`GET /instances`), unread totals → sidebar badge, header status chip |
+| `WhatsAppInboxStore` | inbox page | Chat list: channel, search (300 ms debounce), All/Unread, infinite scroll, live upserts |
+| `WhatsAppThreadStore` | per thread | History (`beforeId` paging), live append + ticks, optimistic sends, the single **composer state**, templates, mark-read |
+| `resolveComposerState()` | `utils/composer-state.util.ts` | Pure function: reply / template only / locked |
+| `provideWhatsApp()` | `app.config.ts` | Starts the root services at boot |
 
 **Key behaviours**
-- **Who can be messaged:** anyone. Employees and admins can message any CRM customer, whoever it is assigned to, or any phone: international `+201012345678` (8–15 digits) or local `01012345678`. Employees always send from their own number, and the frontend never sends `instanceId` for them. In a new chat, an admin sends from the selected channel. Inside an existing chat everyone sends by `chatId`.
-- **Channel filter (admin):** `GET /chats?instanceId=<channel.id>`, or no `instanceId` for "All channels". Live messages are added to the list only when "All channels" is selected or `event.instanceId` matches the selected channel.
-- **Sending:** every message gets a fresh `clientMessageId`. After a network error or gateway timeout the request is retried automatically (2 s, then 5 s) with the **same** id, so the backend can't send it twice. Retrying a definite failure uses a **new** id. The composer never blocks during the provider's 3–12 s anti-ban delay.
-- **Ticks** only move forward (Pending → Sent → Delivered → Read). `Failed` shows the reason and a Retry button.
-- **Mark read:** a chat is marked read when you open it with unread messages, and on new incoming messages only while the window is focused.
-- **Missed events:** if the hub is down, the views fall back to polling (chats every 20 s, channel counters every 60 s, only while the tab is visible). After a reconnect they refetch.
-- **401 handling:** a 401 whose body is `"Unauthorized access."` means *permission denied* app-wide. It skips the token refresh and never logs the user out. A 401 without that body still goes through the normal refresh/logout flow.
-- **Linking a phone:** linking uses a pairing code (the provider exposes no QR). The dialog polls every 5 s and also listens to `whatsappInstanceStatus`. The code is kept only in component memory.
-- **Attachments:** jpg/jpeg/png/webp, mp4/3gp, and pdf/doc(x)/xls(x)/ppt(x)/txt/csv/zip/mp3/ogg/m4a, up to 3.5 MB. These are checked before upload.
+- **24-hour window (composer):** `chat.canReply` → free text + files (with "Replies allowed until 3:40 PM" when < 2 h are left; the window also closes client-side when `replyWindowEndsAt` passes). Otherwise `chat.canSendTemplate` → banner + **Send template**. Otherwise (Messenger past 24 h, or chat not linked yet) → disabled "wait for the customer". A customer profile tab is always template-only (free replies happen in the inbox).
+- **Templates (WhatsApp only):** `GET /templates` (admins pass the chat's `instanceId`), only `sendable` ones. A reactive form with one required control per variable and a live preview; values go in `parameters` keyed by name.
+- **New conversation:** customer or international phone → template → `POST /send-template`. No free text. Hidden when `GET /status` is `NOT_ASSIGNED`. Admins pick the WhatsApp number to send from; employees never send `instanceId`.
+- **Sending:** every message gets a fresh `clientMessageId`. Network errors retry automatically (2 s, 5 s) with the **same** id. A `400` shows the server message as a toast and puts the text / file back into the composer (when it's empty).
+- **Files:** jpg/jpeg/png/webp, mp4/3gp, mp3/ogg/m4a/aac, pdf/doc(x)/xls(x)/ppt(x)/txt/csv/zip, up to **16 MB**, validated before upload; upload progress shows on the bubble.
+- **Ticks** only move forward (Pending → Sent → Delivered → Read). `Failed` shows `errorMessage` (tooltip + under the bubble).
+- **Assignment:** `{ instanceId }` replaces only the user's channel of the same type; `{ instanceId: null }` removes **all** of them. So "unassign" = clear, then re-assign the user's other channel; moving a taken channel releases it first and rolls back on failure.
+- **Missed events:** while the hub is down the views poll (chats 20 s, counters 60 s, only while the tab is visible); after a reconnect they refetch.
+- **401:** a 401 with body `"Unauthorized access."` means *permission denied* app-wide — no refresh, no logout.
 
-**Provider limitations (by design, not bugs):** there is no QR code. History starts when the webhook was configured. Incoming media can't be downloaded, so it shows as a labelled placeholder. "Read" resets the CRM counter only and sends no blue ticks. Number status can take about a minute to update.
-
-**Adding a number:** in the Wavex dashboard, add an instance (no scan needed). Then assign it on `/whatsapp/numbers`. The employee links it from the CRM with a pairing code.
+**Tests:** `src/app/features/whatsapp/**/*.spec.ts` (API URLs/bodies, composer state, template utils, store merging of hub events, assignment). Run only these with:
+`npx ng test --watch=false --browsers=ChromeHeadless --include="src/app/features/whatsapp/**/*.spec.ts"`
+(Note: `tsconfig.spec.json` type-checks every spec, so the unrelated, pre-existing `app.component.spec.ts` error — it expects an `AppComponent.title` that no longer exists — must be fixed first, or run with a tsconfig that only includes the WhatsApp specs.)
 
 ## Further help
 

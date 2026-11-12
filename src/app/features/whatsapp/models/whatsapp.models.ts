@@ -1,47 +1,52 @@
 /**
  * Contracts for `/api/WhatsApp/*` and the `/hubs/whatsapp` SignalR hub.
  *
- * The backend fronts Wavex: the browser never sees Wavex or its API key.
- * Every timestamp is UTC (render with `cairoDate`), and `mediaUrl` is
- * server-relative (resolve with `assetUrl`).
+ * The backend fronts Mihwar (official WhatsApp Business API + Facebook
+ * Messenger): the browser never talks to the provider. A "channel" is a
+ * WhatsApp number or a Messenger page; the API still names its id
+ * `instanceId`. Every timestamp is UTC (render with `cairoDate`).
  */
 
-// ─────────────── numbers / channels ───────────────
+// ─────────────── envelope ───────────────
 
-/** Connection state of a number on Wavex. */
-export type WaInstanceStatus =
-  | 'WORKING'
-  | 'DISCONNECTED'
-  | 'QR_REQUIRED'
-  | 'CONNECTING'
-  | 'INITIALIZING'
-  | 'BANNED'
-  | 'UNKNOWN';
+/** Re-exported for feature code: every success is `{ statusCode, message, data }`. */
+export type { ApiResponse } from '../../../core/models/api-response.model';
 
-/** `GET /status` — the caller's own sending number, live from the provider. */
+export interface Pagination<T> {
+  pageIndex: number;
+  pageSize: number;
+  count: number;
+  data: T[];
+}
+
+// ─────────────── channels ───────────────
+
+export type WaChannelType = 'whatsapp_cloud' | 'messenger';
+
+/** Connection state of a channel on Mihwar. */
+export type WaInstanceStatus = 'CONNECTED' | 'DISCONNECTED' | 'INACTIVE' | 'UNKNOWN';
+
+/** `GET /status` — the caller's own WhatsApp number. */
 export interface WaNumberStatus {
   instanceId: string | null;
+  status: WaInstanceStatus | 'NOT_ASSIGNED';
+  canSend: boolean;
+  /** Disconnected / inactive — must be re-linked in the Mihwar dashboard. */
+  requiresRelink: boolean;
+  name: string | null;
+  phoneNumber: string | null;
   isAssigned: boolean;
   /** Admin without an own number → the company number. */
   isDefault: boolean;
-  name: string | null;
-  phoneNumber: string | null;
-  status: WaInstanceStatus | 'NOT_ASSIGNED';
-  /** `true` only while `WORKING`. */
-  canSend: boolean;
-  /** `QR_REQUIRED` or `DISCONNECTED` — the phone must be linked again. */
-  requiresRelink: boolean;
-  lastSeenAt: string | null;
-  lastConnectedAt: string | null;
-  /** A pairing code is active until this time. */
-  pairingExpiresAt: string | null;
 }
 
-/** One company number — a "channel" in the admin inbox. */
+/** One channel: a WhatsApp number or a Messenger page. */
 export interface WaInstance {
-  /** Wavex instance id — sent as `instanceId` everywhere, never displayed. */
+  /** Mihwar channel id (e.g. `"217"`) — sent as `instanceId`. */
   id: string;
+  type: WaChannelType;
   name: string | null;
+  /** Usually `null` (Mihwar doesn't return it) — display `name`. */
   phoneNumber: string | null;
   status: WaInstanceStatus;
   canSend: boolean;
@@ -49,56 +54,48 @@ export interface WaInstance {
   isDefault: boolean;
   assignedUserId: string | null;
   assignedUserName: string | null;
-  lastSeenAt: string | null;
   lastConnectedAt: string | null;
   lastSyncedAt: string | null;
   /** `false` = removed from the provider: shown greyed and read-only. */
-  existsInWavex: boolean;
+  existsInProvider: boolean;
   chatsCount: number;
   unreadChatsCount: number;
-  pairingExpiresAt: string | null;
 }
 
-/** `POST /instances/connect` — the code the employee types on the phone. Never stored or logged. */
-export interface WaPairingCode {
-  instanceId: string;
-  pairingCode: string;
-  expiresInSeconds: number;
-  expiresAt: string;
-}
-
-export interface WaConnectRequest {
-  /** International format, e.g. `+201012345678`. */
-  phone: string;
-  /** Admin only — the channel to link. */
-  instanceId?: string;
-}
-
-/** Body of `PUT /users/{userId}/number` — `null` unassigns. */
+/**
+ * Body of `PUT /users/{userId}/number`. A channel replaces only the user's
+ * channel of the same type; `null` removes ALL of the user's channels.
+ */
 export interface WaAssignNumberRequest {
   instanceId: string | null;
 }
 
 // ─────────────── chats & messages ───────────────
 
-/** One conversation between one of our numbers and one customer phone. */
+/** One conversation between one of our channels and one customer. */
 export interface WaChat {
   id: number;
   instanceId: string;
+  /** e.g. "shahd Shereef" / "The One System co." */
+  instanceName: string | null;
   instancePhoneNumber: string | null;
+  channelType: WaChannelType;
   ownerUserId: string | null;
   ownerName: string | null;
-  /** Digits only, international, e.g. `201012345678`. */
-  phone: string;
-  /** Name from the customer's WhatsApp profile. */
+  /** Digits only, e.g. `201124612772`; `null` for Messenger. */
+  phone: string | null;
   contactName: string | null;
-  /** Linked CRM customer, when the phone matches one. */
   customerId: number | null;
   customerName: string | null;
   companyName: string | null;
   lastMessageAt: string;
   lastMessagePreview: string | null;
   unreadCount: number;
+  /** A free-form text / file is allowed right now (24-hour window open). */
+  canReply: boolean;
+  replyWindowEndsAt: string | null;
+  /** WhatsApp only: an approved template may be sent. */
+  canSendTemplate: boolean;
 }
 
 /** Delivery state. Incoming messages are always `Received`. */
@@ -106,17 +103,17 @@ export type WaMessageStatus = 'Pending' | 'Sent' | 'Delivered' | 'Read' | 'Faile
 
 export type WaDirection = 'Incoming' | 'Outgoing';
 
-/** Wavex's message kinds — open-ended, so unknown kinds still type-check. */
+/** Open-ended so unknown provider kinds still type-check. */
 export type WaMessageType =
   | 'text'
   | 'image'
   | 'video'
   | 'audio'
-  | 'ptt'
   | 'document'
-  | 'sticker'
+  | 'template'
   | 'location'
-  | 'contact'
+  | 'reaction'
+  | 'system'
   | (string & {});
 
 export interface WaMessage {
@@ -127,14 +124,15 @@ export interface WaMessage {
   clientMessageId: string | null;
   direction: WaDirection;
   messageType: WaMessageType;
-  /** Body, or the caption of a media message. */
+  /** Body, a media caption, or a template's rendered body. */
   text: string | null;
-  /** Server-relative; `null` for incoming media (provider limitation). */
+  /** Relative (`/Images/WhatsApp/…`) for files we sent; absolute for received media. */
   mediaUrl: string | null;
   fileName: string | null;
+  templateName: string | null;
   status: WaMessageStatus;
   sentById: string | null;
-  /** CRM user who sent it — `null` when sent from the phone, or incoming. */
+  /** `null` = sent from the Mihwar inbox / an automation, or incoming. */
   sentByName: string | null;
   sentAt: string;
   deliveredAt: string | null;
@@ -143,14 +141,7 @@ export interface WaMessage {
   errorMessage: string | null;
 }
 
-export interface Pagination<T> {
-  pageIndex: number;
-  pageSize: number;
-  count: number;
-  data: T[];
-}
-
-/** Query for `GET /chats` — `pageIndex` is 1-based, `pageSize` ≤ 100. */
+/** Query for `GET /chats` — `pageIndex` is 1-based. */
 export interface WaChatsQuery {
   pageIndex: number;
   pageSize: number;
@@ -167,24 +158,103 @@ export interface WaMessagesQuery {
   beforeId?: number;
 }
 
+// ─────────────── sending ───────────────
+
 /** Exactly one target per send. */
 export type WaSendTarget = { chatId: number } | { customerId: number } | { phone: string };
 
 export interface WaSendTextRequest {
   target: WaSendTarget;
   text: string;
-  /** Idempotency key — reuse it only when retrying after a network error. */
+  /** Idempotency key — reuse it only when retrying the same message. */
   clientMessageId: string;
-  /** Admin only — the number to send from (new chats). */
+  /** Admin only — the channel to send from (new chats). */
   instanceId?: string;
 }
 
+/** `send-media` only targets an existing chat. */
 export interface WaSendMediaRequest {
-  target: WaSendTarget;
+  chatId: number;
   file: File;
   caption?: string;
   clientMessageId: string;
+}
+
+/** `whatsapp_cloud` only — a Meta-approved template. */
+export interface WaTemplate {
+  id: number;
+  name: string;
+  language: string;
+  category: string;
+  status: string;
+  instanceId: string;
+  /** Body with `{{variable}}` placeholders. */
+  body: string;
+  variables: string[];
+  /** Only sendable templates are offered. */
+  sendable: boolean;
+}
+
+export interface WaSendTemplateRequest {
+  target: WaSendTarget;
+  clientMessageId: string;
+  templateId: number;
+  /** The template's name — sent alongside the id for the backend's lookup. */
+  template?: string;
+  language?: string;
+  /** Values keyed by variable name. */
+  parameters?: Record<string, string>;
+  /** Admin only. */
   instanceId?: string;
+}
+
+/** Upload progress of `send-media`, then the stored message. */
+export type WaUploadEvent =
+  | { kind: 'progress'; percent: number }
+  | { kind: 'done'; message: WaMessage };
+
+// ─────────────── admin ───────────────
+
+/** `POST /import` — idempotent; safe to run again. */
+export interface WaImportResult {
+  conversations: number;
+  newChats: number;
+  newMessages: number;
+  skipped: number;
+  /** Per-conversation failures (provider message or a structured row). */
+  errors: (string | Record<string, unknown>)[];
+}
+
+/** A channel as Mihwar reports it (diagnostics). Every field may be missing. */
+export interface WaProviderChannel {
+  id: string;
+  type?: WaChannelType | string | null;
+  name?: string | null;
+  phoneNumber?: string | null;
+  status?: string | null;
+}
+
+export interface WaWebhookEvent {
+  id: number;
+  eventType: string;
+  instanceId: string | null;
+  attempts?: number;
+  receivedAt: string;
+  processedAt: string | null;
+  lastError: string | null;
+}
+
+/** `GET /diagnostics` (Admin) — is the integration wired correctly end to end? */
+export interface WaDiagnostics {
+  apiKeyConfigured: boolean;
+  webhookSecretConfigured: boolean;
+  publicBaseUrlConfigured: boolean;
+  /** Set when the provider couldn't be reached / rejected the key. */
+  providerError: string | null;
+  providerChannels: WaProviderChannel[];
+  pendingWebhookEvents: number;
+  failedWebhookEvents: number;
+  recentWebhookEvents: WaWebhookEvent[];
 }
 
 // ─────────────── real-time hub events ───────────────
@@ -205,58 +275,19 @@ export interface WaMessageStatusEvent {
   status: WaMessageStatus;
   deliveredAt: string | null;
   readAt: string | null;
+  errorMessage: string | null;
 }
 
-/** `whatsappInstanceStatus` — a number's connection changed. */
+/** `whatsappInstanceStatus` — a channel's connection changed. */
 export interface WaInstanceStatusEvent {
   instance: WaInstance;
   previousStatus: string | null;
   becameConnected: boolean;
 }
 
-// ─────────────── admin diagnostics ───────────────
-
-/** `GET /diagnostics` (Admin) — is the integration wired correctly end to end? */
-export interface WaDiagnostics {
-  apiKeyConfigured: boolean;
-  webhookSecretConfigured: boolean;
-  defaultInstanceId: string | null;
-  /** What the configured Wavex account actually holds. */
-  wavexAccountInstances: { id: string; phoneNumber: string | null; status: string | null }[];
-  /** Set when the provider couldn't be reached / rejected the key. */
-  wavexError: string | null;
-  localInstances: WaDiagnosticsLocalInstance[];
-  pendingWebhookEvents: number;
-  failedWebhookEvents: number;
-  recentWebhookEvents: WaWebhookEvent[];
-}
-
-export interface WaDiagnosticsLocalInstance {
-  instanceId: string;
-  phoneNumber: string | null;
-  status: string | null;
-  /** `false` = stored locally but missing from the configured Wavex account. */
-  inCurrentWavexAccount: boolean;
-  ownerUserId: string | null;
-  ownerName: string | null;
-  chatsCount: number;
-}
-
-export interface WaWebhookEvent {
-  id: number;
-  eventType: string;
-  instanceId: string | null;
-  instancePhoneNumber: string | null;
-  instanceOwnerName: string | null;
-  attempts: number;
-  receivedAt: string;
-  processedAt: string | null;
-  lastError: string | null;
-}
-
 // ─────────────── UI-side ───────────────
 
-/** Someone who can own a number (from `GET /Auth/GetAllUsers`). */
+/** Someone who can own a channel (from `GET /Auth/GetAllUsers`). */
 export interface WaEmployee {
   userId: string;
   fullName: string;

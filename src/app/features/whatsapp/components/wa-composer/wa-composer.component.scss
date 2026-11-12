@@ -85,14 +85,51 @@
   }
 }
 
-.wa-compose__hint {
+/* ── reply window closing soon ── */
+.wa-window {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  margin: 0.4rem 0 0;
+  gap: 0.4rem;
+  margin: 0 0 0.5rem;
+  padding: 0.3rem 0.7rem;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--warning-soft);
+  color: var(--warning);
   font-size: var(--fs-xs);
-  color: var(--text-3);
+  font-weight: var(--fw-600);
 }
+
+/* ── template-only / locked bars ── */
+.wa-gate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+  line-height: 1.5;
+
+  .btn { margin-inline-start: auto; }
+}
+.wa-gate__icon { flex-shrink: 0; font-size: 1.05rem; }
+.wa-gate__text { flex: 1; min-width: 12rem; }
+.wa-gate--template {
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
+  background: var(--warning-soft);
+  color: var(--text-1);
+
+  .wa-gate__icon { color: var(--warning); }
+}
+.wa-gate--locked {
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-2);
+}
+.wa-gate__input { flex-basis: 100%; }
 
 /* ── attachment preview ── */
 .wa-attach {

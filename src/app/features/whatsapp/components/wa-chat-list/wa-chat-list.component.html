@@ -87,7 +87,9 @@
             @if (hasName(chat)) {
               <app-user-avatar class="wa-chat__avatar" [name]="name(chat)" size="lg" />
             } @else {
-              <span class="wa-chat__avatar wa-chat__anon" aria-hidden="true"><i class="fa-solid fa-user"></i></span>
+              <span class="wa-chat__avatar wa-chat__anon" [class.is-messenger]="messenger(chat)" aria-hidden="true">
+                <i [class]="messenger(chat) ? 'fa-brands fa-facebook-messenger' : 'fa-solid fa-user'"></i>
+              </span>
             }
 
             <span class="wa-chat__main">
@@ -104,7 +106,7 @@
                 <span class="wa-chat__company" dir="auto">
                   <i class="fa-regular fa-building" aria-hidden="true"></i>{{ chat.companyName }}
                 </span>
-              } @else if (!chat.customerId && hasName(chat)) {
+              } @else if (!chat.customerId && hasName(chat) && chat.phone) {
                 <span class="wa-chat__company" dir="ltr">{{ phone(chat) }}</span>
               }
 
@@ -119,14 +121,12 @@
                 }
               </span>
 
-              @if (showChannel() && (chat.instancePhoneNumber || chat.ownerName)) {
-                <span class="wa-chat__owner">
-                  <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
-                  @if (chat.instancePhoneNumber) { <span dir="ltr">{{ channelPhone(chat) }}</span> }
-                  @if (chat.instancePhoneNumber && chat.ownerName) { <span aria-hidden="true">·</span> }
-                  @if (chat.ownerName) { <span>{{ chat.ownerName }}</span> }
-                </span>
-              }
+              <span class="wa-chat__owner">
+                <app-wa-channel-badge [type]="chat.channelType" [name]="channelName(chat)" />
+                @if (showOwner() && chat.ownerName) {
+                  <span class="wa-chat__owner-name">· {{ chat.ownerName }}</span>
+                }
+              </span>
             </span>
           </button>
         </li>

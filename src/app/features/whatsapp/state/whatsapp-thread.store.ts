@@ -1,6 +1,6 @@
 import { DestroyRef, Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Observable, Subject, Subscription, timer } from 'rxjs';
+import { Observable, Subject, Subscription, interval, tap, throwError, timer } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../core/i18n';
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
@@ -10,16 +10,19 @@ import {
   WaMessageEvent,
   WaMessageStatusEvent,
   WaSendTarget,
+  WaSendTemplateRequest,
 } from '../models/whatsapp.models';
 import { WhatsAppApiService } from '../services/whatsapp-api.service';
 import { WhatsAppRealtimeService } from '../services/whatsapp-realtime.service';
 import { WindowFocusService } from '../services/window-focus.service';
+import { ComposerState, resolveComposerState } from '../utils/composer-state.util';
 import {
   WHATSAPP_MAX_TAKE,
   WHATSAPP_MESSAGES_TAKE,
   advanceStatus,
   isOutgoing,
   isPermissionError,
+  isRejection,
   isTransientError,
   mediaKindOf,
   messageTypeForFile,
@@ -30,13 +33,13 @@ import { WhatsAppSessionStore } from './whatsapp-session.store';
 
 /**
  * Where a thread's messages come from and where its replies go:
- * - `chat`: one inbox conversation — replies go by `chatId`, so the number is
- *   always the chat's own (no picker needed, admins included);
- * - `customer`: everything with one customer (customer page tab) — replies go
- *   by `customerId`.
+ * - `chat`: one inbox conversation — replies go by `chatId`; `chat` carries
+ *   the 24-hour window (`canReply`, `canSendTemplate`), `null` while unknown;
+ * - `customer`: everything with one customer (profile tab) — history plus
+ *   templates by `customerId`; free replies happen in the inbox.
  */
 export type ThreadSource =
-  | { kind: 'chat'; chatId: number; instanceId: string | null; unreadCount: number | null }
+  | { kind: 'chat'; chatId: number; chat: WaChat | null }
   | { kind: 'customer'; customerId: number };
 
 /** What the user asked to send — kept so a failed send can be retried as-is (file included). */
@@ -57,25 +60,41 @@ export interface OutgoingPayload {
 export interface ThreadMessage extends WaMessage {
   /** Present while this bubble can be re-sent with its original payload. */
   local?: OutgoingPayload;
+  /** 0–100 while a file uploads. */
+  uploadProgress?: number;
 }
+
+/** The server refused a send (business rule) — nothing went out; give the draft back. */
+export interface RejectedDraft {
+  clientMessageId: string;
+  text: string;
+  file: File | null;
+  reason: string;
+}
+
+/** The template fields the picker fills; the store adds the target. */
+export type TemplateSend = Omit<WaSendTemplateRequest, 'target'>;
 
 /** Automatic retries (same id) after a network error, before showing "Failed". */
 const TRANSIENT_RETRY_DELAYS_MS = [2_000, 5_000];
+/** The reply window is re-evaluated this often (countdown + automatic close). */
+const CLOCK_TICK_MS = 30_000;
 
 /**
- * State for one WhatsApp conversation — the inbox's open chat or a
- * customer's WhatsApp tab. Provided per thread component, never at root.
+ * State for one conversation — the inbox's open chat or a customer's
+ * WhatsApp tab. Provided per thread component, never at root.
  *
  * - History: newest 50 first; older pages by `beforeId` (customer threads
- *   widen `take` instead — that endpoint has no cursor). Fewer rows than
- *   asked = the beginning of the conversation.
+ *   widen `take` instead — that endpoint has no cursor).
  * - Live: hub messages are appended (deduped by id, replacing the optimistic
- *   bubble with the same `clientMessageId`); status events move ticks forward
- *   only. After a reconnect the latest page is merged back in.
- * - Sending never blocks the composer: each message is its own optimistic
- *   bubble with a fresh `clientMessageId`, replaced by the stored row.
- * - Reading: the chat is marked read on open when it has unread messages,
- *   and on each incoming message while the window is focused.
+ *   bubble with the same `clientMessageId`); status events move ticks
+ *   forward only; chat events refresh the reply window. After a reconnect
+ *   the latest page is merged back in.
+ * - Composer: one computed `composer` state (reply / template only / locked)
+ *   from the chat's window, the channel and the caller's access.
+ * - Sending: each text / file is its own optimistic bubble with a fresh
+ *   `clientMessageId`; uploads report progress. A 400 removes nothing from
+ *   the user — `rejected$` hands the draft back to the composer.
  */
 @Injectable()
 export class WhatsAppThreadStore {
@@ -88,16 +107,18 @@ export class WhatsAppThreadStore {
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly source = signal<ThreadSource | null>(null);
+  /** The open chat's latest details (source, then hub updates). */
+  private readonly chatInfo = signal<WaChat | null>(null);
   /** Stored messages, ascending by id, unique. */
   private readonly server = signal<WaMessage[]>([]);
   /** Optimistic bubbles not yet stored. */
   private readonly pending = signal<ThreadMessage[]>([]);
   /** Payloads that can still be re-sent, by `clientMessageId`. */
   private readonly outbox = signal<ReadonlyMap<string, OutgoingPayload>>(new Map());
+  /** Ticks so the reply window closes / counts down without a reload. */
+  private readonly now = signal(Date.now());
   /** Customer threads page by widening `take`. */
   private customerTake = WHATSAPP_MESSAGES_TAKE;
-  /** Instance learned from hub events, for deep-linked chats. */
-  private readonly learnedInstanceId = signal<string | null>(null);
 
   readonly loading = signal(false);
   readonly loadingOlder = signal(false);
@@ -122,17 +143,28 @@ export class WhatsAppThreadStore {
     () => !this.reachedStart() && !this.atHistoryLimit() && this.server().length > 0,
   );
 
-  /** The number replies go out from, when known. */
-  readonly instanceId = computed(() => {
-    const source = this.source();
-    return (source?.kind === 'chat' ? source.instanceId : null) ?? this.learnedInstanceId();
-  });
+  readonly kind = computed(() => this.source()?.kind ?? null);
+  readonly chat = this.chatInfo.asReadonly();
 
-  /** Why the composer is locked, or `null` when the thread can send. */
-  readonly blockReason = computed<'forbidden' | 'disconnected' | null>(() => {
-    if (!this.source()) return null;
-    if (this.forbidden()) return 'forbidden';
-    return this.session.canSendFrom(this.instanceId()) ? null : 'disconnected';
+  /** The channel replies go out from, when known. */
+  readonly instanceId = computed(() => this.chatInfo()?.instanceId ?? null);
+
+  /** What the composer offers right now — see `resolveComposerState`. */
+  readonly composer = computed<ComposerState>(() =>
+    resolveComposerState({
+      scope: this.source()?.kind === 'customer' ? 'customer' : 'chat',
+      chat: this.chatInfo(),
+      forbidden: this.forbidden(),
+      channelCanSend: this.session.canSendFrom(this.instanceId()),
+      now: this.now(),
+    }),
+  );
+
+  /** Where a template from this thread goes. */
+  readonly templateTarget = computed<WaSendTarget | null>(() => {
+    const source = this.source();
+    if (!source) return null;
+    return source.kind === 'chat' ? { chatId: source.chatId } : { customerId: source.customerId };
   });
 
   /** The conversation the latest message belongs to — "Open in inbox" from a customer tab. */
@@ -143,10 +175,13 @@ export class WhatsAppThreadStore {
 
   private readonly sentSubject = new Subject<WaMessage>();
   private readonly readSubject = new Subject<number>();
+  private readonly rejectedSubject = new Subject<RejectedDraft>();
   /** Each message the server stored from this thread. */
   readonly sent$: Observable<WaMessage> = this.sentSubject.asObservable();
   /** The chat was marked read on the server (by id). */
   readonly read$: Observable<number> = this.readSubject.asObservable();
+  /** A text / file send the server refused (400) — the composer may take the draft back. */
+  readonly rejected$: Observable<RejectedDraft> = this.rejectedSubject.asObservable();
 
   /** Bumped on every `connect()` — late responses for an old source are dropped. */
   private generation = 0;
@@ -159,7 +194,11 @@ export class WhatsAppThreadStore {
   constructor() {
     this.realtime.message$.pipe(takeUntilDestroyed()).subscribe((e) => this.onHubMessage(e));
     this.realtime.messageStatus$.pipe(takeUntilDestroyed()).subscribe((e) => this.onHubStatus(e));
+    this.realtime.chatUpdated$.pipe(takeUntilDestroyed()).subscribe((chat) => this.onHubChat(chat));
     this.realtime.reconnected$.pipe(takeUntilDestroyed()).subscribe(() => this.refresh());
+    interval(CLOCK_TICK_MS)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.now.set(Date.now()));
 
     // Back to the window with unread incoming messages → report them read.
     effect(() => {
@@ -180,8 +219,9 @@ export class WhatsAppThreadStore {
   /** Switch to `source` (or detach with `null`). */
   connect(source: ThreadSource | null): void {
     if (sameSource(this.source(), source)) {
-      // Same conversation, fresher details (e.g. its instance became known).
+      // Same conversation, fresher details (e.g. the window just changed).
       if (source) this.source.set(source);
+      if (source?.kind === 'chat' && source.chat) this.chatInfo.set(source.chat);
       return;
     }
 
@@ -189,18 +229,19 @@ export class WhatsAppThreadStore {
     this.loadSub?.unsubscribe();
     this.revokeAll();
     this.source.set(source);
+    this.chatInfo.set(source?.kind === 'chat' ? source.chat : null);
     this.server.set([]);
     this.pending.set([]);
     this.outbox.set(new Map());
     this.retried.clear();
     this.customerTake = WHATSAPP_MESSAGES_TAKE;
-    this.learnedInstanceId.set(null);
     this.reachedStart.set(false);
     this.atHistoryLimit.set(false);
     this.error.set(null);
     this.forbidden.set(false);
     this.loadingOlder.set(false);
     this.unreadWhileAway = false;
+    this.now.set(Date.now());
     this.loading.set(!!source);
 
     if (source) this.loadLatest('initial');
@@ -250,7 +291,8 @@ export class WhatsAppThreadStore {
   /** Sends text, or a file with `text` as its caption. Never blocks: each call is its own bubble. */
   send(text: string, file: File | null = null): boolean {
     const body = text.trim();
-    if (!this.source() || this.blockReason() || (!body && !file)) return false;
+    const source = this.source();
+    if (source?.kind !== 'chat' || this.composer().mode !== 'reply' || (!body && !file)) return false;
 
     const payload: OutgoingPayload = {
       clientMessageId: newClientMessageId(),
@@ -265,12 +307,30 @@ export class WhatsAppThreadStore {
   }
 
   /**
+   * Sends an approved template to this thread's target. The picker dialog
+   * owns the request's lifecycle (spinner, inline error, retry with the same
+   * id); the stored message lands in the thread on success.
+   */
+  sendTemplate(request: TemplateSend): Observable<WaMessage> {
+    const target = this.templateTarget();
+    if (!target) return throwError(() => new Error('No conversation is open'));
+    const gen = this.generation;
+    return this.api.sendTemplate({ ...request, target }).pipe(
+      tap((stored) => {
+        if (gen !== this.generation || !stored?.id) return;
+        this.upsertMany([stored]);
+        this.sentSubject.next(stored);
+      }),
+    );
+  }
+
+  /**
    * Re-send a failed message. Same id when the last outcome was unknown
    * (the backend returns the stored message instead of sending twice), a new
    * id after a definite failure.
    */
   retry(message: ThreadMessage): boolean {
-    if (!this.canRetry(message) || this.blockReason()) return false;
+    if (!this.canRetry(message) || this.composer().mode !== 'reply') return false;
 
     const original: OutgoingPayload = message.local ?? {
       clientMessageId: message.clientMessageId ?? newClientMessageId(),
@@ -301,6 +361,13 @@ export class WhatsAppThreadStore {
     if (message.local) return true;
     // A stored failure without its payload (e.g. after a reload) can be re-sent when it was text.
     return mediaKindOf(message.messageType) === 'text' && !!message.text?.trim();
+  }
+
+  /** Drop a failed local bubble whose draft went back into the composer. */
+  discard(clientMessageId: string): void {
+    this.pending.update((list) => list.filter((m) => m.clientMessageId !== clientMessageId));
+    // The composer now owns the file again — keep its preview URL alive for nothing here.
+    this.forget(clientMessageId, true);
   }
 
   // ─────────────── internals: loading ───────────────
@@ -351,15 +418,21 @@ export class WhatsAppThreadStore {
 
   // ─────────────── internals: hub ───────────────
 
-  private onHubMessage({ chat, message }: WaMessageEvent): void {
+  private onHubMessage({ instanceId, chat, message }: WaMessageEvent): void {
     if (!this.belongs(chat)) return;
-    if (this.source()?.kind === 'chat') this.learnedInstanceId.set(chat.instanceId);
+    if (this.source()?.kind === 'chat') this.chatInfo.set({ ...chat, instanceId: instanceId || chat.instanceId });
     this.upsertMany([message]);
 
     if (message.direction === 'Incoming' && this.source()?.kind === 'chat') {
       if (this.focus.focused()) this.markRead();
       else this.unreadWhileAway = true;
     }
+  }
+
+  /** A chat changed without a message (read elsewhere, window update). */
+  private onHubChat(chat: WaChat): void {
+    const source = this.source();
+    if (source?.kind === 'chat' && chat.id === source.chatId) this.chatInfo.set(chat);
   }
 
   private onHubStatus(e: WaMessageStatusEvent): void {
@@ -372,6 +445,7 @@ export class WhatsAppThreadStore {
               status: advanceStatus(m.status, e.status),
               deliveredAt: e.deliveredAt ?? m.deliveredAt,
               readAt: e.readAt ?? m.readAt,
+              errorMessage: e.errorMessage ?? m.errorMessage,
             }
           : m,
       ),
@@ -390,7 +464,7 @@ export class WhatsAppThreadStore {
     const source = this.source();
     if (source?.kind !== 'chat') return;
     // Unknown count (deep link) → mark anyway; it's cheap and idempotent.
-    if (source.unreadCount === 0) return;
+    if (source.chat?.unreadCount === 0) return;
     if (this.focus.focused()) this.markRead();
     else this.unreadWhileAway = true;
   }
@@ -414,57 +488,74 @@ export class WhatsAppThreadStore {
 
   private dispatch(payload: OutgoingPayload, attempt: number): void {
     const source = this.source();
-    if (!source) return;
+    if (source?.kind !== 'chat') return;
     const gen = this.generation;
-    const target: WaSendTarget =
-      source.kind === 'chat' ? { chatId: source.chatId } : { customerId: source.customerId };
+    this.remember(payload);
 
-    const request$ = payload.file
-      ? this.api.sendMedia({
-          target,
+    const onStored = (stored: WaMessage | null | undefined) => {
+      if (gen !== this.generation) return;
+      if (stored?.id) {
+        this.upsertMany([stored]);
+        this.sentSubject.next(stored);
+      } else {
+        this.refresh();
+      }
+    };
+    const onError = (err: unknown) => {
+      if (gen !== this.generation) return;
+      this.onSendError(payload, attempt, err);
+    };
+
+    if (payload.file) {
+      this.api
+        .sendMedia({
+          chatId: source.chatId,
           file: payload.file,
           caption: payload.text,
           clientMessageId: payload.clientMessageId,
         })
-      : this.api.sendText({ target, text: payload.text, clientMessageId: payload.clientMessageId });
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (event) => {
+            if (gen !== this.generation) return;
+            if (event.kind === 'progress') this.patchPending(payload.clientMessageId, { uploadProgress: event.percent });
+            else onStored(event.message);
+          },
+          error: onError,
+        });
+      return;
+    }
 
-    this.remember(payload);
-    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (stored) => {
-        if (gen !== this.generation) return;
-        if (stored?.id) {
-          this.upsertMany([stored]);
-          this.sentSubject.next(stored);
-        } else {
-          this.refresh();
-        }
-      },
-      error: (err) => {
-        if (gen !== this.generation) return;
-        const transient = isTransientError(err);
-        if (transient && attempt < TRANSIENT_RETRY_DELAYS_MS.length) {
-          timer(TRANSIENT_RETRY_DELAYS_MS[attempt])
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(() => gen === this.generation && this.dispatch(payload, attempt + 1));
-          return;
-        }
-        const failed: OutgoingPayload = { ...payload, reuseIdOnRetry: transient };
-        this.remember(failed);
-        this.pending.update((list) =>
-          list.map((m) =>
-            m.clientMessageId === payload.clientMessageId
-              ? {
-                  ...m,
-                  status: 'Failed',
-                  errorMessage: whatsappErrorText(err, (k) => this.t(k), 'whatsapp.errors.sendFailed'),
-                  local: failed,
-                }
-              : m,
-          ),
-        );
-        if (isPermissionError(err)) this.forbidden.set(true);
-      },
+    this.api
+      .sendText({ target: { chatId: source.chatId }, text: payload.text, clientMessageId: payload.clientMessageId })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: onStored, error: onError });
+  }
+
+  private onSendError(payload: OutgoingPayload, attempt: number, err: unknown): void {
+    const transient = isTransientError(err);
+    if (transient && attempt < TRANSIENT_RETRY_DELAYS_MS.length) {
+      const gen = this.generation;
+      timer(TRANSIENT_RETRY_DELAYS_MS[attempt])
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => gen === this.generation && this.dispatch(payload, attempt + 1));
+      return;
+    }
+
+    const reason = whatsappErrorText(err, (k) => this.t(k), 'whatsapp.errors.sendFailed');
+    const failed: OutgoingPayload = { ...payload, reuseIdOnRetry: transient };
+    this.remember(failed);
+    this.patchPending(payload.clientMessageId, {
+      status: 'Failed',
+      errorMessage: reason,
+      uploadProgress: undefined,
+      local: failed,
     });
+    if (isPermissionError(err)) this.forbidden.set(true);
+    // Nothing went out — offer the draft back (the host decides whether the composer takes it).
+    if (isRejection(err)) {
+      this.rejectedSubject.next({ clientMessageId: payload.clientMessageId, text: payload.text, file: payload.file, reason });
+    }
   }
 
   /**
@@ -487,6 +578,7 @@ export class WhatsAppThreadStore {
             // A stale copy must not erase timestamps a status event already set.
             deliveredAt: row.deliveredAt ?? existing.deliveredAt,
             readAt: row.readAt ?? existing.readAt,
+            errorMessage: row.errorMessage ?? existing.errorMessage,
           }
         : row;
       byId.set(row.id, merged);
@@ -502,6 +594,10 @@ export class WhatsAppThreadStore {
     }
   }
 
+  private patchPending(clientMessageId: string, patch: Partial<ThreadMessage>): void {
+    this.pending.update((list) => list.map((m) => (m.clientMessageId === clientMessageId ? { ...m, ...patch } : m)));
+  }
+
   private optimistic(payload: OutgoingPayload): ThreadMessage {
     const source = this.source();
     const user = this.auth.currentUser();
@@ -515,6 +611,7 @@ export class WhatsAppThreadStore {
       text: payload.text || null,
       mediaUrl: payload.previewUrl,
       fileName: payload.file?.name ?? null,
+      templateName: null,
       status: 'Pending',
       sentById: user?.userId ?? null,
       sentByName: user?.fullName?.trim() || user?.email || null,
@@ -523,6 +620,7 @@ export class WhatsAppThreadStore {
       readAt: null,
       errorMessage: null,
       local: payload,
+      uploadProgress: payload.file ? 0 : undefined,
     };
   }
 

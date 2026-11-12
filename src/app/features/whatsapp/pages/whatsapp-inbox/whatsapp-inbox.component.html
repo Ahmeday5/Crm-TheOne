@@ -9,36 +9,26 @@
       {{ 'whatsapp.live.' + realtime.state() | translate }}
     </span>
     @if (isAdmin()) {
-      <a class="btn btn-light btn-sm" routerLink="/whatsapp/numbers">
-        <i class="fa-solid fa-sim-card me-1"></i>{{ 'whatsapp.numbers.title' | translate }}
+      <a class="btn btn-light btn-sm" routerLink="/whatsapp/settings">
+        <i class="fa-solid fa-gear me-1"></i>{{ 'whatsapp.settings.title' | translate }}
       </a>
     }
   </div>
 </app-page-header>
 
-@if (relinkTarget(); as target) {
+@if (attentionChannel(); as channel) {
   <div class="wa-relink" role="alert">
     <i class="fa-solid fa-plug-circle-exclamation wa-relink__icon" aria-hidden="true"></i>
     <p class="wa-relink__text">
-      @if (target.instance) {
-        {{ 'whatsapp.relink.channel' | translate: { phone: phone(target.instance.phoneNumber) } }}
-      } @else {
-        {{ 'whatsapp.relink.own' | translate }}
-      }
+      {{ (isAdmin() ? 'whatsapp.relink.admin' : 'whatsapp.relink.employee') | translate: { name: channelName(channel) } }}
     </p>
-    <button type="button" class="btn btn-sm btn-success" (click)="openPairing(target)">
-      <i class="fa-solid fa-link me-1"></i>{{ 'whatsapp.connect.reconnect' | translate }}
-    </button>
   </div>
 }
 
 <section class="wa-inbox card" [class.is-admin]="isAdmin()" [attr.data-view]="view()">
   @if (isAdmin()) {
     <aside class="wa-inbox__channels">
-      <app-wa-channel-list
-        [selectedId]="channelId()"
-        (selected)="selectChannel($event)"
-        (pair)="openPairing({ instance: $event })" />
+      <app-wa-channel-list [selectedId]="channelId()" (selected)="selectChannel($event)" />
     </aside>
   }
 
@@ -48,7 +38,7 @@
         <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
         <span class="text-truncate" dir="auto">
           @if (selectedChannel(); as c) {
-            <span dir="ltr">{{ phone(c.phoneNumber) || c.name }}</span>
+            {{ channelName(c) }}
           } @else {
             {{ 'whatsapp.channels.all' | translate }}
           }
@@ -57,12 +47,12 @@
       </button>
     } @else {
       <div class="wa-inbox__own">
-        <app-wa-number-card (connect)="openPairing({ instance: null })" />
+        <app-wa-number-card />
       </div>
     }
 
     <app-wa-chat-list
-      [showChannel]="isAdmin() && !channelId()"
+      [showOwner]="isAdmin()"
       [canStartChat]="canStartChat()"
       (selected)="open($event)"
       (newChat)="newChatOpen.set(true)" />
@@ -74,10 +64,8 @@
         [source]="src"
         [contactName]="activeChat()?.customerName || activeChat()?.contactName || null"
         [showSender]="true"
-        [canReconnect]="!!relinkTarget() || !isAdmin()"
         (read)="onRead($event)"
-        (sent)="onSent()"
-        (reconnect)="openPairing(relinkTarget() ?? { instance: isAdmin() ? session.channel(activeChat()?.instanceId) : null })">
+        (sent)="onSent()">
         <header class="wa-head" waThreadHeader>
           <button type="button" class="wa-head__back" (click)="backToList()"
                   [title]="'whatsapp.thread.back' | translate"
@@ -90,9 +78,11 @@
             <div class="wa-head__info">
               <span class="wa-head__name" dir="auto">{{ name(chat) }}</span>
               <span class="wa-head__meta">
-                <span dir="ltr">{{ phone(chat.phone) }}</span>
+                @if (chat.phone) {
+                  <span dir="ltr">{{ phone(chat.phone) }}</span>
+                }
                 @if (chat.companyName) {
-                  <span class="wa-head__dot" aria-hidden="true">·</span>
+                  @if (chat.phone) { <span class="wa-head__dot" aria-hidden="true">·</span> }
                   <span dir="auto">{{ chat.companyName }}</span>
                 }
                 @if (chat.customerId) {
@@ -105,15 +95,14 @@
                 }
               </span>
             </div>
-            @if (isAdmin() && (chat.instancePhoneNumber || chat.ownerName)) {
-              <span class="wa-head__owner" [title]="'whatsapp.chats.channel' | translate">
-                <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
-                @if (chat.instancePhoneNumber) { <span dir="ltr">{{ phone(chat.instancePhoneNumber) }}</span> }
-                @if (chat.ownerName) { <span>· {{ chat.ownerName }}</span> }
-              </span>
-            }
+            <span class="wa-head__owner">
+              <app-wa-channel-badge [type]="chat.channelType" [name]="chat.instanceName" />
+              @if (isAdmin() && chat.ownerName) {
+                <span class="wa-head__owner-name">{{ chat.ownerName }}</span>
+              }
+            </span>
           } @else {
-            <span class="wa-head__anon" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
+            <span class="wa-head__anon" aria-hidden="true"><i class="fa-solid fa-comments"></i></span>
             <div class="wa-head__info">
               <span class="wa-head__name">{{ 'whatsapp.thread.unknownChat' | translate }} #{{ activeChatId() }}</span>
             </div>
@@ -122,20 +111,13 @@
       </app-wa-thread>
     } @else {
       <div class="wa-inbox__placeholder">
-        <span class="wa-inbox__placeholder-icon" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
+        <span class="wa-inbox__placeholder-icon" aria-hidden="true"><i class="fa-solid fa-comments"></i></span>
         <h3 class="fw-700 mb-1">{{ 'whatsapp.thread.selectTitle' | translate }}</h3>
         <p class="text-muted mb-0">{{ 'whatsapp.thread.selectHint' | translate }}</p>
       </div>
     }
   </div>
 </section>
-
-@if (pairTarget(); as target) {
-  <app-wa-connect-dialog
-    [instance]="target.instance"
-    (connected)="onConnected()"
-    (closed)="pairTarget.set(null)" />
-}
 
 @if (newChatOpen()) {
   <app-wa-new-chat-dialog

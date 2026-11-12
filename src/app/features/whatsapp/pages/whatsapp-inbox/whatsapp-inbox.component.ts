@@ -12,6 +12,8 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter, map } from 'rxjs';
+import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
+import { LanguageService } from '../../../../core/services/language.service';
 import { NotificationToastService } from '../../../../core/services/notification-toast.service';
 import { NotificationsStore } from '../../../../core/services/notifications.store';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -19,9 +21,9 @@ import { UserAvatarComponent } from '../../../../shared/components/user-avatar/u
 import { WHATSAPP_CHAT_ENTITY, isWhatsAppNotification } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { CustomerDetailsDialogComponent } from '../../../leads/components/customer-details-dialog/customer-details-dialog.component';
+import { WaChannelBadgeComponent } from '../../components/wa-channel-badge/wa-channel-badge.component';
 import { WaChannelListComponent } from '../../components/wa-channel-list/wa-channel-list.component';
 import { WaChatListComponent } from '../../components/wa-chat-list/wa-chat-list.component';
-import { WaConnectDialogComponent } from '../../components/wa-connect-dialog/wa-connect-dialog.component';
 import { WaNewChatDialogComponent } from '../../components/wa-new-chat-dialog/wa-new-chat-dialog.component';
 import { WaNumberCardComponent } from '../../components/wa-number-card/wa-number-card.component';
 import { WaThreadComponent } from '../../components/wa-thread/wa-thread.component';
@@ -31,23 +33,18 @@ import { WindowFocusService } from '../../services/window-focus.service';
 import { WhatsAppInboxStore } from '../../state/whatsapp-inbox.store';
 import { WhatsAppSessionStore } from '../../state/whatsapp-session.store';
 import { ThreadSource } from '../../state/whatsapp-thread.store';
-import { canPair, chatDisplayName, formatWhatsAppPhone } from '../../utils/whatsapp.util';
-
-/** What the pairing dialog links: the caller's own number, or an admin's channel. */
-interface PairTarget {
-  instance: WaInstance | null;
-}
+import { channelLabel, chatDisplayName, formatWhatsAppPhone, isChannelActive } from '../../utils/whatsapp.util';
 
 /**
- * `/whatsapp` and `/whatsapp/chats/:chatId` — the WhatsApp inbox.
+ * `/whatsapp` and `/whatsapp/chats/:chatId` — the WhatsApp + Messenger inbox.
  *
  * Three columns (RTL aware):
- *   1. Admin: channels (every company number) · Employee: their number card;
- *   2. chats of the selected channel (search, All / Unread, infinite scroll);
+ *   1. Admin: channels (every number and page) · Employee: their own channels;
+ *   2. chats (search, All / Unread, infinite scroll);
  *   3. the open conversation.
  * Phones show one pane at a time. The URL owns the open chat (`chatId`) and
- * the admin's channel (`?channel=`), so back / reload / notification deep
- * links all land in the same place.
+ * the admin's channel filter (`?channel=`), so back / reload / notification
+ * deep links all land in the same place.
  */
 @Component({
   selector: 'app-whatsapp-inbox',
@@ -57,11 +54,11 @@ interface PairTarget {
     TranslatePipe,
     PageHeaderComponent,
     UserAvatarComponent,
+    WaChannelBadgeComponent,
     WaChannelListComponent,
     WaChatListComponent,
     WaThreadComponent,
     WaNumberCardComponent,
-    WaConnectDialogComponent,
     WaNewChatDialogComponent,
     CustomerDetailsDialogComponent,
   ],
@@ -73,6 +70,7 @@ interface PairTarget {
 export class WhatsAppInboxComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly language = inject(LanguageService);
   private readonly notifications = inject(NotificationsStore);
   private readonly notificationToasts = inject(NotificationToastService);
   private readonly focus = inject(WindowFocusService);
@@ -103,33 +101,29 @@ export class WhatsAppInboxComponent implements OnInit {
 
   protected readonly source = computed<ThreadSource | null>(() => {
     const id = this.activeChatId();
-    if (!id) return null;
-    const chat = this.activeChat();
-    return { kind: 'chat', chatId: id, instanceId: chat?.instanceId ?? null, unreadCount: chat?.unreadCount ?? null };
+    return id ? { kind: 'chat', chatId: id, chat: this.activeChat() } : null;
   });
 
   /**
-   * The number that needs relinking, if any: the employee's own, or (admin)
-   * the selected channel / the open chat's channel.
+   * A channel that can't send and needs re-linking in the Mihwar dashboard:
+   * employee → one of their own; admin → the selected channel or the open
+   * chat's channel.
    */
-  protected readonly relinkTarget = computed<PairTarget | null>(() => {
-    if (!this.isAdmin()) {
-      return this.session.status()?.requiresRelink ? { instance: null } : null;
-    }
-    const channel = this.selectedChannel() ?? this.session.channel(this.activeChat()?.instanceId);
-    return channel?.requiresRelink && canPair(channel) ? { instance: channel } : null;
+  protected readonly attentionChannel = computed<WaInstance | null>(() => {
+    const needsRelink = (c: WaInstance | null | undefined): c is WaInstance =>
+      !!c && isChannelActive(c) && !c.canSend;
+    if (!this.isAdmin()) return this.session.channels().find(needsRelink) ?? null;
+    const candidate = this.selectedChannel() ?? this.session.channel(this.activeChat()?.instanceId);
+    return needsRelink(candidate) ? candidate : null;
   });
 
-  /** New chats need a number that can send: employee → own; admin → any working channel. */
-  protected readonly canStartChat = computed(() =>
-    this.isAdmin() ? this.session.channels().some((c) => c.canSend) : !!this.session.status()?.canSend,
-  );
+  /** New chats need a WhatsApp number (Messenger can't start conversations). */
+  protected readonly canStartChat = this.session.hasWhatsAppNumber;
 
   /** Phones: which pane shows when no chat is open. */
   protected readonly mobilePane = signal<'channels' | 'list'>('list');
   protected readonly view = computed(() => (this.activeChatId() ? 'thread' : this.mobilePane()));
 
-  protected readonly pairTarget = signal<PairTarget | null>(null);
   protected readonly newChatOpen = signal(false);
   /** The linked customer's details, opened from the conversation header. */
   protected readonly customerDialogId = signal<number | null>(null);
@@ -209,21 +203,22 @@ export class WhatsAppInboxComponent implements OnInit {
     this.router.navigate(['/whatsapp', 'chats', message.chatId], { queryParamsHandling: 'preserve' });
   }
 
-  protected openPairing(target: PairTarget): void {
-    this.pairTarget.set(target);
-  }
-
-  protected onConnected(): void {
-    this.inbox.refresh();
-  }
-
   // ─────────────── view helpers ───────────────
 
+  /** Customer → contact → +phone → "Messenger customer". */
   protected name(chat: WaChat): string {
-    return chatDisplayName(chat);
+    return chatDisplayName(chat) ?? this.t('whatsapp.chats.messengerCustomer');
   }
 
   protected phone(value: string | null | undefined): string {
     return formatWhatsAppPhone(value);
+  }
+
+  protected channelName(channel: WaInstance): string {
+    return channelLabel(channel);
+  }
+
+  private t(key: string): string {
+    return resolveKey(TRANSLATIONS[this.language.lang()], key);
   }
 }

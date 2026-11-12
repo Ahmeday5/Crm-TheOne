@@ -1,7 +1,7 @@
 <app-modal
   [open]="true"
   size="md"
-  icon="fa-brands fa-whatsapp"
+  icon="fa-solid fa-user-plus"
   iconTone="success"
   [title]="(isChange() ? 'whatsapp.numbers.assignDialog.changeTitle' : 'whatsapp.numbers.assignDialog.title') | translate"
   [closeOnBackdrop]="!saving()"
@@ -11,7 +11,8 @@
   <div class="mb-3">
     <span class="form-label d-block">{{ 'whatsapp.numbers.assignDialog.number' | translate }}</span>
     <div class="d-flex flex-wrap align-items-center gap-2">
-      <span class="fw-700" dir="ltr">{{ phone() || ('whatsapp.numbers.noPhone' | translate) }}</span>
+      <app-wa-channel-badge [type]="instance().type" [compact]="true" />
+      <span class="fw-700" dir="auto">{{ label() }}</span>
       @if (instance().isDefault) {
         <span class="badge blue">{{ 'whatsapp.numbers.companyBadge' | translate }}</span>
       }

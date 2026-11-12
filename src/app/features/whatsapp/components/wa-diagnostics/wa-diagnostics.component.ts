@@ -7,35 +7,48 @@ import { ClampTextDirective } from '../../../../shared/directives/clamp-text.dir
 import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { WaDiagnostics, WaInstanceStatus, WaWebhookEvent } from '../../models/whatsapp.models';
+import { WaChannelType, WaDiagnostics, WaProviderChannel } from '../../models/whatsapp.models';
 import { WhatsAppApiService } from '../../services/whatsapp-api.service';
-import { formatWhatsAppPhone, instanceStatusMeta, whatsappErrorText } from '../../utils/whatsapp.util';
+import { WhatsAppSessionStore } from '../../state/whatsapp-session.store';
+import { channelLabel, formatWhatsAppPhone, instanceStatusMeta, whatsappErrorText } from '../../utils/whatsapp.util';
+import { WaChannelBadgeComponent } from '../wa-channel-badge/wa-channel-badge.component';
 
-interface DiagnosticAlert {
-  key: string;
-  /** Server-provided detail (e.g. the Wavex error), shown as is. */
-  detail?: string;
+interface ConfigCheck {
+  labelKey: string;
+  hintKey: string;
+  ok: boolean;
+}
+
+/** A provider channel row, enriched with what the CRM knows about it. */
+interface ProviderRow {
+  id: string;
+  type: WaChannelType | null;
+  label: string;
+  status: string | null;
+  tone: string;
+  inCrm: boolean;
 }
 
 /**
- * Admin → WhatsApp numbers → Diagnostics (`GET /diagnostics`): is the
+ * Admin → WhatsApp settings → Diagnostics (`GET /diagnostics`): is the
  * integration wired correctly end to end?
  *
- * - red alerts for a missing API key / webhook secret or a provider error;
- * - local numbers vs. the configured Wavex account ("Not in current Wavex
- *   account" usually means the API key points at another account);
+ * - ✅ / ❌ for the API key, the webhook secret and the public base URL;
+ * - the provider's error, in red, when Mihwar couldn't be reached;
+ * - the channels Mihwar reports (and whether the CRM knows each one);
  * - webhook queue health: pending / failed counters + the latest events.
  */
 @Component({
   selector: 'app-wa-diagnostics',
   standalone: true,
-  imports: [TranslatePipe, CairoDatePipe, LoadErrorComponent, ResponsiveTableDirective, ClampTextDirective],
+  imports: [TranslatePipe, CairoDatePipe, LoadErrorComponent, ResponsiveTableDirective, ClampTextDirective, WaChannelBadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './wa-diagnostics.component.html',
   styleUrl: './wa-diagnostics.component.scss',
 })
 export class WaDiagnosticsComponent implements OnInit {
   private readonly api = inject(WhatsAppApiService);
+  private readonly session = inject(WhatsAppSessionStore);
   private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -43,27 +56,43 @@ export class WaDiagnosticsComponent implements OnInit {
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  protected readonly alerts = computed<DiagnosticAlert[]>(() => {
+  protected readonly checks = computed<ConfigCheck[]>(() => {
     const d = this.data();
     if (!d) return [];
-    const list: DiagnosticAlert[] = [];
-    if (!d.apiKeyConfigured) list.push({ key: 'whatsapp.diagnostics.alerts.apiKey' });
-    if (!d.webhookSecretConfigured) list.push({ key: 'whatsapp.diagnostics.alerts.webhookSecret' });
-    if (d.wavexError) list.push({ key: 'whatsapp.diagnostics.alerts.wavex', detail: d.wavexError });
-    return list;
+    return [
+      { labelKey: 'whatsapp.diagnostics.checks.apiKey', hintKey: 'whatsapp.diagnostics.checks.apiKeyHint', ok: !!d.apiKeyConfigured },
+      {
+        labelKey: 'whatsapp.diagnostics.checks.webhookSecret',
+        hintKey: 'whatsapp.diagnostics.checks.webhookSecretHint',
+        ok: !!d.webhookSecretConfigured,
+      },
+      {
+        labelKey: 'whatsapp.diagnostics.checks.publicBaseUrl',
+        hintKey: 'whatsapp.diagnostics.checks.publicBaseUrlHint',
+        ok: !!d.publicBaseUrlConfigured,
+      },
+    ];
   });
 
-  /** Numbers on the Wavex account that the CRM doesn't know yet (press Refresh on the numbers tab). */
-  protected readonly accountOnly = computed(() => {
+  protected readonly allGood = computed(() => {
     const d = this.data();
-    if (!d) return [];
-    const local = new Set(d.localInstances.map((i) => i.instanceId));
-    return d.wavexAccountInstances.filter((i) => !local.has(i.id));
+    return !!d && this.checks().every((c) => c.ok) && !d.providerError;
   });
 
-  protected readonly missingFromAccount = computed(
-    () => this.data()?.localInstances.filter((i) => !i.inCurrentWavexAccount).length ?? 0,
-  );
+  protected readonly providerRows = computed<ProviderRow[]>(() => {
+    const known = new Set(this.session.channels().map((c) => c.id));
+    return (this.data()?.providerChannels ?? []).map((c: WaProviderChannel) => {
+      const id = String(c.id);
+      return {
+        id,
+        type: c.type === 'messenger' || c.type === 'whatsapp_cloud' ? c.type : null,
+        label: channelLabel({ id, name: c.name ?? null, phoneNumber: c.phoneNumber ?? null }),
+        status: c.status ?? null,
+        tone: instanceStatusMeta(c.status).tone,
+        inCrm: known.has(id),
+      };
+    });
+  });
 
   ngOnInit(): void {
     this.load();
@@ -78,9 +107,13 @@ export class WaDiagnosticsComponent implements OnInit {
       .subscribe({
         next: (d) => {
           this.loading.set(false);
-          this.data.set(d);
+          this.data.set({
+            ...d,
+            providerChannels: Array.isArray(d?.providerChannels) ? d.providerChannels : [],
+            recentWebhookEvents: Array.isArray(d?.recentWebhookEvents) ? d.recentWebhookEvents : [],
+          });
         },
-        error: (err) => {
+        error: (err: unknown) => {
           this.loading.set(false);
           this.error.set(whatsappErrorText(err, (k) => this.t(k), 'whatsapp.diagnostics.loadFailed'));
         },
@@ -89,16 +122,6 @@ export class WaDiagnosticsComponent implements OnInit {
 
   protected phone(value: string | null): string {
     return formatWhatsAppPhone(value) || '—';
-  }
-
-  protected statusTone(status: string | null): string {
-    // The provider's raw status string — unknown values fall back to grey.
-    return instanceStatusMeta(status as WaInstanceStatus | null).tone;
-  }
-
-  protected eventNumber(e: WaWebhookEvent): string {
-    const phone = formatWhatsAppPhone(e.instancePhoneNumber);
-    return [phone, e.instanceOwnerName].filter(Boolean).join(' · ') || e.instanceId || '—';
   }
 
   private t(key: string): string {

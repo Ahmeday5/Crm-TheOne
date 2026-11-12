@@ -9,7 +9,7 @@ import { WaChat, WaInstance, WaNumberStatus } from '../models/whatsapp.models';
 import { WhatsAppApiService } from '../services/whatsapp-api.service';
 import { WhatsAppRealtimeService } from '../services/whatsapp-realtime.service';
 import { pollWhileVisible } from '../utils/poll-while-visible.util';
-import { canUseWhatsApp, whatsappErrorText } from '../utils/whatsapp.util';
+import { canUseWhatsApp, isChannelActive, isWhatsAppChannel, whatsappErrorText } from '../utils/whatsapp.util';
 
 /** Sidebar item the unread total is published on. */
 const NAV_PATH = '/whatsapp';
@@ -19,12 +19,13 @@ const CHANNELS_FALLBACK_POLL_MS = 60_000;
 const RESYNC_DEBOUNCE_MS = 3_000;
 
 /**
- * App-wide WhatsApp state for the signed-in user (root, lives for the session):
+ * App-wide WhatsApp / Messenger state for the signed-in user (root, lives for the session):
  *
- * - `status`: the caller's own number (`GET /status`) — drives the number
- *   card, the reconnect banner and the employee composer lock.
- * - `channels`: `GET /instances` — every number for admins, the own number
- *   (0 or 1) for employees — with chat / unread counters.
+ * - `status`: the caller's own WhatsApp number (`GET /status`) — drives the
+ *   header chip, the "new chat" button and the disconnected banner.
+ * - `channels`: `GET /instances` — every channel for admins; for employees
+ *   their own (at most one WhatsApp number + one Messenger page) — with
+ *   chat / unread counters.
  * - `totalUnread`: sum of `unreadChatsCount`, published to the sidebar badge.
  *
  * Kept live from the hub: instance status events patch channels and the own
@@ -59,10 +60,26 @@ export class WhatsAppSessionStore {
     this.channelsSignal().reduce((sum, c) => sum + Math.max(0, c.unreadChatsCount || 0), 0),
   );
 
-  /** The employee's own channel (from `/instances`), else `null`. */
+  /** The caller's own WhatsApp number (from `/instances`), else `null`. */
   readonly ownChannel = computed(() => {
     const id = this.statusSignal()?.instanceId;
     return id ? this.channelsSignal().find((c) => c.id === id) ?? null : null;
+  });
+
+  /** WhatsApp numbers that still exist on the provider (admin "send from" picker). */
+  readonly whatsAppChannels = computed(() =>
+    this.channelsSignal().filter((c) => isWhatsAppChannel(c) && isChannelActive(c)),
+  );
+
+  /**
+   * The caller can start a new WhatsApp conversation: employees need an
+   * assigned number (`GET /status` ≠ `NOT_ASSIGNED`); admins need any number.
+   * Messenger can't start conversations, so a page alone doesn't count.
+   */
+  readonly hasWhatsAppNumber = computed(() => {
+    const status = this.statusSignal();
+    const assigned = !!status && status.status !== 'NOT_ASSIGNED';
+    return this.isAdmin() ? assigned || this.whatsAppChannels().length > 0 : assigned;
   });
 
   /** Last unread count seen per chat — to tell "turned unread / read" transitions apart. */
@@ -159,26 +176,26 @@ export class WhatsAppSessionStore {
   }
 
   /**
-   * Whether a message can go out from `instanceId` right now. Employees only
-   * ever send from their own number; for an admin an unknown number is let
-   * through — the backend has the final word either way.
+   * Whether a message can go out from `instanceId` right now. An unknown
+   * channel is let through — the backend has the final word either way.
    */
   canSendFrom(instanceId: string | null | undefined): boolean {
     const channel = this.channel(instanceId);
-    if (channel) return channel.canSend && channel.existsInWavex !== false;
-    if (this.isAdmin()) return true;
-    return this.statusSignal()?.canSend ?? true;
+    if (channel) return channel.canSend && isChannelActive(channel);
+    const own = this.statusSignal();
+    if (!this.isAdmin() && own?.instanceId && own.instanceId === instanceId) return own.canSend;
+    return true;
   }
 
   // ─────────────── live updates ───────────────
 
-  /** A number's state changed (hub event, connect dialog, assignment). */
+  /** A channel's state changed (hub event, assignment). */
   applyInstance(instance: WaInstance): void {
     this.channelsSignal.update((list) => {
       const i = list.findIndex((c) => c.id === instance.id);
       if (i >= 0) return list.map((c, idx) => (idx === i ? { ...c, ...instance } : c));
-      // Employees only ever hold their own number; admins see every channel.
-      return this.isAdmin() || instance.id === this.statusSignal()?.instanceId ? [...list, instance] : list;
+      // The server only sends employees events for their own channels; admins see every channel.
+      return [...list, instance];
     });
 
     const own = this.statusSignal();
@@ -190,9 +207,6 @@ export class WhatsAppSessionStore {
         status: instance.status,
         canSend: instance.canSend,
         requiresRelink: instance.requiresRelink,
-        lastSeenAt: instance.lastSeenAt,
-        lastConnectedAt: instance.lastConnectedAt,
-        pairingExpiresAt: instance.pairingExpiresAt,
       });
     }
   }

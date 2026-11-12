@@ -73,7 +73,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       // Communication
       whatsapp: 'واتساب العملاء',
       teamChat: 'الدردشة الداخلية',
-      whatsappNumbers: 'أرقام واتساب',
+      whatsappNumbers: 'إعدادات واتساب',
       announcements: 'لوحة الإعلانات',
       notifications: 'مركز الإشعارات',
       chat: 'الدردشة الداخلية',

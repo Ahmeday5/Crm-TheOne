@@ -57,6 +57,59 @@
 /* Removed from the provider: kept for history, read-only. */
 .wa-numbers__removed td { opacity: 0.55; }
 
+/* Status pill: CONNECTED green · DISCONNECTED / INACTIVE red · unknown grey. */
+.wa-pill {
+  --wa-pill-color: var(--text-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--wa-pill-color) 12%, transparent);
+  color: var(--wa-pill-color);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+  white-space: nowrap;
+
+  &[data-tone='success'] { --wa-pill-color: var(--success); }
+  &[data-tone='danger'] { --wa-pill-color: var(--danger); }
+}
+
+/* ── import card ── */
+.wa-import {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+
+  .btn { margin-inline-start: auto; }
+}
+.wa-import__icon { flex-shrink: 0; }
+.wa-import__text { flex: 1; min-width: 14rem; }
+.wa-import__result {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.wa-import__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.6rem 0.4rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  text-align: center;
+}
+.wa-import__num { font-size: var(--fs-xl); font-weight: var(--fw-700); font-variant-numeric: tabular-nums; }
+.wa-import__label { font-size: var(--fs-xs); color: var(--text-2); }
+.wa-import__errors { padding-inline-start: 1.1rem; }
+
+@include bp.down(md) {
+  .wa-import__result { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wa-import .btn { width: 100%; margin-inline-start: 0; }
+}
+
 @include bp.down(md) {
 
   .kpi-card .card-body {

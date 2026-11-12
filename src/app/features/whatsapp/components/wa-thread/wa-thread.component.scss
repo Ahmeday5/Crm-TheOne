@@ -98,23 +98,6 @@
   small { color: var(--text-3); }
 }
 
-/* ── composer locked (disconnected / no access) ── */
-.wa-blocked {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.65rem;
-  padding: 0.55rem 0.85rem;
-  border-top: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
-  background: var(--danger-soft);
-  color: var(--danger);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-600);
-
-  .btn { margin-inline-start: auto; }
-}
-.wa-blocked__text { flex: 1; min-width: 12rem; }
-
 /* ── empty / error / forbidden ── */
 .wa-state {
   margin: auto;

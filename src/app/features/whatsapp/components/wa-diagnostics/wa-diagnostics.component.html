@@ -12,111 +12,106 @@
   <app-load-error [message]="error()" [loading]="loading()" (retry)="load()" />
 } @else if (d) {
   <!-- Configuration -->
-  @for (a of alerts(); track a.key) {
-    <div class="alert alert-danger d-flex gap-2 py-2 mb-2" role="alert">
+  <div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">{{ 'whatsapp.diagnostics.configTitle' | translate }}</h5></div>
+    <ul class="wa-dg__checks list-unstyled mb-0">
+      @for (c of checks(); track c.labelKey) {
+        <li class="wa-dg__check" [class.is-bad]="!c.ok">
+          <span class="wa-dg__check-icon" aria-hidden="true">
+            <i class="fa-solid" [class.fa-circle-check]="c.ok" [class.fa-circle-xmark]="!c.ok"></i>
+          </span>
+          <span class="min-w-0">
+            <span class="fw-600 d-block">{{ c.labelKey | translate }}</span>
+            @if (!c.ok) {
+              <small class="text-muted">{{ c.hintKey | translate }}</small>
+            }
+          </span>
+          <span class="visually-hidden">{{ (c.ok ? 'whatsapp.diagnostics.yes' : 'whatsapp.diagnostics.no') | translate }}</span>
+        </li>
+      }
+    </ul>
+  </div>
+
+  @if (d.providerError) {
+    <div class="alert alert-danger d-flex gap-2 py-2 mb-3" role="alert">
       <i class="fa-solid fa-circle-exclamation mt-1" aria-hidden="true"></i>
       <div class="min-w-0">
-        <strong>{{ a.key | translate }}</strong>
-        @if (a.detail) {
-          <div class="small wa-dg__detail" dir="auto">{{ a.detail }}</div>
-        }
+        <strong>{{ 'whatsapp.diagnostics.providerError' | translate }}</strong>
+        <div class="small wa-dg__detail" dir="auto">{{ d.providerError }}</div>
       </div>
     </div>
-  } @empty {
-    <div class="alert alert-success d-flex gap-2 py-2 mb-2" role="status">
+  } @else if (allGood()) {
+    <div class="alert alert-success d-flex gap-2 py-2 mb-3" role="status">
       <i class="fa-solid fa-circle-check mt-1" aria-hidden="true"></i>
-      <span>{{ 'whatsapp.diagnostics.alerts.allGood' | translate }}</span>
+      <span>{{ 'whatsapp.diagnostics.allGood' | translate }}</span>
     </div>
   }
 
   <!-- Counters -->
-  <div class="row g-3 my-2">
-    <div class="col-6 col-lg-3">
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-sm-4">
       <div class="card h-100"><div class="card-body">
-        <p class="text-muted small mb-1">{{ 'whatsapp.diagnostics.kpi.account' | translate }}</p>
-        <h3 class="fw-700 mb-0">{{ d.wavexAccountInstances.length }}</h3>
+        <p class="text-muted small mb-1">{{ 'whatsapp.diagnostics.kpi.provider' | translate }}</p>
+        <h3 class="fw-700 mb-0">{{ d.providerChannels.length }}</h3>
       </div></div>
     </div>
-    <div class="col-6 col-lg-3">
-      <div class="card h-100"><div class="card-body">
-        <p class="text-muted small mb-1">{{ 'whatsapp.diagnostics.kpi.local' | translate }}</p>
-        <h3 class="fw-700 mb-0" [class.text-danger]="missingFromAccount() > 0">{{ d.localInstances.length }}</h3>
-      </div></div>
-    </div>
-    <div class="col-6 col-lg-3">
+    <div class="col-6 col-sm-4">
       <div class="card h-100"><div class="card-body">
         <p class="text-muted small mb-1">{{ 'whatsapp.diagnostics.kpi.pending' | translate }}</p>
         <h3 class="fw-700 mb-0" [class.text-warning]="d.pendingWebhookEvents > 0">{{ d.pendingWebhookEvents }}</h3>
       </div></div>
     </div>
-    <div class="col-6 col-lg-3">
+    <div class="col-6 col-sm-4">
       <div class="card h-100"><div class="card-body">
         <p class="text-muted small mb-1">{{ 'whatsapp.diagnostics.kpi.failed' | translate }}</p>
         <h3 class="fw-700 mb-0" [class.text-danger]="d.failedWebhookEvents > 0">{{ d.failedWebhookEvents }}</h3>
       </div></div>
     </div>
   </div>
-  <p class="small text-muted mb-3">
-    {{ 'whatsapp.diagnostics.defaultInstance' | translate }}:
-    <code>{{ d.defaultInstanceId || '—' }}</code>
-  </p>
 
-  <!-- Numbers: local vs. Wavex account -->
+  <!-- Provider channels -->
   <div class="card mb-4">
-    <div class="card-header"><h5 class="mb-0">{{ 'whatsapp.diagnostics.numbersTitle' | translate }}</h5></div>
+    <div class="card-header"><h5 class="mb-0">{{ 'whatsapp.diagnostics.channelsTitle' | translate }}</h5></div>
     <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table align-middle mb-0" appResponsiveTable>
-          <thead>
-            <tr>
-              <th>{{ 'whatsapp.numbers.col.number' | translate }}</th>
-              <th>{{ 'whatsapp.numbers.col.status' | translate }}</th>
-              <th>{{ 'whatsapp.numbers.col.employee' | translate }}</th>
-              <th class="text-center">{{ 'whatsapp.numbers.col.chats' | translate }}</th>
-              <th>{{ 'whatsapp.diagnostics.col.account' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (i of d.localInstances; track i.instanceId) {
-              <tr [class.table-danger]="!i.inCurrentWavexAccount">
-                <td>
-                  <span class="fw-700" dir="ltr">{{ phone(i.phoneNumber) }}</span>
-                  <small class="d-block text-muted wa-dg__id" dir="ltr">{{ i.instanceId }}</small>
-                </td>
-                <td>
-                  <span class="wa-status"><span class="wa-dot wa-dot--{{ statusTone(i.status) }}" aria-hidden="true"></span>{{ i.status || '—' }}</span>
-                </td>
-                <td>{{ i.ownerName || ('whatsapp.numbers.unassigned' | translate) }}</td>
-                <td class="text-center">{{ i.chatsCount }}</td>
-                <td>
-                  @if (i.inCurrentWavexAccount) {
-                    <span class="badge success"><i class="fa-solid fa-check me-1"></i>{{ 'whatsapp.diagnostics.inAccount' | translate }}</span>
-                  } @else {
-                    <span class="badge danger"><i class="fa-solid fa-triangle-exclamation me-1"></i>{{ 'whatsapp.diagnostics.notInAccount' | translate }}</span>
-                  }
-                </td>
-              </tr>
-            }
-            @for (i of accountOnly(); track i.id) {
+      @if (providerRows().length) {
+        <div class="table-responsive">
+          <table class="table align-middle mb-0" appResponsiveTable>
+            <thead>
               <tr>
-                <td>
-                  <span class="fw-700" dir="ltr">{{ phone(i.phoneNumber) }}</span>
-                  <small class="d-block text-muted wa-dg__id" dir="ltr">{{ i.id }}</small>
-                </td>
-                <td>
-                  <span class="wa-status"><span class="wa-dot wa-dot--{{ statusTone(i.status) }}" aria-hidden="true"></span>{{ i.status || '—' }}</span>
-                </td>
-                <td class="text-muted">—</td>
-                <td class="text-center">0</td>
-                <td><span class="badge info">{{ 'whatsapp.diagnostics.accountOnly' | translate }}</span></td>
+                <th>{{ 'whatsapp.numbers.col.type' | translate }}</th>
+                <th>{{ 'whatsapp.numbers.col.name' | translate }}</th>
+                <th>{{ 'whatsapp.numbers.col.status' | translate }}</th>
+                <th>{{ 'whatsapp.diagnostics.col.inCrm' | translate }}</th>
               </tr>
-            }
-            @if (!d.localInstances.length && !accountOnly().length) {
-              <tr><td colspan="5" class="text-center text-muted py-4">{{ 'whatsapp.numbers.empty' | translate }}</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              @for (c of providerRows(); track c.id) {
+                <tr>
+                  <td>
+                    @if (c.type) { <app-wa-channel-badge [type]="c.type" /> } @else { <span class="text-muted">—</span> }
+                  </td>
+                  <td>
+                    <span class="fw-700" dir="auto">{{ c.label }}</span>
+                    <small class="d-block text-muted wa-dg__id" dir="ltr">#{{ c.id }}</small>
+                  </td>
+                  <td>
+                    <span class="wa-status"><span class="wa-dot wa-dot--{{ c.tone }}" aria-hidden="true"></span>{{ c.status || '—' }}</span>
+                  </td>
+                  <td>
+                    @if (c.inCrm) {
+                      <span class="badge success"><i class="fa-solid fa-check me-1"></i>{{ 'whatsapp.diagnostics.yes' | translate }}</span>
+                    } @else {
+                      <span class="badge info">{{ 'whatsapp.diagnostics.providerOnly' | translate }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="text-center text-muted py-4 mb-0">{{ 'whatsapp.diagnostics.noProviderChannels' | translate }}</p>
+      }
     </div>
   </div>
 
@@ -134,7 +129,7 @@
             <thead>
               <tr>
                 <th>{{ 'whatsapp.diagnostics.col.event' | translate }}</th>
-                <th>{{ 'whatsapp.diagnostics.col.number' | translate }}</th>
+                <th>{{ 'whatsapp.diagnostics.col.channel' | translate }}</th>
                 <th>{{ 'whatsapp.diagnostics.col.received' | translate }}</th>
                 <th>{{ 'whatsapp.diagnostics.col.processed' | translate }}</th>
                 <th>{{ 'whatsapp.diagnostics.col.error' | translate }}</th>
@@ -144,17 +139,17 @@
               @for (e of d.recentWebhookEvents; track e.id) {
                 <tr>
                   <td><code>{{ e.eventType }}</code></td>
-                  <td><span dir="auto">{{ eventNumber(e) }}</span></td>
+                  <td><span dir="ltr">{{ e.instanceId ? '#' + e.instanceId : '—' }}</span></td>
                   <td class="small text-muted">{{ e.receivedAt | cairoDate: 'datetime' }}</td>
                   <td>
                     @if (e.processedAt) {
-                      <span class="badge success" [title]="e.processedAt | cairoDate">{{ 'whatsapp.diagnostics.yes' | translate }}</span>
+                      <span class="small text-muted" [title]="e.processedAt | cairoDate">{{ e.processedAt | cairoDate: 'datetime' }}</span>
                     } @else {
                       <span class="badge" [class.danger]="!!e.lastError" [class.warning]="!e.lastError">
-                        {{ 'whatsapp.diagnostics.no' | translate }}
+                        {{ 'whatsapp.diagnostics.notProcessed' | translate }}
                       </span>
                     }
-                    @if (e.attempts > 1) {
+                    @if ((e.attempts ?? 0) > 1) {
                       <small class="d-block text-muted">{{ 'whatsapp.diagnostics.attempts' | translate: { n: e.attempts } }}</small>
                     }
                   </td>

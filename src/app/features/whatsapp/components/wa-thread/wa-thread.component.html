@@ -68,7 +68,7 @@
           <app-wa-message-bubble
             [message]="m"
             [showSender]="showSender()"
-            [canRetry]="store.canRetry(m) && !store.blockReason()"
+            [canRetry]="store.canRetry(m) && store.composer().mode === 'reply'"
             (retry)="retry(m)"
             (openImage)="viewer.set($event)" />
         }
@@ -86,31 +86,23 @@
   }
 </div>
 
-@switch (store.blockReason()) {
-  @case ('disconnected') {
-    <div class="wa-blocked" role="status">
-      <i class="fa-solid fa-plug-circle-xmark" aria-hidden="true"></i>
-      <span class="wa-blocked__text">{{ 'whatsapp.composer.disconnected' | translate }}</span>
-      @if (canReconnect()) {
-        <button type="button" class="btn btn-sm btn-success" (click)="reconnect.emit()">
-          <i class="fa-solid fa-link me-1"></i>{{ 'whatsapp.connect.reconnect' | translate }}
-        </button>
-      }
-    </div>
-  }
-  @case ('forbidden') {
-    <div class="wa-blocked" role="status">
-      <i class="fa-solid fa-lock" aria-hidden="true"></i>
-      <span class="wa-blocked__text">{{ 'whatsapp.errors.noPermission' | translate }}</span>
-    </div>
-  }
+@if (source()) {
+  <app-wa-composer
+    [state]="store.composer()"
+    [contactName]="contactName()"
+    [isAdmin]="session.isAdmin()"
+    (submitted)="onSubmit($event)"
+    (templateRequested)="templateOpen.set(true)" />
 }
 
-<app-wa-composer
-  [contactName]="contactName()"
-  [sending]="sending()"
-  [disabled]="!!store.blockReason() || !source()"
-  (submitted)="onSubmit($event)" />
+@if (templateOpen()) {
+  <app-wa-template-picker-dialog
+    [send]="sendTemplate"
+    [instanceId]="templateInstanceId()"
+    [recipient]="contactName()"
+    (sent)="onTemplateSent()"
+    (closed)="templateOpen.set(false)" />
+}
 
 @if (viewer(); as v) {
   <app-modal [open]="true" size="xl" [title]="v.fileName || ('whatsapp.message.kind.image' | translate)"

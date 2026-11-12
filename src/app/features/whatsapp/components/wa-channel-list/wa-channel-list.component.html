@@ -42,13 +42,15 @@
         <li class="wa-ch__row">
           <button type="button" class="wa-ch" [class.is-active]="selectedId() === c.id" [class.is-removed]="!isActive"
                   [attr.aria-current]="selectedId() === c.id ? 'true' : null"
-                  [title]="isActive ? '' : ('whatsapp.channels.removedHint' | translate)"
+                  [title]="isActive ? (st.tone === 'danger' ? ('whatsapp.channels.relinkHint' | translate) : '') : ('whatsapp.channels.removedHint' | translate)"
                   (click)="selected.emit(c.id)">
-            <span class="wa-ch__icon"><i class="fa-brands fa-whatsapp"></i></span>
+            <span class="wa-ch__icon" [attr.data-type]="c.type">
+              <i [class]="c.type === 'messenger' ? 'fa-brands fa-facebook-messenger' : 'fa-brands fa-whatsapp'"></i>
+            </span>
             <span class="wa-ch__main">
               <span class="wa-ch__name">
                 <span class="wa-dot wa-dot--{{ isActive ? st.tone : 'gray' }}" aria-hidden="true"></span>
-                <span dir="ltr" class="text-truncate">{{ phone(c) || c.name || ('whatsapp.numbers.noPhone' | translate) }}</span>
+                <span class="text-truncate" dir="auto">{{ label(c) }}</span>
                 @if (c.isDefault) {
                   <i class="fa-solid fa-building wa-ch__default" [title]="'whatsapp.numbers.companyBadge' | translate"></i>
                 }
@@ -67,13 +69,6 @@
               <span class="wa-badge">{{ c.unreadChatsCount }}</span>
             }
           </button>
-          @if (pairable(c)) {
-            <button type="button" class="wa-ch__pair" (click)="pair.emit(c)"
-                    [title]="'whatsapp.connect.getCode' | translate"
-                    [attr.aria-label]="'whatsapp.connect.getCode' | translate">
-              <i class="fa-solid fa-key"></i>
-            </button>
-          }
         </li>
       }
     </ul>

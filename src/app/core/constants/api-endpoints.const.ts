@@ -300,22 +300,26 @@ export const API_ENDPOINTS = {
     removeFcmToken: 'Notifications/fcm-token',
   },
   /**
-   * In-CRM WhatsApp (Wavex behind the backend — the browser never talks to
-   * Wavex). Scoped server-side: Admin sees every number, employees only their
-   * own; a 401 with "Unauthorized access." means "not allowed", not logout.
-   * Live updates arrive on the `/hubs/whatsapp` SignalR hub.
+   * In-CRM WhatsApp + Messenger (Mihwar behind the backend — the browser
+   * never talks to the provider). Scoped server-side: Admin sees every
+   * channel, employees only their own; a 401 with "Unauthorized access."
+   * means "not allowed", not logout. Live updates arrive on `/hubs/whatsapp`.
    */
   whatsapp: {
-    /** GET the caller's own number, live from the provider. */
+    /** GET the caller's own WhatsApp number (`NOT_ASSIGNED` when none). */
     status: 'WhatsApp/status',
-    /** GET channels — Admin: every number; employee: own only (0 or 1). */
+    /** GET channels — Admin: every channel; employee: own (≤ 1 number + ≤ 1 page). */
     instances: 'WhatsApp/instances',
     /** GET one channel with its live status. */
     instance: (instanceId: string) => `WhatsApp/instances/${encodeURIComponent(instanceId)}`,
-    /** POST `{ phone, instanceId? }` → a pairing code to type on the phone. */
-    connect: 'WhatsApp/instances/connect',
-    /** PUT (Admin) `{ instanceId }` assigns, `{ instanceId: null }` unassigns. */
+    /** PUT (Admin) `{ instanceId }` assigns (replaces the same type), `{ instanceId: null }` removes all. */
     userNumber: (userId: string) => `WhatsApp/users/${encodeURIComponent(userId)}/number`,
+    /** GET approved templates of my WhatsApp number — `instanceId?` (Admin). */
+    templates: 'WhatsApp/templates',
+    /** POST `{ chatId | customerId | phone, instanceId?, clientMessageId, templateId, template?, language?, parameters? }`. */
+    sendTemplate: 'WhatsApp/send-template',
+    /** POST (Admin) `?max=` — imports past conversations from the provider; idempotent, ~1 min. */
+    import: 'WhatsApp/import',
     /** GET paged, newest first — `pageIndex`, `pageSize`, `search?`, `instanceId?`, `unreadOnly?`. */
     chats: 'WhatsApp/chats',
     /** GET oldest → newest — `take` (≤ 200), `beforeId?`. */
@@ -327,9 +331,9 @@ export const API_ENDPOINTS = {
       `WhatsApp/customers/${customerId}/messages`,
     /** POST JSON `{ chatId | customerId | phone, instanceId?, clientMessageId, text }`. */
     send: 'WhatsApp/send',
-    /** POST multipart — `file` + the same fields + `caption?` (≤ 3.5 MB). */
+    /** POST multipart — `file` + `chatId` + `caption?` + `clientMessageId` (≤ 16 MB). */
     sendMedia: 'WhatsApp/send-media',
-    /** GET (Admin) configuration, provider account vs. local numbers, webhook queue health. */
+    /** GET (Admin) configuration, provider channels, webhook queue health. */
     diagnostics: 'WhatsApp/diagnostics',
     /** SignalR hub — relative to the API origin (without `/api`). */
     hub: 'hubs/whatsapp',

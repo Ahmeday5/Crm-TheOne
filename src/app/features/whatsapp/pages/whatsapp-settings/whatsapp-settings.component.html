@@ -1,12 +1,12 @@
 <app-page-header
-  [title]="'whatsapp.numbers.title' | translate"
-  [subtitle]="'whatsapp.numbers.subtitle' | translate"
-  icon="fa-solid fa-sim-card">
+  [title]="'whatsapp.settings.title' | translate"
+  [subtitle]="'whatsapp.settings.subtitle' | translate"
+  icon="fa-solid fa-gear">
   <div class="btn-row">
     <a class="btn btn-light btn-sm" routerLink="/whatsapp">
-      <i class="fa-brands fa-whatsapp me-1"></i>{{ 'whatsapp.numbers.backToInbox' | translate }}
+      <i class="fa-solid fa-comments me-1"></i>{{ 'whatsapp.numbers.backToInbox' | translate }}
     </a>
-    @if (tab() === 'numbers') {
+    @if (tab() === 'channels') {
       <button type="button" class="btn btn-success btn-sm" (click)="load()" [disabled]="loading()">
         <i class="fa-solid fa-rotate me-1" [class.fa-spin]="loading()"></i>{{ 'whatsapp.refresh' | translate }}
       </button>
@@ -15,20 +15,20 @@
 </app-page-header>
 
 <div class="wa-numbers__tabs mb-4" role="tablist">
-  <button type="button" role="tab" class="wa-numbers__tab" [class.is-active]="tab() === 'numbers'"
-          [attr.aria-selected]="tab() === 'numbers'" (click)="setTab('numbers')">
-    <i class="fa-solid fa-sim-card" aria-hidden="true"></i>{{ 'whatsapp.numbers.tabs.numbers' | translate }}
+  <button type="button" role="tab" class="wa-numbers__tab" [class.is-active]="tab() === 'channels'"
+          [attr.aria-selected]="tab() === 'channels'" (click)="setTab('channels')">
+    <i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i>{{ 'whatsapp.settings.tabs.channels' | translate }}
   </button>
   <button type="button" role="tab" class="wa-numbers__tab" [class.is-active]="tab() === 'diagnostics'"
           [attr.aria-selected]="tab() === 'diagnostics'" (click)="setTab('diagnostics')">
-    <i class="fa-solid fa-stethoscope" aria-hidden="true"></i>{{ 'whatsapp.numbers.tabs.diagnostics' | translate }}
+    <i class="fa-solid fa-stethoscope" aria-hidden="true"></i>{{ 'whatsapp.settings.tabs.diagnostics' | translate }}
   </button>
 </div>
 
 @if (tab() === 'diagnostics') {
   <app-wa-diagnostics />
 } @else {
-  <!-- How to add a number -->
+  <!-- Where channels come from -->
   <div class="wa-numbers__hint mb-4" role="note">
     <i class="fa-solid fa-circle-info wa-numbers__hint-icon" aria-hidden="true"></i>
     <p class="mb-0">{{ 'whatsapp.numbers.addHint' | translate }}</p>
@@ -43,7 +43,7 @@
             <p class="kpi-label text-muted small mb-1">{{ 'whatsapp.numbers.kpi.total' | translate }}</p>
             <h3 class="fw-700 mb-0 kpi-value">{{ kpis().total }}</h3>
           </div>
-          <span class="icon-tile xl tone-primary"><i class="fa-solid fa-sim-card"></i></span>
+          <span class="icon-tile xl tone-primary"><i class="fa-solid fa-tower-broadcast"></i></span>
         </div>
       </div>
     </div>
@@ -82,10 +82,72 @@
     </div>
   </div>
 
-  <!-- Numbers -->
+  <!-- Import past conversations -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="wa-import">
+        <span class="icon-tile lg tone-primary wa-import__icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+        <div class="wa-import__text">
+          <h5 class="mb-1">{{ 'whatsapp.import.title' | translate }}</h5>
+          <p class="text-muted small mb-0">{{ 'whatsapp.import.hint' | translate: { max: importMax } }}</p>
+        </div>
+        <button type="button" class="btn btn-success" (click)="runImport()" [disabled]="importing()">
+          @if (importing()) {
+            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>{{ 'whatsapp.import.running' | translate }}
+          } @else {
+            <i class="fa-solid fa-cloud-arrow-down me-1" aria-hidden="true"></i>{{ 'whatsapp.import.cta' | translate }}
+          }
+        </button>
+      </div>
+
+      @if (importing()) {
+        <p class="small text-muted mt-3 mb-0" role="status">
+          <i class="fa-regular fa-clock me-1" aria-hidden="true"></i>{{ 'whatsapp.import.wait' | translate }}
+        </p>
+      }
+      @if (importError(); as message) {
+        <p class="alert alert-danger d-flex gap-2 py-2 mt-3 mb-0" role="alert">
+          <i class="fa-solid fa-circle-exclamation mt-1" aria-hidden="true"></i><span dir="auto">{{ message }}</span>
+        </p>
+      }
+      @if (importResult(); as r) {
+        <div class="wa-import__result mt-3" role="status">
+          <div class="wa-import__stat">
+            <span class="wa-import__num">{{ r.conversations }}</span>
+            <span class="wa-import__label">{{ 'whatsapp.import.conversations' | translate }}</span>
+          </div>
+          <div class="wa-import__stat">
+            <span class="wa-import__num text-success">{{ r.newChats }}</span>
+            <span class="wa-import__label">{{ 'whatsapp.import.newChats' | translate }}</span>
+          </div>
+          <div class="wa-import__stat">
+            <span class="wa-import__num text-success">{{ r.newMessages }}</span>
+            <span class="wa-import__label">{{ 'whatsapp.import.newMessages' | translate }}</span>
+          </div>
+          <div class="wa-import__stat">
+            <span class="wa-import__num text-muted">{{ r.skipped }}</span>
+            <span class="wa-import__label">{{ 'whatsapp.import.skipped' | translate }}</span>
+          </div>
+          <div class="wa-import__stat">
+            <span class="wa-import__num" [class.text-danger]="importErrors().length > 0">{{ importErrors().length }}</span>
+            <span class="wa-import__label">{{ 'whatsapp.import.errors' | translate }}</span>
+          </div>
+        </div>
+        @if (importErrors().length) {
+          <ul class="wa-import__errors mt-2 mb-0">
+            @for (e of importErrors(); track $index) {
+              <li class="text-danger small" dir="auto" appClampText="2" [clampTitle]="'whatsapp.import.errors' | translate">{{ e }}</li>
+            }
+          </ul>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- Channels -->
   <div class="card">
     <div class="card-header d-flex align-items-center gap-2">
-      <i class="fa-brands fa-whatsapp text-success"></i>
+      <i class="fa-solid fa-tower-broadcast text-success"></i>
       <h5 class="mb-0">{{ 'whatsapp.numbers.listTitle' | translate }} ({{ rows().length }})</h5>
     </div>
     <div class="card-body p-0">
@@ -100,7 +162,7 @@
       } @else if (rows().length === 0) {
         <app-empty-state
           [compact]="true"
-          icon="fa-brands fa-whatsapp"
+          icon="fa-solid fa-tower-broadcast"
           tone="success"
           [title]="'whatsapp.numbers.empty' | translate"
           [message]="'whatsapp.numbers.emptyHint' | translate"
@@ -111,12 +173,13 @@
           <table class="table table-hover align-middle mb-0" appResponsiveTable>
             <thead>
               <tr>
-                <th>{{ 'whatsapp.numbers.col.number' | translate }}</th>
+                <th>{{ 'whatsapp.numbers.col.type' | translate }}</th>
+                <th>{{ 'whatsapp.numbers.col.name' | translate }}</th>
                 <th>{{ 'whatsapp.numbers.col.status' | translate }}</th>
                 <th>{{ 'whatsapp.numbers.col.employee' | translate }}</th>
-                <th>{{ 'whatsapp.numbers.col.lastSeen' | translate }}</th>
                 <th class="text-center">{{ 'whatsapp.numbers.col.chats' | translate }}</th>
                 <th class="text-center">{{ 'whatsapp.numbers.col.unread' | translate }}</th>
+                <th>{{ 'whatsapp.numbers.col.lastSynced' | translate }}</th>
                 <th class="text-end rt-actions">{{ 'whatsapp.numbers.col.actions' | translate }}</th>
               </tr>
             </thead>
@@ -125,23 +188,22 @@
                 @let st = status(row);
                 @let isActive = active(row);
                 <tr [class.wa-numbers__removed]="!isActive">
+                  <td><app-wa-channel-badge [type]="row.type" /></td>
                   <td>
                     <div class="d-flex flex-wrap align-items-center gap-2">
-                      <span class="fw-700" dir="ltr">{{ phone(row) }}</span>
+                      <span class="fw-700" dir="auto">{{ label(row) }}</span>
                       @if (row.isDefault) {
                         <span class="badge blue"><i class="fa-solid fa-building me-1"></i>{{ 'whatsapp.numbers.companyBadge' | translate }}</span>
                       }
                     </div>
-                    @if (row.name) {
-                      <small class="text-muted d-block" dir="auto">{{ row.name }}</small>
-                    }
+                    <small class="text-muted d-block" dir="ltr">#{{ row.id }}</small>
                   </td>
                   <td>
-                    <span class="wa-status">
+                    <span class="wa-pill" [attr.data-tone]="st.tone">
                       <span class="wa-dot wa-dot--{{ st.tone }}" aria-hidden="true"></span>{{ st.labelKey | translate }}
                     </span>
-                    @if (row.pairingExpiresAt && !row.canSend) {
-                      <small class="text-muted d-block">{{ 'whatsapp.numbers.pairingActive' | translate }}</small>
+                    @if (isActive && st.tone === 'danger') {
+                      <small class="text-danger d-block mt-1">{{ 'whatsapp.channels.relinkHint' | translate }}</small>
                     }
                   </td>
                   <td>
@@ -154,9 +216,6 @@
                       <span class="text-muted">{{ 'whatsapp.numbers.unassigned' | translate }}</span>
                     }
                   </td>
-                  <td>
-                    <span class="text-muted small">{{ row.lastSeenAt | cairoDate: 'datetime' }}</span>
-                  </td>
                   <td class="text-center">{{ row.chatsCount || 0 }}</td>
                   <td class="text-center">
                     @if (row.unreadChatsCount > 0) {
@@ -165,18 +224,15 @@
                       <span class="text-muted">0</span>
                     }
                   </td>
+                  <td>
+                    <span class="text-muted small">{{ row.lastSyncedAt | cairoDate: 'datetime' }}</span>
+                  </td>
                   <td class="text-end">
                     @if (isActive) {
                       <div class="btn-row justify-content-end">
-                        @if (pairable(row)) {
-                          <button type="button" class="btn btn-sm btn-light text-success" (click)="pairing.set(row)">
-                            <i class="fa-solid fa-key"></i>
-                            {{ 'whatsapp.connect.getCode' | translate }}
-                          </button>
-                        }
                         <button type="button" class="btn btn-sm btn-light" (click)="openAssign(row)"
                                 [disabled]="unlinkingId() === row.id">
-                          <i class="fa-solid" [class.fa-link]="!row.assignedUserId" [class.fa-user-pen]="!!row.assignedUserId"></i>
+                          <i class="fa-solid" [class.fa-user-plus]="!row.assignedUserId" [class.fa-user-pen]="!!row.assignedUserId"></i>
                           {{ (row.assignedUserId ? 'whatsapp.numbers.change' : 'whatsapp.numbers.assign') | translate }}
                         </button>
                         @if (row.assignedUserId) {
@@ -185,7 +241,7 @@
                             @if (unlinkingId() === row.id) {
                               <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                             } @else {
-                              <i class="fa-solid fa-link-slash"></i>
+                              <i class="fa-solid fa-user-minus"></i>
                             }
                             {{ 'whatsapp.numbers.unlink' | translate }}
                           </button>
@@ -211,8 +267,4 @@
     [instances]="session.channels()"
     (saved)="onAssigned($event)"
     (cancelled)="assigning.set(null)" />
-}
-
-@if (pairing(); as instance) {
-  <app-wa-connect-dialog [instance]="instance" (closed)="pairing.set(null)" />
 }

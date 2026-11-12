@@ -15,11 +15,12 @@ import { RouterLink } from "@angular/router";
 import { PwaService } from '../../../core/pwa/pwa.service';
 import { CommandCenterUiService, CommandTriggerComponent, TourService } from '../../../features/command-center';
 import { AttendanceClockChipComponent } from '../../../features/attendance';
+import { WaNumberStatusChipComponent } from '../../../features/whatsapp';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, ThemeToggleComponent, LanguageToggleComponent, NotificationsBellComponent, TranslatePipe, RouterLink, UserAvatarComponent, CommandTriggerComponent, AttendanceClockChipComponent],
+  imports: [CommonModule, ThemeToggleComponent, LanguageToggleComponent, NotificationsBellComponent, TranslatePipe, RouterLink, UserAvatarComponent, CommandTriggerComponent, AttendanceClockChipComponent, WaNumberStatusChipComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
 })

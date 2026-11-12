@@ -76,9 +76,6 @@
   }
   &.is-removed { opacity: 0.55; filter: grayscale(1); }
 }
-/* Leave room for the pairing button. */
-.wa-ch__row:has(.wa-ch__pair) .wa-ch { padding-inline-end: 2.6rem; }
-
 .wa-ch__icon {
   flex-shrink: 0;
   display: inline-grid;
@@ -88,6 +85,9 @@
   border-radius: 50%;
   background: var(--success-soft);
   color: var(--success);
+
+  /* Messenger's own blue — a solid brand colour. */
+  &[data-type='messenger'] { background: color-mix(in srgb, #0866ff 12%, transparent); color: #0866ff; }
 }
 .wa-ch__main {
   flex: 1;
@@ -115,24 +115,6 @@
   color: var(--text-3);
 }
 
-.wa-ch__pair {
-  position: absolute;
-  top: 50%;
-  inset-inline-end: 0.4rem;
-  transform: translateY(-50%);
-  display: inline-grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  background: var(--surface-0);
-  color: var(--success);
-  cursor: pointer;
-
-  &:hover { border-color: var(--success); background: var(--success-soft); }
-}
-
 .wa-badge {
   flex-shrink: 0;
   align-self: center;
@@ -148,7 +130,6 @@
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-.wa-ch__row:has(.wa-ch__pair) .wa-badge { margin-inline-end: 0.15rem; }
 
 .wa-ch__state { padding: 1.25rem 0.75rem; text-align: center; }
 

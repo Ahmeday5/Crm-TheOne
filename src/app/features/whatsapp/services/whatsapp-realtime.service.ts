@@ -6,7 +6,7 @@ import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { AuthService } from '../../../core/services/auth.service';
 import { isJwtExpired } from '../../../core/utils/jwt.util';
 import { WaChat, WaInstanceStatusEvent, WaMessageEvent, WaMessageStatusEvent } from '../models/whatsapp.models';
-import { canUseWhatsApp } from '../utils/whatsapp.util';
+import { canUseWhatsApp, normalizeChannel, normalizeChat } from '../utils/whatsapp.util';
 
 export type WaRealtimeState = 'stopped' | 'connecting' | 'connected' | 'reconnecting';
 
@@ -131,13 +131,15 @@ export class WhatsAppRealtimeService {
       .configureLogging(environment.production ? signalr.LogLevel.Error : signalr.LogLevel.Warning)
       .build();
 
-    connection.on(HUB_EVENTS.message, (e: WaMessageEvent) => this.emit(gen, () => this.messageSubject.next(e)));
+    connection.on(HUB_EVENTS.message, (e: WaMessageEvent) =>
+      this.emit(gen, () => this.messageSubject.next({ ...e, chat: normalizeChat(e.chat) })),
+    );
     connection.on(HUB_EVENTS.messageStatus, (e: WaMessageStatusEvent) =>
       this.emit(gen, () => this.statusSubject.next(e)),
     );
-    connection.on(HUB_EVENTS.chatUpdated, (e: WaChat) => this.emit(gen, () => this.chatSubject.next(e)));
+    connection.on(HUB_EVENTS.chatUpdated, (e: WaChat) => this.emit(gen, () => this.chatSubject.next(normalizeChat(e))));
     connection.on(HUB_EVENTS.instanceStatus, (e: WaInstanceStatusEvent) =>
-      this.emit(gen, () => this.instanceSubject.next(e)),
+      this.emit(gen, () => this.instanceSubject.next({ ...e, instance: normalizeChannel(e.instance) })),
     );
 
     connection.onreconnecting(() => this.emit(gen, () => this.stateSignal.set('reconnecting')));

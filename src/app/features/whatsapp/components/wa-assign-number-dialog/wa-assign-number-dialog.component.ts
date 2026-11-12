@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Observable, catchError, of, switchMap, throwError } from 'rxjs';
 import { roleLabel } from '../../../../core/constants/roles.const';
 import { TRANSLATIONS, interpolate, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
@@ -20,41 +19,43 @@ import { SearchableSelectComponent } from '../../../../shared/components/searcha
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { WaEmployee, WaInstance } from '../../models/whatsapp.models';
 import { WhatsAppApiService } from '../../services/whatsapp-api.service';
+import { WhatsAppAssignmentService } from '../../services/whatsapp-assignment.service';
 import { WhatsAppSessionStore } from '../../state/whatsapp-session.store';
-import { formatWhatsAppPhone, whatsappErrorText } from '../../utils/whatsapp.util';
+import { channelLabel, whatsappErrorText } from '../../utils/whatsapp.util';
+import { WaChannelBadgeComponent } from '../wa-channel-badge/wa-channel-badge.component';
 
 export type AssignOutcome = 'linked' | 'changed';
 
 /**
- * Admin: assign a number to an employee (one number each), or hand it to
- * someone else.
+ * Admin: give a channel (WhatsApp number or Messenger page) to an employee,
+ * or hand it to someone else. Each employee holds at most one channel of
+ * each type.
  *
- * The picker lists active Sales / Support users (`GET /Auth/GetAllUsers`)
- * with the number they hold today, and the dialog spells out side effects
- * before saving:
- *   - the picked employee already has a number → they move to this one
- *     (the server releases their old number itself);
- *   - this number belongs to someone else → they're unassigned first (the
- *     server rejects a taken number).
- * If assigning fails after that unassign, the previous owner is restored.
- * Server messages (e.g. "already assigned to X") are shown as they are.
+ * The picker lists active Sales / Support users with the channel of the
+ * same type they hold today, and spells out side effects before saving:
+ *   - the picked employee already has a channel of this type → it is
+ *     replaced (the server does that itself; their other type stays);
+ *   - this channel belongs to someone else → they lose it (and keep their
+ *     other channel). If assigning then fails, they get it back.
+ * Server messages are shown as they are.
  */
 @Component({
   selector: 'app-wa-assign-number-dialog',
   standalone: true,
-  imports: [FormsModule, TranslatePipe, ModalComponent, SearchableSelectComponent],
+  imports: [FormsModule, TranslatePipe, ModalComponent, SearchableSelectComponent, WaChannelBadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './wa-assign-number-dialog.component.html',
 })
 export class WaAssignNumberDialogComponent implements OnInit {
   private readonly api = inject(WhatsAppApiService);
+  private readonly assignment = inject(WhatsAppAssignmentService);
   private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly session = inject(WhatsAppSessionStore);
 
-  /** The number being (re)assigned. */
+  /** The channel being (re)assigned. */
   readonly instance = input.required<WaInstance>();
-  /** Every number — to show who already holds which. */
+  /** Every channel — to show who already holds which. */
   readonly instances = input<readonly WaInstance[]>([]);
 
   readonly saved = output<AssignOutcome>();
@@ -68,14 +69,15 @@ export class WaAssignNumberDialogComponent implements OnInit {
   protected readonly saveError = signal<string | null>(null);
 
   protected readonly isChange = computed(() => !!this.instance().assignedUserId);
-  protected readonly phone = computed(() => formatWhatsAppPhone(this.instance().phoneNumber));
+  protected readonly label = computed(() => channelLabel(this.instance()));
   protected readonly offline = computed(() => !this.instance().canSend);
 
-  /** userId → the *other* number that user holds now. */
-  private readonly numberOfUser = computed(() => {
+  /** userId → the *other* channel of the same type that user holds now. */
+  private readonly sameTypeOfUser = computed(() => {
+    const target = this.instance();
     const map = new Map<string, WaInstance>();
     for (const i of this.instances()) {
-      if (i.assignedUserId && i.id !== this.instance().id) map.set(i.assignedUserId, i);
+      if (i.assignedUserId && i.id !== target.id && i.type === target.type) map.set(i.assignedUserId, i);
     }
     return map;
   });
@@ -84,14 +86,12 @@ export class WaAssignNumberDialogComponent implements OnInit {
     const lang = this.language.lang();
     const current = this.instance().assignedUserId;
     return this.employees().map((e) => {
-      const held = this.numberOfUser().get(e.userId);
+      const held = this.sameTypeOfUser().get(e.userId);
       const status =
         e.userId === current
           ? this.t('whatsapp.numbers.assignDialog.currentlyLinked')
           : held
-            ? interpolate(this.t('whatsapp.numbers.assignDialog.hasNumber'), {
-                phone: formatWhatsAppPhone(held.phoneNumber) || this.t('whatsapp.numbers.noPhone'),
-              })
+            ? interpolate(this.t('whatsapp.numbers.assignDialog.hasNumber'), { channel: channelLabel(held) })
             : this.t('whatsapp.numbers.assignDialog.noNumber');
       return { userId: e.userId, fullName: e.fullName, sub: `${roleLabel(e.role, lang)} · ${status}` };
     });
@@ -101,18 +101,18 @@ export class WaAssignNumberDialogComponent implements OnInit {
     () => this.employees().find((e) => e.userId === this.selectedUserId()) ?? null,
   );
 
-  /** "{name} is linked to {phone} and will be moved here." */
+  /** "{name} has {channel}; it will be replaced by this one." */
   protected readonly moveNotice = computed(() => {
     const picked = this.selected();
-    const held = picked ? this.numberOfUser().get(picked.userId) : undefined;
+    const held = picked ? this.sameTypeOfUser().get(picked.userId) : undefined;
     if (!picked || !held) return null;
     return interpolate(this.t('whatsapp.numbers.assignDialog.willMove'), {
       name: picked.fullName,
-      phone: formatWhatsAppPhone(held.phoneNumber) || this.t('whatsapp.numbers.noPhone'),
+      channel: channelLabel(held),
     });
   });
 
-  /** "{current owner} will be unlinked and fall back to the company number." */
+  /** "{current owner} will lose this channel." */
   protected readonly replaceNotice = computed(() => {
     const { assignedUserId, assignedUserName } = this.instance();
     const picked = this.selectedUserId();
@@ -164,7 +164,8 @@ export class WaAssignNumberDialogComponent implements OnInit {
     this.saveError.set(null);
     const changing = this.isChange();
 
-    this.assign(userId)
+    this.assignment
+      .assign(this.instance(), userId, this.instances())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
@@ -172,31 +173,11 @@ export class WaAssignNumberDialogComponent implements OnInit {
           if (updated) this.session.applyInstance(updated);
           this.saved.emit(changing ? 'changed' : 'linked');
         },
-        error: (err) => {
+        error: (err: unknown) => {
           this.saving.set(false);
           this.saveError.set(whatsappErrorText(err, (k) => this.t(k)));
         },
       });
-  }
-
-  /** Link `userId`; when the number is taken, release it first and roll back on failure. */
-  private assign(userId: string): Observable<WaInstance | null> {
-    const { id: instanceId, assignedUserId: previous } = this.instance();
-    const link$ = this.api.assignNumber(userId, { instanceId });
-    if (!previous || previous === userId) return link$;
-
-    return this.api.assignNumber(previous, { instanceId: null }).pipe(
-      switchMap(() =>
-        link$.pipe(
-          catchError((err) =>
-            this.api.assignNumber(previous, { instanceId }).pipe(
-              catchError(() => of(null)),
-              switchMap(() => throwError(() => err)),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   protected t(key: string): string {

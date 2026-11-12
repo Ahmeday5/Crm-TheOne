@@ -1,0 +1,77 @@
+<div [formGroup]="form">
+  <!-- Template -->
+  <div class="mb-3">
+    <label class="form-label" for="wa-tpl-select">{{ 'whatsapp.templates.pick' | translate }}</label>
+
+    @if (loading()) {
+      <div class="wa-tpl__state" role="status">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        <span>{{ 'whatsapp.templates.loading' | translate }}</span>
+      </div>
+    } @else if (error()) {
+      <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2 py-2 mb-0">
+        <span dir="auto">{{ error() }}</span>
+        <button type="button" class="btn btn-sm btn-light" (click)="retry()">
+          <i class="fa-solid fa-rotate me-1"></i>{{ 'whatsapp.retry' | translate }}
+        </button>
+      </div>
+    } @else if (templates().length === 0) {
+      <div class="alert alert-info d-flex gap-2 py-2 mb-0">
+        <i class="fa-solid fa-circle-info mt-1" aria-hidden="true"></i>
+        <span>{{ 'whatsapp.templates.empty' | translate }}</span>
+      </div>
+    } @else {
+      <select id="wa-tpl-select" class="form-select" formControlName="templateId"
+              [class.is-invalid]="showErrors() && form.controls.templateId.invalid">
+        <option [ngValue]="null" disabled>{{ 'whatsapp.templates.pickPlaceholder' | translate }}</option>
+        @for (tpl of templates(); track tpl.id) {
+          <option [ngValue]="tpl.id">{{ tpl.name }} · {{ tpl.language }}</option>
+        }
+      </select>
+      @if (showErrors() && form.controls.templateId.invalid) {
+        <div class="invalid-feedback d-block">{{ 'whatsapp.templates.required' | translate }}</div>
+      }
+    }
+  </div>
+
+  @if (selected(); as tpl) {
+    <div class="wa-tpl__meta">
+      <span class="badge info">{{ tpl.category }}</span>
+      <span class="badge">{{ tpl.language }}</span>
+    </div>
+
+    <!-- Variables -->
+    @if (variables().length) {
+      <fieldset class="mb-3" formGroupName="params">
+        <legend class="form-label">{{ 'whatsapp.templates.variables' | translate }}</legend>
+        <div class="wa-tpl__vars">
+          @for (name of variables(); track name) {
+            <div>
+              <label class="form-label small mb-1" [for]="'wa-tpl-var-' + $index" dir="auto">
+                {{ variableLabel(name) }} <span class="text-danger" aria-hidden="true">*</span>
+              </label>
+              <input class="form-control" type="text" dir="auto" autocomplete="off"
+                     [id]="'wa-tpl-var-' + $index"
+                     [formControlName]="name"
+                     [attr.maxlength]="maxLength"
+                     [class.is-invalid]="invalid(name)"
+                     [attr.aria-invalid]="invalid(name)"
+                     [placeholder]="placeholderFor(name)" />
+              @if (invalid(name)) {
+                <div class="invalid-feedback d-block">{{ 'whatsapp.templates.variableRequired' | translate }}</div>
+              }
+            </div>
+          }
+        </div>
+      </fieldset>
+    }
+
+    <!-- Live preview -->
+    <div class="wa-tpl__preview" aria-live="polite">
+      <span class="wa-tpl__preview-label">
+        <i class="fa-regular fa-eye" aria-hidden="true"></i>{{ 'whatsapp.templates.preview' | translate }}
+      </span>
+      <div class="wa-tpl__bubble" dir="auto">@for (s of preview(); track $index) {@if (s.variable) {<mark class="wa-tpl__slot" [class.is-missing]="s.missing">{{ s.text }}</mark>} @else {<ng-container>{{ s.text }}</ng-container>}}</div>
+    </div>
+  }
+</div>

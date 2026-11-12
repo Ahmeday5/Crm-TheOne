@@ -1,55 +1,89 @@
-@if (file(); as f) {
-  <div class="wa-attach">
-    @if (preview(); as src) {
-      <img class="wa-attach__thumb" [src]="src" alt="" />
-    } @else {
-      <span class="wa-attach__icon" aria-hidden="true"><i class="fa-regular fa-file-lines"></i></span>
+@let s = state();
+@switch (s.mode) {
+  <!-- ── Free reply (24-hour window open) ── -->
+  @case ('reply') {
+    @if (s.closingSoon && s.windowEndsAt) {
+      <p class="wa-window" role="status">
+        <i class="fa-regular fa-hourglass-half" aria-hidden="true"></i>
+        {{ 'whatsapp.composer.windowUntil' | translate: { time: (s.windowEndsAt | cairoDate: 'time') } }}
+      </p>
     }
-    <span class="wa-attach__info">
-      <span class="wa-attach__name" dir="auto" [title]="f.name">{{ f.name }}</span>
-      <span class="wa-attach__size">{{ fileSize() }}</span>
-    </span>
-    <button type="button" class="wa-icon-btn" (click)="removeFile()"
-            [title]="'whatsapp.composer.removeFile' | translate"
-            [attr.aria-label]="'whatsapp.composer.removeFile' | translate">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-  </div>
-}
 
-<div class="wa-compose">
-  <button type="button" class="wa-icon-btn" (click)="openPicker()" [disabled]="disabled()"
-          [title]="'whatsapp.composer.attach' | translate"
-          [attr.aria-label]="'whatsapp.composer.attach' | translate">
-    <i class="fa-solid fa-paperclip"></i>
-  </button>
-  <input #picker type="file" class="d-none" [accept]="accept" (change)="onPick($event)" tabindex="-1" />
-  <app-quick-reply-picker [disabled]="disabled()" (picked)="insertReply($event)" />
+    @if (file(); as f) {
+      <div class="wa-attach">
+        @if (preview(); as src) {
+          <img class="wa-attach__thumb" [src]="src" alt="" />
+        } @else {
+          <span class="wa-attach__icon" aria-hidden="true"><i class="fa-regular fa-file-lines"></i></span>
+        }
+        <span class="wa-attach__info">
+          <span class="wa-attach__name" dir="auto" [title]="f.name">{{ f.name }}</span>
+          <span class="wa-attach__size">{{ fileSize() }}</span>
+        </span>
+        <button type="button" class="wa-icon-btn" (click)="removeFile()"
+                [title]="'whatsapp.composer.removeFile' | translate"
+                [attr.aria-label]="'whatsapp.composer.removeFile' | translate">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    }
 
-  <textarea #box
-            class="wa-compose__input"
-            rows="1"
-            dir="auto"
-            [attr.maxlength]="maxLength()"
-            [value]="text()"
-            [disabled]="disabled()"
-            [placeholder]="(file() ? 'whatsapp.composer.captionPlaceholder' : 'whatsapp.composer.placeholder') | translate"
-            [attr.aria-label]="'whatsapp.composer.placeholder' | translate"
-            [title]="'whatsapp.composer.keyboardHint' | translate"
-            (input)="onInput($event)"
-            (keydown)="onKeydown($event)"
-            (paste)="onPaste($event)"></textarea>
+    <div class="wa-compose">
+      <button type="button" class="wa-icon-btn" (click)="openPicker()"
+              [title]="attachHint()" [attr.aria-label]="attachHint()">
+        <i class="fa-solid fa-paperclip"></i>
+      </button>
+      <input #picker type="file" class="d-none" [accept]="accept" (change)="onPick($event)" tabindex="-1" />
+      <app-quick-reply-picker (picked)="insertReply($event)" />
 
-  <button type="button" class="wa-send" (click)="submit()" [disabled]="!canSend()"
-          [title]="'whatsapp.composer.send' | translate"
-          [attr.aria-label]="'whatsapp.composer.send' | translate">
-    <i class="fa-solid fa-paper-plane"></i>
-  </button>
-</div>
+      <textarea #box
+                class="wa-compose__input"
+                rows="1"
+                dir="auto"
+                [attr.maxlength]="maxLength()"
+                [value]="text()"
+                [placeholder]="(file() ? 'whatsapp.composer.captionPlaceholder' : 'whatsapp.composer.placeholder') | translate"
+                [attr.aria-label]="'whatsapp.composer.placeholder' | translate"
+                [title]="'whatsapp.composer.keyboardHint' | translate"
+                (input)="onInput($event)"
+                (keydown)="onKeydown($event)"
+                (paste)="onPaste($event)"></textarea>
 
-@if (sending()) {
-  <p class="wa-compose__hint" role="status">
-    <i class="fa-regular fa-clock" aria-hidden="true"></i>
-    {{ 'whatsapp.composer.sendingHint' | translate }}
-  </p>
+      <button type="button" class="wa-send" (click)="submit()" [disabled]="!canSend()"
+              [title]="'whatsapp.composer.send' | translate"
+              [attr.aria-label]="'whatsapp.composer.send' | translate">
+        <i class="fa-solid fa-paper-plane"></i>
+      </button>
+    </div>
+  }
+
+  <!-- ── Only an approved template can go out ── -->
+  @case ('templateOnly') {
+    <div class="wa-gate wa-gate--template" role="status">
+      <i class="fa-solid fa-clock-rotate-left wa-gate__icon" aria-hidden="true"></i>
+      <span class="wa-gate__text">{{ 'whatsapp.composer.reason.' + s.reason | translate }}</span>
+      <button type="button" class="btn btn-sm btn-success" (click)="templateRequested.emit()">
+        <i class="fa-solid fa-file-signature me-1" aria-hidden="true"></i>{{ 'whatsapp.templates.cta' | translate }}
+      </button>
+    </div>
+  }
+
+  <!-- ── Nothing can be sent right now ── -->
+  @case ('locked') {
+    <div class="wa-gate wa-gate--locked" role="status">
+      <i class="wa-gate__icon fa-solid"
+         [class.fa-lock]="s.reason === 'forbidden'"
+         [class.fa-plug-circle-xmark]="s.reason === 'disconnected'"
+         [class.fa-hourglass-start]="s.reason === 'waitCustomer'"
+         aria-hidden="true"></i>
+      <span class="wa-gate__text">
+        {{ 'whatsapp.composer.reason.' + s.reason | translate }}
+        @if (s.reason === 'disconnected' && isAdmin()) {
+          <small class="d-block fw-normal">{{ 'whatsapp.channels.relinkHint' | translate }}</small>
+        }
+      </span>
+      <textarea class="wa-compose__input wa-gate__input" rows="1" disabled
+                [attr.aria-label]="'whatsapp.composer.placeholder' | translate"></textarea>
+    </div>
+  }
 }

@@ -312,7 +312,7 @@ export const NAV_SECTIONS: NavSection[] = [
         labelKey: 'sidebar.groups.chats',
         icon: 'fa-solid fa-comments',
         children: [
-          // Customer WhatsApp inbox — each employee chats from their own number.
+          // Customer inbox (WhatsApp + Messenger) — each employee chats from their own channels.
           {
             labelKey: 'sidebar.items.whatsapp',
             path: '/whatsapp',
@@ -329,8 +329,8 @@ export const NAV_SECTIONS: NavSection[] = [
           },
           {
             labelKey: 'sidebar.items.whatsappNumbers',
-            path: '/whatsapp/numbers',
-            icon: 'fa-solid fa-sim-card',
+            path: '/whatsapp/settings',
+            icon: 'fa-solid fa-gear',
             roles: ['Admin'],
           },
         ],

@@ -2,16 +2,16 @@ import { ApiError } from '../../../core/models/api-response.model';
 import { UserRole } from '../../../core/models/auth.model';
 import { APP_TIME_ZONE, parseUtc } from '../../../shared/pipes/cairo-date.pipe';
 import {
+  WaChannelType,
   WaChat,
   WaInstance,
-  WaInstanceStatus,
   WaMessage,
   WaMessageStatus,
   WaMessageType,
   WaNumberStatus,
 } from '../models/whatsapp.models';
 
-/** Roles that chat with customers on WhatsApp inside the CRM. */
+/** Roles that chat with customers inside the CRM. */
 export const WHATSAPP_ROLES: readonly UserRole[] = ['Admin', 'Sales', 'Support'];
 
 export function canUseWhatsApp(role: UserRole | null | undefined): boolean {
@@ -20,8 +20,8 @@ export function canUseWhatsApp(role: UserRole | null | undefined): boolean {
 
 // ─────────────── limits (mirror the backend) ───────────────
 
-/** `send-media` rejects anything larger (3.5 MB). */
-export const WHATSAPP_MAX_FILE_BYTES = 3.5 * 1024 * 1024;
+/** `send-media` rejects anything larger (16 MB — the WhatsApp Cloud API limit). */
+export const WHATSAPP_MAX_FILE_BYTES = 16 * 1024 * 1024;
 export const WHATSAPP_MAX_TEXT_LENGTH = 4096;
 export const WHATSAPP_MAX_CAPTION_LENGTH = 1024;
 /** One page of a thread's history. */
@@ -32,16 +32,16 @@ export const WHATSAPP_CHATS_PAGE_SIZE = 30;
 export const WHATSAPP_SEARCH_DEBOUNCE_MS = 300;
 /** Safety net while the real-time hub is down: re-read the visible data this often. */
 export const WHATSAPP_FALLBACK_POLL_MS = 20_000;
-/** The pairing dialog polls `GET /status` this often (alongside the hub event). */
-export const WHATSAPP_PAIRING_POLL_MS = 5_000;
+/** `POST /import?max=` — conversations pulled from Mihwar per run. */
+export const WHATSAPP_IMPORT_MAX = 100;
 
 /** Extension → the family it is sent as. Everything else is rejected client-side. */
-const ALLOWED_EXTENSIONS: Readonly<Record<string, 'image' | 'video' | 'document'>> = {
+const ALLOWED_EXTENSIONS: Readonly<Record<string, 'image' | 'video' | 'audio' | 'document'>> = {
   jpg: 'image', jpeg: 'image', png: 'image', webp: 'image',
   mp4: 'video', '3gp': 'video',
+  mp3: 'audio', ogg: 'audio', m4a: 'audio', aac: 'audio',
   pdf: 'document', doc: 'document', docx: 'document', xls: 'document', xlsx: 'document',
   ppt: 'document', pptx: 'document', txt: 'document', csv: 'document', zip: 'document',
-  mp3: 'document', ogg: 'document', m4a: 'document',
 };
 
 /** What the composer's file picker offers. */
@@ -81,23 +81,74 @@ export function normalizeInternationalPhone(raw: string | null | undefined): str
   return /^[1-9]\d{7,14}$/.test(digits) ? `+${digits}` : null;
 }
 
-/**
- * A number to message: international (`+201012345678`, 8–15 digits) → `+<digits>`,
- * or a local Egyptian number (`01012345678`) passed through as digits — the
- * backend accepts both. `null` when neither.
- */
-export function normalizeRecipientPhone(raw: string | null | undefined): string | null {
-  const value = (raw ?? '').trim();
-  const digits = value.replace(/\D+/g, '');
-  if (!value.startsWith('+') && !value.startsWith('00') && /^0\d{9,10}$/.test(digits)) return digits;
-  return normalizeInternationalPhone(value);
+// ─────────────── channels ───────────────
+
+export function isMessenger(subject: { channelType?: WaChannelType | null } | null | undefined): boolean {
+  return subject?.channelType === 'messenger';
+}
+
+export function isWhatsAppChannel(channel: Pick<WaInstance, 'type'> | null | undefined): boolean {
+  return channel?.type === 'whatsapp_cloud';
+}
+
+/** A channel the admin can still act on (it exists on the provider). */
+export function isChannelActive(instance: Pick<WaInstance, 'existsInProvider'>): boolean {
+  return instance.existsInProvider !== false;
+}
+
+/** Channel label: its name (Mihwar rarely returns the phone), else the phone, else the id. */
+export function channelLabel(
+  channel: Pick<WaInstance, 'id' | 'name' | 'phoneNumber'> | null | undefined,
+): string {
+  if (!channel) return '';
+  return channel.name?.trim() || formatWhatsAppPhone(channel.phoneNumber) || `#${channel.id}`;
 }
 
 // ─────────────── chats ───────────────
 
-/** Customer name → WhatsApp profile name → `+phone`. */
-export function chatDisplayName(chat: Pick<WaChat, 'customerName' | 'contactName' | 'phone'>): string {
-  return chat.customerName?.trim() || chat.contactName?.trim() || formatWhatsAppPhone(chat.phone);
+/**
+ * Customer name → contact name → `+phone`, else `null` (a Messenger user
+ * without a name — the caller shows "Messenger customer").
+ */
+export function chatDisplayName(
+  chat: Pick<WaChat, 'customerName' | 'contactName' | 'phone'>,
+): string | null {
+  return chat.customerName?.trim() || chat.contactName?.trim() || formatWhatsAppPhone(chat.phone) || null;
+}
+
+/**
+ * Fills fields an older / partial backend build may omit, so the UI never
+ * shows `undefined` or locks the composer by accident:
+ * - `channelType` missing → Messenger chats have no phone, WhatsApp ones do;
+ * - `canReply` missing → unknown window: let the user type (the backend has
+ *   the final word and a refusal hands the draft back);
+ * - `canSendTemplate` missing → WhatsApp only.
+ */
+export function normalizeChat(raw: WaChat): WaChat {
+  const channelType: WaChannelType =
+    raw.channelType === 'messenger' || raw.channelType === 'whatsapp_cloud'
+      ? raw.channelType
+      : raw.phone
+        ? 'whatsapp_cloud'
+        : 'messenger';
+  return {
+    ...raw,
+    channelType,
+    instanceName: raw.instanceName ?? null,
+    canReply: raw.canReply ?? true,
+    replyWindowEndsAt: raw.replyWindowEndsAt ?? null,
+    canSendTemplate: raw.canSendTemplate ?? channelType === 'whatsapp_cloud',
+  };
+}
+
+/** Same idea for channels: an unknown `type` is a WhatsApp number; missing `existsInProvider` = present. */
+export function normalizeChannel(raw: WaInstance): WaInstance {
+  return {
+    ...raw,
+    id: String(raw.id),
+    type: raw.type === 'messenger' ? 'messenger' : 'whatsapp_cloud',
+    existsInProvider: raw.existsInProvider ?? true,
+  };
 }
 
 /** Newest activity first, ties by id — the order `GET /chats` returns. */
@@ -109,7 +160,7 @@ export function compareChatsByActivity(a: WaChat, b: WaChat): number {
 
 // ─────────────── messages ───────────────
 
-/** Rendering families — Wavex has a few aliases per family. */
+/** Rendering families. */
 export type WaMediaKind =
   | 'text'
   | 'image'
@@ -117,8 +168,10 @@ export type WaMediaKind =
   | 'audio'
   | 'document'
   | 'sticker'
+  | 'template'
   | 'location'
-  | 'contact'
+  | 'reaction'
+  | 'system'
   | 'other';
 
 export function mediaKindOf(type: WaMessageType | null | undefined): WaMediaKind {
@@ -139,14 +192,22 @@ export function mediaKindOf(type: WaMessageType | null | undefined): WaMediaKind
       return 'document';
     case 'sticker':
       return 'sticker';
+    case 'template':
+      return 'template';
     case 'location':
       return 'location';
-    case 'contact':
-    case 'vcard':
-      return 'contact';
+    case 'reaction':
+      return 'reaction';
+    case 'system':
+      return 'system';
     default:
       return 'other';
   }
+}
+
+/** Kinds shown as a small muted note instead of a full bubble. */
+export function isNoteKind(kind: WaMediaKind): boolean {
+  return kind === 'location' || kind === 'reaction' || kind === 'system';
 }
 
 export const MEDIA_KIND_ICON: Record<Exclude<WaMediaKind, 'text'>, string> = {
@@ -155,8 +216,10 @@ export const MEDIA_KIND_ICON: Record<Exclude<WaMediaKind, 'text'>, string> = {
   audio: 'fa-solid fa-microphone',
   document: 'fa-regular fa-file-lines',
   sticker: 'fa-regular fa-face-smile',
+  template: 'fa-solid fa-file-signature',
   location: 'fa-solid fa-location-dot',
-  contact: 'fa-regular fa-address-card',
+  reaction: 'fa-regular fa-face-smile',
+  system: 'fa-solid fa-circle-info',
   other: 'fa-solid fa-paperclip',
 };
 
@@ -178,7 +241,7 @@ const STATUS_RANK: Readonly<Record<WaMessageStatus, number>> = {
 };
 
 export function advanceStatus(current: WaMessageStatus, next: WaMessageStatus): WaMessageStatus {
-  return STATUS_RANK[next] > STATUS_RANK[current] ? next : current;
+  return (STATUS_RANK[next] ?? 0) > (STATUS_RANK[current] ?? 0) ? next : current;
 }
 
 export interface MessageStatusMeta {
@@ -220,7 +283,7 @@ export function messageTypeForFile(file: File): WaMessageType {
 
 export type AttachmentProblem = 'empty' | 'tooLarge' | 'type';
 
-export function validateAttachment(file: File): AttachmentProblem | null {
+export function validateAttachment(file: Pick<File, 'name' | 'size'>): AttachmentProblem | null {
   if (!ALLOWED_EXTENSIONS[fileExtension(file.name)]) return 'type';
   if (file.size === 0) return 'empty';
   if (file.size > WHATSAPP_MAX_FILE_BYTES) return 'tooLarge';
@@ -277,43 +340,29 @@ export function relativeDay(dayKey: string, now = new Date()): 'today' | 'yester
   return null;
 }
 
-// ─────────────── numbers ───────────────
+// ─────────────── channel status ───────────────
 
-/** Status-dot colour: WORKING green, connecting amber, needs relink red, banned dark. */
-export type StatusTone = 'success' | 'warning' | 'danger' | 'dark' | 'gray';
+/** Status colour: CONNECTED green, DISCONNECTED / INACTIVE red, unknown / none grey. */
+export type StatusTone = 'success' | 'danger' | 'gray';
 
 export interface InstanceStatusMeta {
   tone: StatusTone;
   labelKey: string;
 }
 
-export function instanceStatusMeta(status: WaNumberStatus['status'] | null | undefined): InstanceStatusMeta {
+export function instanceStatusMeta(status: WaNumberStatus['status'] | string | null | undefined): InstanceStatusMeta {
   switch (status) {
-    case 'WORKING':
-      return { tone: 'success', labelKey: 'whatsapp.instanceStatus.WORKING' };
-    case 'CONNECTING':
-    case 'INITIALIZING':
-      return { tone: 'warning', labelKey: 'whatsapp.instanceStatus.CONNECTING' };
-    case 'QR_REQUIRED':
+    case 'CONNECTED':
+      return { tone: 'success', labelKey: 'whatsapp.instanceStatus.CONNECTED' };
     case 'DISCONNECTED':
       return { tone: 'danger', labelKey: 'whatsapp.instanceStatus.DISCONNECTED' };
-    case 'BANNED':
-      return { tone: 'dark', labelKey: 'whatsapp.instanceStatus.BANNED' };
+    case 'INACTIVE':
+      return { tone: 'danger', labelKey: 'whatsapp.instanceStatus.INACTIVE' };
     case 'NOT_ASSIGNED':
       return { tone: 'gray', labelKey: 'whatsapp.instanceStatus.NOT_ASSIGNED' };
     default:
       return { tone: 'gray', labelKey: 'whatsapp.instanceStatus.UNKNOWN' };
   }
-}
-
-/** A channel the admin can still act on (it exists on the provider). */
-export function isChannelActive(instance: Pick<WaInstance, 'existsInWavex'>): boolean {
-  return instance.existsInWavex !== false;
-}
-
-/** The number can be (re)linked with a pairing code: present, not connected, not banned. */
-export function canPair(instance: Pick<WaInstance, 'existsInWavex' | 'status' | 'canSend'>): boolean {
-  return isChannelActive(instance) && !instance.canSend && instance.status !== 'BANNED';
 }
 
 // ─────────────── errors ───────────────
@@ -333,17 +382,15 @@ export function isTransientError(err: unknown): boolean {
   return status === 0 || status === 502 || status === 503 || status === 504;
 }
 
-/** "already requested … try again in N seconds" → N, else `null`. */
-export function retryAfterSeconds(err: unknown): number | null {
-  const message = (err as ApiError | null)?.message ?? '';
-  const match = /try again in\s+(\d+)\s*s/i.exec(message);
-  return match ? Number(match[1]) : null;
+/** A business-rule rejection (`400` with the reason in `message`) — nothing was sent. */
+export function isRejection(err: unknown): boolean {
+  const status = (err as ApiError | null)?.status ?? 0;
+  return status === 400 || status === 404 || status === 409 || status === 413 || status === 422;
 }
 
 /**
- * User-facing text for a failed WhatsApp call: permission → the shared
- * message, otherwise the server's own message (400s carry the reason),
- * else `fallbackKey`.
+ * User-facing text for a failed call: permission → the shared message,
+ * otherwise the server's own message (400s carry the reason), else `fallbackKey`.
  */
 export function whatsappErrorText(
   err: unknown,

@@ -1,0 +1,75 @@
+@use 'breakpoints' as bp;
+
+:host { display: block; }
+
+.wa-tpl__state {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.wa-tpl__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: -0.35rem 0 0.85rem;
+}
+
+fieldset { min-width: 0; border: 0; padding: 0; margin: 0; }
+legend { float: none; width: auto; }
+
+.wa-tpl__vars {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem 0.85rem;
+}
+@include bp.down(sm) {
+  .wa-tpl__vars { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Preview: an outgoing bubble on the chat canvas. */
+.wa-tpl__preview {
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+}
+.wa-tpl__preview-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+  color: var(--text-3);
+}
+.wa-tpl__bubble {
+  max-width: 100%;
+  margin-inline-start: auto;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.9rem;
+  border-start-end-radius: 0.25rem;
+  background: color-mix(in srgb, var(--success) 16%, var(--surface-0));
+  color: var(--text-1);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+  font-size: var(--fs-md);
+}
+.wa-tpl__slot {
+  padding: 0 0.15rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--success) 22%, transparent);
+  color: inherit;
+  font-weight: var(--fw-600);
+
+  &.is-missing {
+    background: color-mix(in srgb, var(--warning) 22%, transparent);
+    color: var(--warning);
+  }
+}

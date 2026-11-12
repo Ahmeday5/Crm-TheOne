@@ -16,19 +16,22 @@ export function whatsappInboxMatcher(segments: UrlSegment[]): UrlMatchResult | n
 }
 
 /**
- * WhatsApp (Admin / Sales / Support):
+ * WhatsApp + Messenger (Admin / Sales / Support) — every page lazy-loaded:
  *   /whatsapp                 inbox
  *   /whatsapp/chats/:chatId   inbox with that chat open (notification deep links)
- *   /whatsapp/numbers         Admin — numbers & assignment
+ *   /whatsapp/settings        Admin — channels, import, diagnostics
+ * Roles are enforced by the shell's role guard from `data.roles`.
  */
 export const WHATSAPP_ROUTES: Routes = [
   {
-    path: 'whatsapp/numbers',
-    title: 'أرقام واتساب',
+    path: 'whatsapp/settings',
+    title: 'إعدادات واتساب',
     data: { roles: ['Admin'] },
     loadComponent: () =>
-      import('./pages/whatsapp-numbers/whatsapp-numbers.component').then((m) => m.WhatsAppNumbersComponent),
+      import('./pages/whatsapp-settings/whatsapp-settings.component').then((m) => m.WhatsAppSettingsComponent),
   },
+  // The page was called "numbers" before Messenger pages joined the channels.
+  { path: 'whatsapp/numbers', redirectTo: 'whatsapp/settings' },
   {
     matcher: whatsappInboxMatcher,
     title: 'واتساب',

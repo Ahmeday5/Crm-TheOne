@@ -213,23 +213,25 @@
   font-size: var(--fs-sm);
   color: var(--text-3);
 }
+/* Channel badge (+ owner for admins) under the preview. */
 .wa-chat__owner {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.3rem;
-  align-self: flex-start;
+  min-width: 0;
   max-width: 100%;
   margin-top: 0.2rem;
-  padding: 0.05rem 0.5rem;
-  border-radius: var(--radius-pill);
-  background: var(--brand-soft);
-  color: var(--brand-dark);
   font-size: var(--fs-xs);
-  font-weight: var(--fw-600);
+  color: var(--text-3);
+}
+.wa-chat__owner-name {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Messenger's own blue — a solid brand colour. */
+.wa-chat__anon.is-messenger { background: color-mix(in srgb, #0866ff 12%, transparent); color: #0866ff; }
 
 /* Unread: bolder name + preview, green time. */
 .wa-chat.is-unread {

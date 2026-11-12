@@ -1,98 +1,130 @@
 @let m = message();
 
-<div class="wa-bubble">
-  <!-- Media -->
-  @switch (kind()) {
-    @case ('text') {}
-    @case ('image') {
-      @if (mediaSrc(); as src) {
-        <button type="button" class="wa-media wa-media--image" (click)="viewImage()"
-                [title]="'whatsapp.message.openImage' | translate"
-                [attr.aria-label]="'whatsapp.message.openImage' | translate">
-          <img [src]="src" alt="" loading="lazy" decoding="async" />
-        </button>
-      } @else {
-        <ng-container *ngTemplateOutlet="placeholder" />
-      }
+@if (note()) {
+  <!-- Location / reaction / system: a small muted line, centred -->
+  <span class="wa-note" dir="auto">
+    <i [class]="kindIcon()" aria-hidden="true"></i>
+    @if (kind() === 'location' && mediaSrc(); as href) {
+      <a [href]="href" target="_blank" rel="noopener noreferrer">{{ m.text || ('whatsapp.message.kind.location' | translate) }}</a>
+    } @else {
+      <span>{{ m.text || ('whatsapp.message.kind.' + kind() | translate) }}</span>
     }
-    @case ('sticker') {
-      @if (mediaSrc(); as src) {
-        <img class="wa-media wa-media--sticker" [src]="src" alt="" loading="lazy" decoding="async" />
-      } @else {
-        <ng-container *ngTemplateOutlet="placeholder" />
-      }
-    }
-    @case ('video') {
-      @if (mediaSrc(); as src) {
-        <video class="wa-media wa-media--video" [src]="src" controls preload="metadata" playsinline></video>
-      } @else {
-        <ng-container *ngTemplateOutlet="placeholder" />
-      }
-    }
-    @case ('audio') {
-      @if (mediaSrc(); as src) {
-        <audio class="wa-media--audio" [src]="src" controls preload="none"></audio>
-      } @else {
-        <ng-container *ngTemplateOutlet="placeholder" />
-      }
-    }
-    @case ('document') {
-      @if (mediaSrc(); as src) {
-        <div class="wa-file">
-          <span class="wa-file__icon" aria-hidden="true"><i class="fa-regular fa-file-lines"></i></span>
-          <span class="wa-file__name" dir="auto" [title]="m.fileName || ''">
-            {{ m.fileName || ('whatsapp.message.kind.document' | translate) }}
-          </span>
-          <a class="wa-file__download" [href]="src" target="_blank" rel="noopener"
-             [attr.download]="m.fileName || ''"
-             [title]="'whatsapp.message.download' | translate"
-             [attr.aria-label]="'whatsapp.message.download' | translate">
-            <i class="fa-solid fa-download"></i>
-          </a>
-        </div>
-      } @else {
-        <ng-container *ngTemplateOutlet="placeholder" />
-      }
-    }
-    @default {
-      <ng-container *ngTemplateOutlet="placeholder" />
-    }
-  }
-
-  <!-- Text / caption -->
-  @if (segments().length) {
-    <p class="wa-text" dir="auto">@for (s of segments(); track $index) {@if (s.href) {<a [href]="s.href" target="_blank" rel="noopener noreferrer">{{ s.text }}</a>} @else {<ng-container>{{ s.text }}</ng-container>}}</p>
-  }
-
-  <!-- Time + delivery ticks -->
-  <span class="wa-meta">
-    <time [attr.datetime]="m.sentAt" [title]="m.sentAt | cairoDate">{{ m.sentAt | cairoDate: 'time' }}</time>
-    @if (status(); as st) {
-      <i class="wa-tick wa-tick--{{ st.tone }} {{ st.icon }}"
-         [title]="(failed() && m.errorMessage) || (st.labelKey | translate)"
-         role="img" [attr.aria-label]="st.labelKey | translate"></i>
-    }
+    <time class="wa-note__time" [attr.datetime]="m.sentAt" [title]="m.sentAt | cairoDate">{{ m.sentAt | cairoDate: 'time' }}</time>
   </span>
-</div>
-
-@if (failed()) {
-  <div class="wa-fail" role="alert">
-    <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
-    <span class="wa-fail__text" dir="auto">{{ m.errorMessage || ('whatsapp.message.status.Failed' | translate) }}</span>
-    @if (canRetry()) {
-      <button type="button" class="wa-fail__retry" (click)="retry.emit()">
-        <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
-        {{ 'whatsapp.message.retry' | translate }}
-      </button>
+} @else {
+  <div class="wa-bubble">
+    <!-- Template tag -->
+    @if (kind() === 'template') {
+      <span class="wa-tpl-tag">
+        <i class="fa-solid fa-file-signature" aria-hidden="true"></i>{{ 'whatsapp.message.templateTag' | translate }}
+        @if (m.templateName) { <span class="wa-tpl-tag__name" dir="ltr">· {{ m.templateName }}</span> }
+      </span>
     }
+
+    <!-- Media -->
+    @switch (kind()) {
+      @case ('image') {
+        @if (mediaSrc(); as src) {
+          <button type="button" class="wa-media wa-media--image" (click)="viewImage()"
+                  [title]="'whatsapp.message.openImage' | translate"
+                  [attr.aria-label]="'whatsapp.message.openImage' | translate">
+            <img [src]="src" alt="" loading="lazy" decoding="async" />
+          </button>
+        } @else {
+          <ng-container *ngTemplateOutlet="placeholder" />
+        }
+      }
+      @case ('sticker') {
+        @if (mediaSrc(); as src) {
+          <img class="wa-media wa-media--sticker" [src]="src" alt="" loading="lazy" decoding="async" />
+        } @else {
+          <ng-container *ngTemplateOutlet="placeholder" />
+        }
+      }
+      @case ('video') {
+        @if (mediaSrc(); as src) {
+          <video class="wa-media wa-media--video" [src]="src" controls preload="metadata" playsinline></video>
+        } @else {
+          <ng-container *ngTemplateOutlet="placeholder" />
+        }
+      }
+      @case ('audio') {
+        @if (mediaSrc(); as src) {
+          <audio class="wa-media--audio" [src]="src" controls preload="none"></audio>
+        } @else {
+          <ng-container *ngTemplateOutlet="placeholder" />
+        }
+      }
+      @case ('document') {
+        @if (mediaSrc(); as src) {
+          <div class="wa-file">
+            <span class="wa-file__icon" aria-hidden="true"><i class="fa-regular fa-file-lines"></i></span>
+            <span class="wa-file__name" dir="auto" [title]="m.fileName || ''">
+              {{ m.fileName || ('whatsapp.message.kind.document' | translate) }}
+            </span>
+            <a class="wa-file__download" [href]="src" target="_blank" rel="noopener"
+               [attr.download]="m.fileName || ''"
+               [title]="'whatsapp.message.download' | translate"
+               [attr.aria-label]="'whatsapp.message.download' | translate">
+              <i class="fa-solid fa-download"></i>
+            </a>
+          </div>
+        } @else {
+          <ng-container *ngTemplateOutlet="placeholder" />
+        }
+      }
+      @case ('other') {
+        <ng-container *ngTemplateOutlet="placeholder" />
+      }
+    }
+
+    <!-- Upload progress -->
+    @if (progress(); as pct) {
+      <div class="wa-progress" role="progressbar" [attr.aria-valuenow]="pct" aria-valuemin="0" aria-valuemax="100"
+           [attr.aria-label]="'whatsapp.message.uploading' | translate">
+        <span class="wa-progress__bar" [style.width.%]="pct"></span>
+      </div>
+    } @else if (progress() === 0) {
+      <div class="wa-progress is-indeterminate" role="progressbar" [attr.aria-label]="'whatsapp.message.uploading' | translate">
+        <span class="wa-progress__bar"></span>
+      </div>
+    }
+
+    <!-- Text / caption / template body -->
+    @if (segments().length) {
+      <p class="wa-text" dir="auto">@for (s of segments(); track $index) {@if (s.href) {<a [href]="s.href" target="_blank" rel="noopener noreferrer">{{ s.text }}</a>} @else {<ng-container>{{ s.text }}</ng-container>}}</p>
+    }
+
+    <!-- Time + delivery ticks -->
+    <span class="wa-meta">
+      <time [attr.datetime]="m.sentAt" [title]="m.sentAt | cairoDate">{{ m.sentAt | cairoDate: 'time' }}</time>
+      @if (outgoing()) {
+        <app-wa-status-ticks [message]="m" />
+      }
+    </span>
   </div>
-} @else if (outgoing() && showSender() && m.sentByName) {
-  <span class="wa-sender">{{ 'whatsapp.message.sentBy' | translate: { name: m.sentByName } }}</span>
+
+  @if (failed()) {
+    <div class="wa-fail" role="alert">
+      <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+      <span class="wa-fail__text" dir="auto">{{ m.errorMessage || ('whatsapp.message.status.Failed' | translate) }}</span>
+      @if (canRetry()) {
+        <button type="button" class="wa-fail__retry" (click)="retry.emit()">
+          <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+          {{ 'whatsapp.message.retry' | translate }}
+        </button>
+      }
+    </div>
+  } @else if (outgoing() && showSender() && m.sentByName) {
+    <span class="wa-sender">{{ 'whatsapp.message.sentBy' | translate: { name: m.sentByName } }}</span>
+  } @else if (fromProvider() && showSender()) {
+    <span class="wa-sender">{{ 'whatsapp.message.fromProvider' | translate }}</span>
+  }
 }
 
-<!-- Media that isn't available in the CRM (incoming attachments) -->
+<!-- Media without a URL -->
 <ng-template #placeholder>
-  <span class="wa-placeholder" [title]="outgoing() ? '' : ('whatsapp.message.incomingMediaHint' | translate)">
+  <span class="wa-placeholder">
     <i [class]="kindIcon()" aria-hidden="true"></i>
     {{ 'whatsapp.message.kind.' + kind() | translate }}
     @if (m.fileName) {

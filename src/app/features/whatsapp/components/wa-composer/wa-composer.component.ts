@@ -14,8 +14,10 @@ import { TRANSLATIONS, interpolate, resolveKey } from '../../../../core/i18n';
 import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { QuickReplyPickerComponent, fillReplyPlaceholders } from '../../../sales-playbook';
+import { ComposerState } from '../../utils/composer-state.util';
 import {
   AttachmentProblem,
   WHATSAPP_ACCEPT,
@@ -42,20 +44,22 @@ const ATTACHMENT_ERROR_KEY: Record<AttachmentProblem, string> = {
 const MAX_TEXTAREA_PX = 140;
 
 /**
- * Message input: text (≤ 4096), or one attachment with an optional caption
- * (≤ 1024).
+ * The bottom of a conversation. What it shows comes from ONE computed
+ * `state` (see `resolveComposerState`), never from scattered flags:
  *
- * - Enter sends, Shift+Enter breaks the line (on touch screens Enter always
- *   breaks the line — there's a send button).
- * - Files are checked for type and the 3.5 MB limit before anything is
- *   uploaded; an image can also be pasted straight from the clipboard.
- * - Sending never locks the composer: the thread shows each message as its
- *   own "sending" bubble while the provider's anti-ban delay runs.
+ *   reply         text (≤ 4096) or one attachment + caption (≤ 1024),
+ *                 with "Reply available until 3:40 PM" when < 2 h are left;
+ *   templateOnly  the reason + "Send template" (emits `templateRequested`);
+ *   locked        a disabled bar explaining why nothing can be sent.
+ *
+ * Enter sends, Shift+Enter breaks the line (touch screens: Enter always
+ * breaks — there's a send button). Files are checked for type and the 16 MB
+ * limit before upload; an image can be pasted from the clipboard.
  */
 @Component({
   selector: 'app-wa-composer',
   standalone: true,
-  imports: [TranslatePipe, QuickReplyPickerComponent],
+  imports: [TranslatePipe, CairoDatePipe, QuickReplyPickerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './wa-composer.component.html',
   styleUrl: './wa-composer.component.scss',
@@ -65,14 +69,14 @@ export class WaComposerComponent implements OnDestroy {
   private readonly language = inject(LanguageService);
   private readonly auth = inject(AuthService);
 
-  /** At least one message is still on its way — shows the anti-ban delay hint. */
-  readonly sending = input(false);
-  /** The thread can't send (no permission, number disconnected). */
-  readonly disabled = input(false);
+  readonly state = input.required<ComposerState>();
   /** Customer's name — fills `{{customerName}}` in quick replies when known. */
   readonly contactName = input<string | null>(null);
+  /** Admin hint on a disconnected channel ("re-link it in the Mihwar dashboard"). */
+  readonly isAdmin = input(false);
 
   readonly submitted = output<WaComposerSubmit>();
+  readonly templateRequested = output<void>();
 
   private readonly textarea = viewChild<ElementRef<HTMLTextAreaElement>>('box');
   private readonly picker = viewChild<ElementRef<HTMLInputElement>>('picker');
@@ -91,9 +95,12 @@ export class WaComposerComponent implements OnDestroy {
   });
   protected readonly canSend = computed(
     () =>
-      !this.disabled() &&
+      this.state().mode === 'reply' &&
       (!!this.text().trim() || !!this.file()) &&
       this.text().length <= this.maxLength(),
+  );
+  protected readonly attachHint = computed(() =>
+    interpolate(this.t('whatsapp.composer.attach'), { max: formatBytes(WHATSAPP_MAX_FILE_BYTES, this.language.lang()) }),
   );
 
   private readonly coarsePointer =
@@ -101,6 +108,18 @@ export class WaComposerComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.revokePreview();
+  }
+
+  /**
+   * Put a refused draft back (the server rejected it, nothing was sent).
+   * Only when the composer is empty — never overwrite what the user typed since.
+   */
+  restore(text: string, file: File | null): boolean {
+    if (this.state().mode !== 'reply' || this.text().trim() || this.file()) return false;
+    if (file) this.setFile(file);
+    this.setText(text.slice(0, file ? WHATSAPP_MAX_CAPTION_LENGTH : WHATSAPP_MAX_TEXT_LENGTH));
+    this.focus();
+    return true;
   }
 
   // ─────────────── input ───────────────
@@ -123,7 +142,7 @@ export class WaComposerComponent implements OnDestroy {
       (i) => i.kind === 'file' && i.type.startsWith('image/'),
     );
     const pasted = item?.getAsFile();
-    if (!pasted || this.disabled()) return;
+    if (!pasted || this.state().mode !== 'reply') return;
     event.preventDefault();
     this.attach(pasted);
   }
@@ -140,10 +159,8 @@ export class WaComposerComponent implements OnDestroy {
     const end = el?.selectionEnd ?? current.length;
     const next = (current.slice(0, start) + snippet + current.slice(end)).slice(0, this.maxLength());
     const caret = Math.min(start + snippet.length, next.length);
-    this.text.set(next);
+    this.setText(next);
     if (!el) return;
-    el.value = next;
-    this.autoGrow(el);
     el.focus();
     el.setSelectionRange(caret, caret);
   }
@@ -186,23 +203,30 @@ export class WaComposerComponent implements OnDestroy {
       );
       return;
     }
-    this.revokePreview();
-    this.file.set(file);
-    if (file.type.startsWith('image/')) this.preview.set(URL.createObjectURL(file));
+    this.setFile(file);
     // A caption is shorter than a message — trim what was typed to fit.
-    if (this.text().length > WHATSAPP_MAX_CAPTION_LENGTH) this.text.set(this.text().slice(0, WHATSAPP_MAX_CAPTION_LENGTH));
+    if (this.text().length > WHATSAPP_MAX_CAPTION_LENGTH) this.setText(this.text().slice(0, WHATSAPP_MAX_CAPTION_LENGTH));
     this.focus();
   }
 
+  private setFile(file: File): void {
+    this.revokePreview();
+    this.file.set(file);
+    if (file.type.startsWith('image/')) this.preview.set(URL.createObjectURL(file));
+  }
+
+  private setText(value: string): void {
+    this.text.set(value);
+    const el = this.textarea()?.nativeElement;
+    if (!el) return;
+    el.value = value;
+    this.autoGrow(el);
+  }
+
   private reset(): void {
-    this.text.set('');
+    this.setText('');
     this.revokePreview();
     this.file.set(null);
-    const el = this.textarea()?.nativeElement;
-    if (el) {
-      el.value = '';
-      this.autoGrow(el);
-    }
     this.focus();
   }
 
