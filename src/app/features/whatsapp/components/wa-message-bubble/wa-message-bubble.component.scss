@@ -250,6 +250,19 @@
   font-size: var(--fs-sm);
   font-weight: var(--fw-600);
 }
+/* File still being stored on our server — gentle shimmer until the re-push lands. */
+.wa-placeholder.is-loading {
+  min-width: 11rem;
+  color: var(--text-2);
+  animation: wa-media-wait 1.6s ease-in-out infinite;
+  .spinner-border { width: 0.85rem; height: 0.85rem; border-width: 0.15em; color: var(--brand-500); }
+}
+.wa-placeholder.is-missing { color: var(--text-3); font-weight: var(--fw-500); }
+@keyframes wa-media-wait { 50% { opacity: 0.6; } }
+@media (prefers-reduced-motion: reduce) { .wa-placeholder.is-loading { animation: none; } }
+
+.wa-file--audio { text-decoration: none; color: inherit; }
+
 .wa-placeholder__name {
   min-width: 0;
   overflow: hidden;

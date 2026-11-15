@@ -22,7 +22,22 @@ export type NotificationType =
   | 'Announcement'
   | 'LeaveRequestSubmitted'
   | 'LeaveRequestReviewed'
+  /** 30, 7 and 1 days before `endDate` — creator + admins. */
+  | 'ContractExpiringSoon'
+  /** Once, the day after it ended. */
+  | 'ContractExpired'
+  /** Creator + admins, except whoever renewed it. */
+  | 'ContractRenewed'
   | (string & {});
+
+/** `relatedEntityType` of a contract notification — `relatedEntityId` is the contract id. */
+export const CONTRACT_ENTITY = 'Contract';
+
+const CONTRACT_TYPES: ReadonlySet<string> = new Set(['ContractExpiringSoon', 'ContractExpired', 'ContractRenewed']);
+
+export function isContractNotification(n: { type: NotificationType | number; relatedEntityType: string | null }): boolean {
+  return n.relatedEntityType === CONTRACT_ENTITY || CONTRACT_TYPES.has(String(n.type));
+}
 
 /** `relatedEntityType` of an announcement notification — `relatedEntityId` is its id. */
 export const ANNOUNCEMENT_ENTITY = 'Announcement';

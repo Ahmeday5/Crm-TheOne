@@ -1,0 +1,74 @@
+<div class="mf" role="search" [attr.aria-label]="'customerMap.filters.title' | translate">
+  <div class="mf__grid">
+    <label class="mf__field">
+      <span class="mf__label">{{ 'customerMap.filters.status' | translate }}</span>
+      <select class="form-select form-select-sm" [ngModel]="statusId() ?? ''" (ngModelChange)="setNumber('statusId', $event)">
+        <option value="">{{ 'customerMap.filters.all' | translate }}</option>
+        @for (o of statuses(); track o.id) { <option [value]="o.id">{{ o.label }}</option> }
+      </select>
+    </label>
+
+    <label class="mf__field">
+      <span class="mf__label">{{ 'customerMap.filters.source' | translate }}</span>
+      <select class="form-select form-select-sm" [ngModel]="sourceId() ?? ''" (ngModelChange)="setNumber('sourceId', $event)">
+        <option value="">{{ 'customerMap.filters.all' | translate }}</option>
+        @for (o of sources(); track o.id) { <option [value]="o.id">{{ o.label }}</option> }
+      </select>
+    </label>
+
+    <label class="mf__field">
+      <span class="mf__label">{{ 'customerMap.filters.campaign' | translate }}</span>
+      <select class="form-select form-select-sm" [ngModel]="campaignId() ?? ''" (ngModelChange)="setNumber('campaignId', $event)">
+        <option value="">{{ 'customerMap.filters.all' | translate }}</option>
+        @for (o of campaigns(); track o.id) { <option [value]="o.id">{{ o.label }}</option> }
+      </select>
+    </label>
+
+    <label class="mf__field">
+      <span class="mf__label">{{ 'customerMap.filters.service' | translate }}</span>
+      <select class="form-select form-select-sm" [ngModel]="serviceId() ?? ''" (ngModelChange)="setNumber('serviceId', $event)">
+        <option value="">{{ 'customerMap.filters.all' | translate }}</option>
+        @for (o of services(); track o.id) { <option [value]="o.id">{{ o.label }}</option> }
+      </select>
+    </label>
+
+    @if (showSalesPerson()) {
+      <label class="mf__field">
+        <span class="mf__label">{{ 'customerMap.filters.salesPerson' | translate }}</span>
+        <select class="form-select form-select-sm" [ngModel]="salesPersonId() ?? ''" (ngModelChange)="setSalesPerson($event)">
+          <option value="">{{ 'customerMap.filters.allSalesPeople' | translate }}</option>
+          @for (o of salesTeam(); track o.id) { <option [value]="o.id">{{ o.label }}</option> }
+        </select>
+      </label>
+    }
+
+    <div class="mf__field mf__field--dates">
+      <span class="mf__label">{{ 'customerMap.filters.createdBetween' | translate }}</span>
+      <div class="mf__dates">
+        <input type="date" class="form-control form-control-sm" [attr.aria-label]="'customerMap.filters.from' | translate"
+               [max]="to() || today" [ngModel]="from()" (ngModelChange)="setDate('from', $event)" />
+        <i class="fa-solid fa-arrow-left-long mf__dates-sep" aria-hidden="true"></i>
+        <input type="date" class="form-control form-control-sm" [attr.aria-label]="'customerMap.filters.to' | translate"
+               [min]="from()" [max]="today" [ngModel]="to()" (ngModelChange)="setDate('to', $event)" />
+      </div>
+    </div>
+  </div>
+
+  <div class="mf__bar">
+    <div class="mf__presets" role="group" [attr.aria-label]="'customerMap.filters.createdBetween' | translate">
+      @for (p of presets; track p) {
+        <button type="button" class="mf__chip" [class.is-active]="preset() === p" [attr.aria-pressed]="preset() === p"
+                (click)="applyPreset(p)">
+          {{ 'customerMap.filters.presets.' + p | translate }}
+        </button>
+      }
+    </div>
+    @if (activeCount() > 0) {
+      <button type="button" class="btn btn-sm btn-light mf__reset" (click)="reset()">
+        <i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i>
+        {{ 'customerMap.filters.reset' | translate }}
+        <span class="badge rounded-pill text-bg-primary">{{ activeCount() }}</span>
+      </button>
+    }
+  </div>
+</div>

@@ -34,7 +34,13 @@ import {
   phoneValidator,
 } from '../../../../shared/utils/custom-validators.util';
 import { CustomersService } from '../../services/customers.service';
+import {
+  LocationFormValue,
+  locationFormValueOf,
+  updateLocationPayload,
+} from '../../utils/customer-location.util';
 import { ServicesService } from '../../../services/services/services.service';
+import { CustomerLocationFieldsComponent } from '../customer-location-fields/customer-location-fields.component';
 
 @Component({
   selector: 'app-customer-edit-dialog',
@@ -47,6 +53,7 @@ import { ServicesService } from '../../../services/services/services.service';
     FormErrorComponent,
     LoadErrorComponent,
     SearchableSelectComponent,
+    CustomerLocationFieldsComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-edit-dialog.component.html',
@@ -86,7 +93,14 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
     notes: ['', [Validators.maxLength(500)]],
     campaignId: [null as number | null, [Validators.required]],
     serviceIds: this.fb.nonNullable.control<number[]>([], [minSelected(1)]),
+    countryId: [null as number | null],
+    governorateId: [null as number | null],
   });
+
+  /** Location as loaded — the update sends only what changed (see `updateLocationPayload`). */
+  private initialLocation: LocationFormValue = { countryId: null, governorateId: null };
+  /** The phone-inferred country, shown as a hint instead of a selection. */
+  readonly inferredCountryName = signal<string | null>(null);
 
   readonly servicesControl = this.form.controls.serviceIds as FormControl<number[]>;
 
@@ -119,7 +133,10 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
     this.loadError.set(null);
     this.customers.getById(this.customerId).subscribe({
       next: (c: CustomerDetails) => {
+        this.initialLocation = locationFormValueOf(c);
+        this.inferredCountryName.set(c.countryInferred ? c.countryName ?? null : null);
         this.form.patchValue({
+          ...this.initialLocation,
           name: c.fullName ?? '',
           phone: c.phone ?? '',
           email: c.email ?? '',
@@ -181,6 +198,10 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
       notes: v.notes.trim(),
       campaignId: v.campaignId,
       serviceIds: v.serviceIds,
+      ...updateLocationPayload(this.initialLocation, {
+        countryId: v.countryId,
+        governorateId: v.governorateId,
+      }),
     };
 
     this.submitting.set(true);

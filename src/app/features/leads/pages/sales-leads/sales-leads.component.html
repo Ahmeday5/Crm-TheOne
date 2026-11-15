@@ -48,26 +48,49 @@
   <div class="card mb-4">
     <div class="card-body">
       <div class="row g-3 align-items-end">
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-lg-4">
           <div class="position-relative">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
             <input class="form-control search-input" [placeholder]="'customers.filters.searchPlaceholder' | translate"
               [ngModel]="searchTerm" (ngModelChange)="onSearchInput($event)" />
           </div>
         </div>
-        <div class="col-12 col-md-4">
-          <select class="form-select" [ngModel]="selectedStatusId() ?? ''" (ngModelChange)="onStatusChange($event)">
+        <div class="col-6 col-lg-2">
+          <select class="form-select" [attr.aria-label]="'customers.table.status' | translate"
+            [ngModel]="selectedStatusId() ?? ''" (ngModelChange)="onStatusChange($event)">
             <option value="">{{ 'customers.filters.allStatuses' | translate }}</option>
             @for (s of statuses(); track s.id) {
             <option [value]="s.id">{{ localizeStatusName(s.name) }}</option>
             }
           </select>
         </div>
-        <div class="col-12 col-md-4">
-          <select class="form-select" [ngModel]="selectedSourceId() ?? ''" (ngModelChange)="onSourceChange($event)">
+        <div class="col-6 col-lg-2">
+          <select class="form-select" [attr.aria-label]="'customers.table.source' | translate"
+            [ngModel]="selectedSourceId() ?? ''" (ngModelChange)="onSourceChange($event)">
             <option value="">{{ 'customers.filters.allSources' | translate }}</option>
             @for (src of sources(); track src.id) {
             <option [value]="src.id">{{ src.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-6 col-lg-2">
+          <select class="form-select" [attr.aria-label]="'customers.location.country' | translate"
+            [ngModel]="selectedCountryId() ?? ''" (ngModelChange)="onCountryChange($event)">
+            <option value="">{{ 'customers.location.allCountries' | translate }}</option>
+            <option value="0">{{ 'customers.location.unknownCountry' | translate }}</option>
+            @for (c of countries(); track c.id) {
+            <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-6 col-lg-2">
+          <select class="form-select" [attr.aria-label]="'customers.location.governorate' | translate"
+            [disabled]="!governorateFilterApplies()"
+            [ngModel]="selectedGovernorateId() ?? ''" (ngModelChange)="onGovernorateChange($event)">
+            <option value="">{{ 'customers.location.allGovernorates' | translate }}</option>
+            <option value="0">{{ 'customers.location.noGovernorate' | translate }}</option>
+            @for (g of governorates(); track g.id) {
+            <option [value]="g.id">{{ g.name }}</option>
             }
           </select>
         </div>
@@ -101,7 +124,7 @@
         <span class="spinner-border text-primary" role="status"></span>
       </div>
       } @else if (rows().length === 0) {
-      <app-empty-state [compact]="true" icon="fa-solid fa-inbox" [message]="searchSignal() || selectedStatusId() || selectedSourceId()
+      <app-empty-state [compact]="true" icon="fa-solid fa-inbox" [message]="hasActiveFilters()
             ? ('customers.table.emptyFiltered' | translate)
             : (emptyMessageKey() | translate)" [loading]="loading()" (retry)="reload()" />
       } @else {
@@ -111,7 +134,7 @@
             <tr>
               <th>{{ 'customers.table.fullName' | translate }}</th>
               <th>{{ 'customers.details.company' | translate }}</th>
-              <th>{{ 'customers.table.address' | translate }}</th>
+              <th>{{ 'customers.location.column' | translate }}</th>
               <th>{{ 'customers.table.source' | translate }} / {{ 'customers.table.campaign' | translate }}</th>
               <th>{{ 'customers.table.services' | translate }}</th>
               <th>{{ 'customers.table.status' | translate }}</th>
@@ -150,13 +173,16 @@
                 }
               </td>
 
-              <!-- Address -->
+              <!-- Location + address -->
               <td>
+                @if (row.countryName) {
+                <app-customer-location class="d-flex mb-1" [location]="row" />
+                }
                 @if (row.address) {
                 <div class="crm-address" appClampText="2" [clampTitle]="row.fullName" [clampText]="row.address">
                   <i class="fa-solid fa-location-dot me-1 opacity-75"></i>{{ row.address }}
                 </div>
-                } @else {
+                } @else if (!row.countryName) {
                 <span class="text-muted">—</span>
                 }
               </td>

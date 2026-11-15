@@ -58,6 +58,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       // Sales
       salesCustomers: 'Sales customers',
       salesPipeline: 'Sales board (Kanban)',
+      customerMap: 'Customer map',
       priceOffers: 'Price offers',
       salesPlaybook: 'Sales playbook',
       salesLine: 'Price offers',
@@ -85,6 +86,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       settings: 'System settings',
       services: 'Services management',
       resources: 'Resources management',
+      vault: 'Accounts vault',
       // Not in the menu right now
       reports: 'Reports & analytics',
       improvements: 'System improvements',

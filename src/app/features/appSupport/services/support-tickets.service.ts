@@ -56,10 +56,11 @@ export class SupportTicketsService {
     });
   }
 
-  statistics(): Observable<SupportTicketStatistics> {
+  statistics(force = false): Observable<SupportTicketStatistics> {
+    const cache = withCache({ ttlMs: CACHE_TTL.SHORT });
     return this.api.get<SupportTicketStatistics>(
       API_ENDPOINTS.supportTickets.statistics,
-      { context: withCache({ ttlMs: CACHE_TTL.SHORT }) },
+      { context: force ? withCacheBypass(cache) : cache },
     );
   }
 

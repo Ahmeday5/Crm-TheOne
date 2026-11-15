@@ -35,7 +35,9 @@ import {
   noWhitespaceValidator,
   phoneValidator,
 } from '../../../../shared/utils/custom-validators.util';
+import { CustomerLocationFieldsComponent } from '../../components/customer-location-fields/customer-location-fields.component';
 import { CustomersService } from '../../services/customers.service';
+import { createLocationPayload } from '../../utils/customer-location.util';
 import { ServicesService } from '../../../services/services/services.service';
 
 @Component({
@@ -50,6 +52,7 @@ import { ServicesService } from '../../../services/services/services.service';
     FormErrorComponent,
     ModalComponent,
     SearchableSelectComponent,
+    CustomerLocationFieldsComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './add-lead.component.html',
@@ -94,6 +97,9 @@ export class AddLeadComponent {
     notes: ['', [Validators.maxLength(500)]],
     campaignId: [null as number | null, [Validators.required]],
     serviceIds: this.fb.nonNullable.control<number[]>([], [minSelected(1)]),
+    /** Optional — empty lets the backend infer it from the phone's dial code. */
+    countryId: [null as number | null],
+    governorateId: [null as number | null],
   });
 
   readonly servicesControl = this.form.controls.serviceIds as FormControl<number[]>;
@@ -204,6 +210,7 @@ export class AddLeadComponent {
       serviceIds: v.serviceIds,
       assignToSalesTeam: assignToSales,
       salesPersonId: assignToSales ? salesPersonId : '',
+      ...createLocationPayload({ countryId: v.countryId, governorateId: v.governorateId }),
     };
 
     this.submitting.set(true);

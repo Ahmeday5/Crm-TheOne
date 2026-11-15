@@ -1,0 +1,146 @@
+@use 'breakpoints' as bp;
+
+$ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+:host { display: block; }
+
+.rh {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  // The spine.
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: 0.75rem;
+    inset-inline-start: 1rem;
+    width: 2px;
+    background: var(--border);
+  }
+}
+
+.rh__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.85rem;
+  padding-bottom: 1rem;
+  animation: rh-in 360ms $ease both;
+  animation-delay: calc(min(var(--i, 0), 8) * 70ms);
+
+  &:last-child { padding-bottom: 0; }
+}
+
+.rh__dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid var(--surface-0);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: 0.75rem;
+}
+.is-latest .rh__dot { background: var(--success); color: #fff; box-shadow: 0 0 0 4px var(--success-soft); }
+.is-latest .rh__dot i { animation: rh-spin 1.2s $ease 300ms 1 both; }
+
+.rh__card {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-0);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+
+  &:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+}
+.is-latest .rh__card { border-color: var(--success); }
+
+.rh__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1rem; margin-bottom: 0.6rem; font-size: var(--fs-sm); }
+.rh__when, .rh__who { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--text-2); }
+.rh__when { font-weight: var(--fw-700); color: var(--text-1); }
+.rh__when i, .rh__who i { color: var(--text-3); }
+.rh__badge {
+  margin-inline-start: auto;
+  padding: 0.05rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-700);
+}
+
+.rh__grid { display: grid; gap: 0.4rem; }
+.rh__row {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--fs-sm);
+}
+.rh__label { color: var(--text-3); font-size: var(--fs-xs); font-weight: var(--fw-600); }
+.rh__old { color: var(--text-3); text-decoration: line-through; text-decoration-color: var(--border-strong); }
+.rh__new { color: var(--text-1); font-weight: var(--fw-700); }
+.rh__new.is-up { color: var(--success); }
+.rh__new.is-down { color: var(--danger); }
+.rh__arrow { color: var(--text-muted); font-size: var(--fs-xs); }
+:host-context([dir='ltr']) .rh__arrow { transform: scaleX(-1); }
+
+.rh__notes {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.7rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  white-space: pre-line;
+
+  i { color: var(--text-muted); font-size: 0.75em; margin-top: 0.25rem; }
+}
+
+.rh-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.75rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-2);
+  text-align: center;
+}
+.rh-state__icon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-3);
+}
+
+.rh-sk { display: grid; gap: 1rem; }
+.rh-sk__item { display: grid; grid-template-columns: 2rem 1fr; gap: 0.85rem; }
+.rh-sk__dot, .rh-sk__card { background: var(--surface-2); animation: rh-pulse 1.2s ease-in-out infinite; }
+.rh-sk__dot { width: 2rem; height: 2rem; border-radius: 50%; }
+.rh-sk__card { height: 5.5rem; border-radius: var(--radius-lg); }
+
+@keyframes rh-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes rh-spin { from { transform: rotate(-180deg); } }
+@keyframes rh-pulse { 50% { opacity: 0.45; } }
+
+@include bp.down(sm) {
+  .rh__row { grid-template-columns: 1fr; gap: 0.15rem; }
+  .rh__arrow { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rh__item, .is-latest .rh__dot i, .rh-sk__dot, .rh-sk__card { animation: none; }
+}

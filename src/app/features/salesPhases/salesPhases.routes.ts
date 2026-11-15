@@ -14,6 +14,16 @@ export const SALES_PHASES_ROUTES: Routes = [
   },
   // Old tab URLs (bookmarks, notification links) → their current home.
   { path: 'contracts', redirectTo: 'contracts-management', pathMatch: 'full' },
+  {
+    // One contract: status, renew, renewal history. Contract notifications open here.
+    path: 'contracts/:id',
+    title: 'تفاصيل العقد',
+    data: { roles: ['Admin', 'Sales'] },
+    loadComponent: () =>
+      import('./pages/contract-details/contract-details.component').then(
+        (m) => m.ContractDetailsComponent,
+      ),
+  },
   { path: 'follow-ups', redirectTo: 'price-offers', pathMatch: 'full' },
   {
     path: 'view-details-deal',

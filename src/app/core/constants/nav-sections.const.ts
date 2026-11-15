@@ -163,6 +163,13 @@ export const NAV_SECTIONS: NavSection[] = [
             icon: 'fa-solid fa-table-columns',
             roles: ['Admin', 'Sales'],
           },
+          // Customers per country / Egyptian governorate (Sales: own customers).
+          {
+            labelKey: 'sidebar.items.customerMap',
+            path: '/customers/map',
+            icon: 'fa-solid fa-earth-africa',
+            roles: ['Admin', 'Sales'],
+          },
           {
             labelKey: 'sidebar.items.priceOffers',
             path: '/price-offers',
@@ -383,6 +390,13 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: 'fa-solid fa-users-gear',
         roles: ['Admin'],
       },
+      // Email + server credentials (passwords revealed on demand, logged server-side).
+      {
+        labelKey: 'sidebar.items.vault',
+        path: '/vault',
+        icon: 'fa-solid fa-vault',
+        roles: ['Admin'],
+      },
     ],
   },
 ];
@@ -421,6 +435,7 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   dashboardSupport: ['Admin', 'Support'],
   'Designated-clients': ['Admin', 'Support'],
   SupportTickets: ['Admin', 'Support'],
+  SupportTicketsBoard: ['Admin', 'Support'],
   SupportLog: ['Admin', 'Support'],
   'technical-consultation': ['Admin', 'Support'],
   'details-of-support-cases': ['Admin', 'Support'],
@@ -444,6 +459,9 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   services: ['Admin', 'Marketing'],
   'system-improvements': ['Admin'],
   resources: ['Admin'],
+  vault: ['Admin'],
+  // `customers/map` carries its own `data.roles` (Admin, Sales).
+  customers: ['Admin', 'Sales'],
   // The notification center (history + manual send) is an admin tool; the
   // header bell stays available to every role.
   notifications: ['Admin'],

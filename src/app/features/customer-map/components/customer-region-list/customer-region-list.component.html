@@ -1,0 +1,58 @@
+<div class="rl-head">
+  <h6 class="rl-title">
+    {{ 'customerMap.panel.customerList' | translate }}
+    @if (!loading()) { <span class="text-muted fw-normal">({{ count() | number }})</span> }
+  </h6>
+  <a class="btn btn-sm btn-light" routerLink="/leads/sales-leadsCustomer" [queryParams]="region()">
+    <i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i>
+    {{ 'customerMap.panel.openList' | translate }}
+  </a>
+</div>
+
+@if (unsupportedFilters()) {
+  <p class="rl-note"><i class="fa-solid fa-filter" aria-hidden="true"></i>{{ 'customerMap.panel.filtersNote' | translate }}</p>
+}
+
+@if (loading() && !rows().length) {
+  <ul class="rl-list" aria-hidden="true">
+    @for (_ of [1, 2, 3, 4]; track $index) { <li class="rl-sk"><span></span><span class="is-short"></span></li> }
+  </ul>
+} @else if (failed()) {
+  <div class="rl-state">
+    <i class="fa-solid fa-triangle-exclamation text-warning" aria-hidden="true"></i>
+    <span>{{ 'customerMap.panel.loadFailed' | translate }}</span>
+    <button type="button" class="btn btn-sm btn-light" (click)="load()">{{ 'common.retry' | translate }}</button>
+  </div>
+} @else if (!rows().length) {
+  <div class="rl-state">
+    <i class="fa-solid fa-user-slash text-muted" aria-hidden="true"></i>
+    <span>{{ 'customerMap.panel.noCustomers' | translate }}</span>
+  </div>
+} @else {
+  <ul class="rl-list" [class.is-refreshing]="loading()">
+    @for (c of rows(); track c.id; let i = $index) {
+      <li>
+        <button type="button" class="rl-item" [style.--i]="i" (click)="detailsId.set(c.id)">
+          <span class="rl-main">
+            <span class="rl-name" dir="auto">{{ c.fullName }}</span>
+            <span class="rl-sub" dir="ltr">{{ c.phone || '—' }}</span>
+          </span>
+          @if (showGovernorate() && c.governorateName) {
+            <span class="rl-tag" dir="auto"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>{{ c.governorateName }}</span>
+          } @else if (c.countryInferred) {
+            <app-customer-location [location]="c" />
+          }
+          <span class="badge {{ statusClass(c.status) }}">{{ statusLabel(c.status) }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+  @if (count() > pageSize) {
+    <app-pagination class="d-block mt-3" [pageIndex]="pageIndex()" [pageSize]="pageSize" [count]="count()"
+                    [showPageSize]="false" [disabled]="loading()" (pageChange)="onPage($event)" />
+  }
+}
+
+@if (detailsId(); as id) {
+  <app-customer-details-dialog [customerId]="id" (closed)="detailsId.set(null)" />
+}

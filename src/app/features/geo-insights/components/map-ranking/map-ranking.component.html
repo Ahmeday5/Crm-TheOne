@@ -1,0 +1,46 @@
+<div class="mr" role="table" [attr.aria-label]="'geo.ranking.title' | translate">
+  <div class="mr__head" role="row">
+    <span role="columnheader" class="mr__c-name">{{ regionLabelKey() | translate }}</span>
+    <span role="columnheader" class="mr__c-num">{{ 'geo.ranking.count' | translate }}</span>
+    <span role="columnheader" class="mr__c-share">%</span>
+    @if (showInferred()) {
+      <span role="columnheader" class="mr__c-num mr__c-inf" [title]="'geo.ranking.inferredHint' | translate">
+        {{ 'geo.ranking.inferred' | translate }}
+      </span>
+    }
+  </div>
+
+  <div class="mr__body" role="rowgroup">
+    @for (row of rows(); track row.key; let i = $index) {
+      <button type="button" role="row" class="mr__row" [class.is-selected]="row.key === selectedKey()"
+              [class.is-bucket]="row.bucket" [style.--i]="i" [attr.aria-pressed]="row.key === selectedKey()"
+              (click)="selectRow.emit(row)">
+        <span role="cell" class="mr__c-name">
+          @if (row.color) {
+            <span class="mr__swatch" [style.background]="row.color" aria-hidden="true"></span>
+          }
+          @if (row.iso2) {
+            <app-country-flag [iso2]="row.iso2" />
+          } @else if (row.icon) {
+            <i [class]="row.icon + ' mr__icon'" aria-hidden="true"></i>
+          }
+          <span class="mr__name" dir="auto" [title]="row.name">{{ row.name }}</span>
+        </span>
+        <span role="cell" class="mr__c-num mr__count">{{ row.count | number }}</span>
+        <span role="cell" class="mr__c-share">
+          <span class="mr__bar" aria-hidden="true">
+            <span class="mr__bar-fill" [style.width.%]="row.bucket ? 0 : (row.count / topCount()) * 100"></span>
+          </span>
+          <span class="mr__pct">{{ row.percentage | number: '1.0-1' }}%</span>
+        </span>
+        @if (showInferred()) {
+          <span role="cell" class="mr__c-num mr__c-inf mr__inf">
+            @if (row.inferredCount) { {{ row.inferredCount | number }} } @else { — }
+          </span>
+        }
+      </button>
+    } @empty {
+      <p class="mr__empty">{{ 'geo.ranking.empty' | translate }}</p>
+    }
+  </div>
+</div>

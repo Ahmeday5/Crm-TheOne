@@ -14,8 +14,12 @@ import { ContractListItem } from '../../../shared/models';
  */
 export type ContractLifecycle = 'active' | 'expiring' | 'expired' | 'cancelled';
 
-/** An active contract counts as "expiring soon" when it ends within… */
-export const EXPIRING_WINDOW_DAYS = 90;
+/**
+ * An active contract counts as "expiring soon" when it ends within… — the
+ * backend's window (its first `ContractExpiringSoon` notification goes out
+ * 30 days before `endDate`), so the badge agrees with notifications.
+ */
+export const EXPIRING_WINDOW_DAYS = 30;
 
 const DAY_MS = 86_400_000;
 

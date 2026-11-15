@@ -13,6 +13,9 @@ import { ApiService } from '../../../core/services/api.service';
 import {
   ContractDetail,
   ContractListItem,
+  ContractRenewal,
+  RenewContractRequest,
+  RenewContractResponse,
   CONTRACTS_MAX_PAGE_SIZE,
   ContractListQuery,
   ContractStatistics,
@@ -126,10 +129,11 @@ export class ContractsService {
     );
   }
 
-  getById(id: number): Observable<ContractDetail> {
+  getById(id: number, force = false): Observable<ContractDetail> {
+    const cache = withSkipLoader(withCache({ ttlMs: CACHE_TTL.SHORT }));
     return this.api
       .get<ContractDetail>(API_ENDPOINTS.contracts.byId(id), {
-        context: withSkipLoader(withCache({ ttlMs: CACHE_TTL.SHORT })),
+        context: force ? withCacheBypass(cache) : cache,
       })
       .pipe(map((c) => ({ ...c, status: parseContractStatus(c?.status ?? c?.statusName) ?? 'Active' })));
   }
@@ -185,6 +189,39 @@ export class ContractsService {
       payload,
       { context: withInlineHandling(withCacheInvalidate(['Contracts', 'AdminDashboard'])) },
     );
+  }
+
+  /**
+   * Extends the same contract (same id), back to `Active`, and logs the old
+   * period. Invalidates every contracts read (list, statistics, renewals).
+   */
+  renew(id: number, body: RenewContractRequest): Observable<RenewContractResponse> {
+    return this.api
+      .post<RenewContractResponse>(API_ENDPOINTS.contracts.renew(id), body, {
+        context: withInlineHandling(withCacheInvalidate(['Contracts', 'AdminDashboard'])),
+      })
+      .pipe(
+        map((res) => ({
+          ...res,
+          contract: res?.contract
+            ? { ...res.contract, status: parseContractStatus(res.contract.status ?? res.contract.statusName) ?? 'Active' }
+            : res?.contract,
+        })),
+      );
+  }
+
+  /** Renewal history, newest first. */
+  renewals(id: number, force = false): Observable<ContractRenewal[]> {
+    const cache = withSkipLoader(withCache({ ttlMs: CACHE_TTL.SHORT }));
+    return this.api
+      .get<ContractRenewal[] | null>(API_ENDPOINTS.contracts.renewals(id), {
+        context: force ? withCacheBypass(cache) : cache,
+      })
+      .pipe(
+        map((rows) =>
+          (Array.isArray(rows) ? rows : []).sort((a, b) => Date.parse(b.renewedAt) - Date.parse(a.renewedAt)),
+        ),
+      );
   }
 
   delete(id: number): Observable<unknown> {

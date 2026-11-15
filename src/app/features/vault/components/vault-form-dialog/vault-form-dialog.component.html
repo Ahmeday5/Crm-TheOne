@@ -1,0 +1,163 @@
+<app-modal
+  [open]="true"
+  [title]="(mode() === 'edit' ? 'vault.form.editTitle' : 'vault.form.addTitle') | translate"
+  [icon]="mode() === 'edit' ? 'fa-solid fa-pen-to-square' : 'fa-solid fa-key'"
+  iconTone="primary"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  @if (loading()) {
+    <div class="text-center py-5"><span class="spinner-border text-primary" role="status"></span></div>
+  } @else if (loadError()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-0">
+      <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+      <span class="me-auto">{{ loadError() }}</span>
+      <button type="button" class="btn btn-sm btn-light" (click)="load()">{{ 'common.retry' | translate }}</button>
+    </div>
+  } @else {
+    <form [formGroup]="form" id="vault-form" novalidate autocomplete="off" (ngSubmit)="submit()">
+      <!-- Type -->
+      <div class="vf-types" role="radiogroup" [attr.aria-label]="'vault.form.type' | translate">
+        @for (t of types; track t) {
+          <button type="button" role="radio" class="vf-type" [class.is-active]="type() === t" [attr.aria-checked]="type() === t"
+                  (click)="setType(t)">
+            <span class="vf-type__icon"><i [class]="t === 'Email' ? 'fa-solid fa-envelope' : 'fa-solid fa-server'" aria-hidden="true"></i></span>
+            <span class="vf-type__text">
+              <strong>{{ 'vault.types.' + t | translate }}</strong>
+              <small>{{ 'vault.types.' + t + 'Hint' | translate }}</small>
+            </span>
+          </button>
+        }
+      </div>
+
+      <div class="row g-3">
+        <div class="col-12">
+          <label for="vf-title" class="form-label fw-600">{{ 'vault.form.title' | translate }} <span class="text-danger">*</span></label>
+          <input id="vf-title" class="form-control" formControlName="title" [maxlength]="limits.title"
+                 [class.is-invalid]="invalid('title')" [placeholder]="'vault.form.titlePh' | translate" />
+          <app-form-error [control]="form.controls.title" [forceShow]="submitAttempted()" [label]="'vault.form.title' | translate" />
+        </div>
+
+        <!-- Email: required for email accounts, optional for servers -->
+        <div class="col-md-6" [class.vf-emphasis]="required().email">
+          <label for="vf-email" class="form-label fw-600">
+            {{ 'vault.form.email' | translate }}
+            @if (required().email) { <span class="text-danger">*</span> }
+          </label>
+          <input id="vf-email" type="email" class="form-control" dir="ltr" formControlName="email" inputmode="email"
+                 [maxlength]="limits.email" [class.is-invalid]="invalid('email')" placeholder="name@company.com" />
+          <app-form-error [control]="form.controls.email" [forceShow]="submitAttempted()" [label]="'vault.form.email' | translate" />
+        </div>
+
+        <div class="col-md-6">
+          <label for="vf-username" class="form-label fw-600">{{ 'vault.form.username' | translate }}</label>
+          <input id="vf-username" class="form-control" dir="ltr" formControlName="username" autocomplete="off"
+                 [maxlength]="limits.username" [class.is-invalid]="invalid('username')" />
+          <app-form-error [control]="form.controls.username" [label]="'vault.form.username' | translate" />
+        </div>
+
+        <!-- Host + port -->
+        <div class="col-md-8" [class.vf-emphasis]="required().host">
+          <label for="vf-host" class="form-label fw-600">
+            {{ (type() === 'Email' ? 'vault.form.mailHost' : 'vault.form.host') | translate }}
+            @if (required().host) { <span class="text-danger">*</span> }
+          </label>
+          <input id="vf-host" class="form-control" dir="ltr" formControlName="host" [maxlength]="limits.host"
+                 [class.is-invalid]="invalid('host')"
+                 [placeholder]="type() === 'Email' ? 'imap.gmail.com' : '192.168.1.10 / server.company.com'" />
+          <app-form-error [control]="form.controls.host" [forceShow]="submitAttempted()" [custom]="customErrors()"
+                          [label]="'vault.form.host' | translate" />
+        </div>
+        <div class="col-md-4">
+          <label for="vf-port" class="form-label fw-600">{{ 'vault.form.port' | translate }}</label>
+          <input id="vf-port" type="number" class="form-control" dir="ltr" formControlName="port" inputmode="numeric"
+                 min="1" max="65535" [class.is-invalid]="invalid('port')" [placeholder]="type() === 'Email' ? '993' : '22'" />
+          <app-form-error [control]="form.controls.port" [forceShow]="submitAttempted()" [custom]="customErrors()"
+                          [label]="'vault.form.port' | translate" />
+        </div>
+
+        <!-- Password -->
+        <div class="col-12">
+          <div class="d-flex align-items-center justify-content-between gap-2 mb-1 flex-wrap">
+            <label for="vf-password" class="form-label fw-600 mb-0">{{ 'vault.form.password' | translate }}</label>
+            <div class="d-flex gap-1">
+              <button type="button" class="btn btn-sm btn-light" (click)="generatePassword()" [disabled]="removePassword()">
+                <i class="fa-solid fa-wand-magic-sparkles me-1" aria-hidden="true"></i>{{ 'vault.form.generate' | translate }}
+              </button>
+              @if (mode() === 'edit' && hadPassword()) {
+                <button type="button" class="btn btn-sm" [class.btn-danger]="removePassword()" [class.btn-danger-soft]="!removePassword()"
+                        [attr.aria-pressed]="removePassword()" (click)="toggleRemovePassword()">
+                  <i [class]="removePassword() ? 'fa-solid fa-rotate-left me-1' : 'fa-solid fa-eraser me-1'" aria-hidden="true"></i>
+                  {{ (removePassword() ? 'vault.form.undoClear' : 'vault.form.clearPassword') | translate }}
+                </button>
+              }
+            </div>
+          </div>
+          <div class="input-group vf-password" [class.is-removing]="removePassword()">
+            <input id="vf-password" class="form-control" dir="ltr" formControlName="password"
+                   [type]="showPassword() ? 'text' : 'password'" autocomplete="new-password" spellcheck="false"
+                   [maxlength]="limits.password" [readonly]="removePassword()"
+                   [placeholder]="(removePassword() ? 'vault.form.passwordWillClear'
+                     : mode() === 'edit' && hadPassword() ? 'vault.form.passwordKeepPh' : 'vault.form.passwordPh') | translate" />
+            <button type="button" class="btn btn-light" (click)="showPassword.set(!showPassword())"
+                    [attr.aria-label]="(showPassword() ? 'vault.secret.hide' : 'vault.secret.show') | translate">
+              <i [class]="showPassword() ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'" aria-hidden="true"></i>
+            </button>
+          </div>
+          @if (removePassword()) {
+            <small class="text-danger d-block mt-1"><i class="fa-solid fa-triangle-exclamation me-1"></i>{{ 'vault.form.clearWarning' | translate }}</small>
+          } @else if (mode() === 'edit' && hadPassword()) {
+            <small class="form-text d-block mt-1">{{ 'vault.form.passwordKeepHint' | translate }}</small>
+          }
+        </div>
+
+        <div class="col-12">
+          <label for="vf-url" class="form-label fw-600">{{ 'vault.form.url' | translate }}</label>
+          <input id="vf-url" type="url" class="form-control" dir="ltr" formControlName="url" [maxlength]="limits.url"
+                 [class.is-invalid]="invalid('url')" placeholder="https://" />
+          <app-form-error [control]="form.controls.url" [forceShow]="submitAttempted()" [custom]="customErrors()"
+                          [label]="'vault.form.url' | translate" />
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-600">{{ 'vault.form.customer' | translate }}</label>
+          <app-searchable-select formControlName="customerId" [fetchFn]="customersFetch" labelKey="fullName" valueKey="id"
+                                 subLabelKey="campanyName" [placeholder]="'vault.form.customerPh' | translate" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-600">{{ 'vault.form.project' | translate }}</label>
+          <app-searchable-select formControlName="projectId" [pagedFetchFn]="projectsFetch" labelKey="title" valueKey="id"
+                                 [placeholder]="'vault.form.projectPh' | translate" />
+        </div>
+
+        <div class="col-12">
+          <label for="vf-notes" class="form-label fw-600">{{ 'vault.form.notes' | translate }}</label>
+          <textarea id="vf-notes" class="form-control" rows="3" formControlName="notes" [maxlength]="limits.notes"
+                    [class.is-invalid]="invalid('notes')"></textarea>
+        </div>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mt-3 mb-0" role="alert">
+          <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span>{{ errorMessage() }}</span>
+        </div>
+      }
+    </form>
+  }
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="cancel.emit()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button type="submit" form="vault-form" class="btn btn-primary" [disabled]="submitting() || loading() || !!loadError()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-floppy-disk me-1" aria-hidden="true"></i>
+      }
+      {{ 'vault.form.save' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

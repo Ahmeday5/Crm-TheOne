@@ -1,10 +1,17 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { resolveAssetUrl } from '../../../../core/utils/asset-url.util';
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ThreadMessage } from '../../state/whatsapp-thread.store';
-import { MEDIA_KIND_ICON, isNoteKind, isOutgoing, mediaKindOf } from '../../utils/whatsapp.util';
+import {
+  MEDIA_DOWNLOAD_GRACE_MS,
+  MEDIA_KIND_ICON,
+  isNoteKind,
+  isOutgoing,
+  mediaAvailability,
+  mediaKindOf,
+} from '../../utils/whatsapp.util';
 import { WaStatusTicksComponent } from '../wa-status-ticks/wa-status-ticks.component';
 
 /** A run of message text — plain, or a link (rendered as an anchor, never as HTML). */
@@ -26,10 +33,15 @@ export interface WaImagePreview {
  *
  * By `messageType`: image → thumbnail (opens the viewer) · video / audio →
  * native player · document → file chip · template → bubble tagged "Template"
- * + its name · location / reaction / system → a small muted note. Media
- * without a URL renders as a labelled placeholder. `mediaUrl` is relative
- * for files we sent (resolved against the API origin) and absolute for
- * received media.
+ * + its name · location / reaction / system → a small muted note.
+ *
+ * Media files are stored on our server in the background: a media message
+ * first arrives with `mediaUrl: null` and is re-pushed (same id) once the
+ * file is ready — until then the bubble shows "loading the file…", and
+ * after {@link MEDIA_DOWNLOAD_GRACE_MS} "file unavailable". `mediaUrl` is
+ * server-relative (`/Images/WhatsApp/…`), resolved against the API origin;
+ * no auth header is needed. Unplayable audio (Opus on old Safari) falls back
+ * to a download link.
  */
 @Component({
   selector: 'app-wa-message-bubble',
@@ -77,6 +89,30 @@ export class WaMessageBubbleComponent {
   });
 
   protected readonly segments = computed<TextSegment[]>(() => splitLinks(this.message().text ?? ''));
+
+  /** Ticks once, when a still-loading file's grace period ends (→ "unavailable"). */
+  private readonly now = signal(Date.now());
+  protected readonly availability = computed(() => mediaAvailability(this.message(), this.now()));
+  /** The browser couldn't play the file (e.g. Opus voice notes on old Safari) → offer a download. */
+  protected readonly playbackFailed = signal(false);
+
+  constructor() {
+    effect((onCleanup) => {
+      const m = this.message();
+      if (mediaAvailability(m, Date.now()) !== 'loading') return;
+      const wait = Date.parse(m.sentAt) + MEDIA_DOWNLOAD_GRACE_MS - Date.now();
+      const timer = setTimeout(() => this.now.set(Date.now()), Math.max(0, wait) + 50);
+      onCleanup(() => clearTimeout(timer));
+    });
+    // A new file URL gets a fresh playback attempt.
+    effect(
+      () => {
+        this.mediaSrc();
+        this.playbackFailed.set(false);
+      },
+      { allowSignalWrites: true },
+    );
+  }
 
   protected viewImage(): void {
     const url = this.mediaSrc();

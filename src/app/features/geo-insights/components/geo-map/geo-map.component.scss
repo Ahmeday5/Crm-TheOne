@@ -1,0 +1,103 @@
+:host { position: relative; display: block; min-height: 320px; overflow: hidden; }
+
+.gm__canvas { position: absolute; inset: 0; }
+
+.gm__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: var(--surface-1);
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  text-align: center;
+  padding: 1rem;
+  transition: opacity 300ms ease;
+
+  &.is-error i { font-size: 2rem; color: var(--text-muted); }
+}
+
+.gm__radar {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid var(--brand-soft);
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--brand-500);
+    opacity: 0;
+    animation: gm-radar 2.2s ease-out infinite;
+  }
+  &::after { animation-delay: 1.1s; }
+}
+
+@keyframes gm-radar {
+  0% { opacity: 0.7; transform: scale(0.3); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
+/* ── MapLibre chrome, themed (rendered inside the host) ── */
+:host ::ng-deep {
+  .maplibregl-ctrl-group {
+    border-radius: var(--radius-md);
+    background: var(--surface-0);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+
+    button { width: 34px; height: 34px; }
+    button + button { border-top-color: var(--border); }
+    button:hover { background-color: var(--surface-2); }
+  }
+
+  .maplibregl-ctrl-attrib {
+    font-size: 10px;
+    background: color-mix(in srgb, var(--surface-0) 85%, transparent);
+    color: var(--text-3);
+    a { color: var(--text-2); }
+  }
+
+  .maplibregl-cooperative-gesture-screen {
+    font-family: var(--ff-base);
+    font-size: var(--fs-md);
+  }
+
+  .geo-popup {
+    font-family: var(--ff-base);
+    animation: gm-pop 140ms ease-out;
+
+    .maplibregl-popup-content {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--surface-0);
+      color: var(--text-1);
+      border: 1px solid var(--border);
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.16);
+    }
+
+    &.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+    &.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+    &.maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: var(--surface-0); }
+    &.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+    &.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+    &.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: var(--surface-0); }
+    &.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--surface-0); }
+    &.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--surface-0); }
+  }
+}
+
+// Opacity only: MapLibre positions the popup with `transform`.
+@keyframes gm-pop { from { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .gm__radar::before, .gm__radar::after { animation-duration: 6s; }
+  :host ::ng-deep .geo-popup { animation: none; }
+}

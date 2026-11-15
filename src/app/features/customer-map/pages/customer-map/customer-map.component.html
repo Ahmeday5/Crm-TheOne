@@ -1,0 +1,60 @@
+<app-page-header
+  [title]="'customerMap.title' | translate"
+  [subtitle]="(isAdmin() ? 'customerMap.subtitleAdmin' : 'customerMap.subtitleSales') | translate"
+  icon="fa-solid fa-earth-africa" />
+
+<div class="card cm-card mb-3">
+  <div class="card-body">
+    <app-map-filters [showSalesPerson]="isAdmin()" (queryChange)="onFilters($event)" />
+  </div>
+</div>
+
+<div class="row g-3 mb-3 cm-kpis" [class.is-loading]="loading() && !data()">
+  <div class="col-6 col-xl-3">
+    <app-stat-card [label]="'customerMap.kpi.total' | translate" [value]="(kpis().total | number) ?? '0'"
+                   icon="fa-solid fa-users" tone="primary" />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-stat-card [label]="'customerMap.kpi.countries' | translate" [value]="(kpis().countries | number) ?? '0'"
+                   icon="fa-solid fa-earth-africa" tone="info" />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-stat-card [label]="'customerMap.kpi.located' | translate" [value]="((kpis().located | number: '1.0-1') ?? '0') + '%'"
+                   icon="fa-solid fa-location-crosshairs" tone="success" />
+  </div>
+  <div class="col-6 col-xl-3">
+    <button type="button" class="cm-kpi-btn" [disabled]="!kpis().unknown" (click)="openUnknown()"
+            [attr.aria-label]="'customerMap.kpi.unknownAria' | translate">
+      <app-stat-card [label]="'customerMap.kpi.unknown' | translate" [value]="(kpis().unknown | number) ?? '0'"
+                     [sub]="'customerMap.kpi.unknownSub' | translate" icon="fa-solid fa-circle-question" tone="orange" />
+    </button>
+  </div>
+</div>
+
+@if (failed() && !data()) {
+  <div class="card cm-card">
+    <div class="cm-state">
+      <span class="icon-tile lg tone-warning"><i class="fa-solid fa-triangle-exclamation"></i></span>
+      <h6 class="fw-700 mb-1">{{ 'customerMap.loadFailed' | translate }}</h6>
+      <button type="button" class="btn btn-sm btn-primary" (click)="retry()">
+        <i class="fa-solid fa-rotate me-1"></i>{{ 'common.retry' | translate }}
+      </button>
+    </div>
+  </div>
+} @else if (data()?.total === 0 && !loading()) {
+  <div class="card cm-card">
+    <div class="cm-state">
+      <span class="cm-empty-globe" aria-hidden="true"><i class="fa-solid fa-earth-africa"></i></span>
+      <h6 class="fw-700 mb-1">{{ 'customerMap.empty' | translate }}</h6>
+      <p class="text-muted mb-0 small">{{ 'customerMap.emptyHint' | translate }}</p>
+    </div>
+  </div>
+} @else {
+  <app-geo-explorer [data]="data()" [loading]="loading()" [labels]="labels" [showInferred]="true" [(selection)]="selection" />
+}
+
+@if (selection(); as s) {
+  <app-region-panel [selection]="s" [labels]="labels" (closed)="selection.set(null)">
+    <app-customer-region-list [region]="regionFilter()!" [mapQuery]="query()" [showGovernorate]="s.kind === 'country'" />
+  </app-region-panel>
+}

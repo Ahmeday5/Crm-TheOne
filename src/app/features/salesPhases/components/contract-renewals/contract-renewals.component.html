@@ -1,0 +1,61 @@
+@if (loading() && !renewals().length) {
+  <div class="rh-sk" aria-hidden="true">
+    @for (_ of [1, 2]; track $index) {
+      <div class="rh-sk__item"><span class="rh-sk__dot"></span><span class="rh-sk__card"></span></div>
+    }
+  </div>
+} @else if (failed()) {
+  <div class="rh-state">
+    <i class="fa-solid fa-triangle-exclamation text-warning" aria-hidden="true"></i>
+    <span>{{ 'sales.renewal.history.loadFailed' | translate }}</span>
+    <button type="button" class="btn btn-sm btn-light" (click)="retry.emit()">{{ 'common.retry' | translate }}</button>
+  </div>
+} @else if (!renewals().length) {
+  <div class="rh-state">
+    <span class="rh-state__icon" aria-hidden="true"><i class="fa-solid fa-clock-rotate-left"></i></span>
+    <span>{{ 'sales.renewal.history.empty' | translate }}</span>
+  </div>
+} @else {
+  <ol class="rh">
+    @for (r of renewals(); track r.id; let i = $index; let first = $first) {
+      <li class="rh__item" [class.is-latest]="first" [style.--i]="i">
+        <span class="rh__dot" aria-hidden="true"><i class="fa-solid fa-arrows-rotate"></i></span>
+        <article class="rh__card">
+          <header class="rh__head">
+            <span class="rh__when">
+              <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+              <time [attr.datetime]="r.renewedAt">{{ r.renewedAt | cairoDate }}</time>
+            </span>
+            @if (r.renewedByName) {
+              <span class="rh__who"><i class="fa-solid fa-user-pen" aria-hidden="true"></i>{{ r.renewedByName }}</span>
+            }
+            @if (first) {
+              <span class="rh__badge">{{ 'sales.renewal.history.latest' | translate }}</span>
+            }
+          </header>
+
+          <div class="rh__grid">
+            <div class="rh__row">
+              <span class="rh__label">{{ 'sales.renewal.history.period' | translate }}</span>
+              <span class="rh__old">{{ day(r.previousStartDate) }} — {{ day(r.previousEndDate) }}</span>
+              <i class="fa-solid fa-arrow-left-long rh__arrow" aria-hidden="true"></i>
+              <span class="rh__new">{{ day(r.newStartDate) }} — {{ day(r.newEndDate) }}</span>
+            </div>
+            <div class="rh__row">
+              <span class="rh__label">{{ 'sales.renewal.history.price' | translate }}</span>
+              <span class="rh__old">{{ r.previousPrice | money }}</span>
+              <i class="fa-solid fa-arrow-left-long rh__arrow" aria-hidden="true"></i>
+              <span class="rh__new" [class.is-up]="r.newPrice > r.previousPrice" [class.is-down]="r.newPrice < r.previousPrice">
+                {{ r.newPrice | money }}
+              </span>
+            </div>
+          </div>
+
+          @if (r.notes) {
+            <p class="rh__notes" dir="auto"><i class="fa-solid fa-quote-right" aria-hidden="true"></i>{{ r.notes }}</p>
+          }
+        </article>
+      </li>
+    }
+  </ol>
+}

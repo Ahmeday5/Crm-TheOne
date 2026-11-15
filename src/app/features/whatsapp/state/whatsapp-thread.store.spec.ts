@@ -63,6 +63,18 @@ describe('WhatsAppThreadStore', () => {
     expect(ids()).toEqual([10, 11, 12]);
   });
 
+  it('replaces a media placeholder in place when the file lands (same id re-pushed)', () => {
+    const voice = makeMessage({ id: 13, messageType: 'voice', text: null, mediaUrl: null });
+    realtime.message.next({ instanceId: '217', chat, message: voice });
+    realtime.message.next({ instanceId: '217', chat, message: { ...voice, mediaUrl: '/Images/WhatsApp/in/2026-11/a.ogg' } });
+    expect(ids()).toEqual([10, 11, 13]);
+    expect(store.messages().find((m) => m.id === 13)?.mediaUrl).toBe('/Images/WhatsApp/in/2026-11/a.ogg');
+
+    // A stale copy (fetched before the download finished) must not blank it again.
+    realtime.message.next({ instanceId: '217', chat, message: voice });
+    expect(store.messages().find((m) => m.id === 13)?.mediaUrl).toBe('/Images/WhatsApp/in/2026-11/a.ogg');
+  });
+
   it('ignores messages of other chats', () => {
     realtime.message.next({ instanceId: '217', chat: makeChat({ id: 2 }), message: makeMessage({ id: 99, chatId: 2 }) });
     expect(ids()).toEqual([10, 11]);

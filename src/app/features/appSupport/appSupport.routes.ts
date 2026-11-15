@@ -34,6 +34,16 @@ export const APP_SUPPORT_ROUTES: Routes = [
           ),
       },
       {
+        // Kanban view of the same tickets (drag a card to change its status).
+        path: 'SupportTicketsBoard',
+        title: 'لوحة التذاكر',
+        data: { roles: ['Admin', 'Support'] },
+        loadComponent: () =>
+          import('./pages/tickets-board/tickets-board.component').then(
+            (m) => m.TicketsBoardComponent,
+          ),
+      },
+      {
         path: 'SupportLog',
         title: 'سجل الدعم',
         loadComponent: () =>
@@ -47,16 +57,16 @@ export const APP_SUPPORT_ROUTES: Routes = [
     path: 'technical-consultation',
     title: 'الاستشارة الفنية',
     loadComponent: () =>
-      import(
-        './pages/designated-clients/technical-consultation/technical-consultation.component'
-      ).then((m) => m.TechnicalConsultationComponent),
+      import('./pages/designated-clients/technical-consultation/technical-consultation.component').then(
+        (m) => m.TechnicalConsultationComponent,
+      ),
   },
   {
     path: 'details-of-support-cases',
     title: 'تفاصيل حالات الدعم المفتوحة',
     loadComponent: () =>
-      import(
-        './pages/support-tickets/details-of-support-cases/details-of-support-cases.component'
-      ).then((m) => m.DetailsOfSupportCasesComponent),
+      import('./pages/support-tickets/details-of-support-cases/details-of-support-cases.component').then(
+        (m) => m.DetailsOfSupportCasesComponent,
+      ),
   },
 ];

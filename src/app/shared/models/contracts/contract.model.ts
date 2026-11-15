@@ -122,6 +122,45 @@ export interface ContractListItem {
   createdAt: string;
 }
 
+/**
+ * Body for `POST /Contracts/RenewContract/{id}` (Admin; Sales: own contracts).
+ * Renewing extends the SAME contract (same id), sets it back to `Active` and
+ * stores the previous period in the renewal history. Dates are `yyyy-MM-dd`.
+ */
+export interface RenewContractRequest {
+  newEndDate: string;
+  /** Default: the day after the current end date (today when open-ended). */
+  newStartDate?: string | null;
+  /** Default: the current price. */
+  newPrice?: number | null;
+  /** ≤ {@link RENEWAL_NOTES_MAX}. */
+  notes?: string | null;
+}
+
+export const RENEWAL_NOTES_MAX = 1000;
+
+/** One renewal — `GET /Contracts/ContractRenewals/{id}` (newest first). */
+export interface ContractRenewal {
+  id: number;
+  contractId: number;
+  previousStartDate: string;
+  previousEndDate: string | null;
+  previousPrice: number;
+  newStartDate: string;
+  newEndDate: string;
+  newPrice: number;
+  notes: string | null;
+  renewedById: string | null;
+  renewedByName: string | null;
+  renewedAt: string;
+}
+
+/** `data` of a successful renewal. */
+export interface RenewContractResponse {
+  contract: ContractDetail;
+  renewal: ContractRenewal;
+}
+
 /** Hard server cap on `GET /Contracts/GetContracts?pageSize=`. */
 export const CONTRACTS_MAX_PAGE_SIZE = 100;
 

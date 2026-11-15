@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   Subject,
   Subscription,
@@ -48,7 +48,9 @@ import { ResponsiveTableDirective } from '../../../../shared/directives/responsi
 import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ContractFormDialogComponent } from '../../components/contract-form-dialog/contract-form-dialog.component';
+import { RenewContractDialogComponent } from '../../components/renew-contract-dialog/renew-contract-dialog.component';
 import { ContractsService } from '../../services/contracts.service';
+import { renewalUrgency, suggestsRenewal } from '../../utils/contract-renewal.util';
 import {
   ContractLifecycle,
   contractLifecycle,
@@ -110,8 +112,10 @@ type PageLoad =
     LoadErrorComponent,
     TableToolsComponent,
     ContractFormDialogComponent,
+    RenewContractDialogComponent,
     ResponsiveTableDirective,
     ClampTextDirective,
+    RouterLink,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './contracts-management.component.html',
@@ -122,6 +126,7 @@ export class ContractsManagementComponent implements OnInit {
   private readonly dialog = inject(DialogService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly language = inject(LanguageService);
   private readonly auth = inject(AuthService);
 
@@ -155,6 +160,12 @@ export class ContractsManagementComponent implements OnInit {
   /** Form dialog state. `formOpen` toggles the modal; `editId` ≠ null ⇒ edit. */
   readonly formOpen = signal(false);
   readonly editId = signal<number | null>(null);
+
+  /** Row being renewed (renew dialog open). */
+  readonly renewTarget = signal<ContractListItem | null>(null);
+
+  readonly suggestsRenewal = (row: ContractListItem) => suggestsRenewal(row);
+  readonly renewalUrgency = (row: ContractListItem) => renewalUrgency(row);
 
   /** The exact query the table shows (tab filter + search + paging). */
   private readonly query = computed<ContractListQuery>(() => ({
@@ -207,6 +218,9 @@ export class ContractsManagementComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Deep link, e.g. `/contracts-management?tab=expiring` from a dashboard card.
+    const tab = this.route.snapshot.queryParamMap.get('tab') as ContractTab | null;
+    if (tab && CONTRACT_TABS.some((t) => t.key === tab)) this.activeTab.set(tab);
     this.reload();
     if (this.isAdmin()) {
       this.service.salesTeam().subscribe({
@@ -323,6 +337,17 @@ export class ContractsManagementComponent implements OnInit {
 
   onSaved(): void {
     this.closeForm();
+    this.reload(true);
+  }
+
+  openRenew(row: ContractListItem): void {
+    if (this.busyId() === row.id) return;
+    this.renewTarget.set(row);
+  }
+
+  /** The renewed contract moves tabs (e.g. Expired → Active): refresh table + counters. */
+  onRenewed(): void {
+    this.renewTarget.set(null);
     this.reload(true);
   }
 

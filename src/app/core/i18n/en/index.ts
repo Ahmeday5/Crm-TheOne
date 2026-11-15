@@ -31,6 +31,9 @@ import smartAnalytics from './smartAnalytics.en';
 import bottomNav from './bottomNav.en';
 import salesPlaybook from './salesPlaybook.en';
 import attendance from './attendance.en';
+import customerMap from './customerMap.en';
+import vault from './vault.en';
+import geo from './geo.en';
 
 const en: Translations = {
   ...common,
@@ -65,6 +68,9 @@ const en: Translations = {
   ...bottomNav,
   ...salesPlaybook,
   ...attendance,
+  ...customerMap,
+  ...vault,
+  ...geo,
 };
 
 export default en;

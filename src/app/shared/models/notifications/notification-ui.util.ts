@@ -3,9 +3,11 @@ import { UserRole } from '../../../core/models/auth.model';
 import { Lang } from '../../../core/services/language.service';
 import {
   ANNOUNCEMENT_ENTITY,
+  CONTRACT_ENTITY,
   LEAVE_REQUEST_ENTITY,
   NotificationType,
   WHATSAPP_CHAT_ENTITY,
+  isContractNotification,
   isWhatsAppNotification,
 } from './notification.model';
 
@@ -36,6 +38,10 @@ export function notificationIcon(type: NotificationType): string {
     case 'Announcement': return 'fa-solid fa-bullhorn';
     case 'LeaveRequestSubmitted': return 'fa-solid fa-plane-departure';
     case 'LeaveRequestReviewed': return 'fa-solid fa-calendar-check';
+    case 'ContractExpiringSoon': return 'fa-solid fa-hourglass-half';
+    case 'ContractExpired': return 'fa-solid fa-file-circle-xmark';
+    case 'ContractRenewed': return 'fa-solid fa-file-circle-check';
+    // Unknown / future types still render — with the generic bell.
     default: return 'fa-solid fa-bell';
   }
 }
@@ -57,6 +63,9 @@ export function notificationTone(type: NotificationType): string {
     case 'Announcement': return 'orange';
     case 'LeaveRequestSubmitted': return 'info';
     case 'LeaveRequestReviewed': return 'success';
+    case 'ContractExpiringSoon': return 'warning';
+    case 'ContractExpired': return 'danger';
+    case 'ContractRenewed': return 'success';
     default: return 'primary';
   }
 }
@@ -79,6 +88,13 @@ export function notificationRoute(n: NotificationTarget, role: UserRole | null):
     // Older payloads may carry no chat id — the inbox is still the right place.
     const chatId = n.relatedEntityType === WHATSAPP_CHAT_ENTITY ? n.relatedEntityId : null;
     return chatId ? ['/whatsapp', 'chats', String(chatId)] : ['/whatsapp'];
+  }
+
+  // Contracts: the contract's page (Admin / Sales — the only roles that receive them).
+  if (isContractNotification(n)) {
+    if (role !== 'Admin' && role !== 'Sales') return null;
+    const id = n.relatedEntityType === CONTRACT_ENTITY ? n.relatedEntityId : null;
+    return id ? ['/contracts', String(id)] : ['/contracts-management'];
   }
 
   // Announcements: everyone; the id opens that announcement on the board.

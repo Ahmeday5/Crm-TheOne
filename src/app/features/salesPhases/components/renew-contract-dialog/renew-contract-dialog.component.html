@@ -1,0 +1,114 @@
+@let c = contract();
+
+<app-modal
+  [open]="true"
+  [title]="'sales.renewal.title' | translate"
+  icon="fa-solid fa-arrows-rotate"
+  iconTone="success"
+  size="lg"
+  [closeOnBackdrop]="!submitting()"
+  [closeOnEsc]="!submitting()"
+  (closed)="cancel.emit()">
+
+  <!-- Which contract -->
+  <div class="rn-head">
+    <span class="rn-head__id">CNT-{{ c.id }}</span>
+    <div class="min-w-0">
+      <div class="rn-head__title" dir="auto">{{ c.title }}</div>
+      <small class="text-muted" dir="auto">{{ c.customerName }}</small>
+    </div>
+  </div>
+
+  <!-- Old period → new period (live) -->
+  <div class="rn-periods" aria-live="polite">
+    <div class="rn-period">
+      <span class="rn-period__label">{{ 'sales.renewal.currentPeriod' | translate }}</span>
+      <span class="rn-period__dates">{{ day(currentStart()) }} — {{ day(currentEnd()) }}</span>
+      <span class="rn-period__price">{{ c.price | money }}</span>
+    </div>
+    <span class="rn-periods__arrow" aria-hidden="true"><i class="fa-solid fa-arrow-left-long"></i></span>
+    <div class="rn-period is-new" [class.is-empty]="!newEndDate()">
+      <span class="rn-period__label">{{ 'sales.renewal.newPeriod' | translate }}</span>
+      <span class="rn-period__dates">{{ day(newStartDate() || null) }} — {{ newEndDate() ? day(newEndDate()) : '…' }}</span>
+      <span class="rn-period__price">
+        {{ (newPrice() ?? c.price) | money }}
+        @if (priceDelta(); as delta) {
+          <span class="rn-delta" [class.is-up]="delta > 0" [class.is-down]="delta < 0">
+            <i [class]="delta > 0 ? 'fa-solid fa-arrow-trend-up' : 'fa-solid fa-arrow-trend-down'" aria-hidden="true"></i>
+            {{ delta > 0 ? '+' : '' }}{{ delta | number: '1.0-1' }}%
+          </span>
+        }
+      </span>
+      @if (durationMonths(); as months) {
+        <span class="rn-period__len">{{ monthsLabel(months) }}</span>
+      }
+    </div>
+  </div>
+
+  <form id="renew-form" novalidate (ngSubmit)="submit()">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="rn-end" class="form-label fw-600">{{ 'sales.renewal.newEndDate' | translate }} <span class="text-danger">*</span></label>
+        <input id="rn-end" type="date" class="form-control" name="newEndDate" [min]="minEnd()"
+               [class.is-invalid]="visibleErrors().includes('endRequired') || visibleErrors().includes('endNotAfterCurrent') || visibleErrors().includes('endInPast')"
+               [ngModel]="newEndDate()" (ngModelChange)="newEndDate.set($event ?? '')" required />
+        <div class="rn-quick" role="group" [attr.aria-label]="'sales.renewal.quick' | translate">
+          @for (q of quickPicks; track q.months) {
+            <button type="button" class="rn-quick__btn" [class.is-active]="isPicked(q.months)" (click)="pick(q.months)">
+              {{ q.key | translate }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <label for="rn-start" class="form-label fw-600">{{ 'sales.renewal.newStartDate' | translate }}</label>
+        <input id="rn-start" type="date" class="form-control" name="newStartDate" [max]="newEndDate() || null"
+               [class.is-invalid]="visibleErrors().includes('startAfterEnd')"
+               [ngModel]="newStartDate()" (ngModelChange)="newStartDate.set($event ?? '')" />
+        <small class="form-text d-block mt-1">{{ 'sales.renewal.startHint' | translate }}</small>
+      </div>
+
+      <div class="col-md-6">
+        <label for="rn-price" class="form-label fw-600">{{ 'sales.renewal.newPrice' | translate }}</label>
+        <input id="rn-price" type="number" class="form-control" name="newPrice" min="0" step="0.01" inputmode="decimal"
+               [class.is-invalid]="visibleErrors().includes('negativePrice')"
+               [ngModel]="newPrice()" (ngModelChange)="onPrice($event)" />
+        <small class="form-text d-block mt-1">{{ 'sales.renewal.priceHint' | translate }}</small>
+      </div>
+
+      <div class="col-12">
+        <label for="rn-notes" class="form-label fw-600">{{ 'sales.renewal.notes' | translate }}</label>
+        <textarea id="rn-notes" class="form-control" rows="3" name="notes" [maxlength]="notesMax"
+                  [placeholder]="'sales.renewal.notesPh' | translate"
+                  [ngModel]="notes()" (ngModelChange)="notes.set($event ?? '')"></textarea>
+        <small class="form-text d-block text-end mt-1">{{ notes().length }} / {{ notesMax }}</small>
+      </div>
+    </div>
+
+    @if (visibleErrors().length) {
+      <ul class="rn-errors" role="alert">
+        @for (e of visibleErrors(); track e) {
+          <li><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ 'sales.renewal.errors.' + e | translate }}</li>
+        }
+      </ul>
+    }
+    @if (serverError()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mt-3 mb-0" role="alert">
+        <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span>{{ serverError() }}</span>
+      </div>
+    }
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" [disabled]="submitting()" (click)="cancel.emit()">{{ 'common.cancel' | translate }}</button>
+    <button type="submit" form="renew-form" class="btn btn-success" [disabled]="submitting() || errors().includes('cancelled')">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-arrows-rotate me-1" aria-hidden="true"></i>
+      }
+      {{ 'sales.renewal.submit' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

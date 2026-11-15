@@ -28,6 +28,16 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "*.svg",
+                "input": "node_modules/flag-icons/flags/4x3",
+                "output": "assets/flags"
+              },
+              {
+                "glob": "{maplibre-gl.css,maplibre-gl-worker.mjs}",
+                "input": "node_modules/maplibre-gl/dist",
+                "output": "assets/vendor/maplibre"
               }
             ],
             "styles": [

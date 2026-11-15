@@ -1,4 +1,5 @@
 import { Appointment, SupportHandoffAppointment } from '../appointments/appointment.model';
+import { CustomerLocation } from '../locations/location.model';
 
 /**
  * Row shape returned by `GET /Customers/getLeadCustomer`.
@@ -13,7 +14,7 @@ export interface CustomerServiceRef {
   name: string;
 }
 
-export interface CustomerListItem {
+export interface CustomerListItem extends CustomerLocation {
   id: number;
   fullName: string;
   phone: string;
@@ -123,7 +124,7 @@ export interface CustomerNoteResponse {
  * (`noteMarketing` / `noteSales` / `noteSupport`) are read-only in this view;
  * each role edits its own slot through `PUT /CustomerNotes/customer/{id}/myNote`.
  */
-export interface CustomerDetails {
+export interface CustomerDetails extends CustomerLocation {
   id: number;
   fullName: string | null;
   phone: string;
@@ -164,6 +165,10 @@ export interface CreateCustomerRequest {
   serviceIds: number[];
   assignToSalesTeam: boolean;
   salesPersonId: string | null;
+  /** Optional — empty lets the backend infer it from the phone's dial code. */
+  countryId?: number | null;
+  /** Egypt only — choosing one makes the country Egypt. */
+  governorateId?: number | null;
 }
 
 /**
@@ -185,6 +190,12 @@ export interface UpdateCustomerRequest {
   notes: string;
   campaignId: number | null;
   serviceIds: number[];
+  /**
+   * Omitted / `null` = keep the stored value, `0` = clear it
+   * ({@link CLEAR_LOCATION_ID}), an id = set it.
+   */
+  countryId?: number | null;
+  governorateId?: number | null;
 }
 
 /** Body for `POST /Customers/{id}/assign`. */
@@ -316,4 +327,8 @@ export interface CustomerListQuery {
   Search?: string;
   SourceId?: number;
   CustomerStatusId?: number;
+  /** `getSalesCustomers` only — effective country; `0` = unknown country. */
+  CountryId?: number;
+  /** `getSalesCustomers` only — `0` = Egyptian customers without a governorate. */
+  GovernorateId?: number;
 }

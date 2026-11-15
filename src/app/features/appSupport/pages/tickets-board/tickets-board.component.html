@@ -1,0 +1,235 @@
+<section class="sp-page">
+  <!-- Header + view switch -->
+  <header class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3 min-w-0">
+      <span class="icon-tile xl tone-primary flex-shrink-0"><i class="fa-solid fa-table-columns"></i></span>
+      <div class="min-w-0">
+        <h3 class="fw-700 mb-1">{{ 'support.board.title' | translate }}</h3>
+        <p class="text-muted mb-0">{{ 'support.board.subtitle' | translate }}</p>
+      </div>
+    </div>
+
+    <div class="sp-view-switch" role="group" [attr.aria-label]="'pipeline.view.label' | translate">
+      <a class="sp-view-btn" routerLink="/SupportTickets">
+        <i class="fa-solid fa-table-list"></i>{{ 'pipeline.view.table' | translate }}
+      </a>
+      <span class="sp-view-btn is-active" aria-current="page">
+        <i class="fa-solid fa-table-columns"></i>{{ 'pipeline.view.kanban' | translate }}
+      </span>
+    </div>
+  </header>
+
+  <!-- KPIs (TicketStatistics) -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <app-stat-card [label]="'support.board.stats.total' | translate" [value]="stats()?.totalTickets ?? '—'"
+                     icon="fa-solid fa-ticket" tone="primary" />
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card [label]="'support.board.stats.open' | translate" [value]="stats()?.openTickets ?? '—'"
+                     icon="fa-solid fa-folder-open" tone="info" />
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card [label]="'support.board.stats.inProgress' | translate" [value]="stats()?.inProgressTickets ?? '—'"
+                     icon="fa-solid fa-spinner" tone="warning" />
+    </div>
+    <div class="col-6 col-lg-3">
+      <app-stat-card [label]="'support.board.stats.high' | translate" [value]="stats()?.highPriorityTickets ?? '—'"
+                     [sub]="stats() ? ('support.board.stats.resolved' | translate: { n: stats()!.resolvedTickets }) : null"
+                     icon="fa-solid fa-fire-flame-curved" tone="danger" />
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-12 col-md-8">
+          <div class="position-relative">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input class="form-control search-input" type="search" [placeholder]="'support.board.search' | translate"
+                   [ngModel]="searchTerm" (ngModelChange)="onSearchInput($event)" />
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <select class="form-select" [attr.aria-label]="'support.board.priority' | translate"
+                  [ngModel]="priority() ?? ''" (ngModelChange)="onPriorityChange($event)">
+            <option value="">{{ 'support.board.allPriorities' | translate }}</option>
+            @for (p of priorities; track p.enumName) {
+              <option [value]="p.enumName">{{ p.i18nKey | translate }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="sp-toolbar mb-3">
+    @if (overdueCount() > 0) {
+      <span class="sp-overdue is-static">
+        <i class="fa-solid fa-bell"></i>
+        {{ 'support.board.overdue' | translate }}
+        <span class="sp-overdue-count">{{ overdueCount() }}</span>
+      </span>
+    }
+    @if (hasFilters()) {
+      <button type="button" class="btn btn-sm btn-link text-decoration-none px-1" (click)="clearFilters()">
+        <i class="fa-solid fa-filter-circle-xmark me-1"></i>{{ 'pipeline.toolbar.clear' | translate }}
+      </button>
+    }
+    <span class="sp-hint d-none d-lg-inline-flex">
+      <i class="fa-solid fa-hand-pointer"></i>{{ 'support.board.dragHint' | translate }}
+    </span>
+    <button type="button" class="btn btn-sm btn-outline-secondary sp-refresh" [disabled]="loading()" (click)="reload(true)">
+      <i class="fa-solid fa-rotate-right" [class.fa-spin]="loading()"></i>
+      {{ 'pipeline.toolbar.refresh' | translate }}
+    </button>
+  </div>
+
+  @if (loadError()) {
+    <div class="mb-3">
+      <app-load-error [message]="loadError()" [loading]="loading()" (retry)="reload(true)"></app-load-error>
+    </div>
+  }
+
+  <!-- Board -->
+  @if (loading() && !columns().length) {
+    <div class="sp-board" aria-hidden="true">
+      @for (_ of [1, 2, 3, 4, 5]; track $index) {
+        <div class="sp-col sp-col--sk"><div class="sp-col-head"><span class="sk-line"></span></div>
+          <div class="sp-col-body">@for (__ of [1, 2, 3]; track $index) { <div class="sk-card"></div> }</div>
+        </div>
+      }
+    </div>
+  } @else if (columns().length) {
+    <div class="sp-board" [class.is-loading]="loading()">
+      @for (col of columns(); track col.meta.value) {
+        <div class="sp-col tone-{{ col.tone }}"
+             [class.is-drop-target]="dropTarget() === col.meta.value"
+             (dragover)="onDragOver($event, col)"
+             (dragleave)="onDragLeave($event, col)"
+             (drop)="onDrop($event, col)">
+          <div class="sp-col-head">
+            <span class="sp-col-icon"><i [class]="col.meta.icon"></i></span>
+            <span class="sp-col-title">{{ col.meta.i18nKey | translate }}</span>
+            <span class="sp-col-count">{{ col.count }}</span>
+          </div>
+
+          <div class="sp-col-body">
+            @for (t of col.items; track t.id) {
+              @let pr = priorityMeta[t.priority];
+              <article class="sp-card"
+                       [class.is-stale]="overdue(t)"
+                       [class.is-saving]="savingIds().has(t.id)"
+                       [class.is-dragging]="dragging()?.id === t.id"
+                       draggable="true"
+                       (dragstart)="onDragStart($event, t)"
+                       (dragend)="onDragEnd()">
+                <div class="sp-card-top">
+                  <span class="tb-no">#{{ t.ticketNumber }}</span>
+                  @if (pr) {
+                    <span class="tb-prio" [attr.data-p]="pr.enumName"><i [class]="pr.icon"></i>{{ pr.i18nKey | translate }}</span>
+                  }
+                  @if (savingIds().has(t.id)) {
+                    <span class="spinner-border spinner-border-sm text-primary ms-auto" role="status"></span>
+                  }
+                </div>
+
+                <button type="button" class="sp-name tb-title" (click)="detailsId.set(t.id)" appClampText="2" [clampTitle]="t.title">
+                  {{ t.title }}
+                </button>
+
+                <div class="sp-line">
+                  <i class="fa-solid fa-user"></i>
+                  <span class="text-truncate">{{ t.customerName }}@if (t.companyName) { · {{ t.companyName }} }</span>
+                </div>
+
+                <div class="sp-line">
+                  <i class="fa-solid fa-hourglass-half"></i>{{ ageLabel(t) }}
+                </div>
+
+                @if (t.nextFollowUpDate && t.status === statusEnum.Open) {
+                  <div class="sp-line" [class.is-danger]="overdue(t)">
+                    <i class="fa-solid fa-calendar-day"></i>
+                    {{ (overdue(t) ? 'support.board.card.followUpOverdue' : 'support.board.card.followUp') | translate }}:
+                    {{ t.nextFollowUpDate | cairoDate }}
+                  </div>
+                }
+
+                @if (t.serviceName) {
+                  <div class="sp-chips"><span class="crm-chip tone-brand">{{ t.serviceName }}</span></div>
+                }
+
+                <div class="sp-line">
+                  <i class="fa-solid fa-user-pen"></i>{{ t.createdByName || '—' }}
+                </div>
+
+                <div class="sp-actions">
+                  <button type="button" class="sp-act" [appTip]="'support.board.card.view' | translate"
+                          [attr.aria-label]="'support.board.card.view' | translate" (click)="detailsId.set(t.id)">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                  <button type="button" class="sp-act" [appTip]="'support.board.card.edit' | translate"
+                          [attr.aria-label]="'support.board.card.edit' | translate" (click)="openEdit(t.id)">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <label class="tb-move" [appTip]="'support.board.card.move' | translate">
+                    <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+                    <select #mv [attr.aria-label]="'support.board.card.move' | translate" [disabled]="savingIds().has(t.id)"
+                            (change)="onMoveSelect(t, mv.value, mv)">
+                      <option value="">{{ 'support.board.card.move' | translate }}</option>
+                      @for (c of otherColumns(t); track c.meta.value) {
+                        <option [value]="c.meta.value">{{ c.meta.i18nKey | translate }}</option>
+                      }
+                    </select>
+                  </label>
+                </div>
+              </article>
+            } @empty {
+              <div class="sp-col-empty">
+                <i class="fa-regular fa-folder-open"></i>
+                {{ 'support.board.columnEmpty' | translate }}
+              </div>
+            }
+
+            @if (col.items.length < col.count) {
+              <button type="button" class="sp-more" [disabled]="loadingMore() !== null" (click)="loadMore(col)">
+                @if (loadingMore() === col.meta.value) {
+                  <span class="spinner-border spinner-border-sm"></span>
+                } @else {
+                  <i class="fa-solid fa-angles-down"></i>
+                }
+                {{ 'pipeline.loadMore' | translate: { left: col.count - col.items.length } }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>
+
+@if (detailsId(); as id) {
+  <app-support-ticket-details-dialog [ticketId]="id" (edit)="openEdit($event)" (cancel)="detailsId.set(null)" />
+}
+
+@if (editId(); as id) {
+  <app-support-ticket-form-dialog [ticketId]="id" (updated)="onEdited()" (cancel)="editId.set(null)" />
+}
+
+@if (reopen(); as r) {
+  <app-modal [open]="true" [title]="'support.board.reopen.title' | translate" icon="fa-solid fa-calendar-day"
+             iconTone="primary" size="sm" (closed)="reopen.set(null)">
+    <p class="text-muted small mb-2">{{ 'support.board.reopen.hint' | translate: { no: r.ticket.ticketNumber } }}</p>
+    <label class="form-label fw-600" for="tb-followup">{{ 'support.board.reopen.label' | translate }}</label>
+    <input id="tb-followup" type="datetime-local" class="form-control" [ngModel]="r.when"
+           (ngModelChange)="reopen.set({ ticket: r.ticket, when: $event })" />
+    <ng-container modal-footer>
+      <button type="button" class="btn btn-light" (click)="reopen.set(null)">{{ 'common.cancel' | translate }}</button>
+      <button type="button" class="btn btn-primary" [disabled]="!r.when" (click)="confirmReopen()">
+        <i class="fa-solid fa-folder-open me-1"></i>{{ 'support.board.reopen.submit' | translate }}
+      </button>
+    </ng-container>
+  </app-modal>
+}

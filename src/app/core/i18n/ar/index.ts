@@ -31,6 +31,9 @@ import smartAnalytics from './smartAnalytics.ar';
 import bottomNav from './bottomNav.ar';
 import salesPlaybook from './salesPlaybook.ar';
 import attendance from './attendance.ar';
+import customerMap from './customerMap.ar';
+import vault from './vault.ar';
+import geo from './geo.ar';
 
 const ar: Translations = {
   ...common,
@@ -65,6 +68,9 @@ const ar: Translations = {
   ...bottomNav,
   ...salesPlaybook,
   ...attendance,
+  ...customerMap,
+  ...vault,
+  ...geo,
 };
 
 export default ar;

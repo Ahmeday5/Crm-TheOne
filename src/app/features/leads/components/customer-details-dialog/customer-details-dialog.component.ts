@@ -14,6 +14,7 @@ import {
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
+import { CustomerLocationComponent } from '../../../../shared/components/customer-location/customer-location.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { CustomerDetails } from '../../../../shared/models';
@@ -29,7 +30,15 @@ export type CustomerDetailsTab = 'details' | 'whatsapp';
 @Component({
   selector: 'app-customer-details-dialog',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslatePipe, ModalComponent, LoadErrorComponent, WaThreadComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    TranslatePipe,
+    ModalComponent,
+    LoadErrorComponent,
+    WaThreadComponent,
+    CustomerLocationComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-details-dialog.component.html',
   styleUrl: './customer-details-dialog.component.scss',

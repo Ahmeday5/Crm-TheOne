@@ -15,9 +15,14 @@
     </app-stat-card>
   </div>
   <div class="col-12 col-sm-6 col-lg">
-    <app-stat-card [label]="'sales.contractsMgmt.stats.expiring' | translate" [value]="formatCount(kpis().expiring)"
-      icon="fa-solid fa-circle-exclamation" tone="orange">
-    </app-stat-card>
+    <!-- Opens the "expiring soon" list (GetContracts?expiringSoon=true). -->
+    <button type="button" class="kpi-link" [class.is-active]="activeTab() === 'expiring'"
+            [attr.aria-label]="'sales.contractsMgmt.stats.expiringAria' | translate" (click)="setTab('expiring')">
+      <app-stat-card [label]="'sales.contractsMgmt.stats.expiring' | translate" [value]="formatCount(kpis().expiring)"
+        [sub]="'sales.contractsMgmt.stats.expiringSub' | translate"
+        icon="fa-solid fa-circle-exclamation" tone="orange">
+      </app-stat-card>
+    </button>
   </div>
   <div class="col-12 col-sm-6 col-lg">
     <app-stat-card [label]="'sales.contractsMgmt.stats.expired' | translate" [value]="formatCount(kpis().expired)"
@@ -121,8 +126,12 @@
         </thead>
         <tbody>
           @for (row of rows(); track row.id) {
-          <tr>
-            <td class="ps-3 fw-bold text-primary">CNT-{{ row.id }}</td>
+          @let urgency = renewalUrgency(row);
+          <tr [class.row-expiring]="urgency === 'expiring'" [class.row-expired]="urgency === 'expired'">
+            <td class="ps-3 fw-bold">
+              <a class="contract-id-link" [routerLink]="['/contracts', row.id]"
+                 [attr.aria-label]="'sales.contractDetails.open' | translate">CNT-{{ row.id }}</a>
+            </td>
             <td>
               <div class="d-flex align-items-center gap-2 min-w-0">
                 <i class="fa-solid fa-user text-muted flex-shrink-0"></i>
@@ -177,6 +186,21 @@
             <td class="fw-bold text-success text-nowrap">{{ row.price | money }}</td>
             <td class="text-end pe-3">
               <div class="d-inline-flex gap-2 flex-nowrap">
+                @if (suggestsRenewal(row)) {
+                  <button type="button"
+                          class="btn btn-sm btn-success text-nowrap renew-btn"
+                          [disabled]="busyId() === row.id"
+                          (click)="openRenew(row)">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span>{{ 'sales.renewal.action' | translate }}</span>
+                  </button>
+                }
+                <a class="btn btn-sm btn-light"
+                   [routerLink]="['/contracts', row.id]"
+                   [attr.title]="'sales.contractDetails.open' | translate"
+                   [attr.aria-label]="'sales.contractDetails.open' | translate">
+                  <i class="fa-solid fa-eye"></i>
+                </a>
                 <button type="button"
                         class="btn btn-sm btn-primary text-nowrap"
                         [disabled]="busyId() === row.id"
@@ -225,4 +249,8 @@
 <app-contract-form-dialog [contractId]="editId()" (created)="onSaved()" (updated)="onSaved()"
   (cancel)="closeForm()">
 </app-contract-form-dialog>
+}
+
+@if (renewTarget(); as target) {
+<app-renew-contract-dialog [contract]="target" (renewed)="onRenewed()" (cancel)="renewTarget.set(null)" />
 }

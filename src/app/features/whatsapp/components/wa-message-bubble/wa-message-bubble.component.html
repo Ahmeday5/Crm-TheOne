@@ -50,7 +50,15 @@
       }
       @case ('audio') {
         @if (mediaSrc(); as src) {
-          <audio class="wa-media--audio" [src]="src" controls preload="none"></audio>
+          @if (!playbackFailed()) {
+            <audio class="wa-media--audio" [src]="src" controls preload="metadata" (error)="playbackFailed.set(true)"></audio>
+          } @else {
+            <a class="wa-file wa-file--audio" [href]="src" target="_blank" rel="noopener" [attr.download]="m.fileName || ''">
+              <span class="wa-file__icon" aria-hidden="true"><i class="fa-solid fa-microphone"></i></span>
+              <span class="wa-file__name">{{ 'whatsapp.message.playbackFallback' | translate }}</span>
+              <span class="wa-file__download" aria-hidden="true"><i class="fa-solid fa-download"></i></span>
+            </a>
+          }
         } @else {
           <ng-container *ngTemplateOutlet="placeholder" />
         }
@@ -122,13 +130,35 @@
   }
 }
 
-<!-- Media without a URL -->
+<!-- Media without a URL: still being stored on our server, or given up on -->
 <ng-template #placeholder>
-  <span class="wa-placeholder">
-    <i [class]="kindIcon()" aria-hidden="true"></i>
-    {{ 'whatsapp.message.kind.' + kind() | translate }}
-    @if (m.fileName) {
-      <span class="wa-placeholder__name" dir="auto">· {{ m.fileName }}</span>
+  @switch (availability()) {
+    @case ('loading') {
+      <span class="wa-placeholder is-loading" role="status">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        {{ 'whatsapp.message.mediaLoading' | translate }}
+        @if (m.fileName) {
+          <span class="wa-placeholder__name" dir="auto">· {{ m.fileName }}</span>
+        }
+      </span>
     }
-  </span>
+    @case ('unavailable') {
+      <span class="wa-placeholder is-missing">
+        <i class="fa-solid fa-file-circle-exclamation" aria-hidden="true"></i>
+        {{ 'whatsapp.message.mediaUnavailable' | translate }}
+        @if (m.fileName) {
+          <span class="wa-placeholder__name" dir="auto">· {{ m.fileName }}</span>
+        }
+      </span>
+    }
+    @default {
+      <span class="wa-placeholder">
+        <i [class]="kindIcon()" aria-hidden="true"></i>
+        {{ 'whatsapp.message.kind.' + kind() | translate }}
+        @if (m.fileName) {
+          <span class="wa-placeholder__name" dir="auto">· {{ m.fileName }}</span>
+        }
+      </span>
+    }
+  }
 </ng-template>

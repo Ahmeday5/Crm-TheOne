@@ -210,6 +210,34 @@ export function isNoteKind(kind: WaMediaKind): boolean {
   return kind === 'location' || kind === 'reaction' || kind === 'system';
 }
 
+/** Kinds whose file the backend downloads to our server after the message arrives. */
+const DOWNLOADED_KINDS: ReadonlySet<WaMediaKind> = new Set(['image', 'video', 'audio', 'document', 'sticker']);
+
+/**
+ * How long a media message may wait for its file. The backend stores every
+ * file on our server in the background and re-pushes the same message (same
+ * id) with `mediaUrl` set — usually within seconds, longer after retries.
+ */
+export const MEDIA_DOWNLOAD_GRACE_MS = 3 * 60_000;
+
+/**
+ * `ready` — has a URL · `loading` — the server is still fetching it ·
+ * `unavailable` — gave up (after the grace period, or on reload) ·
+ * `none` — not a downloadable kind.
+ */
+export type MediaAvailability = 'ready' | 'loading' | 'unavailable' | 'none';
+
+export function mediaAvailability(
+  m: Pick<WaMessage, 'messageType' | 'mediaUrl' | 'sentAt'>,
+  now = Date.now(),
+): MediaAvailability {
+  const kind = mediaKindOf(m.messageType);
+  if (!DOWNLOADED_KINDS.has(kind)) return 'none';
+  if (m.mediaUrl) return 'ready';
+  const sent = Date.parse(m.sentAt);
+  return Number.isFinite(sent) && now - sent < MEDIA_DOWNLOAD_GRACE_MS ? 'loading' : 'unavailable';
+}
+
 export const MEDIA_KIND_ICON: Record<Exclude<WaMediaKind, 'text'>, string> = {
   image: 'fa-regular fa-image',
   video: 'fa-solid fa-video',

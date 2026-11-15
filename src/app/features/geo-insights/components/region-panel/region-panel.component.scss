@@ -1,0 +1,91 @@
+:host { display: contents; }
+
+.rp-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  animation: rp-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.rp-hero__id { display: flex; align-items: center; gap: 0.85rem; min-width: 0; }
+.rp-hero__flag { --flag-w: 2.6rem; }
+.rp-hero__icon {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: var(--radius-md);
+  background: var(--brand-soft);
+  color: var(--brand-500);
+  font-size: 1.1rem;
+}
+.rp-hero__count { font-size: var(--fs-2xl); font-weight: var(--fw-800); line-height: 1.1; color: var(--text-1); font-variant-numeric: tabular-nums; }
+.rp-hero__label { color: var(--text-3); font-size: var(--fs-sm); }
+
+.rp-hero__facts {
+  display: flex;
+  gap: 1.25rem;
+  margin: 0;
+
+  dt { font-size: var(--fs-xs); font-weight: var(--fw-500); color: var(--text-3); }
+  dd { margin: 0; font-size: var(--fs-lg); font-weight: var(--fw-700); color: var(--text-1); font-variant-numeric: tabular-nums; }
+}
+
+.rp-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.85rem 0 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-md);
+  background: var(--info-soft);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+
+  i { margin-top: 0.2rem; color: var(--info); }
+  &--warn { background: var(--warning-soft); i { color: var(--warning); } }
+}
+
+.rp-section { margin-top: 1.4rem; }
+.rp-section__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.6rem; }
+.rp-section__title { font-weight: var(--fw-700); color: var(--text-1); margin-bottom: 0.6rem; }
+
+.rp-status { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+.rp-status__row {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 3rem 3rem;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: var(--fs-sm);
+  animation: rp-in 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+.rp-status__label { color: var(--text-2); font-weight: var(--fw-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-status__bar { position: relative; height: 8px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
+.rp-status__fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: inherit;
+  background: var(--brand-500);
+  animation: rp-grow 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transform-origin: left center;
+}
+:host-context([dir='rtl']) .rp-status__fill { transform-origin: right center; }
+.rp-status__num { text-align: end; font-weight: var(--fw-700); font-variant-numeric: tabular-nums; }
+.rp-status__pct { text-align: end; color: var(--text-3); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+
+
+
+@keyframes rp-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes rp-grow { from { transform: scaleX(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rp-hero, .rp-status__row, .rp-status__fill { animation: none; }
+}

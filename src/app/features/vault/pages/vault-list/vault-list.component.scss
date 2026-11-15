@@ -1,0 +1,169 @@
+@use 'breakpoints' as bp;
+
+$ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+.vl-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-inline-start: 4px solid var(--brand-500);
+  border-radius: var(--radius-lg);
+  background: var(--surface-0);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  animation: vl-rise 360ms $ease both;
+}
+
+.vl-notice__icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: var(--radius-md);
+  background: var(--brand-soft);
+  color: var(--brand-500);
+}
+
+.vl-card { animation: vl-rise 420ms $ease 60ms both; }
+
+.vl-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.vl-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+}
+
+.vl-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.95rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+  transition: background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+
+  &:hover { color: var(--text-1); }
+  &:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 2px; }
+  &.is-active { background: var(--surface-0); color: var(--brand-500); box-shadow: var(--shadow-sm); }
+}
+
+.vl-search {
+  position: relative;
+  flex: 0 1 20rem;
+
+  i { position: absolute; inset-inline-start: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+  .form-control { padding-inline-start: 2.4rem; }
+}
+
+.vl-table-wrap { transition: opacity 160ms ease; }
+.vl-table-wrap.is-refreshing { opacity: 0.6; }
+
+.vl-row { animation: vl-rise 300ms $ease both; animation-delay: calc(min(var(--i, 0), 12) * 30ms); }
+
+.vl-account { display: flex; align-items: center; gap: 0.7rem; min-width: 0; }
+
+.vl-account__icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: var(--radius-md);
+  background: var(--info-soft);
+  color: var(--info);
+  transition: transform 200ms $ease;
+
+  &.is-server { background: var(--brand-soft); color: var(--brand-500); }
+}
+.vl-row:hover .vl-account__icon { transform: rotate(-8deg) scale(1.06); }
+
+.vl-copyable { display: inline-flex; align-items: center; gap: 0.15rem; max-width: 100%; }
+.vl-mono {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 16rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+}
+
+.vl-links { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.vl-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+
+  i { color: var(--text-3); font-size: 0.8em; }
+}
+
+.vl-skeleton { display: grid; gap: 0.6rem; }
+.vl-skeleton__row {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  span { height: 0.8rem; border-radius: var(--radius-pill); background: var(--surface-2); animation: vl-pulse 1.2s ease-in-out infinite; }
+  .is-short { width: 60%; }
+}
+
+.vl-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.vl-state__vault {
+  display: grid;
+  place-items: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  margin-bottom: 0.85rem;
+  border-radius: var(--radius-xl);
+  background: var(--brand-soft);
+  color: var(--brand-500);
+  font-size: 1.8rem;
+  animation: vl-float 3.4s ease-in-out infinite;
+}
+
+@keyframes vl-rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes vl-pulse { 50% { opacity: 0.45; } }
+@keyframes vl-float { 50% { transform: translateY(-5px); } }
+
+@include bp.down(md) {
+  .vl-search { flex-basis: 100%; }
+  .vl-tabs { width: 100%; justify-content: space-between; }
+  .vl-tab { flex: 1; justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vl-notice, .vl-card, .vl-row, .vl-skeleton__row span, .vl-state__vault { animation: none; }
+}

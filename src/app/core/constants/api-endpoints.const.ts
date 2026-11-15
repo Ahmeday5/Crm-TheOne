@@ -73,6 +73,13 @@ export const API_ENDPOINTS = {
     contact: (id: number | string) => `Customers/${id}/contact`,
     /** Customer picker for price quotations — each item carries its services. */
     dropdown: 'Customers/dropdownCustomers',
+    /** Egypt's 27 governorates (`code` = ISO 3166-2, e.g. `EG-C`). Static. */
+    governorates: 'Customers/governorates',
+    /**
+     * GET (Admin, Sales — Sales sees only own customers) customers per country
+     * and per Egyptian governorate. All filters optional.
+     */
+    map: 'Customers/map',
   },
   customerNotes: {
     /**
@@ -96,6 +103,23 @@ export const API_ENDPOINTS = {
     update: (id: number | string) => `Contracts/UpdateContract/${id}`,
     delete: (id: number | string) => `Contracts/DeleteContract/${id}`,
     statistics: 'Contracts/ContractStatistics',
+    /** POST (Admin; Sales: own) — extends the same contract and logs the old period. */
+    renew: (id: number | string) => `Contracts/RenewContract/${id}`,
+    /** GET renewal history, newest first. */
+    renewals: (id: number | string) => `Contracts/ContractRenewals/${id}`,
+  },
+  /**
+   * Accounts vault (Admin only) — email / server credentials. Reads never
+   * carry the password; `password` is the only way to get it (logged
+   * server-side). Nothing from here is ever cached client-side.
+   */
+  vault: {
+    /** GET `?type=&search=&customerId=&projectId=&pageIndex=&pageSize=` (paged). POST creates. */
+    list: 'Vault',
+    /** GET / PUT / DELETE one account. */
+    byId: (id: number | string) => `Vault/${id}`,
+    /** GET `{ id, password }`. */
+    password: (id: number | string) => `Vault/${id}/password`,
   },
   appointments: {
     list: 'Appointments/GetAppointments',

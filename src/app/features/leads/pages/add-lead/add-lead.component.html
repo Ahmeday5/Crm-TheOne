@@ -100,6 +100,14 @@
                 [label]="'customers.form.address' | translate" />
             </div>
 
+            <!-- Country (optional) + governorate (Egypt only) -->
+            <div class="col-12">
+              <app-customer-location-fields
+                idPrefix="add"
+                [countryControl]="form.controls.countryId"
+                [governorateControl]="form.controls.governorateId" />
+            </div>
+
             <!-- Campaign -->
             <div class="col-md-6">
               <label for="add-campaign" class="form-label fw-600">

@@ -1,0 +1,168 @@
+<app-page-header [title]="'vault.title' | translate" [subtitle]="'vault.subtitle' | translate" icon="fa-solid fa-vault">
+  <button type="button" class="btn btn-primary" (click)="openCreate()">
+    <i class="fa-solid fa-plus me-1" aria-hidden="true"></i>{{ 'vault.add' | translate }}
+  </button>
+</app-page-header>
+
+<div class="vl-notice" role="note">
+  <span class="vl-notice__icon" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span>
+  <p class="mb-0">{{ 'vault.securityNote' | translate }}</p>
+</div>
+
+<div class="card vl-card">
+  <div class="card-body">
+    <div class="vl-toolbar">
+      <div class="vl-tabs" role="tablist" [attr.aria-label]="'vault.form.type' | translate">
+        @for (t of tabs; track t.key) {
+          <button type="button" role="tab" class="vl-tab" [class.is-active]="tab() === t.key"
+                  [attr.aria-selected]="tab() === t.key" (click)="setTab(t.key)">
+            <i [class]="t.icon" aria-hidden="true"></i>{{ 'vault.tabs.' + t.key | translate }}
+          </button>
+        }
+      </div>
+      <div class="vl-search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" class="form-control" [placeholder]="'vault.searchPlaceholder' | translate"
+               [attr.aria-label]="'vault.searchPlaceholder' | translate" (input)="onSearch($any($event.target).value)" />
+      </div>
+    </div>
+
+    @if (loading() && !rows().length) {
+      <div class="vl-skeleton" aria-hidden="true">
+        @for (_ of [1, 2, 3, 4, 5]; track $index) {
+          <div class="vl-skeleton__row"><span></span><span></span><span class="is-short"></span></div>
+        }
+      </div>
+    } @else if (loadError()) {
+      <div class="vl-state">
+        <span class="icon-tile lg tone-warning"><i class="fa-solid fa-triangle-exclamation"></i></span>
+        <p class="mb-2 text-muted">{{ loadError() }}</p>
+        <button type="button" class="btn btn-sm btn-light" (click)="load()">
+          <i class="fa-solid fa-rotate me-1" aria-hidden="true"></i>{{ 'common.retry' | translate }}
+        </button>
+      </div>
+    } @else if (!rows().length) {
+      <div class="vl-state">
+        <span class="vl-state__vault" aria-hidden="true"><i class="fa-solid fa-vault"></i></span>
+        <h6 class="fw-700 mb-1">{{ (filtered() ? 'vault.emptyFiltered' : 'vault.empty') | translate }}</h6>
+        @if (!filtered()) {
+          <p class="text-muted small mb-3">{{ 'vault.emptyHint' | translate }}</p>
+          <button type="button" class="btn btn-primary btn-sm" (click)="openCreate()">
+            <i class="fa-solid fa-plus me-1" aria-hidden="true"></i>{{ 'vault.add' | translate }}
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="table-responsive border rounded vl-table-wrap" [class.is-refreshing]="loading()" [attr.aria-busy]="loading()">
+        <table class="table table-hover align-middle mb-0 vl-table" appResponsiveTable [rtPrimaryCol]="0">
+          <thead>
+            <tr>
+              <th class="ps-3">{{ 'vault.table.account' | translate }}</th>
+              <th>{{ 'vault.table.address' | translate }}</th>
+              <th>{{ 'vault.table.username' | translate }}</th>
+              <th>{{ 'vault.table.password' | translate }}</th>
+              <th>{{ 'vault.table.linkedTo' | translate }}</th>
+              <th>{{ 'vault.table.updatedAt' | translate }}</th>
+              <th class="rt-actions text-end pe-3" style="width:1%">{{ 'vault.table.actions' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id; let i = $index) {
+              <tr class="vl-row" [style.--i]="i">
+                <td class="ps-3">
+                  <div class="vl-account">
+                    <span class="vl-account__icon" [class.is-server]="row.type === 'Server'"
+                          [attr.title]="row.typeName" aria-hidden="true">
+                      <i [class]="row.type === 'Server' ? 'fa-solid fa-server' : 'fa-solid fa-envelope'"></i>
+                    </span>
+                    <div class="min-w-0">
+                      <div class="fw-600" appClampText="1">{{ row.title }}</div>
+                      <small class="text-muted">{{ row.typeName || ('vault.types.' + row.type | translate) }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  @if (row.type === 'Email' ? row.email : endpoint(row); as address) {
+                    <span class="vl-copyable">
+                      <code dir="ltr" class="vl-mono">{{ address }}</code>
+                      <app-copy-button [value]="address" [label]="'vault.copy' | translate" (copied)="onCopied()" (failed)="onCopyFailed()" />
+                    </span>
+                    @if (row.type === 'Email' && endpoint(row); as server) {
+                      <small class="d-block text-muted" dir="ltr">{{ server }}</small>
+                    }
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td>
+                  @if (row.username) {
+                    <span class="vl-copyable">
+                      <code dir="ltr" class="vl-mono">{{ row.username }}</code>
+                      <app-copy-button [value]="row.username" [label]="'vault.copy' | translate" (copied)="onCopied()" (failed)="onCopyFailed()" />
+                    </span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td>
+                  <app-vault-secret [accountId]="row.id" [hasPassword]="row.hasPassword"
+                                    (copied)="onCopied()" (failed)="onCopyFailed()" (revealFailed)="onRevealFailed($event)" />
+                </td>
+                <td>
+                  @if (row.customerName || row.projectTitle) {
+                    <div class="vl-links">
+                      @if (row.customerName) {
+                        <span class="vl-link"><i class="fa-solid fa-user" aria-hidden="true"></i><span appClampText="1">{{ row.customerName }}</span></span>
+                      }
+                      @if (row.projectTitle) {
+                        <span class="vl-link"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i><span appClampText="1">{{ row.projectTitle }}</span></span>
+                      }
+                    </div>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td class="text-nowrap small">
+                  <div>{{ (row.updatedAt || row.createdAt) | cairoDate: 'date' }}</div>
+                  <small class="text-muted">{{ row.updatedByName || row.createdByName || '' }}</small>
+                </td>
+                <td class="text-end pe-3">
+                  <div class="d-inline-flex gap-1 flex-nowrap">
+                    @if (safeUrl(row); as url) {
+                      <a class="btn btn-sm btn-light" [href]="url" target="_blank" rel="noopener noreferrer"
+                         [attr.title]="'vault.table.open' | translate" [attr.aria-label]="'vault.table.open' | translate">
+                        <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                      </a>
+                    }
+                    <button type="button" class="btn btn-sm btn-light" [disabled]="busyId() === row.id" (click)="openEdit(row)"
+                            [attr.title]="'vault.table.edit' | translate" [attr.aria-label]="'vault.table.edit' | translate">
+                      <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger-soft" [disabled]="busyId() === row.id" (click)="confirmDelete(row)"
+                            [attr.title]="'vault.table.delete' | translate" [attr.aria-label]="'vault.table.delete' | translate">
+                      @if (busyId() === row.id) {
+                        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                      } @else {
+                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                      }
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-3">
+        <app-pagination [pageIndex]="pageIndex()" [pageSize]="pageSize()" [count]="count()" [pageSizeOptions]="pageSizeOptions"
+                        [disabled]="loading()" (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
+      </div>
+    }
+  </div>
+</div>
+
+@if (formOpen()) {
+  <app-vault-form-dialog [accountId]="editId()" [initialType]="tab() === 'Server' ? 'Server' : 'Email'"
+                         (saved)="onSaved($event)" (cancel)="closeForm()" />
+}

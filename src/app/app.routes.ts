@@ -22,6 +22,8 @@ import { TEAM_CHAT_ROUTES } from './features/team-chat/team-chat.routes';
 import { SMART_ANALYTICS_ROUTES } from './features/smart-analytics/smart-analytics.routes';
 import { SALES_PLAYBOOK_ROUTES } from './features/sales-playbook/sales-playbook.routes';
 import { ATTENDANCE_ROUTES } from './features/attendance/attendance.routes';
+import { CUSTOMER_MAP_ROUTES } from './features/customer-map/customer-map.routes';
+import { VAULT_ROUTES } from './features/vault/vault.routes';
 
 
 export const routes: Routes = [
@@ -50,6 +52,8 @@ export const routes: Routes = [
       ...SMART_ANALYTICS_ROUTES,
       ...SALES_PLAYBOOK_ROUTES,
       ...ATTENDANCE_ROUTES,
+      ...CUSTOMER_MAP_ROUTES,
+      ...VAULT_ROUTES,
       ...GOALS_ROUTES,
       ...PROJECT_PROGRESS_ROUTES,
       {

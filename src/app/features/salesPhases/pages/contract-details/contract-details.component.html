@@ -1,0 +1,147 @@
+<a class="cdt-back" routerLink="/contracts-management">
+  <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>{{ 'sales.contractDetails.back' | translate }}
+</a>
+
+@if (loading() && !contract()) {
+  <div class="cdt-skeleton" aria-hidden="true">
+    <span class="cdt-sk cdt-sk--title"></span>
+    <span class="cdt-sk cdt-sk--hero"></span>
+    <div class="cdt-sk-grid"><span class="cdt-sk"></span><span class="cdt-sk"></span></div>
+  </div>
+} @else if (error()) {
+  @let e = error()!;
+  <div class="card cdt-card">
+    <div class="cdt-state">
+      <span class="icon-tile lg" [class.tone-warning]="!e.notFound" [class.tone-primary]="e.notFound">
+        <i [class]="e.notFound ? 'fa-solid fa-file-circle-question' : 'fa-solid fa-triangle-exclamation'"></i>
+      </span>
+      <h6 class="fw-700 mb-1">{{ e.message }}</h6>
+      <div class="btn-row">
+        @if (!e.notFound) {
+          <button type="button" class="btn btn-sm btn-primary" (click)="load()">
+            <i class="fa-solid fa-rotate me-1"></i>{{ 'common.retry' | translate }}
+          </button>
+        }
+        <a class="btn btn-sm btn-light" routerLink="/contracts-management">{{ 'sales.contractDetails.back' | translate }}</a>
+      </div>
+    </div>
+  </div>
+} @else if (contract()) {
+  @let c = contract()!;
+  <app-page-header [title]="c.title" [subtitle]="'CNT-' + c.id + ' · ' + c.customerName" icon="fa-solid fa-file-contract">
+    @if (renewable()) {
+      <button type="button" class="btn btn-success cdt-renew" (click)="renewOpen.set(true)">
+        <i class="fa-solid fa-arrows-rotate me-1" aria-hidden="true"></i>{{ 'sales.renewal.action' | translate }}
+      </button>
+    }
+    <button type="button" class="btn btn-light" (click)="editOpen.set(true)">
+      <i class="fa-solid fa-pen-to-square me-1" aria-hidden="true"></i>{{ 'sales.contractsMgmt.table.edit' | translate }}
+    </button>
+    <button type="button" class="btn btn-light" (click)="openDocument()">
+      <i class="fa-solid fa-print me-1" aria-hidden="true"></i>{{ 'sales.contractDetails.document' | translate }}
+    </button>
+  </app-page-header>
+
+  <!-- Hero: status + period progress -->
+  <section class="card cdt-card cdt-hero" [class.is-renewed]="justRenewed()" [attr.data-tone]="tone()">
+    <div class="cdt-hero__status">
+      <span class="cdt-status" [attr.data-tone]="tone()">
+        <span class="cdt-status__dot" aria-hidden="true"></span>
+        {{ 'sales.contractsMgmt.status.' + (lifecycle() === 'expiring' ? 'expiringSoon' : lifecycle()) | translate }}
+      </span>
+      <div class="cdt-hero__left">{{ daysLeftLabel() }}</div>
+      @if (lifecycle() === 'expiring' || lifecycle() === 'expired') {
+        <p class="cdt-hero__hint">
+          <i class="fa-solid fa-bell" aria-hidden="true"></i>
+          {{ (lifecycle() === 'expired' ? 'sales.contractDetails.expiredHint' : 'sales.contractDetails.expiringHint') | translate }}
+        </p>
+      }
+    </div>
+
+    <div class="cdt-hero__period">
+      <div class="cdt-period">
+        <div class="cdt-period__end">
+          <span class="cdt-period__label">{{ 'sales.contractsMgmt.table.startDate' | translate }}</span>
+          <strong>{{ day(c.startDate) }}</strong>
+        </div>
+        <div class="cdt-period__end is-end">
+          <span class="cdt-period__label">{{ 'sales.contractsMgmt.table.endDate' | translate }}</span>
+          <strong>{{ day(c.endDate) }}</strong>
+        </div>
+      </div>
+      @if (elapsed(); as pct) {
+        <div class="cdt-progress" role="progressbar" [attr.aria-valuenow]="pct | number: '1.0-0'" aria-valuemin="0" aria-valuemax="100"
+             [attr.aria-label]="'sales.contractDetails.elapsed' | translate">
+          <span class="cdt-progress__bar" [style.width.%]="pct"></span>
+        </div>
+      } @else if (elapsed() === 0) {
+        <div class="cdt-progress"><span class="cdt-progress__bar" style="width:0"></span></div>
+      }
+      @if (totalDays(); as total) {
+        <small class="text-muted">{{ 'sales.contractDetails.totalDays' | translate: { n: total } }}</small>
+      }
+    </div>
+
+    <div class="cdt-hero__price">
+      <span class="cdt-period__label">{{ 'sales.contractsMgmt.table.value' | translate }}</span>
+      <strong class="cdt-price">{{ c.price | money }}</strong>
+      @if (renewals().length) {
+        <small class="text-muted">
+          <i class="fa-solid fa-arrows-rotate me-1" aria-hidden="true"></i>{{ 'sales.contractDetails.renewedTimes' | translate: { n: renewals().length } }}
+        </small>
+      }
+    </div>
+  </section>
+
+  <div class="cdt-grid">
+    <!-- Customer + contract info -->
+    <section class="card cdt-card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="fa-solid fa-circle-info text-primary" aria-hidden="true"></i>
+        <h5 class="mb-0">{{ 'sales.contractDetails.info' | translate }}</h5>
+      </div>
+      <div class="card-body">
+        <dl class="cdt-dl">
+          <div><dt>{{ 'sales.contractsMgmt.table.customer' | translate }}</dt><dd dir="auto">{{ c.customerName }}</dd></div>
+          @if (c.companyName) {
+            <div><dt>{{ 'customers.details.company' | translate }}</dt><dd dir="auto">{{ c.companyName }}</dd></div>
+          }
+          @if (c.phone) {
+            <div><dt>{{ 'customers.table.phone' | translate }}</dt><dd dir="ltr" class="text-start">{{ c.phone }}</dd></div>
+          }
+          @if (c.address) {
+            <div><dt>{{ 'sales.contractsMgmt.form.address' | translate }}</dt><dd dir="auto">{{ c.address }}</dd></div>
+          }
+          <div><dt>{{ 'sales.contractsMgmt.table.createdByName' | translate }}</dt><dd>{{ c.createdByName || '—' }}</dd></div>
+          <div><dt>{{ 'sales.contractsMgmt.table.createdAt' | translate }}</dt><dd>{{ c.createdAt | cairoDate }}</dd></div>
+        </dl>
+        @if (c.description) {
+          <h6 class="cdt-subtitle">{{ 'sales.contractDetails.description' | translate }}</h6>
+          <p class="cdt-desc" dir="auto">{{ c.description }}</p>
+        }
+      </div>
+    </section>
+
+    <!-- Renewal history -->
+    <section class="card cdt-card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="fa-solid fa-clock-rotate-left text-success" aria-hidden="true"></i>
+        <h5 class="mb-0 me-auto">{{ 'sales.renewal.history.title' | translate }}</h5>
+        @if (renewals().length) {
+          <span class="badge rounded-pill text-bg-light">{{ renewals().length }}</span>
+        }
+      </div>
+      <div class="card-body">
+        <app-contract-renewals [renewals]="renewals()" [loading]="renewalsLoading()" [failed]="renewalsFailed()"
+                               (retry)="loadRenewals(contractId(), true)" />
+      </div>
+    </section>
+  </div>
+
+  @if (renewOpen()) {
+    <app-renew-contract-dialog [contract]="c" (renewed)="onRenewed($event)" (cancel)="renewOpen.set(false)" />
+  }
+  @if (editOpen()) {
+    <app-contract-form-dialog [contractId]="c.id" (updated)="onEdited()" (created)="onEdited()" (cancel)="editOpen.set(false)" />
+  }
+}

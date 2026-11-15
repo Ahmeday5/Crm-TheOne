@@ -81,6 +81,12 @@
         <span class="details-label">{{ 'customers.details.address' | translate }}</span>
         <span class="details-value">{{ c.address || ('customers.details.notAvailable' | translate) }}</span>
       </div>
+      <div class="details-row">
+        <span class="details-label">{{ 'customers.location.countryAndGovernorate' | translate }}</span>
+        <span class="details-value">
+          <app-customer-location [location]="c" [emptyText]="'customers.location.unknown' | translate" />
+        </span>
+      </div>
     </div>
 
     <!-- Marketing Information -->

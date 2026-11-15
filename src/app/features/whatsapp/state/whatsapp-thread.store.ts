@@ -579,6 +579,10 @@ export class WhatsAppThreadStore {
             deliveredAt: row.deliveredAt ?? existing.deliveredAt,
             readAt: row.readAt ?? existing.readAt,
             errorMessage: row.errorMessage ?? existing.errorMessage,
+            // Media lands a few seconds after the message (same id, re-pushed with
+            // `mediaUrl`); a late page fetch from before that must not blank it again.
+            mediaUrl: row.mediaUrl ?? existing.mediaUrl,
+            fileName: row.fileName ?? existing.fileName,
           }
         : row;
       byId.set(row.id, merged);

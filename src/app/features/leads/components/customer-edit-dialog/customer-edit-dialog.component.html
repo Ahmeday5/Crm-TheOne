@@ -146,6 +146,15 @@
             [label]="'customers.form.service' | translate" />
         </div>
 
+        <!-- Country (optional) + governorate (Egypt only) -->
+        <div class="col-12">
+          <app-customer-location-fields
+            idPrefix="edit"
+            [countryControl]="form.controls.countryId"
+            [governorateControl]="form.controls.governorateId"
+            [inferredCountryName]="inferredCountryName()" />
+        </div>
+
         <!-- Address -->
         <div class="col-12">
           <label for="edit-address" class="form-label fw-600">

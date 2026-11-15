@@ -329,6 +329,31 @@ const customers: TranslationFile<'customers'> = {
       confirm: 'حذف',
       cancel: 'إلغاء',
     },
+
+    /** Country (optional, inferred from the phone) + Egyptian governorate. */
+    location: {
+      country: 'الدولة',
+      governorate: 'المحافظة',
+      countryAndGovernorate: 'الدولة / المحافظة',
+      column: 'العنوان والدولة',
+      optional: 'اختياري',
+      countryPlaceholder: 'تلقائي من رقم الموبايل',
+      inferredPlaceholder: '{country} — من رقم الموبايل',
+      countryHint: 'لو سبتها فاضية هنحددها تلقائي من كود الدولة في رقم الموبايل.',
+      governoratePh: 'اختر المحافظة',
+      governorateHint: 'للعملاء في مصر بس — اختيار محافظة بيخلّي الدولة مصر.',
+      searchCountry: 'ابحث باسم الدولة أو كود الاتصال…',
+      searchGovernorate: 'ابحث باسم المحافظة…',
+      noMatch: 'مفيش نتائج',
+      loadFailed: 'تعذّر تحميل قوائم الدول والمحافظات.',
+      inferredTip: 'من رقم الموبايل',
+      inferredShort: 'من رقم الموبايل',
+      unknown: 'غير معروفة',
+      allCountries: 'كل الدول',
+      unknownCountry: 'دولة غير معروفة',
+      allGovernorates: 'كل المحافظات',
+      noGovernorate: 'بدون محافظة',
+    },
   },
 };
 

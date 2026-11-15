@@ -1,6 +1,47 @@
 import { WaTemplate } from '../models/whatsapp.models';
 import { renderTemplateBody, renderTemplateSegments, sendableTemplates, templateVariables } from './template.util';
-import { validateAttachment } from './whatsapp.util';
+import { WaChat, WaInstance } from '../models/whatsapp.models';
+import { makeChannel, makeChat } from '../testing/whatsapp.testing';
+import { normalizeChannel, normalizeChat, validateAttachment } from './whatsapp.util';
+
+describe('normalizeChat / normalizeChannel (fields missing from the backend)', () => {
+  /** A chat as an older backend build sends it — without the Mihwar fields. */
+  function legacy(patch: Partial<WaChat>): WaChat {
+    const chat: Partial<WaChat> = { ...makeChat(), ...patch };
+    delete chat.channelType;
+    delete chat.canReply;
+    delete chat.canSendTemplate;
+    delete chat.replyWindowEndsAt;
+    delete chat.instanceName;
+    return chat as WaChat;
+  }
+
+  it('infers the channel type from the phone and never leaves it undefined', () => {
+    expect(normalizeChat(legacy({ phone: '201000000000' })).channelType).toBe('whatsapp_cloud');
+    expect(normalizeChat(legacy({ phone: null })).channelType).toBe('messenger');
+  });
+
+  it('keeps the composer usable when the window fields are missing', () => {
+    const wa = normalizeChat(legacy({ phone: '201000000000' }));
+    expect(wa.canReply).toBeTrue();
+    expect(wa.canSendTemplate).toBeTrue();
+    expect(wa.replyWindowEndsAt).toBeNull();
+    expect(wa.instanceName).toBeNull();
+    expect(normalizeChat(legacy({ phone: null })).canSendTemplate).toBeFalse();
+  });
+
+  it('keeps values the backend did send', () => {
+    const chat = makeChat({ channelType: 'messenger', canReply: false, canSendTemplate: false });
+    expect(normalizeChat(chat)).toEqual(chat);
+  });
+
+  it('defaults a channel to WhatsApp and to "exists on the provider"', () => {
+    const raw = { ...makeChannel(), type: undefined, existsInProvider: undefined } as unknown as WaInstance;
+    const channel = normalizeChannel(raw);
+    expect(channel.type).toBe('whatsapp_cloud');
+    expect(channel.existsInProvider).toBeTrue();
+  });
+});
 
 function tpl(patch: Partial<WaTemplate>): WaTemplate {
   return {

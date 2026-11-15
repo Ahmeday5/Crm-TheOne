@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   Subject,
   debounceTime,
@@ -30,10 +30,16 @@ import { TipDirective } from '../../../../shared/directives/tip.directive';
 import {
   CustomerFollowUpResponse,
   AssignSupportResponse,
+  Country,
   CustomerListItem,
+  CustomerListQuery,
   CustomerNoteResponse,
   CustomerStatus,
+  EGYPT_COUNTRY_ID,
+  Governorate,
 } from '../../../../shared/models';
+import { LocationLookupsService } from '../../../../core/services/location-lookups.service';
+import { CustomerLocationComponent } from '../../../../shared/components/customer-location/customer-location.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ChannelSourcesService } from '../../../marketing-campaigns/services/channel-sources.service';
 import { AssignSupportDialogComponent } from '../../components/assign-support-dialog/assign-support-dialog.component';
@@ -98,6 +104,7 @@ interface JourneyStep {
     CustomerActionsMenuComponent,
     ClampTextDirective,
     ResponsiveTableDirective,
+    CustomerLocationComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-leads.component.html',
@@ -109,6 +116,8 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   private readonly language = inject(LanguageService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly locations = inject(LocationLookupsService);
 
   // ─────────── search / filter ───────────
   searchTerm = '';
@@ -118,6 +127,27 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   readonly searchSignal = signal('');
   readonly selectedStatusId = signal<number | null>(null);
   readonly selectedSourceId = signal<number | null>(null);
+  /** Effective country; `0` = unknown country. */
+  readonly selectedCountryId = signal<number | null>(null);
+  /** `0` = Egyptian customers without a governorate. */
+  readonly selectedGovernorateId = signal<number | null>(null);
+  readonly countries = signal<Country[]>([]);
+  readonly governorates = signal<Governorate[]>([]);
+
+  /** Governorates only narrow Egypt (or "any country"). */
+  readonly governorateFilterApplies = computed(() => {
+    const country = this.selectedCountryId();
+    return country === null || country === EGYPT_COUNTRY_ID;
+  });
+
+  readonly hasActiveFilters = computed(
+    () =>
+      !!this.searchSignal() ||
+      this.selectedStatusId() !== null ||
+      this.selectedSourceId() !== null ||
+      this.selectedCountryId() !== null ||
+      this.selectedGovernorateId() !== null,
+  );
 
   // ─────────── data ───────────
   readonly rows = signal<CustomerListItem[]>([]);
@@ -197,8 +227,21 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
         this.reload();
       });
 
+    this.applyLinkFilters();
     this.loadFilters();
     this.reload();
+  }
+
+  /** Deep links (e.g. from the customer map): `?countryId=20&governorateId=1`. */
+  private applyLinkFilters(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const id = (key: string) => {
+      const raw = params.get(key);
+      const n = raw === null || raw === '' ? NaN : Number(raw);
+      return Number.isInteger(n) && n >= 0 ? n : null;
+    };
+    this.selectedCountryId.set(id('countryId'));
+    this.selectedGovernorateId.set(this.governorateFilterApplies() ? id('governorateId') : null);
   }
 
   ngOnDestroy(): void {
@@ -215,22 +258,28 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     this.channelSources.list().subscribe({
       next: (items: SourceItem[]) => this.sources.set(items),
     });
+    this.locations.countries().subscribe({ next: (rows) => this.countries.set(rows), error: () => undefined });
+    this.locations.governorates().subscribe({ next: (rows) => this.governorates.set(rows), error: () => undefined });
+  }
+
+  /** The list query for the current filters (table, export). */
+  private listQuery(pageIndex: number, pageSize: number): CustomerListQuery {
+    return {
+      PageIndex: pageIndex,
+      PageSize: pageSize,
+      Search: this.searchSignal().trim() || undefined,
+      CustomerStatusId: this.selectedStatusId() ?? undefined,
+      SourceId: this.selectedSourceId() ?? undefined,
+      CountryId: this.selectedCountryId() ?? undefined,
+      GovernorateId: this.governorateFilterApplies() ? this.selectedGovernorateId() ?? undefined : undefined,
+    };
   }
 
   reload(force = false): void {
     this.loading.set(true);
     this.loadError.set(null);
     this.customers
-      .listForSales(
-        {
-          PageIndex: this.pageIndex(),
-          PageSize: this.pageSize(),
-          Search: this.searchSignal().trim() || undefined,
-          CustomerStatusId: this.selectedStatusId() ?? undefined,
-          SourceId: this.selectedSourceId() ?? undefined,
-        },
-        force,
-      )
+      .listForSales(this.listQuery(this.pageIndex(), this.pageSize()), force)
       .subscribe({
         next: (page) => {
           this.rows.set(page.data ?? []);
@@ -259,6 +308,20 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
   onSourceChange(id: string): void {
     this.selectedSourceId.set(id ? Number(id) : null);
+    this.pageIndex.set(1);
+    this.reload();
+  }
+
+  onCountryChange(id: string): void {
+    this.selectedCountryId.set(id === '' || id == null ? null : Number(id));
+    // Another country has no governorates — drop a stale governorate filter.
+    if (!this.governorateFilterApplies()) this.selectedGovernorateId.set(null);
+    this.pageIndex.set(1);
+    this.reload();
+  }
+
+  onGovernorateChange(id: string): void {
+    this.selectedGovernorateId.set(id === '' || id == null ? null : Number(id));
     this.pageIndex.set(1);
     this.reload();
   }
@@ -519,6 +582,16 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
       { header: this.t('customers.details.company'), value: (r) => r.campanyName },
       { header: this.t('customers.table.phone'), value: (r) => r.phone },
       { header: this.t('customers.table.address'), value: (r) => r.address },
+      {
+        header: this.t('customers.location.country'),
+        value: (r) =>
+          r.countryName
+            ? r.countryInferred
+              ? `${r.countryName} (${this.t('customers.location.inferredShort')})`
+              : r.countryName
+            : null,
+      },
+      { header: this.t('customers.location.governorate'), value: (r) => r.governorateName },
       { header: this.t('customers.table.source'), value: (r) => r.source },
       { header: this.t('customers.table.campaign'), value: (r) => r.campaignName },
       {
@@ -575,13 +648,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
   readonly fetchAllRows = async (): Promise<CustomerListItem[]> => {
     const page = await firstValueFrom(
-      this.customers.listForSales({
-        PageIndex: 1,
-        PageSize: this.count() || this.pageSize(),
-        Search: this.searchSignal().trim() || undefined,
-        CustomerStatusId: this.selectedStatusId() ?? undefined,
-        SourceId: this.selectedSourceId() ?? undefined,
-      }),
+      this.customers.listForSales(this.listQuery(1, this.count() || this.pageSize())),
     );
     return page.data ?? [];
   };

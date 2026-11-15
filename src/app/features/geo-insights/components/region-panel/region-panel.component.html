@@ -1,0 +1,66 @@
+@let s = selection();
+@let h = headline();
+
+<app-slide-panel
+  [open]="true"
+  size="lg"
+  icon="fa-solid fa-earth-africa"
+  [title]="title() ?? ((s.kind === 'unknown' ? 'geo.unknownCountry' : 'geo.noGovernorate') | translate)"
+  (closed)="closed.emit()">
+
+  <section class="rp-hero">
+    <div class="rp-hero__id">
+      @if (s.kind === 'country') {
+        <app-country-flag class="rp-hero__flag" [iso2]="s.country.iso2" />
+      } @else {
+        <span class="rp-hero__icon" aria-hidden="true">
+          <i [class]="s.kind === 'governorate' ? 'fa-solid fa-location-dot' : 'fa-solid fa-circle-question'"></i>
+        </span>
+      }
+      <div class="min-w-0">
+        <div class="rp-hero__count">{{ h.count | number }}</div>
+        <div class="rp-hero__label">{{ labels().unitKey | translate }}</div>
+      </div>
+    </div>
+    <dl class="rp-hero__facts">
+      @if (h.percentage !== null) {
+        <div>
+          <dt>{{ (s.kind === 'governorate' ? 'geo.panel.shareOfEgypt' : 'geo.panel.shareOfTotal') | translate }}</dt>
+          <dd>{{ h.percentage | number: '1.0-1' }}%</dd>
+        </div>
+      }
+      @if (h.inferred) {
+        <div>
+          <dt>{{ 'geo.panel.inferred' | translate }}</dt>
+          <dd>{{ h.inferred | number }}</dd>
+        </div>
+      }
+    </dl>
+  </section>
+
+  @if (s.kind === 'unknown') {
+    <p class="rp-note"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>{{ 'geo.panel.unknownHint' | translate }}</p>
+  } @else if (s.kind === 'egyptNoGovernorate') {
+    <p class="rp-note"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>{{ 'geo.panel.noGovernorateHint' | translate }}</p>
+  }
+
+  @if (statusRows().length) {
+    <section class="rp-section">
+      <h6 class="rp-section__title">{{ 'geo.panel.byStatus' | translate }}</h6>
+      <ul class="rp-status">
+        @for (st of statusRows(); track st.statusId; let i = $index) {
+          <li class="rp-status__row" [style.--i]="i">
+            <span class="rp-status__label">{{ st.label }}</span>
+            <span class="rp-status__bar" aria-hidden="true"><span class="rp-status__fill" [style.width.%]="st.width"></span></span>
+            <span class="rp-status__num">{{ st.count | number }}</span>
+            <span class="rp-status__pct">{{ st.share | number: '1.0-1' }}%</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <section class="rp-section">
+    <ng-content />
+  </section>
+</app-slide-panel>

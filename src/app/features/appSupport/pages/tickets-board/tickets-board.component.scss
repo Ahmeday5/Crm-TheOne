@@ -1,0 +1,76 @@
+// Same board as the sales pipeline (one design for both Kanbans) …
+@use '../../../leads/pages/sales-pipeline/sales-pipeline.component';
+
+// … plus what tickets need: two more column tones, ticket number,
+// priority badge, the keyboard/touch "move to" menu, skeletons.
+
+.sp-col {
+  &.tone-info  { --tone: var(--info);   --tone-soft: var(--info-soft); }
+  &.tone-muted { --tone: var(--text-3); --tone-soft: var(--surface-2); }
+}
+
+.sp-overdue.is-static { cursor: default; &:hover { background: var(--surface-0); } }
+
+.tb-no {
+  font-weight: var(--fw-800);
+  color: var(--tone);
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-prio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 0.72rem;
+  font-weight: var(--fw-700);
+
+  &[data-p='High'] { background: var(--danger-soft); color: var(--danger); }
+  &[data-p='Medium'] { background: var(--warning-soft); color: var(--warning); }
+  &[data-p='Low'] { background: var(--info-soft); color: var(--info); }
+}
+
+.tb-title {
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.tb-move {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: 0;
+  margin-inline-start: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-0);
+  color: var(--text-2);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:hover, &:focus-within { background: var(--tone-soft); color: var(--tone); border-color: var(--tone); }
+
+  // The native select covers the icon: real keyboard + touch support, no custom menu.
+  select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+}
+
+/* skeleton while the first load is in flight */
+.sp-col--sk { --tone: var(--border); }
+.sk-line, .sk-card { display: block; border-radius: var(--radius-md); background: var(--surface-2); animation: tb-pulse 1.2s ease-in-out infinite; }
+.sk-line { height: 1rem; width: 50%; }
+.sk-card { height: 6.5rem; }
+
+@keyframes tb-pulse { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .sk-line, .sk-card { animation: none; } }

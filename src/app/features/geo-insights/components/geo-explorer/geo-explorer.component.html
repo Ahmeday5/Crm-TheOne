@@ -1,0 +1,126 @@
+<!-- Level bar: breadcrumb, drill / back, the two shapeless buckets -->
+<div class="gx-toolbar">
+  <nav class="gx-crumbs" [attr.aria-label]="'geo.map.levels' | translate">
+    @if (level() === 'egypt') {
+      <button type="button" class="gx-back" (click)="backToWorld()" [attr.aria-label]="'geo.map.back' | translate">
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="gx-crumb" (click)="backToWorld()">{{ 'geo.map.world' | translate }}</button>
+      <i class="fa-solid fa-chevron-left gx-crumb-sep" aria-hidden="true"></i>
+      <span class="gx-crumb is-current" aria-current="page">{{ 'geo.map.egypt' | translate }}</span>
+    } @else {
+      <span class="gx-crumb is-current" aria-current="page">
+        <i class="fa-solid fa-earth-africa" aria-hidden="true"></i>{{ 'geo.map.world' | translate }}
+      </span>
+    }
+  </nav>
+
+  <div class="gx-chips">
+    @if (level() === 'world') {
+      @if (egypt(); as eg) {
+        <button type="button" class="gx-chip is-brand" (click)="drillIntoEgypt()">
+          <i class="fa-solid fa-magnifying-glass-location" aria-hidden="true"></i>
+          {{ 'geo.map.openEgypt' | translate }} <b>{{ eg.count | number }}</b>
+        </button>
+      }
+      @if (data()?.unknown) {
+        <button type="button" class="gx-chip" (click)="openUnknown()">
+          <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+          {{ 'geo.unknownCountry' | translate }} <b>{{ data()!.unknown | number }}</b>
+        </button>
+      }
+    } @else {
+      <button type="button" class="gx-chip is-brand" (click)="openEgyptPanel()">
+        <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+        {{ 'geo.map.allEgypt' | translate }} <b>{{ (egypt()?.count ?? 0) | number }}</b>
+      </button>
+      @if (data()?.egyptWithoutGovernorate) {
+        <button type="button" class="gx-chip" (click)="openNoGovernorate()">
+          <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+          {{ 'geo.noGovernorate' | translate }} <b>{{ data()!.egyptWithoutGovernorate | number }}</b>
+        </button>
+      }
+    }
+
+    @if (isMobile()) {
+      <div class="gx-switch" role="tablist">
+        <button type="button" role="tab" [class.is-active]="mobileView() === 'list'" [attr.aria-selected]="mobileView() === 'list'"
+                (click)="mobileView.set('list')">
+          <i class="fa-solid fa-list" aria-hidden="true"></i>{{ 'geo.map.listView' | translate }}
+        </button>
+        <button type="button" role="tab" [class.is-active]="mobileView() === 'map'" [attr.aria-selected]="mobileView() === 'map'"
+                (click)="mobileView.set('map')">
+          <i class="fa-solid fa-map" aria-hidden="true"></i>{{ 'geo.map.mapView' | translate }}
+        </button>
+      </div>
+    }
+  </div>
+</div>
+
+<div class="gx-layout" [class.is-mobile]="isMobile()">
+  @if (!isMobile() || mobileView() === 'map') {
+    <section class="card gx-card gx-map">
+      <div class="gx-map__stage" [class.is-refreshing]="loading() && !!data()">
+        @if (palette(); as p) {
+          @if (activeGeo() !== undefined) {
+            <app-geo-map
+              class="gx-map__map"
+              [level]="level()"
+              [geo]="activeGeo() ?? null"
+              [regions]="geoRegions()"
+              [bubbles]="geoBubbles()"
+              [palette]="p"
+              [dark]="dark()"
+              [lang]="lang()"
+              [selectedKey]="selectedKey()"
+              [tooltip]="tooltipFor"
+              [ariaLabel]="mapAria()"
+              [errorText]="'geo.map.unavailable' | translate"
+              (regionClick)="onRegion($event)" />
+          }
+        }
+        @if (loading() && data()) {
+          <span class="gx-map__busy" role="status">
+            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>{{ 'geo.updating' | translate }}
+          </span>
+        }
+      </div>
+
+      <footer class="gx-map__foot">
+        <div class="gx-legend">
+          <span class="gx-legend__title">{{ 'geo.legend.title' | translate }} · {{ labels().unitKey | translate }}</span>
+          @for (item of legend(); track item.label) {
+            <span class="gx-legend__item"><span class="gx-legend__sw" [style.background]="item.color"></span>{{ item.label }}</span>
+          }
+        </div>
+        <span class="gx-map__hint">
+          <i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>{{ 'geo.map.hint' | translate }}
+        </span>
+      </footer>
+      @if (activeGeo() === null) {
+        <p class="gx-map__fallback"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>{{ 'geo.map.noShapes' | translate }}</p>
+      }
+    </section>
+  }
+
+  @if (!isMobile() || mobileView() === 'list') {
+    <aside class="card gx-card gx-rank">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="fa-solid fa-ranking-star text-primary" aria-hidden="true"></i>
+        <h5 class="mb-0">{{ (level() === 'world' ? 'geo.ranking.countries' : 'geo.ranking.governorates') | translate }}</h5>
+      </div>
+      <div class="gx-rank__body">
+        @if (!data()) {
+          <div class="gx-rank__sk" aria-hidden="true">@for (_ of [1, 2, 3, 4, 5, 6]; track $index) { <span></span> }</div>
+        } @else {
+          <app-map-ranking
+            [rows]="rankRows()"
+            [selectedKey]="selectedKey()"
+            [showInferred]="showInferred() && level() === 'world'"
+            [regionLabelKey]="level() === 'world' ? 'geo.ranking.country' : 'geo.ranking.governorate'"
+            (selectRow)="onRegion($event.key)" />
+        }
+      </div>
+    </aside>
+  }
+</div>

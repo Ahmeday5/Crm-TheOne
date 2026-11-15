@@ -35,6 +35,12 @@ export class AppSupportMainComponent {
       icon: 'fa-solid fa-ticket',
       color: 'orange',
     },
+    {
+      routerLink: 'SupportTicketsBoard',
+      labelKey: 'support.tabs.ticketsBoard',
+      icon: 'fa-solid fa-table-columns',
+      color: 'primary',
+    },
     /*{
       routerLink: 'SupportLog',
       labelKey: 'support.tabs.log',
