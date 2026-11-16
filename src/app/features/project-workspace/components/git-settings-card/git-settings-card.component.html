@@ -1,0 +1,52 @@
+<div class="card h-100">
+  <div class="card-header d-flex align-items-center gap-2">
+    <i class="fa-brands fa-github text-primary" aria-hidden="true"></i>
+    <h5 class="mb-0">{{ 'gitSettings.title' | translate }}</h5>
+  </div>
+
+  <div class="card-body">
+    @if (loading()) {
+      <div class="d-flex justify-content-center py-3"><span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span></div>
+    } @else if (loadFailed()) {
+      <p class="text-muted small mb-2">{{ 'projectWorkspace.loadFailedSection' | translate }}</p>
+      <button type="button" class="btn btn-sm btn-light" (click)="load()">{{ 'common.retry' | translate }}</button>
+    } @else {
+      @if (settings()?.isOrgTokenConfigured === false) {
+        <div class="alert alert-warning py-2 small">
+          <i class="fa-solid fa-triangle-exclamation me-1" aria-hidden="true"></i>{{ 'gitSettings.noToken' | translate }}
+        </div>
+      }
+
+      <form class="d-flex flex-column gap-3" (ngSubmit)="save()">
+        <div>
+          <label class="form-label" for="gs-url">{{ 'gitSettings.repo' | translate }}</label>
+          <input id="gs-url" type="url" class="form-control" dir="ltr" name="url"
+                 placeholder="https://github.com/the-one/project"
+                 [class.is-invalid]="!urlValid()"
+                 [ngModel]="repoUrl()" (ngModelChange)="repoUrl.set($event); error.set(null)" />
+          <div class="invalid-feedback">{{ 'gitSettings.repoRule' | translate }}</div>
+          <div class="form-text">{{ 'gitSettings.repoHint' | translate }}</div>
+        </div>
+        <div>
+          <label class="form-label" for="gs-branch">{{ 'gitSettings.branch' | translate }}</label>
+          <input id="gs-branch" type="text" class="form-control" dir="ltr" name="branch" maxlength="100" placeholder="main"
+                 [ngModel]="branch()" (ngModelChange)="branch.set($event)" />
+        </div>
+        <div class="form-check form-switch">
+          <input id="gs-client" type="checkbox" class="form-check-input" role="switch" name="client"
+                 [ngModel]="showToClient()" (ngModelChange)="showToClient.set($event)" />
+          <label class="form-check-label" for="gs-client">{{ 'gitSettings.showToClient' | translate }}</label>
+          <div class="form-text">{{ 'gitSettings.showToClientHint' | translate }}</div>
+        </div>
+
+        @if (error(); as e) { <div class="alert alert-danger py-2 small mb-0">{{ e }}</div> }
+
+        <button type="submit" class="btn btn-primary align-self-start" [disabled]="!urlValid() || !dirty() || saving()">
+          @if (saving()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+          @else if (savedFlash()) { <i class="fa-solid fa-check me-1" aria-hidden="true"></i> }
+          {{ (savedFlash() ? 'projectTeam.saved' : 'common.save') | translate }}
+        </button>
+      </form>
+    }
+  </div>
+</div>

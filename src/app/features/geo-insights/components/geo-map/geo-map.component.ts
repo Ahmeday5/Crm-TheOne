@@ -47,9 +47,9 @@ export interface GeoBubbleDatum {
 }
 
 /**
- * One individual record (e.g. a single customer) dropped as a pin. Unlike
- * bubbles these are clustered by MapLibre: thousands stay fast and legible,
- * collapsing into counted clusters that split apart as the map zooms in.
+ * One individual record (e.g. a single customer) dropped as a small dot. Never
+ * clustered: 100 customers in Cairo are 100 dots (GL circles stay fast into
+ * the thousands).
  */
 export interface GeoPointDatum {
   /** Stable id — used as the popup key and for click-through. */
@@ -70,24 +70,10 @@ const L_LINE = 'geo-regions-line';
 const L_SELECTED = 'geo-regions-selected';
 const L_PULSE = 'geo-bubbles-pulse';
 const L_BUBBLES = 'geo-bubbles';
-const L_CLUSTERS = 'geo-points-clusters';
-const L_CLUSTER_COUNT = 'geo-points-cluster-count';
 const L_POINTS = 'geo-points';
 const MIN_RADIUS = 7;
 const MAX_RADIUS = 22;
 const FLY_MS = 1800;
-/** Zoom past which clusters stop forming (individual pins show). */
-const CLUSTER_MAX_ZOOM = 12;
-/** Pixel radius within which pins merge into one cluster. Tight so a few
- * scattered customers read as separate dots, not one lump. */
-const CLUSTER_RADIUS = 28;
-/**
- * Fewest pins that may form a cluster. With this high, a handful of customers
- * in one spot stay separate dots (no cluster to zoom into); only genuinely
- * dense areas — dozens overlapping — collapse into a counted bubble. That keeps
- * "5 in Cairo = 5 dots" true while a thousand pins stay fast and legible.
- */
-const CLUSTER_MIN_POINTS = 12;
 
 /**
  * A real, zoomable map (MapLibre GL + OpenFreeMap / OpenStreetMap tiles)
@@ -275,11 +261,6 @@ export class GeoMapComponent {
       });
     }
 
-    // Clicking a cluster zooms to the level where it splits apart.
-    map.on('click', L_CLUSTERS, (e) => this.expandCluster(e));
-    map.on('mouseenter', L_CLUSTERS, () => (map.getCanvas().style.cursor = 'pointer'));
-    map.on('mouseleave', L_CLUSTERS, () => (map.getCanvas().style.cursor = ''));
-
     // Individual pins: hover popup, click → open that record.
     map.on('mousemove', L_POINTS, (e) => this.onPinHover(e));
     map.on('mouseleave', L_POINTS, () => this.clearHover());
@@ -313,14 +294,7 @@ export class GeoMapComponent {
 
     map.addSource(SRC_REGIONS, { type: 'geojson', data: empty, promoteId: 'key' });
     map.addSource(SRC_BUBBLES, { type: 'geojson', data: empty, promoteId: 'key' });
-    map.addSource(SRC_POINTS, {
-      type: 'geojson',
-      data: empty,
-      cluster: true,
-      clusterMaxZoom: CLUSTER_MAX_ZOOM,
-      clusterRadius: CLUSTER_RADIUS,
-      clusterMinPoints: CLUSTER_MIN_POINTS,
-    });
+    map.addSource(SRC_POINTS, { type: 'geojson', data: empty, promoteId: 'id' });
 
     map.addLayer(
       {
@@ -384,49 +358,21 @@ export class GeoMapComponent {
       },
     });
 
-    // Individual pins (clustered) sit *above* the basemap labels — they're the
-    // foreground subject, not part of the choropleth that reads as the map.
-    const p = this.palette();
-    map.addLayer({
-      id: L_CLUSTERS,
-      type: 'circle',
-      source: SRC_POINTS,
-      filter: ['has', 'point_count'],
-      paint: {
-        // Grow the disc in steps with how many pins it holds.
-        'circle-radius': ['step', ['get', 'point_count'], 15, 20, 20, 100, 26, 500, 32],
-        'circle-color': p.accent,
-        'circle-opacity': 0.92,
-        'circle-stroke-color': '#ffffff',
-        'circle-stroke-width': 2,
-        'circle-stroke-opacity': 0.85,
-      },
-    });
-    map.addLayer({
-      id: L_CLUSTER_COUNT,
-      type: 'symbol',
-      source: SRC_POINTS,
-      filter: ['has', 'point_count'],
-      layout: {
-        'text-field': ['get', 'point_count_abbreviated'],
-        'text-font': ['Noto Sans Regular', 'Open Sans Regular'],
-        'text-size': ['step', ['get', 'point_count'], 12, 100, 14, 500, 16],
-        'text-allow-overlap': true,
-      },
-      paint: { 'text-color': '#ffffff' },
-    });
+    // Individual pins sit *above* the basemap labels — they're the foreground
+    // subject, not part of the choropleth that reads as the map. One small dot
+    // per customer, never merged into a bigger circle.
     map.addLayer({
       id: L_POINTS,
       type: 'circle',
       source: SRC_POINTS,
-      filter: ['!', ['has', 'point_count']],
       paint: {
-        // No feature-state hover: a clustered source generates its own feature
-        // ids, so `setFeatureState` by our id can't target a pin. The cursor +
-        // popup carry the hover affordance instead.
-        // Small dots that grow a touch as you zoom in — one per customer.
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, 2.5, 9, 3.5, 12, 5],
-        'circle-color': p.accent,
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          6, ['case', ['boolean', ['feature-state', 'hover'], false], 4, 2.5],
+          9, ['case', ['boolean', ['feature-state', 'hover'], false], 5.5, 3.5],
+          12, ['case', ['boolean', ['feature-state', 'hover'], false], 7, 5],
+        ],
+        'circle-color': this.palette().accent,
         'circle-stroke-color': '#ffffff',
         'circle-stroke-width': 1,
       },
@@ -492,7 +438,6 @@ export class GeoMapComponent {
     map.setFilter(L_SELECTED, ['==', ['get', 'key'], p.selected ?? '']);
 
     // Pins follow the brand accent; re-tint on theme / colour change.
-    if (map.getLayer(L_CLUSTERS)) map.setPaintProperty(L_CLUSTERS, 'circle-color', p.palette.accent);
     if (map.getLayer(L_POINTS)) map.setPaintProperty(L_POINTS, 'circle-color', p.palette.accent);
 
     if (this.hovered && !byKey.has(this.hovered) && !p.bubbles.some((b) => b.key === this.hovered)) this.clearHover();
@@ -552,36 +497,28 @@ export class GeoMapComponent {
     this.popup?.remove();
   }
 
-  /** A pin's own popup — built from its label / sub (the clustered source can't
-   * carry feature-state, so hover is cursor + popup only). */
+  /** A pin's own popup (label / sub escaped here) + a slightly bigger dot. */
   private onPinHover(e: MapLayerMouseEvent): void {
     const map = this.map;
     const feat = e.features?.[0];
     if (!map || !feat) return;
     map.getCanvas().style.cursor = 'pointer';
     const props = feat.properties ?? {};
-    if (this.hovered !== `pt:${props['id']}`) {
+    const id = props['id'];
+    if (this.hovered !== `pt:${id}`) {
       this.clearHover();
-      this.hovered = `pt:${props['id']}`;
+      this.hovered = `pt:${id}`;
+      this.hoveredSource = SRC_POINTS;
+      if (typeof id === 'number') {
+        this.hoveredId = id;
+        map.setFeatureState({ source: SRC_POINTS, id }, { hover: true });
+      }
     }
     const label = escapeHtml(String(props['label'] ?? ''));
     const sub = props['sub'] ? `<div class="gm-pin__sub">${escapeHtml(String(props['sub']))}</div>` : '';
     if (this.popup) {
       this.popup.setLngLat(e.lngLat).setHTML(`<div class="gm-pin"><div class="gm-pin__name">${label}</div>${sub}</div>`).addTo(map);
     }
-  }
-
-  /** Zoom to the cluster's expansion level and recentre on it. */
-  private expandCluster(e: MapLayerMouseEvent): void {
-    const map = this.map;
-    const feat = e.features?.[0];
-    const clusterId = feat?.properties?.['cluster_id'];
-    if (!map || clusterId == null) return;
-    const source = map.getSource(SRC_POINTS) as GeoJSONSource;
-    const coords = (feat!.geometry as unknown as { coordinates: [number, number] }).coordinates;
-    source.getClusterExpansionZoom(clusterId).then((zoom) => {
-      map.easeTo({ center: coords, zoom: Math.min(zoom + 0.2, 13), duration: this.reducedMotion ? 0 : 600 });
-    }).catch(() => undefined);
   }
 
   /** Expanding rings on the hotspot bubbles (~30 fps, paused in hidden tabs by rAF). */

@@ -129,6 +129,8 @@ export const API_ENDPOINTS = {
     unlock: 'Vault/unlock',
     /** POST `{ currentPassword, newPassword }` — revokes every open vault token. */
     lockChangePassword: 'Vault/lock/change-password',
+    /** GET paged lock audit (needs `X-Vault-Token`). */
+    lockAudit: 'Vault/lock/audit',
   },
   appointments: {
     list: 'Appointments/GetAppointments',
@@ -172,12 +174,44 @@ export const API_ENDPOINTS = {
     create: 'ManagerProjects/CreateProject',
     update: (id: number | string) => `ManagerProjects/UpdateProject/${id}`,
     delete: (id: number | string) => `ManagerProjects/DeleteProject/${id}`,
+    // ── Project workspace (everything about one project, one place) ──
+    /** GET list · PUT replaces the whole team `{ developers: [...] }`. */
+    developers: (pid: number | string) => `ManagerProjects/${pid}/developers`,
+    developer: (pid: number | string, devId: string) => `ManagerProjects/${pid}/developers/${devId}`,
+    milestones: (pid: number | string) => `ManagerProjects/${pid}/milestones`,
+    milestone: (pid: number | string, id: number | string) => `ManagerProjects/${pid}/milestones/${id}`,
+    /** Paged, newest first. */
+    timeline: (pid: number | string) => `ManagerProjects/${pid}/timeline`,
+    /** GET status · POST create / re-invite · DELETE revoke. */
+    clientAccess: (pid: number | string) => `ManagerProjects/${pid}/client-access`,
+    gitSettings: (pid: number | string) => `ManagerProjects/${pid}/git-settings`,
+    clientRequests: (pid: number | string) => `ManagerProjects/${pid}/client-requests`,
+    clientRequest: (pid: number | string, id: number | string) => `ManagerProjects/${pid}/client-requests/${id}`,
+    clientRequestComments: (pid: number | string, id: number | string) =>
+      `ManagerProjects/${pid}/client-requests/${id}/comments`,
+    builds: (pid: number | string) => `ManagerProjects/${pid}/builds`,
+    build: (pid: number | string, id: number | string) => `ManagerProjects/${pid}/builds/${id}`,
+    buildRetry: (pid: number | string, id: number | string) => `ManagerProjects/${pid}/builds/${id}/retry`,
   },
   /** Developer-facing, read-only view scoped to the signed-in developer. */
   developerProjects: {
     myProjects: 'DeveloperProjects/GetMyProjects',
     myActive: 'DeveloperProjects/GetMyActiveProjects',
     myById: (id: number | string) => `DeveloperProjects/GetMyProjectById/${id}`,
+    /** GET paged list · POST multipart upload (202, status Pending). */
+    builds: (pid: number | string) => `DeveloperProjects/${pid}/builds`,
+    build: (pid: number | string, id: number | string) => `DeveloperProjects/${pid}/builds/${id}`,
+    buildRetry: (pid: number | string, id: number | string) => `DeveloperProjects/${pid}/builds/${id}/retry`,
+  },
+  /** Client portal — role `Client`, scoped server-side to the client's own customer. */
+  clientPortal: {
+    myProjects: 'ClientPortal/MyProjects',
+    project: (pid: number | string) => `ClientPortal/Projects/${pid}`,
+    timeline: (pid: number | string) => `ClientPortal/Projects/${pid}/timeline`,
+    /** GET paged (own) · POST multipart create. */
+    requests: (pid: number | string) => `ClientPortal/Projects/${pid}/requests`,
+    request: (id: number | string) => `ClientPortal/requests/${id}`,
+    requestComments: (id: number | string) => `ClientPortal/requests/${id}/comments`,
   },
   /** Admin-facing task management — full CRUD + board statistics + control panel. */
   managerTasks: {
@@ -359,6 +393,8 @@ export const API_ENDPOINTS = {
     chatMessages: (chatId: number | string) => `WhatsApp/chats/${chatId}/messages`,
     /** POST — resets the CRM unread counter (no blue ticks to the customer). */
     markChatRead: (chatId: number | string) => `WhatsApp/chats/${chatId}/read`,
+    /** DELETE (Admin / channel owner) — soft delete; a new customer message brings it back. */
+    chat: (chatId: number | string) => `WhatsApp/chats/${chatId}`,
     /** GET oldest → newest — `take`. */
     customerMessages: (customerId: number | string) =>
       `WhatsApp/customers/${customerId}/messages`,

@@ -5,7 +5,6 @@ import { ToastService } from '../services/toast.service';
 import { UserRole } from '../models/auth.model';
 import { ROUTE_ROLE_MAP } from '../constants/nav-sections.const';
 import { ROLE_HOME } from '../constants/role-home.const';
-import { CLIENT_ALLOWED_SEGMENTS } from '../constants/roles.const';
 
 /**
  * Generic role guard:
@@ -36,9 +35,8 @@ export const roleGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
-  // Clients are external: an allow-list, never "anything not restricted".
+  // Clients are external: no staff page at all — their whole app is `/portal`.
   if (role === 'Client') {
-    if (CLIENT_ALLOWED_SEGMENTS.has(firstSegment(state.url))) return true;
     router.navigateByUrl(ROLE_HOME.Client);
     return false;
   }

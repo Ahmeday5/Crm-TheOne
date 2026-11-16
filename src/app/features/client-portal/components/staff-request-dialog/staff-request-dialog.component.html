@@ -1,0 +1,51 @@
+@if (request(); as r) {
+  <app-modal [open]="true" size="lg" [title]="r.title" [icon]="typeIcon(r.type)" (closed)="closed.emit()">
+    <div class="sr-meta">
+      <span><i class="fa-solid fa-user" aria-hidden="true"></i>{{ r.clientName || '—' }}</span>
+      <span><i class="fa-solid fa-tag" aria-hidden="true"></i>{{ 'clientPortal.type.' + r.type | translate }}</span>
+      <span><i class="fa-regular fa-clock" aria-hidden="true"></i>{{ r.createdAt | cairoDate }}</span>
+    </div>
+
+    <div class="sr-triage">
+      <label class="sr-field">
+        <span>{{ 'clientPortal.staff.status' | translate }}</span>
+        <select class="form-select form-select-sm" [disabled]="saving()" [ngModel]="r.status" (ngModelChange)="setStatus($event)">
+          @for (s of statuses; track s) { <option [value]="s">{{ 'clientPortal.status.' + s | translate }}</option> }
+        </select>
+      </label>
+      <label class="sr-field">
+        <span>{{ 'clientPortal.staff.priority' | translate }}</span>
+        <select class="form-select form-select-sm" [disabled]="saving()" [ngModel]="r.priority ?? ''" (ngModelChange)="setPriority($event)">
+          @if (!r.priority) { <option value="" disabled>{{ 'clientPortal.priority.untriaged' | translate }}</option> }
+          @for (p of priorities; track p) { <option [value]="p">{{ 'clientPortal.priority.' + p | translate }}</option> }
+        </select>
+      </label>
+      <label class="sr-field">
+        <span>{{ 'clientPortal.staff.assignee' | translate }}</span>
+        <select class="form-select form-select-sm" [disabled]="saving()" [ngModel]="r.assignedToId ?? ''" (ngModelChange)="setAssignee($event)">
+          <option value="">{{ 'clientPortal.staff.unassigned' | translate }}</option>
+          @for (a of assignees(); track a.userId) { <option [value]="a.userId">{{ a.fullName }}</option> }
+          @if (r.assignedToId && !isKnownAssignee(r.assignedToId)) {
+            <option [value]="r.assignedToId">{{ r.assignedToName }}</option>
+          }
+        </select>
+      </label>
+      @if (saving()) { <span class="spinner-border spinner-border-sm text-primary align-self-center" aria-hidden="true"></span> }
+    </div>
+    @if (error(); as e) { <div class="alert alert-danger py-2 small">{{ e }}</div> }
+
+    <app-request-thread [request]="r" viewer="staff" [sending]="sending()" [error]="replyError()"
+                        [sentCount]="sentCount()" (reply)="onReply($event)" />
+  </app-modal>
+} @else {
+  <app-modal [open]="true" size="sm" [showHeader]="false" (closed)="closed.emit()">
+    <div class="d-flex flex-column align-items-center gap-2 py-3">
+      @if (loadFailed()) {
+        <p class="mb-0">{{ 'projectWorkspace.loadFailedSection' | translate }}</p>
+        <button type="button" class="btn btn-sm btn-light" (click)="load()">{{ 'common.retry' | translate }}</button>
+      } @else {
+        <span class="spinner-border text-primary" aria-hidden="true"></span>
+      }
+    </div>
+  </app-modal>
+}

@@ -59,8 +59,15 @@ export class ReportDetailComponent implements OnInit {
     return this.company.assetUrl(path) ?? path;
   }
 
+  /** Back to the project's page — the reports tab (admin) or "my report" (developer). */
   goBack(): void {
-    this.router.navigate(['/ProjectManage']);
+    const projectId = this.report()?.projectId;
+    if (!projectId) {
+      this.router.navigate(['/ProjectManage']);
+      return;
+    }
+    const tab = this.auth.currentRole() === 'Admin' ? 'reports' : 'myReport';
+    this.router.navigate(['/projects', projectId], { queryParams: { tab } });
   }
 
   formatDate(iso: string): string {

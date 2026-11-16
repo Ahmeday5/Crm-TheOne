@@ -29,7 +29,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((err: HttpErrorResponse) => {
-      if (err.status !== 401 || isAuthEndpoint(req.url)) {
+      if (err.status !== 401 || isAuthEndpoint(req.url) || isVaultPasswordError(req.url, err)) {
         return throwError(() => err);
       }
       // A business-level 401 on a live session ("Unauthorized access." body,
@@ -63,6 +63,20 @@ function withAuthHeader(
   token: string,
 ): HttpRequest<unknown> {
   return req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
+}
+
+/**
+ * A wrong *vault* password answers 401 too (`X-Vault-Error: invalid_password`)
+ * — the session is fine, so never refresh / log the admin out for it.
+ */
+function isVaultPasswordError(url: string, err: HttpErrorResponse): boolean {
+  // Usually already an `ApiError` here (errorInterceptor runs first on errors).
+  const reason = (err as unknown as { reason?: string }).reason ?? err.headers?.get?.('X-Vault-Error');
+  return (
+    reason === 'invalid_password' ||
+    url.includes(API_ENDPOINTS.vault.unlock) ||
+    url.includes(API_ENDPOINTS.vault.lockChangePassword)
+  );
 }
 
 function isAuthEndpoint(url: string): boolean {

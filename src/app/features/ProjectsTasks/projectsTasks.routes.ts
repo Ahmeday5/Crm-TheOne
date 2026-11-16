@@ -27,26 +27,17 @@ export const PROJECTS_TASKS_ROUTES: Routes = [
       },
     ],
   },
-  // Project progress & daily reporting — sibling routes (not nested under the
-  // ProjectManage/TasksManage tab shell) so these render as full pages.
+  // Progress / daily reporting now live inside the project workspace
+  // (`/projects/:id`). The old links redirect to the matching tab.
   {
     path: 'ProjectManage/:projectId/progress',
-    title: 'متابعة تقدم المشروع',
-    data: { roles: ['Admin'] },
-    loadComponent: () =>
-      import(
-        '../project-progress/pages/project-progress-admin/project-progress-admin.component'
-      ).then((m) => m.ProjectProgressAdminComponent),
+    redirectTo: ({ params }) => `/projects/${params['projectId']}?tab=team`,
   },
   {
     path: 'ProjectManage/:projectId/my-progress',
-    title: 'تقدمي في المشروع',
-    data: { roles: ['Developer'] },
-    loadComponent: () =>
-      import(
-        '../project-progress/pages/my-project-progress/my-project-progress.component'
-      ).then((m) => m.MyProjectProgressComponent),
+    redirectTo: ({ params }) => `/projects/${params['projectId']}?tab=myReport`,
   },
+  // Report pages stay full pages (opened from the workspace "reports" tab).
   {
     path: 'ProjectManage/reports/:reportId/edit',
     title: 'تعديل التقرير',

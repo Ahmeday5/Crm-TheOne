@@ -165,6 +165,14 @@ export interface ProjectListItem {
   engineers: ProjectEngineerRef[];
   teamMembersCount: number;
   createdAt: string;
+  /** Only filled by `DeveloperProjects/GetMyProjectById` — the caller's share. */
+  myAllocationPercent?: number | null;
+  myRoleOnProject?: string | null;
+  /** The project's customer has a client-portal account. */
+  hasClientAccess?: boolean;
+  gitHubRepoUrl?: string | null;
+  gitBranch?: string | null;
+  showBuildsToClient?: boolean;
 }
 
 /** Detail read is identical to the list row. */
@@ -193,14 +201,14 @@ export interface CreateProjectRequest {
 /**
  * Body for `PUT /ManagerProjects/UpdateProject/{id}`.
  *
- * The customer can't be reassigned on edit — same field set as create minus
- * the (already-omitted) manager. `customerId` stays so the backend keeps the
- * link, mirroring the sample payload.
+ * `customerId` omitted / `null` keeps the current customer. `engineerIds`
+ * omitted / `null` leaves the team untouched (the team is managed from the
+ * project workspace now); when sent it must be non-empty.
  */
 export interface UpdateProjectRequest {
   title: string;
   description: string;
-  customerId: number;
+  customerId?: number | null;
   status: ProjectStatusName;
   priority: ProjectPriorityName;
   price: number;
@@ -208,7 +216,7 @@ export interface UpdateProjectRequest {
   start: string;
   /** ISO date-time. */
   end: string;
-  engineerIds: string[];
+  engineerIds?: string[] | null;
 }
 
 /** Query params for the paginated list endpoints. */

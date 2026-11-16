@@ -78,11 +78,16 @@ function normalizeError(err: HttpErrorResponse, isAr: boolean): ApiError {
       ? body.errors
       : undefined;
 
+  const reason: string | undefined = body?.data?.reason || err.headers?.get('X-Vault-Error') || undefined;
+  const retryAfter = Number(err.headers?.get('Retry-After'));
+
   return {
     status,
     code: body?.code,
     message,
     fieldErrors,
+    reason,
+    retryAfterSec: Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined,
     raw: body,
   };
 }

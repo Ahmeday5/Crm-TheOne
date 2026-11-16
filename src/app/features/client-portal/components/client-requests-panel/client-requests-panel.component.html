@@ -1,0 +1,69 @@
+<div class="card">
+  <div class="card-header d-flex align-items-center gap-2 flex-wrap">
+    <i class="fa-solid fa-message text-primary" aria-hidden="true"></i>
+    <h5 class="mb-0 me-auto">{{ 'clientPortal.requests.staffTitle' | translate }}</h5>
+    <button type="button" class="btn btn-sm btn-light" (click)="load()" [disabled]="loading()"
+            [attr.aria-label]="'common.refresh' | translate">
+      <i class="fa-solid fa-rotate" [class.fa-spin]="loading()" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div class="crp-chips" role="tablist">
+    <button type="button" role="tab" class="crp-chip" [class.is-active]="filter() === 'all'" (click)="filter.set('all')">
+      {{ 'clientPortal.requests.all' | translate }} <b>{{ counts()['all'] }}</b>
+    </button>
+    @for (s of statuses; track s) {
+      <button type="button" role="tab" class="crp-chip" [attr.data-status]="s" [class.is-active]="filter() === s" (click)="filter.set(s)">
+        {{ 'clientPortal.status.' + s | translate }} <b>{{ counts()[s] ?? 0 }}</b>
+      </button>
+    }
+  </div>
+
+  <div class="card-body p-0">
+    @if (loading() && !items().length) {
+      <div class="crp-center"><span class="spinner-border text-primary" aria-hidden="true"></span></div>
+    } @else if (loadFailed()) {
+      <div class="crp-empty">
+        <h6 class="fw-700 mb-2">{{ 'projectWorkspace.loadFailedSection' | translate }}</h6>
+        <button type="button" class="btn btn-sm btn-light" (click)="load()">{{ 'common.retry' | translate }}</button>
+      </div>
+    } @else if (rows().length === 0) {
+      <div class="crp-empty">
+        <span class="icon-tile lg tone-success"><i class="fa-solid fa-circle-check"></i></span>
+        <h6 class="fw-700 mb-0">{{ (items().length ? 'clientPortal.requests.emptyFilter' : 'clientPortal.requests.emptyStaff') | translate }}</h6>
+      </div>
+    } @else {
+      <ul class="crp-list" role="list">
+        @for (r of rows(); track r.id) {
+          <li>
+            <button type="button" class="crp-row" (click)="openId.set(r.id)">
+              <span class="crp-icon" [attr.data-type]="r.type"><i [class]="typeIcon(r.type)" aria-hidden="true"></i></span>
+              <span class="crp-main">
+                <span class="crp-title">{{ r.title }}</span>
+                <span class="crp-sub">
+                  {{ r.clientName || '—' }} · {{ (r.updatedAt || r.createdAt) | cairoDate: 'date' }}
+                  @if (r.assignedToName) { · <i class="fa-solid fa-user-check" aria-hidden="true"></i> {{ r.assignedToName }} }
+                  @if (r.commentsCount) { · <i class="fa-regular fa-comment" aria-hidden="true"></i> {{ r.commentsCount }} }
+                  @if (r.attachmentsCount) { · <i class="fa-solid fa-paperclip" aria-hidden="true"></i> {{ r.attachmentsCount }} }
+                </span>
+              </span>
+              <span class="crp-badges">
+                @if (r.priority) {
+                  <span class="badge" [class]="priorityClass(r.priority)">{{ 'clientPortal.priority.' + r.priority | translate }}</span>
+                } @else {
+                  <span class="badge bg-warning-subtle text-warning">{{ 'clientPortal.priority.untriaged' | translate }}</span>
+                }
+                <span class="badge" [class]="statusClass(r.status)">{{ 'clientPortal.status.' + r.status | translate }}</span>
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>
+
+@if (openId(); as id) {
+  <app-staff-request-dialog [projectId]="projectId()" [requestId]="id" [assignees]="assignees()"
+                            (updated)="onUpdated($event)" (closed)="openId.set(null)" />
+}

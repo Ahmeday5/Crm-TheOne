@@ -22,5 +22,12 @@ export interface ApiError {
   code?: string;
   message: string;
   fieldErrors?: ApiFieldErrors;
+  /**
+   * Machine-readable cause when the server gives one — `data.reason` in the
+   * body or the `X-Vault-Error` header (e.g. `vault_locked`, `invalid_password`).
+   */
+  reason?: string;
+  /** Seconds from the `Retry-After` header (429). */
+  retryAfterSec?: number;
   raw?: unknown;
 }

@@ -1,0 +1,60 @@
+.ph-head { margin-bottom: 1.25rem; }
+.ph-title { margin: 0 0 0.25rem; font-weight: var(--fw-700); }
+.ph-sub { margin: 0; color: var(--text-3); }
+
+.ph-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
+  gap: 1rem;
+}
+
+.ph-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.15rem 1.25rem;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+
+  &:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--brand-500); }
+  &:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 2px; }
+
+  &__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+  &__name { margin: 0; font-size: var(--fs-lg); font-weight: var(--fw-700); min-width: 0; }
+  &__meta {
+    display: flex; flex-direction: column; gap: 0.3rem; font-size: var(--fs-xs); color: var(--text-3);
+    span { display: inline-flex; align-items: center; gap: 0.4rem; }
+  }
+  &--sk { min-height: 11rem; background: var(--surface-0); animation: ph-pulse 1.4s ease-in-out infinite; }
+}
+
+.ph-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  b { font-variant-numeric: tabular-nums; color: var(--brand-500); min-width: 3ch; }
+  &__bar {
+    flex: 1; height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden;
+    span { display: block; height: 100%; border-radius: 4px; background: var(--brand-500); transition: width 500ms ease; }
+  }
+}
+
+.ph-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-end;
+  color: var(--brand-500);
+  font-weight: var(--fw-600);
+  font-size: var(--fs-sm);
+}
+:host-context([dir='ltr']) .ph-go i { transform: scaleX(-1); }
+
+.ph-empty { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; padding: 3rem 1rem; text-align: center; }
+
+@keyframes ph-pulse { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) {
+  .ph-card { transition: none; &:hover { transform: none; } }
+  .ph-card--sk { animation: none; }
+}

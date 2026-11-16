@@ -191,6 +191,7 @@
   min-width: 0;
   max-width: 12rem;
 }
+.wa-head__delete { flex-shrink: 0; }
 .wa-head__owner-name {
   max-width: 100%;
   overflow: hidden;

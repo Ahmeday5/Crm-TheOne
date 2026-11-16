@@ -65,6 +65,9 @@ export class WhatsAppInboxStore {
   private readonly total = signal(0);
   /** Every chat seen this visit — the open chat keeps its header when filtered out. */
   private readonly seen = signal<ReadonlyMap<number, WaChat>>(new Map());
+  private readonly deletedSubject = new Subject<number>();
+  /** A chat left the inbox (deleted here or by someone else) — the page closes it if open. */
+  readonly chatDeleted$ = this.deletedSubject.asObservable();
 
   readonly channelId = computed(() => this.query().channelId);
   readonly search = computed(() => this.query().search);
@@ -76,21 +79,14 @@ export class WhatsAppInboxStore {
   readonly refreshing = signal(false);
   readonly error = signal<string | null>(null);
 
-  /** Channels removed from the provider — their chats are deleted and never shown. */
-  private readonly removedChannelIds = computed(
-    () => new Set(this.session.channels().filter((c) => c.existsInProvider === false).map((c) => c.id)),
-  );
-
   /**
    * The open chat always shows as read — the thread marks it read itself.
-   * Chats belonging to a channel deleted from the provider are hidden entirely.
+   * Deleted chats are excluded server-side (list, counts, search); a live
+   * deletion is removed in `removeChat`. Nothing is filtered or counted here.
    */
   readonly chats = computed<WaChat[]>(() => {
     const active = this.activeChatId();
-    const removed = this.removedChannelIds();
-    return this.items()
-      .filter((c) => c.id === active || !removed.has(c.instanceId))
-      .map((c) => (c.id === active && c.unreadCount ? { ...c, unreadCount: 0 } : c));
+    return this.items().map((c) => (c.id === active && c.unreadCount ? { ...c, unreadCount: 0 } : c));
   });
   readonly hasMore = computed(() => this.items().length < this.total());
   /** The open chat as the server reports it (real unread count — the thread decides on marking read). */
@@ -144,7 +140,15 @@ export class WhatsAppInboxStore {
       .subscribe(({ instanceId, chat }) => this.upsert({ ...chat, instanceId: instanceId || chat.instanceId }, true));
     this.realtime.chatUpdated$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((chat) => this.upsert(chat, false));
+      .subscribe((chat) => {
+        if (chat.isDeleted) {
+          this.removeChat(chat.id);
+          // Channel badges / "all channels" come from the server — re-read them.
+          this.session.loadChannels();
+        } else {
+          this.upsert(chat, false);
+        }
+      });
 
     // Catch up after a gap; keep fresh by polling only while the hub is down.
     merge(
@@ -217,6 +221,33 @@ export class WhatsAppInboxStore {
   }
 
   // ─────────────── local updates ───────────────
+
+  /**
+   * Drop a chat from the list (deleted — by us optimistically, or announced by
+   * the hub). Returns the removed row so a failed delete can put it back.
+   */
+  removeChat(chatId: number): WaChat | null {
+    const removed = this.items().find((c) => c.id === chatId) ?? this.seen().get(chatId) ?? null;
+    if (this.items().some((c) => c.id === chatId)) {
+      this.items.update((list) => list.filter((c) => c.id !== chatId));
+      this.total.update((n) => Math.max(0, n - 1));
+    }
+    this.seen.update((map) => {
+      if (!map.has(chatId)) return map;
+      const next = new Map(map);
+      next.delete(chatId);
+      return next;
+    });
+    this.deletedSubject.next(chatId);
+    return removed;
+  }
+
+  /** Undo an optimistic removal (the delete failed). */
+  restoreChat(chat: WaChat): void {
+    if (this.items().some((c) => c.id === chat.id)) return;
+    this.items.update((list) => [...list, chat].sort(compareChatsByActivity));
+    this.total.update((n) => n + 1);
+  }
 
   /** The thread just marked this chat read. */
   markReadLocally(chatId: number): void {

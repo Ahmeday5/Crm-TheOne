@@ -1,0 +1,94 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--surface-1);
+}
+
+.cl-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-0);
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0.6rem 1rem;
+  }
+}
+
+.cl-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  color: var(--text-1);
+  text-decoration: none;
+
+  &__logo { width: 34px; height: 34px; border-radius: var(--radius-md); object-fit: contain; flex-shrink: 0; }
+  &__name { font-weight: var(--fw-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+
+.cl-nav {
+  display: flex;
+  gap: 0.25rem;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-pill);
+    color: var(--text-2);
+    font-weight: var(--fw-600);
+    font-size: var(--fs-sm);
+    text-decoration: none;
+    transition: background-color 150ms ease, color 150ms ease;
+
+    &:hover { background: var(--surface-2); color: var(--text-1); }
+    &.is-active { background: var(--brand-soft); color: var(--brand-500); }
+  }
+}
+
+.cl-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.cl-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  &__name { font-size: var(--fs-sm); font-weight: var(--fw-600); max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+.cl-main {
+  flex: 1;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2.5rem;
+}
+
+.cl-foot {
+  padding: 1rem;
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+@include bp.down(md) {
+  .cl-brand__name, .cl-user__name, .cl-nav span { display: none; }
+  .cl-bar__inner { gap: 0.5rem; }
+  .cl-main { padding-top: 1rem; }
+}

@@ -1,0 +1,159 @@
+<div class="card ta-card">
+  <div class="card-header d-flex align-items-center gap-2 flex-wrap">
+    <i class="fa-solid fa-people-group text-primary" aria-hidden="true"></i>
+    <h5 class="mb-0 me-auto">{{ 'projectTeam.title' | translate }}</h5>
+    @if (rows().length && !loading()) {
+      <span class="ta-today" [class.is-all]="reportedCount() === rows().length">
+        <i class="fa-solid fa-file-circle-check" aria-hidden="true"></i>
+        {{ 'projectTeam.reportedToday' | translate: { n: reportedCount(), total: rows().length } }}
+      </span>
+    }
+    @if (canEdit()) {
+      <button type="button" class="btn btn-sm btn-light" (click)="historyFor.set({})">
+        <i class="fa-solid fa-clock-rotate-left me-1" aria-hidden="true"></i>{{ 'projectTeam.historyAll' | translate }}
+      </button>
+      @if (rows().length > 1) {
+        <button type="button" class="btn btn-sm btn-light" (click)="distributeEvenly()">
+          <i class="fa-solid fa-scale-balanced me-1" aria-hidden="true"></i>{{ 'projectTeam.distribute' | translate }}
+        </button>
+      }
+    }
+  </div>
+
+  <div class="card-body">
+    @if (loading()) {
+      <div class="ta-sk" aria-hidden="true">@for (_ of [1, 2, 3]; track $index) { <span></span> }</div>
+    } @else if (loadFailed()) {
+      <div class="ta-empty">
+        <span class="icon-tile lg tone-warning"><i class="fa-solid fa-triangle-exclamation"></i></span>
+        <h6 class="fw-700 mb-2">{{ 'projectWorkspace.loadFailedSection' | translate }}</h6>
+        <button type="button" class="btn btn-sm btn-light" (click)="load()">{{ 'common.retry' | translate }}</button>
+      </div>
+    } @else {
+      @if (rows().length === 0) {
+        <div class="ta-empty">
+          <span class="icon-tile lg tone-secondary"><i class="fa-solid fa-user-plus"></i></span>
+          <h6 class="fw-700 mb-1">{{ 'projectTeam.emptyTitle' | translate }}</h6>
+          @if (canEdit()) { <p class="text-muted small mb-0">{{ 'projectTeam.emptyHint' | translate }}</p> }
+        </div>
+      } @else {
+        <div class="ta-headrow" aria-hidden="true">
+          <span>{{ 'projectTeam.developer' | translate }}</span>
+          <span>{{ 'projectTeam.allocation' | translate }}</span>
+          <span>{{ 'projectTeam.progress' | translate }}</span>
+          <span></span>
+        </div>
+        <ul class="ta-list" role="list">
+          @for (r of rows(); track r.developerId) {
+            <li class="ta-row">
+              <!-- who -->
+              <div class="ta-who">
+                <app-user-avatar [name]="r.name" [imageUrl]="r.imageUrl" size="md" />
+                <div class="ta-who__text">
+                  <span class="ta-name">{{ r.name }}</span>
+                  @if (canEdit()) {
+                    <input type="text" class="form-control form-control-sm ta-role-input" list="ta-roles" maxlength="50"
+                           [attr.aria-label]="'projectTeam.role' | translate"
+                           [placeholder]="'projectTeam.rolePlaceholder' | translate"
+                           [ngModel]="r.roleOnProject" (ngModelChange)="setRole(r.developerId, $event)" />
+                  } @else {
+                    <span class="ta-role">{{ r.roleOnProject || ('projectTeam.noRole' | translate) }}</span>
+                  }
+                  @if (r.tasksTotal) {
+                    <span class="ta-tasks"><i class="fa-solid fa-list-check" aria-hidden="true"></i>{{ r.tasksDone }}/{{ r.tasksTotal }} {{ 'projectTeam.tasks' | translate }}</span>
+                  }
+                </div>
+              </div>
+
+              <!-- share -->
+              <div class="ta-share">
+                @if (canEdit()) {
+                  <input type="range" min="0" max="100" step="5" class="form-range ta-slider"
+                         [attr.aria-label]="'projectTeam.allocation' | translate"
+                         [ngModel]="r.allocationPercent" (ngModelChange)="setPercent(r.developerId, $event)" />
+                  <input type="number" min="0" max="100" class="form-control form-control-sm ta-num"
+                         [attr.aria-label]="'projectTeam.allocation' | translate"
+                         [ngModel]="r.allocationPercent" (ngModelChange)="setPercent(r.developerId, $event)" />
+                  <span class="ta-pct-sign">%</span>
+                } @else {
+                  <span class="ta-pct">{{ r.allocationPercent }}%</span>
+                }
+              </div>
+
+              <!-- progress -->
+              <div class="ta-progress">
+                @if (r.earned !== null) {
+                  <div class="ta-bar" [title]="'projectTeam.earnedOf' | translate: { earned: r.earned, share: r.allocationPercent }">
+                    <span [style.width.%]="earnedOfShare(r)"></span>
+                  </div>
+                  <span class="ta-earned">{{ r.earned }}% <small>/ {{ r.allocationPercent }}%</small></span>
+                  @if (r.reportedToday) {
+                    <span class="ta-flag is-ok" [title]="'projectProgress.admin.badges.reportedToday' | translate"><i class="fa-solid fa-circle-check"></i></span>
+                  } @else {
+                    <span class="ta-flag" [title]="'projectProgress.admin.badges.notReportedToday' | translate"><i class="fa-solid fa-circle-exclamation"></i></span>
+                  }
+                } @else {
+                  <span class="ta-muted">{{ 'projectTeam.notStarted' | translate }}</span>
+                }
+              </div>
+
+              <!-- actions -->
+              <div class="ta-actions">
+                @if (canEdit()) {
+                  <app-row-menu [items]="menuFor(r)" (select)="onRowAction($event, r)" />
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (canEdit()) {
+        <datalist id="ta-roles">@for (s of roleSuggestions; track s) { <option [value]="s"></option> }</datalist>
+
+        <div class="ta-add">
+          @if (picking()) {
+            <select class="form-select form-select-sm ta-add-select" (change)="add($any($event.target).value)">
+              <option value="" selected disabled>{{ 'projectTeam.pickDeveloper' | translate }}</option>
+              @for (d of available(); track d.userId) {
+                <option [value]="d.userId">{{ d.fullName }}@if (d.specialty) { — {{ d.specialty }} }</option>
+              }
+            </select>
+            <button type="button" class="btn btn-sm btn-light" (click)="picking.set(false)">{{ 'common.cancel' | translate }}</button>
+          } @else {
+            <button type="button" class="btn btn-sm btn-light" (click)="picking.set(true)" [disabled]="available().length === 0">
+              <i class="fa-solid fa-plus me-1" aria-hidden="true"></i>{{ 'projectTeam.addDeveloper' | translate }}
+            </button>
+          }
+        </div>
+
+        @if (error(); as e) { <div class="alert alert-danger py-2 mt-3 mb-0 small">{{ e }}</div> }
+      }
+    }
+  </div>
+
+  @if (canEdit() && !loading() && !loadFailed()) {
+    <div class="ta-foot" [class.is-over]="overBudget()">
+      <span class="ta-total">
+        {{ 'projectTeam.total' | translate }}: <b>{{ total() }}%</b> / 100%
+        @if (overBudget()) { <span class="ta-total__warn">· {{ 'projectTeam.overBudget' | translate }}</span> }
+      </span>
+      <div class="ta-foot__bar" aria-hidden="true"><span [style.width.%]="total() > 100 ? 100 : total()"></span></div>
+      @if (dirty()) {
+        <button type="button" class="btn btn-sm btn-light" (click)="reset()" [disabled]="saving()">{{ 'common.cancel' | translate }}</button>
+      }
+      <button type="button" class="btn btn-sm btn-primary" [disabled]="!canSave()" (click)="save()">
+        @if (saving()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+        @else if (savedFlash()) { <i class="fa-solid fa-check me-1" aria-hidden="true"></i> }
+        {{ (savedFlash() ? 'projectTeam.saved' : 'common.save') | translate }}
+      </button>
+    </div>
+  }
+</div>
+
+@if (adjusting(); as m) {
+  <app-adjust-progress-dialog [projectId]="projectId()" [member]="m" (saved)="onAdjusted()" (cancel)="adjusting.set(null)" />
+}
+@if (historyFor(); as h) {
+  <app-progress-history-panel [projectId]="projectId()" [developerId]="h.developerId" (cancel)="historyFor.set(null)" />
+}

@@ -1,0 +1,128 @@
+@use 'breakpoints' as bp;
+
+.ta-card { overflow: visible; }
+
+.ta-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--warning-subtle, #fef3c7);
+  color: var(--warning);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+  &.is-all { background: var(--success-subtle, #dcfce7); color: var(--success); }
+}
+
+/* ── grid: who | share | progress | ⋯ ── */
+$cols: minmax(12rem, 1.4fr) minmax(11rem, 1fr) minmax(12rem, 1.1fr) 2.5rem;
+
+.ta-headrow {
+  display: grid;
+  grid-template-columns: $cols;
+  gap: 1rem;
+  padding: 0 0.75rem 0.4rem;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+  color: var(--text-3);
+}
+
+.ta-list { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+
+.ta-row {
+  display: grid;
+  grid-template-columns: $cols;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+}
+
+.ta-who { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
+.ta-who__text { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.ta-name { font-weight: var(--fw-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ta-role { font-size: var(--fs-xs); color: var(--text-3); }
+.ta-role-input { max-width: 12rem; }
+.ta-tasks {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: var(--fs-xs); color: var(--text-3); font-variant-numeric: tabular-nums;
+}
+
+.ta-share { display: flex; align-items: center; gap: 0.4rem; }
+.ta-slider { flex: 1; min-width: 4rem; }
+.ta-num { width: 4rem; text-align: center; }
+.ta-pct-sign { color: var(--text-3); }
+.ta-pct { font-weight: var(--fw-700); font-variant-numeric: tabular-nums; color: var(--brand-500); font-size: var(--fs-md); }
+
+.ta-progress { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.ta-bar {
+  flex: 1; height: 7px; border-radius: 4px; background: var(--surface-2); overflow: hidden;
+  span { display: block; height: 100%; background: var(--success); border-radius: 4px; transition: width 300ms ease; }
+}
+.ta-earned {
+  font-weight: var(--fw-700); font-size: var(--fs-sm); font-variant-numeric: tabular-nums; white-space: nowrap;
+  small { font-weight: var(--fw-500); color: var(--text-3); }
+}
+.ta-flag { color: var(--warning); &.is-ok { color: var(--success); } }
+.ta-muted { font-size: var(--fs-xs); color: var(--text-3); }
+
+.ta-actions { display: flex; justify-content: flex-end; }
+
+.ta-add { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; }
+.ta-add-select { max-width: 18rem; }
+
+.ta-foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-lg, var(--radius-md)) var(--radius-lg, var(--radius-md));
+  background: var(--surface-0);
+
+  &__bar {
+    flex: 1 1 6rem; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden;
+    span { display: block; height: 100%; background: var(--brand-500); transition: width 250ms ease, background-color 200ms ease; }
+  }
+  &.is-over &__bar span { background: var(--danger); }
+}
+.ta-total {
+  font-size: var(--fs-sm); color: var(--text-2);
+  b { font-variant-numeric: tabular-nums; color: var(--brand-500); }
+  &__warn { color: var(--danger); font-weight: var(--fw-600); }
+}
+.ta-foot.is-over .ta-total b { color: var(--danger); }
+
+.ta-empty { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; padding: 2rem 1rem; text-align: center; }
+
+.ta-sk {
+  display: flex; flex-direction: column; gap: 0.5rem;
+  span { height: 3.5rem; border-radius: var(--radius-md); background: var(--surface-1); animation: ta-pulse 1.4s ease-in-out infinite; }
+}
+@keyframes ta-pulse { 50% { opacity: 0.5; } }
+
+/* Phones / narrow: stacked card per developer. */
+@include bp.down(lg) {
+  .ta-headrow { display: none; }
+  .ta-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: 'who actions' 'share share' 'progress progress';
+    gap: 0.6rem;
+  }
+  .ta-who { grid-area: who; }
+  .ta-share { grid-area: share; }
+  .ta-progress { grid-area: progress; }
+  .ta-actions { grid-area: actions; }
+  .ta-role-input { max-width: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ta-sk span { animation: none; }
+}

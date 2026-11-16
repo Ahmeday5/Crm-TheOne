@@ -39,10 +39,11 @@
             </button>
           </div>
 
+          <div class="vl-meter" [attr.data-level]="strength()" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
           <ul class="vl-rules" role="list" aria-live="polite">
             <li [class.ok]="rules().length"><i class="fa-solid" [class.fa-check]="rules().length" [class.fa-circle]="!rules().length" aria-hidden="true"></i>{{ 'vaultLock.rules.length' | translate }}</li>
-            <li [class.ok]="rules().letter"><i class="fa-solid" [class.fa-check]="rules().letter" [class.fa-circle]="!rules().letter" aria-hidden="true"></i>{{ 'vaultLock.rules.letter' | translate }}</li>
-            <li [class.ok]="rules().digit"><i class="fa-solid" [class.fa-check]="rules().digit" [class.fa-circle]="!rules().digit" aria-hidden="true"></i>{{ 'vaultLock.rules.digit' | translate }}</li>
+            <li [class.ok]="rules().letter" class="is-hint"><i class="fa-solid" [class.fa-check]="rules().letter" [class.fa-circle]="!rules().letter" aria-hidden="true"></i>{{ 'vaultLock.rules.letter' | translate }}</li>
+            <li [class.ok]="rules().digit" class="is-hint"><i class="fa-solid" [class.fa-check]="rules().digit" [class.fa-circle]="!rules().digit" aria-hidden="true"></i>{{ 'vaultLock.rules.digit' | translate }}</li>
           </ul>
 
           <label class="form-label" for="vl-confirm">{{ 'vaultLock.setup.confirm' | translate }}</label>
@@ -54,7 +55,7 @@
             <div class="invalid-feedback d-block">{{ 'vaultLock.setup.mismatch' | translate }}</div>
           }
 
-          @if (error(); as e) { <div class="alert alert-danger py-2 mt-3 mb-0 small">{{ e.key | translate: { n: e.n ?? '' } }}</div> }
+          @if (error(); as e) { <div class="alert alert-danger py-2 mt-3 mb-0 small">{{ e.text || (e.key | translate: { n: e.n ?? '' }) }}</div> }
 
           <button type="submit" class="btn btn-primary w-100 mt-3" [disabled]="!canSetup()">
             @if (busy()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
@@ -71,6 +72,8 @@
 
         @if (setupRaced()) {
           <div class="alert alert-info py-2 small">{{ 'vaultLock.unlock.raced' | translate }}</div>
+        } @else if (reasonKey()) {
+          <div class="alert alert-info py-2 small"><i class="fa-regular fa-clock me-1" aria-hidden="true"></i>{{ reasonKey()! | translate }}</div>
         }
 
         <form class="vl-form" (ngSubmit)="submitUnlock()" autocomplete="off">
@@ -89,10 +92,10 @@
 
           @if (lockedFor() > 0) {
             <div class="alert alert-warning py-2 mt-3 mb-0 small" role="status">
-              <i class="fa-solid fa-hourglass-half me-1" aria-hidden="true"></i>{{ 'vaultLock.errors.lockedOut' | translate: { n: lockedFor() } }}
+              <i class="fa-solid fa-hourglass-half me-1" aria-hidden="true"></i>{{ 'vaultLock.errors.lockedOut' | translate: { t: lockedForLabel() } }}
             </div>
           } @else if (error()) {
-            <div class="alert alert-danger py-2 mt-3 mb-0 small" role="alert">{{ error()!.key | translate: { n: error()!.n ?? '' } }}</div>
+            <div class="alert alert-danger py-2 mt-3 mb-0 small" role="alert">{{ error()!.text || (error()!.key | translate: { n: error()!.n ?? '' }) }}</div>
           }
 
           <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" [disabled]="!canUnlock()">
@@ -102,7 +105,10 @@
           </button>
         </form>
 
-        <p class="vl-foot"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>{{ 'vaultLock.unlock.forgot' | translate }}</p>
+        @if (unlockMinutes(); as m) {
+          <p class="vl-foot"><i class="fa-regular fa-clock" aria-hidden="true"></i>{{ 'vaultLock.unlock.duration' | translate: { n: m } }}</p>
+        }
+        <p class="vl-foot mt-1"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>{{ 'vaultLock.unlock.forgot' | translate }}</p>
       }
     }
   </div>

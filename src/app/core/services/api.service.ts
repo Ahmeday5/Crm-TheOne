@@ -2,12 +2,17 @@ import { Injectable, inject } from '@angular/core';
 import {
   HttpClient,
   HttpContext,
+  HttpEventType,
   HttpHeaders,
   HttpParams,
+  HttpResponse,
 } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, filter, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
+
+/** Progress / completion of `ApiService.upload()`. */
+export type UploadEvent<T> = { kind: 'progress'; percent: number } | { kind: 'done'; data: T };
 
 export interface RequestOptions {
   params?: Record<string, unknown>;
@@ -86,6 +91,30 @@ export class ApiService {
     return this.http
       .delete<ApiResponse<T> | T>(this.url(endpoint), this.opts(options))
       .pipe(map((res) => this.unwrap<T>(res)));
+  }
+
+  /**
+   * Multipart POST that reports upload progress.
+   *
+   * Emits `{ kind: 'progress', percent }` while the body uploads, then one
+   * `{ kind: 'done', data }` with the unwrapped payload.
+   */
+  upload<T>(endpoint: string, body: FormData, options: RequestOptions = {}): Observable<UploadEvent<T>> {
+    return this.http
+      .post<ApiResponse<T> | T>(this.url(endpoint), body, {
+        ...this.opts(options),
+        reportProgress: true,
+        observe: 'events',
+      })
+      .pipe(
+        filter((e) => e.type === HttpEventType.UploadProgress || e.type === HttpEventType.Response),
+        map((e): UploadEvent<T> => {
+          if (e.type === HttpEventType.UploadProgress) {
+            return { kind: 'progress', percent: e.total ? Math.round((e.loaded / e.total) * 100) : 0 };
+          }
+          return { kind: 'done', data: this.unwrap<T>((e as HttpResponse<ApiResponse<T> | T>).body as ApiResponse<T> | T) };
+        }),
+      );
   }
 
   // ─────────── internals ───────────

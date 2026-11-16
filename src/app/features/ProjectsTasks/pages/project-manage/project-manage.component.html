@@ -248,47 +248,15 @@
 
 <!-- ── Row actions ── -->
 <ng-template #actionsCell let-row>
-  <div class="d-inline-flex flex-wrap gap-1">
-    <button type="button"
-            class="btn btn-sm btn-light"
-            [attr.aria-label]="'projects.manage.table.view' | translate"
-            [title]="'projects.manage.table.view' | translate"
-            (click)="openDetails(row)">
-      <i class="fa-solid fa-eye"></i>
-    </button>
-    <a [routerLink]="['/ProjectManage', row.id, isAdmin() ? 'progress' : 'my-progress']"
-       class="btn btn-sm btn-light"
-       [attr.aria-label]="'projectProgress.entryButton' | translate"
-       [title]="'projectProgress.entryButton' | translate">
-      <i class="fa-solid fa-chart-line"></i>
+  <!-- One obvious action (open the project's page — everything lives there) + the rest under ⋯ -->
+  <div class="pm-actions">
+    <a [routerLink]="['/projects', row.id]" class="btn btn-sm btn-primary pm-open">
+      <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>{{ 'projects.manage.table.open' | translate }}
     </a>
-    <a [routerLink]="['/projects', row.id, 'workspace']"
-       class="btn btn-sm btn-light"
-       [attr.aria-label]="'projectTeam.title' | translate"
-       [title]="'projectWorkspace.team' | translate">
-      <i class="fa-solid fa-diagram-project"></i>
-    </a>
-    @if (isAdmin()) {
-      <button type="button"
-              class="btn btn-sm btn-light"
-              [disabled]="busyId() === row.id"
-              [attr.aria-label]="'projects.manage.table.edit' | translate"
-              [title]="'projects.manage.table.edit' | translate"
-              (click)="openEdit(row)">
-        <i class="fa-solid fa-pen"></i>
-      </button>
-      <button type="button"
-              class="btn btn-sm btn-icon btn-danger-soft"
-              [disabled]="busyId() === row.id"
-              [attr.aria-label]="'projects.manage.table.delete' | translate"
-              [title]="'projects.manage.table.delete' | translate"
-              (click)="confirmDelete(row)">
-        @if (busyId() === row.id) {
-          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        } @else {
-          <i class="fa-solid fa-trash"></i>
-        }
-      </button>
+    @if (busyId() === row.id) {
+      <span class="spinner-border spinner-border-sm text-danger" role="status" aria-hidden="true"></span>
+    } @else {
+      <app-row-menu [items]="rowMenu()" (select)="onRowAction($event, row)" />
     }
   </div>
 </ng-template>

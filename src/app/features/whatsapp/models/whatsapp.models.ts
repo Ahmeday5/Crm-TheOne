@@ -96,6 +96,11 @@ export interface WaChat {
   replyWindowEndsAt: string | null;
   /** WhatsApp only: an approved template may be sent. */
   canSendTemplate: boolean;
+  /**
+   * Always `false` in lists (the server never returns deleted chats). `true`
+   * only on the `whatsappChatUpdated` event that announces a deletion.
+   */
+  isDeleted?: boolean;
 }
 
 /** Delivery state. Incoming messages are always `Received`. */

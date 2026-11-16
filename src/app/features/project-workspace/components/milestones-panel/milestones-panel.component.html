@@ -1,0 +1,128 @@
+<div class="card">
+  <div class="card-header d-flex align-items-center gap-2 flex-wrap">
+    <i class="fa-solid fa-flag-checkered text-primary" aria-hidden="true"></i>
+    <h5 class="mb-0 me-auto">{{ 'milestones.title' | translate }}</h5>
+    @if (items().length) {
+      <span class="ms-count">{{ doneCount() }} / {{ items().length }} {{ 'milestones.done' | translate }}</span>
+    }
+    @if (reordering()) { <span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span> }
+    <button type="button" class="btn btn-sm btn-primary" (click)="openNew()">
+      <i class="fa-solid fa-plus me-1" aria-hidden="true"></i>{{ 'milestones.add' | translate }}
+    </button>
+  </div>
+
+  <div class="card-body">
+    <p class="ms-hint"><i class="fa-solid fa-eye me-1" aria-hidden="true"></i>{{ 'milestones.clientHint' | translate }}</p>
+
+    @if (error(); as e) { <div class="alert alert-danger py-2 small">{{ e }}</div> }
+
+    @if (loading()) {
+      <div class="ms-sk" aria-hidden="true">@for (_ of [1, 2, 3]; track $index) { <span></span> }</div>
+    } @else if (loadFailed()) {
+      <div class="ms-empty">
+        <h6 class="fw-700 mb-2">{{ 'projectWorkspace.loadFailedSection' | translate }}</h6>
+        <button type="button" class="btn btn-sm btn-light" (click)="load()">{{ 'common.retry' | translate }}</button>
+      </div>
+    } @else if (items().length === 0) {
+      <div class="ms-empty">
+        <span class="icon-tile lg tone-secondary"><i class="fa-solid fa-list-check"></i></span>
+        <h6 class="fw-700 mb-1">{{ 'milestones.emptyTitle' | translate }}</h6>
+        <p class="text-muted small mb-2">{{ 'milestones.emptyHint' | translate }}</p>
+        <button type="button" class="btn btn-sm btn-light" (click)="openNew()">
+          <i class="fa-solid fa-plus me-1" aria-hidden="true"></i>{{ 'milestones.add' | translate }}
+        </button>
+      </div>
+    } @else {
+      <ol class="ms-list">
+        @for (m of items(); track m.id; let i = $index; let first = $first; let lastRow = $last) {
+          <li class="ms-row" [attr.data-status]="m.status"
+              [class.is-dragging]="dragId() === m.id" [class.is-over]="overId() === m.id && dragId() !== m.id"
+              draggable="true"
+              (dragstart)="onDragStart(m.id, $event)" (dragover)="onDragOver(m.id, $event)"
+              (drop)="onDrop(m.id, $event)" (dragend)="onDragEnd()">
+            <span class="ms-handle" aria-hidden="true"><i class="fa-solid fa-grip-vertical"></i></span>
+
+            <span class="ms-check" aria-hidden="true">
+              @switch (m.status) {
+                @case ('Done') { <i class="fa-solid fa-circle-check"></i> }
+                @case ('InProgress') { <i class="fa-solid fa-circle-half-stroke"></i> }
+                @default { <i class="fa-regular fa-circle"></i> }
+              }
+            </span>
+
+            <span class="ms-main">
+              <span class="ms-title">{{ m.title }}</span>
+              <span class="ms-sub">
+                @if (m.completedAt) { <i class="fa-solid fa-check"></i> {{ m.completedAt | cairoDate: 'date' }} }
+                @else if (m.dueDate) { <i class="fa-regular fa-calendar"></i> {{ m.dueDate | cairoDate: 'date' }} }
+                @if (m.description) { · {{ m.description }} }
+              </span>
+            </span>
+
+            <select class="form-select form-select-sm ms-status" [attr.aria-label]="'milestones.status' | translate"
+                    [disabled]="busyId() === m.id" [ngModel]="m.status" (ngModelChange)="setStatus(m, $event)">
+              @for (s of statuses; track s) { <option [value]="s">{{ 'milestones.statuses.' + s | translate }}</option> }
+            </select>
+
+            @if (m.status !== 'Done') {
+              <button type="button" class="btn btn-sm btn-success ms-done" [disabled]="busyId() === m.id" (click)="markDone(m)">
+                @if (busyId() === m.id) { <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> }
+                @else { {{ 'milestones.markDone' | translate }} <i class="fa-solid fa-check ms-1" aria-hidden="true"></i> }
+              </button>
+            }
+
+            <span class="ms-actions">
+              <button type="button" class="btn btn-sm btn-light" [disabled]="first" (click)="move(i, -1)"
+                      [attr.aria-label]="'milestones.moveUp' | translate"><i class="fa-solid fa-arrow-up"></i></button>
+              <button type="button" class="btn btn-sm btn-light" [disabled]="lastRow" (click)="move(i, 1)"
+                      [attr.aria-label]="'milestones.moveDown' | translate"><i class="fa-solid fa-arrow-down"></i></button>
+              <button type="button" class="btn btn-sm btn-light" (click)="openEdit(m)"
+                      [attr.aria-label]="'common.edit' | translate"><i class="fa-solid fa-pen"></i></button>
+              <button type="button" class="btn btn-sm btn-icon btn-danger-soft" (click)="remove(m)"
+                      [attr.aria-label]="'common.delete' | translate"><i class="fa-solid fa-trash"></i></button>
+            </span>
+          </li>
+        }
+      </ol>
+    }
+  </div>
+</div>
+
+@if (draft(); as d) {
+  <app-modal [open]="true" size="md" icon="fa-solid fa-flag-checkered"
+             [title]="(d.id === null ? 'milestones.add' : 'milestones.edit') | translate" (closed)="draft.set(null)">
+    <form class="d-flex flex-column gap-3" (ngSubmit)="saveDraft()">
+      <div>
+        <label class="form-label" for="ms-title">{{ 'milestones.fields.title' | translate }}</label>
+        <input id="ms-title" type="text" class="form-control" maxlength="200" name="title"
+               [placeholder]="'milestones.fields.titlePlaceholder' | translate"
+               [ngModel]="d.title" (ngModelChange)="patchDraft({ title: $event })" />
+      </div>
+      <div class="row g-3">
+        <div class="col-12 col-sm-6">
+          <label class="form-label" for="ms-status">{{ 'milestones.status' | translate }}</label>
+          <select id="ms-status" class="form-select" name="status" [ngModel]="d.status" (ngModelChange)="patchDraft({ status: $event })">
+            @for (s of statuses; track s) { <option [value]="s">{{ 'milestones.statuses.' + s | translate }}</option> }
+          </select>
+        </div>
+        <div class="col-12 col-sm-6">
+          <label class="form-label" for="ms-due">{{ 'milestones.fields.dueDate' | translate }}</label>
+          <input id="ms-due" type="date" class="form-control" name="due" [ngModel]="d.dueDate" (ngModelChange)="patchDraft({ dueDate: $event })" />
+        </div>
+      </div>
+      <div>
+        <label class="form-label" for="ms-desc">{{ 'milestones.fields.description' | translate }}</label>
+        <textarea id="ms-desc" class="form-control" rows="2" name="desc" maxlength="1000"
+                  [ngModel]="d.description" (ngModelChange)="patchDraft({ description: $event })"></textarea>
+      </div>
+      @if (error(); as e) { <div class="alert alert-danger py-2 mb-0 small">{{ e }}</div> }
+    </form>
+    <div modal-footer class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-light" (click)="draft.set(null)">{{ 'common.cancel' | translate }}</button>
+      <button type="button" class="btn btn-primary" [disabled]="!d.title.trim() || saving()" (click)="saveDraft()">
+        @if (saving()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+        {{ 'common.save' | translate }}
+      </button>
+    </div>
+  </app-modal>
+}

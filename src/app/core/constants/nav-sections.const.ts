@@ -75,20 +75,6 @@ export function isNavItemActive(item: NavItem, url: string): boolean {
 }
 
 export const NAV_SECTIONS: NavSection[] = [
-  // ── Client portal (Client role only) ─────────────────────────
-  {
-    titleKey: 'sidebar.sections.clientPortal',
-    items: [
-      {
-        labelKey: 'sidebar.items.myProjects',
-        path: '/client-portal',
-        icon: 'fa-solid fa-diagram-project',
-        roles: ['Client'],
-        matchSubroutes: true,
-      },
-    ],
-  },
-
   // ── Overview ────────────────────────────────────────────────
   {
     titleKey: 'sidebar.sections.overview',
@@ -464,9 +450,8 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   // Developer modules
   ProjectManage: ['Admin', 'Developer'],
   TasksManage: ['Admin', 'Developer'],
-  // `/projects/:id/workspace` — team allocation + build archive.
+  // `/projects/:id` — the project workspace.
   projects: ['Admin', 'Developer'],
-  'client-portal': ['Client'],
   'developer-analytics': ['Admin', 'Developer'],
   webhooks: ['Admin', 'Developer'],
 

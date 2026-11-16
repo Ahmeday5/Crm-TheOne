@@ -162,6 +162,11 @@ export class WhatsAppApiService {
     return this.api.post<unknown>(this.ep.markChatRead(chatId), null, { context: inline() });
   }
 
+  /** Soft delete (Admin / the channel's owner). A new customer message brings the chat back. */
+  deleteChat(chatId: number): Observable<unknown> {
+    return this.api.delete<unknown>(this.ep.chat(chatId), { context: inline() });
+  }
+
   // ─────────────── sending ───────────────
 
   sendText(req: WaSendTextRequest): Observable<WaMessage> {

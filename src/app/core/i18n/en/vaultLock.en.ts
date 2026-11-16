@@ -18,9 +18,9 @@ const vaultLock: TranslationFile<'vaultLock'> = {
       submit: 'Lock the vault with this password',
     },
     rules: {
-      length: 'At least 8 characters',
-      letter: 'Has a letter',
-      digit: 'Has a number',
+      length: 'At least 8 characters (required)',
+      letter: 'Has a letter (stronger)',
+      digit: 'Has a number (stronger)',
     },
     unlock: {
       title: 'The vault is locked',
@@ -29,6 +29,7 @@ const vaultLock: TranslationFile<'vaultLock'> = {
       submit: 'Open vault',
       raced: 'Another admin set the vault password first — use theirs.',
       forgot: 'Forgot it? Ask the admin who set it.',
+      duration: 'The vault stays open for {n} minutes, then locks by itself.',
     },
     session: {
       open: 'Vault open — locks automatically in',
@@ -42,11 +43,17 @@ const vaultLock: TranslationFile<'vaultLock'> = {
       hint: 'After the change the vault locks for everyone; they’ll need the new password.',
       done: 'Vault password changed',
       wrongCurrent: 'Current password is wrong',
+      lockedOut: 'Too many wrong attempts — wait a little and try again',
+    },
+    reason: {
+      expired: 'The vault’s open time ran out — enter the password again.',
+      revoked: 'The vault was locked (the password probably changed) — enter the password.',
     },
     errors: {
-      wrong: 'Wrong password — {n} attempts left',
-      lockedOut: 'Too many wrong attempts — try again in {n} seconds',
-      weak: 'Password too weak — check the rules',
+      wrong: 'Wrong vault password — {n} attempts left',
+      wrongPlain: 'Wrong vault password',
+      lockedOut: 'Too many attempts — try again in {t}',
+      weak: 'The password must be 8–128 characters',
       generic: 'Something went wrong, please try again',
     },
   },

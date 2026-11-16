@@ -1,0 +1,60 @@
+@let r = request();
+<div class="rt">
+  <div #scroller class="rt-scroll">
+    <!-- Original request -->
+    <div class="rt-msg" [class.is-mine]="originalIsMine()">
+      <div class="rt-bubble">
+        <div class="rt-head">
+          <b>{{ originalIsMine() ? ('clientPortal.thread.you' | translate) : (r.clientName || ('clientPortal.role.Client' | translate)) }}</b>
+          <span class="rt-role">{{ 'clientPortal.role.Client' | translate }}</span>
+        </div>
+        <p class="rt-body">{{ r.description }}</p>
+        <app-attachment-list [items]="r.attachments" />
+        <span class="rt-time">{{ r.createdAt | cairoDate }}</span>
+      </div>
+    </div>
+
+    @for (c of r.comments; track c.id) {
+      <div class="rt-msg" [class.is-mine]="c.isMine" [class.is-team]="c.authorRole !== 'Client'">
+        <div class="rt-bubble">
+          <div class="rt-head">
+            <b>{{ c.isMine ? ('clientPortal.thread.you' | translate) : (c.authorName || ('clientPortal.role.' + c.authorRole | translate)) }}</b>
+            <span class="rt-role">{{ (c.authorRole === 'Client' ? 'clientPortal.role.Client' : 'clientPortal.role.Team') | translate }}</span>
+          </div>
+          @if (c.body) { <p class="rt-body">{{ c.body }}</p> }
+          <app-attachment-list [items]="c.attachments" />
+          <span class="rt-time">{{ c.createdAt | cairoDate }}</span>
+        </div>
+      </div>
+    } @empty {
+      <p class="rt-wait"><i class="fa-regular fa-clock me-1" aria-hidden="true"></i>
+        {{ (viewer() === 'client' ? 'clientPortal.thread.noRepliesClient' : 'clientPortal.thread.noRepliesStaff') | translate }}</p>
+    }
+  </div>
+
+  @if (locked()) {
+    <p class="rt-locked"><i class="fa-solid fa-lock me-1" aria-hidden="true"></i>{{ 'clientPortal.thread.closed' | translate }}</p>
+  } @else {
+    @if (r.status === 'Resolved' && viewer() === 'client') {
+      <p class="rt-note"><i class="fa-solid fa-circle-info me-1" aria-hidden="true"></i>{{ 'clientPortal.thread.reopenHint' | translate }}</p>
+    }
+    <div class="rt-compose">
+      <app-attachment-picker [compact]="true" [disabled]="sending()" [(files)]="files" />
+      <textarea class="form-control" rows="2" [maxlength]="maxLen" [disabled]="sending()"
+                [placeholder]="'clientPortal.thread.replyPlaceholder' | translate"
+                [ngModel]="body()" (ngModelChange)="body.set($event)" (keydown.control.enter)="send()"></textarea>
+      <button type="button" class="btn btn-primary" [disabled]="!canSend()" (click)="send()"
+              [attr.aria-label]="'clientPortal.thread.send' | translate">
+        @if (sending()) { <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> }
+        @else { <i class="fa-solid fa-paper-plane" aria-hidden="true"></i> }
+      </button>
+    </div>
+    @if (files().length) {
+      <div class="rt-files">
+        @for (f of files(); track $index) { <span class="rt-file" dir="auto"><i class="fa-regular fa-file" aria-hidden="true"></i>{{ f.name }}</span> }
+        <button type="button" class="btn btn-link btn-sm p-0 text-danger" [disabled]="sending()" (click)="clearFiles()">{{ 'clientPortal.attach.clear' | translate }}</button>
+      </div>
+    }
+    @if (error(); as e) { <div class="alert alert-danger py-2 small mt-2 mb-0">{{ e }}</div> }
+  }
+</div>

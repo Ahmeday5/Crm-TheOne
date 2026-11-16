@@ -94,6 +94,11 @@ const whatsapp: TranslationFile<'whatsapp'> = {
     },
 
     thread: {
+      delete: 'حذف المحادثة',
+      deleteTitle: 'حذف المحادثة؟',
+      deleteMessage: 'المحادثة هتختفي من الصندوق. لو العميل بعت تاني هترجع تظهر.',
+      deleteConfirm: 'حذف',
+      deleteFailed: 'تعذّر حذف المحادثة',
       selectTitle: 'اختر محادثة',
       selectHint: 'اختر محادثة من القائمة لعرض الرسائل والرد على العميل',
       back: 'رجوع للمحادثات',

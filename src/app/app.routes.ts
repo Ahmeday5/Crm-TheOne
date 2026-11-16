@@ -24,12 +24,15 @@ import { SALES_PLAYBOOK_ROUTES } from './features/sales-playbook/sales-playbook.
 import { ATTENDANCE_ROUTES } from './features/attendance/attendance.routes';
 import { CUSTOMER_MAP_ROUTES } from './features/customer-map/customer-map.routes';
 import { VAULT_ROUTES } from './features/vault/vault.routes';
-import { PROJECT_BUILDS_ROUTES } from './features/project-builds/project-builds.routes';
+import { PROJECT_WORKSPACE_ROUTES } from './features/project-workspace/project-workspace.routes';
 import { CLIENT_PORTAL_ROUTES } from './features/client-portal/client-portal.routes';
 
 
 export const routes: Routes = [
   ...AUTH_ROUTES,
+  // Client portal — its own minimal shell, before the staff shell so `/portal`
+  // never falls into the staff routes.
+  ...CLIENT_PORTAL_ROUTES,
   {
     path: '',
     canActivate: [authGuard],
@@ -56,8 +59,7 @@ export const routes: Routes = [
       ...ATTENDANCE_ROUTES,
       ...CUSTOMER_MAP_ROUTES,
       ...VAULT_ROUTES,
-      ...PROJECT_BUILDS_ROUTES,
-      ...CLIENT_PORTAL_ROUTES,
+      ...PROJECT_WORKSPACE_ROUTES,
       ...GOALS_ROUTES,
       ...PROJECT_PROGRESS_ROUTES,
       {

@@ -10,9 +10,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { switchMap } from 'rxjs';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { VaultLockGateway } from '../../data/vault-lock-gateway';
-import { VaultLockError, checkVaultPassword, isStrongEnough } from '../../models/vault-lock.models';
+import { VaultLockError, checkVaultPassword, isStrongEnough, passwordStrength } from '../../models/vault-lock.models';
 import { VaultSessionService } from '../../state/vault-session.service';
 
 type Mode = 'loading' | 'setup' | 'unlock' | 'error';
@@ -42,17 +43,38 @@ export class VaultLockScreenComponent {
   protected readonly confirm = signal('');
   protected readonly reveal = signal(false);
   protected readonly busy = signal(false);
-  /** i18n key of the current error, with its params. */
-  protected readonly error = signal<{ key: string; n?: number } | null>(null);
+  /** Error to show: an i18n key (+ params) or the server's own message. */
+  protected readonly error = signal<{ key: string; n?: number | string; text?: string | null } | null>(null);
   /** Lockout countdown (seconds). */
   protected readonly lockedFor = signal(0);
   /** Shown once when another admin set the password first. */
   protected readonly setupRaced = signal(false);
+  /** How long an unlock lasts (from `lock-status`). */
+  protected readonly unlockMinutes = signal<number | null>(null);
 
   protected readonly rules = computed(() => checkVaultPassword(this.password()));
+  protected readonly strength = computed(() => passwordStrength(this.password()));
   protected readonly matches = computed(() => !!this.confirm() && this.confirm() === this.password());
   protected readonly canSetup = computed(() => isStrongEnough(this.password()) && this.matches() && !this.busy());
   protected readonly canUnlock = computed(() => !!this.password() && !this.busy() && this.lockedFor() === 0);
+  /** `mm:ss` for the lockout countdown. */
+  protected readonly lockedForLabel = computed(() => {
+    const s = this.lockedFor();
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  });
+  /** Why we're here again (expired / revoked) — only right after an automatic lock. */
+  protected readonly reasonKey = computed(() => {
+    switch (this.session.lockReason()) {
+      case 'expired':
+      case 'vault_token_expired':
+        return 'vaultLock.reason.expired';
+      case 'vault_token_invalid':
+      case 'vault_locked':
+        return 'vaultLock.reason.revoked';
+      default:
+        return null;
+    }
+  });
 
   private lockTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -69,14 +91,19 @@ export class VaultLockScreenComponent {
   protected loadStatus(): void {
     this.mode.set('loading');
     this.gateway.status().subscribe({
-      next: (s) => this.mode.set(s.isConfigured ? 'unlock' : 'setup'),
+      next: (s) => {
+        this.unlockMinutes.set(s.unlockMinutes || null);
+        this.mode.set(s.isConfigured ? 'unlock' : 'setup');
+      },
       error: () => this.mode.set('error'),
     });
   }
 
+  /** Create the password, then open the vault with it straight away. */
   protected submitSetup(): void {
     if (!this.canSetup()) return;
-    this.run(this.gateway.setup(this.password()));
+    const pw = this.password();
+    this.run(this.gateway.setup(pw).pipe(switchMap(() => this.gateway.unlock(pw))));
   }
 
   protected submitUnlock(): void {
@@ -105,7 +132,9 @@ export class VaultLockScreenComponent {
     switch (e.code) {
       case 'wrong':
         this.password.set('');
-        this.error.set({ key: 'vaultLock.errors.wrong', n: e.attemptsLeft ?? undefined });
+        this.error.set(
+          e.attemptsLeft != null ? { key: 'vaultLock.errors.wrong', n: e.attemptsLeft } : { key: 'vaultLock.errors.wrongPlain' },
+        );
         this.pwInput()?.nativeElement.focus();
         break;
       case 'lockedOut':
@@ -122,10 +151,10 @@ export class VaultLockScreenComponent {
         this.mode.set('setup');
         break;
       case 'weak':
-        this.error.set({ key: 'vaultLock.errors.weak' });
+        this.error.set({ key: 'vaultLock.errors.weak', text: e.serverMessage });
         break;
       default:
-        this.error.set({ key: 'vaultLock.errors.generic' });
+        this.error.set({ key: 'vaultLock.errors.generic', text: e.serverMessage });
     }
   }
 

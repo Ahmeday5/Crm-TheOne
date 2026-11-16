@@ -34,6 +34,7 @@ export class VaultChangePasswordDialogComponent {
   protected readonly confirm = signal('');
   protected readonly busy = signal(false);
   protected readonly errorKey = signal<string | null>(null);
+  protected readonly serverError = signal<string | null>(null);
 
   protected readonly rules = computed(() => checkVaultPassword(this.next()));
   protected readonly matches = computed(() => !!this.confirm() && this.confirm() === this.next());
@@ -45,6 +46,7 @@ export class VaultChangePasswordDialogComponent {
     if (!this.canSave()) return;
     this.busy.set(true);
     this.errorKey.set(null);
+    this.serverError.set(null);
     this.gateway.changePassword(this.current(), this.next()).subscribe({
       next: () => {
         this.busy.set(false);
@@ -54,10 +56,19 @@ export class VaultChangePasswordDialogComponent {
       },
       error: (err: unknown) => {
         this.busy.set(false);
-        const code = err instanceof VaultLockError ? err.code : 'unknown';
-        this.errorKey.set(
-          code === 'wrong' ? 'vaultLock.change.wrongCurrent' : code === 'weak' ? 'vaultLock.errors.weak' : 'vaultLock.errors.generic',
-        );
+        const e = err instanceof VaultLockError ? err : new VaultLockError('unknown');
+        switch (e.code) {
+          case 'wrong':
+            this.errorKey.set('vaultLock.change.wrongCurrent');
+            break;
+          case 'lockedOut':
+            this.errorKey.set('vaultLock.change.lockedOut');
+            break;
+          default:
+            // The server explains validation problems itself (in Arabic).
+            this.serverError.set(e.serverMessage);
+            this.errorKey.set(e.serverMessage ? null : 'vaultLock.errors.generic');
+        }
       },
     });
   }

@@ -33,6 +33,7 @@ import {
 } from '../../../../shared/components/data-table/data-table.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
+import { RowMenuComponent, RowMenuItem } from '../../../../shared/components/row-menu/row-menu.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import {
@@ -71,6 +72,7 @@ const DEFAULT_PAGE_SIZE = 10;
     NgApexchartsModule,
     ProjectFormDialogComponent,
     ProjectDetailsDialogComponent,
+    RowMenuComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './project-manage.component.html',
@@ -87,6 +89,25 @@ export class ProjectManageComponent implements OnInit, OnDestroy {
 
   /** Admins get full CRUD over every project; everyone else is read-only "my projects". */
   readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
+
+  /** The row's ⋯ menu — "open" is the visible button; everything else lives here. */
+  readonly rowMenu = computed<RowMenuItem[]>(() => [
+    { id: 'preview', labelKey: 'projects.manage.table.view', icon: 'fa-solid fa-eye' },
+    ...(this.isAdmin()
+      ? [
+          { id: 'edit', labelKey: 'projects.manage.table.edit', icon: 'fa-solid fa-pen' },
+          { id: 'delete', labelKey: 'projects.manage.table.delete', icon: 'fa-solid fa-trash', tone: 'danger' as const },
+        ]
+      : []),
+  ]);
+
+  onRowAction(action: string, row: ProjectListItem): void {
+    switch (action) {
+      case 'preview': return this.openDetails(row);
+      case 'edit': return this.openEdit(row);
+      case 'delete': void this.confirmDelete(row); return;
+    }
+  }
 
   /** Board statistics (KPI strip + 2 charts) — admin vs. developer scoped. */
   readonly stats = signal<TaskStatistics | null>(null);

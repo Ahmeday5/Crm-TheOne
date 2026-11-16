@@ -77,6 +77,19 @@
 /* Bootstrap's invalid icon would sit under the eye button. */
 .vl-field .is-invalid { background-image: none; }
 
+.vl-meter {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-top: 0.5rem;
+
+  span { height: 4px; border-radius: 2px; background: var(--surface-2); transition: background-color 200ms ease; }
+  &[data-level='1'] span:nth-child(-n + 1) { background: var(--danger); }
+  &[data-level='2'] span:nth-child(-n + 2) { background: var(--warning); }
+  &[data-level='3'] span:nth-child(-n + 3) { background: var(--success); }
+  &[data-level='4'] span { background: var(--success); }
+}
+
 .vl-rules {
   display: flex;
   flex-wrap: wrap;

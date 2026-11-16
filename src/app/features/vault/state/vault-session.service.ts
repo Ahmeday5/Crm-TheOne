@@ -19,6 +19,13 @@ export class VaultSessionService {
   private readonly now = signal(Date.now());
   private timer: ReturnType<typeof setInterval> | null = null;
 
+  /**
+   * Why the vault last locked by itself — `expired` (time ran out),
+   * a server reason (`vault_token_expired`, `vault_locked`, …) or `null`
+   * (manual lock / fresh visit). Lets the lock screen explain.
+   */
+  readonly lockReason = signal<string | null>(null);
+
   readonly token = this.tokenSig.asReadonly();
   readonly isUnlocked = computed(() => !!this.tokenSig() && this.expiresAtSig() > this.now());
   /** Seconds until auto-lock (0 when locked). */
@@ -44,20 +51,24 @@ export class VaultSessionService {
     this.tokenSig.set(result.vaultToken);
     this.expiresAtSig.set(Number.isFinite(expires) ? expires : Date.now() + 15 * 60_000);
     this.now.set(Date.now());
+    this.lockReason.set(null);
     this.startTimer();
   }
 
-  lock(): void {
+  /** Drop the token. `reason` is shown on the lock screen (omit for a manual lock). */
+  lock(reason: string | null = null): void {
+    const wasOpen = !!this.tokenSig();
     this.tokenSig.set(null);
     this.expiresAtSig.set(0);
     this.stopTimer();
+    if (wasOpen || reason) this.lockReason.set(reason);
   }
 
   private startTimer(): void {
     this.stopTimer();
     this.timer = setInterval(() => {
       this.now.set(Date.now());
-      if (!this.isUnlocked()) this.lock();
+      if (!this.isUnlocked()) this.lock('expired');
     }, 1000);
   }
 

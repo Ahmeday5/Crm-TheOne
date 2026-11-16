@@ -13,7 +13,11 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
+import { ApiError } from '../../../../core/models/api-response.model';
+import { AuthService } from '../../../../core/services/auth.service';
+import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { NotificationToastService } from '../../../../core/services/notification-toast.service';
 import { NotificationsStore } from '../../../../core/services/notifications.store';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -28,6 +32,7 @@ import { WaNewChatDialogComponent } from '../../components/wa-new-chat-dialog/wa
 import { WaNumberCardComponent } from '../../components/wa-number-card/wa-number-card.component';
 import { WaThreadComponent } from '../../components/wa-thread/wa-thread.component';
 import { WaChat, WaInstance, WaMessage } from '../../models/whatsapp.models';
+import { WhatsAppApiService } from '../../services/whatsapp-api.service';
 import { WhatsAppRealtimeService } from '../../services/whatsapp-realtime.service';
 import { WindowFocusService } from '../../services/window-focus.service';
 import { WhatsAppInboxStore } from '../../state/whatsapp-inbox.store';
@@ -77,6 +82,13 @@ export class WhatsAppInboxComponent implements OnInit {
   protected readonly realtime = inject(WhatsAppRealtimeService);
   protected readonly session = inject(WhatsAppSessionStore);
   protected readonly inbox = inject(WhatsAppInboxStore);
+  private readonly api = inject(WhatsAppApiService);
+  private readonly auth = inject(AuthService);
+  private readonly dialog = inject(DialogService);
+  private readonly toast = inject(ToastService);
+
+  /** A delete request is in flight. */
+  protected readonly deleting = signal(false);
 
   protected readonly isAdmin = this.session.isAdmin;
 
@@ -163,6 +175,11 @@ export class WhatsAppInboxComponent implements OnInit {
       )
       .subscribe(() => this.inbox.refresh());
 
+    // The open chat was deleted (here or by someone else) → back to the list.
+    this.inbox.chatDeleted$.pipe(takeUntilDestroyed()).subscribe((id) => {
+      if (id === this.activeChatId()) this.backToList();
+    });
+
     inject(DestroyRef).onDestroy(unregister);
   }
 
@@ -191,6 +208,35 @@ export class WhatsAppInboxComponent implements OnInit {
 
   protected onRead(chatId: number): void {
     this.inbox.markReadLocally(chatId);
+  }
+
+  /** Admin, or the employee who owns the chat's channel (the server re-checks). */
+  protected canDelete(chat: WaChat): boolean {
+    return this.isAdmin() || (!!chat.ownerUserId && chat.ownerUserId === this.auth.currentUser()?.userId);
+  }
+
+  /** Confirm → optimistic remove → DELETE; a failure puts the chat back. */
+  protected async deleteChat(chat: WaChat): Promise<void> {
+    const ok = await this.dialog.confirm({
+      title: this.t('whatsapp.thread.deleteTitle'),
+      message: this.t('whatsapp.thread.deleteMessage'),
+      confirmText: this.t('whatsapp.thread.deleteConfirm'),
+      type: 'danger',
+    });
+    if (!ok) return;
+    this.deleting.set(true);
+    const removed = this.inbox.removeChat(chat.id);
+    this.api.deleteChat(chat.id).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.session.loadChannels();
+      },
+      error: (e: ApiError) => {
+        this.deleting.set(false);
+        if (removed) this.inbox.restoreChat(removed);
+        this.toast.error(e?.message || this.t('whatsapp.thread.deleteFailed'));
+      },
+    });
   }
 
   protected onSent(): void {

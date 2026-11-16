@@ -1,0 +1,138 @@
+@if (project(); as p) {
+  <app-page-header [title]="p.title" [subtitle]="p.customerName" icon="fa-solid fa-diagram-project">
+    <a class="btn btn-light" [routerLink]="backLink()">
+      <i class="fa-solid fa-arrow-right me-1" aria-hidden="true"></i>{{ 'common.back' | translate }}
+    </a>
+  </app-page-header>
+
+  <!-- Tabs -->
+  <nav class="pw-tabs" role="tablist" [attr.aria-label]="'projectWorkspace.tabsLabel' | translate">
+    @for (t of tabs(); track t.id) {
+      <button type="button" role="tab" class="pw-tab" [class.is-active]="tab() === t.id"
+              [attr.aria-selected]="tab() === t.id" (click)="selectTab(t.id)">
+        <i [class]="t.icon" aria-hidden="true"></i>
+        <span>{{ t.labelKey | translate }}</span>
+        @if (t.id === 'requests' && openRequests() > 0) {
+          <span class="pw-tab__badge">{{ openRequests() > 99 ? '99+' : openRequests() }}</span>
+        }
+      </button>
+    }
+  </nav>
+
+  @switch (tab()) {
+    @case ('overview') {
+      @if (isDeveloper() && p.myAllocationPercent != null) {
+        <div class="pw-share mb-3">
+          <span class="pw-share__icon"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i></span>
+          <span>
+            {{ 'projectWorkspace.myShare' | translate }}: <b>{{ p.myAllocationPercent }}%</b>
+            @if (p.myRoleOnProject) { · <b>{{ p.myRoleOnProject }}</b> }
+          </span>
+        </div>
+      }
+
+      <div class="card pw-summary mb-3">
+        <div class="pw-summary__grid">
+          <div class="pw-stat">
+            <span class="pw-stat__label">{{ 'projectWorkspace.status' | translate }}</span>
+            <span class="badge align-self-start" [class]="statusClass(p.status)">{{ 'projects.manage.statuses.' + p.status | translate }}</span>
+          </div>
+          <div class="pw-stat">
+            <span class="pw-stat__label">{{ 'projectWorkspace.progress' | translate }}</span>
+            @let pct = summary()?.overallProgressPercentage ?? p.overallProgressPercentage ?? p.progress;
+            <div class="pw-progress">
+              <div class="pw-progress__bar"><span [style.width.%]="pct"></span></div>
+              <b>{{ pct }}%</b>
+            </div>
+          </div>
+          <div class="pw-stat">
+            <span class="pw-stat__label">{{ 'projectWorkspace.dates' | translate }}</span>
+            <span class="pw-stat__value small">{{ p.start | cairoDate: 'date' }} ← {{ p.end | cairoDate: 'date' }}</span>
+          </div>
+          <div class="pw-stat">
+            <span class="pw-stat__label">{{ 'projectWorkspace.team' | translate }}</span>
+            <span class="pw-stat__value"><i class="fa-solid fa-users me-1" aria-hidden="true"></i>{{ p.teamMembersCount }}</span>
+          </div>
+          <div class="pw-stat">
+            <span class="pw-stat__label">{{ 'projectWorkspace.client' | translate }}</span>
+            <span class="pw-stat__value text-truncate">{{ p.customerName }}</span>
+            @if (p.hasClientAccess) {
+              <span class="pw-flag is-on"><i class="fa-solid fa-user-check" aria-hidden="true"></i>{{ 'projectWorkspace.hasPortal' | translate }}</span>
+            } @else if (isAdmin()) {
+              <button type="button" class="pw-flag" (click)="selectTab('settings')">
+                <i class="fa-solid fa-user-plus" aria-hidden="true"></i>{{ 'projectWorkspace.noPortal' | translate }}
+              </button>
+            }
+          </div>
+          <div class="pw-stat">
+            <span class="pw-stat__label">GitHub</span>
+            @if (p.gitHubRepoUrl) {
+              <a class="pw-stat__value small text-truncate" dir="ltr" [href]="p.gitHubRepoUrl" target="_blank" rel="noopener">
+                <i class="fa-brands fa-github me-1" aria-hidden="true"></i>{{ p.gitBranch || 'main' }}
+              </a>
+            } @else if (isAdmin()) {
+              <button type="button" class="pw-flag" (click)="selectTab('settings')">
+                <i class="fa-solid fa-link" aria-hidden="true"></i>{{ 'projectWorkspace.linkRepo' | translate }}
+              </button>
+            } @else {
+              <span class="text-muted small">—</span>
+            }
+          </div>
+        </div>
+        @if (p.description) { <p class="pw-desc">{{ p.description }}</p> }
+      </div>
+
+      <!-- Schedule (working days) -->
+      @if (summary(); as s) {
+        <div class="pw-days mb-3">
+          <div class="pw-day">
+            <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+            <span><b>{{ s.workingDays }}</b>{{ 'projectWorkspace.days.total' | translate }}</span>
+          </div>
+          <div class="pw-day">
+            <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
+            <span><b>{{ s.elapsedWorkingDays }}</b>{{ 'projectWorkspace.days.elapsed' | translate }}</span>
+          </div>
+          <div class="pw-day" [class.is-warn]="s.remainingWorkingDays <= 5">
+            <i class="fa-solid fa-hourglass-end" aria-hidden="true"></i>
+            <span><b>{{ s.remainingWorkingDays }}</b>{{ 'projectWorkspace.days.remaining' | translate }}</span>
+          </div>
+        </div>
+      }
+
+      @if (isAdmin()) {
+        <app-project-timeline [projectId]="projectId" />
+      }
+    }
+    @case ('team') { <app-team-allocation [projectId]="projectId" [canEdit]="isAdmin()" (changed)="loadSummary(); loadProject()" /> }
+    @case ('tasks') { <app-project-tasks-panel [projectId]="projectId" [isAdmin]="isAdmin()" /> }
+    @case ('reports') { <app-project-reports-panel [projectId]="projectId" /> }
+    @case ('myReport') { <app-my-project-progress [forProject]="projectId" [embedded]="true" /> }
+    @case ('milestones') { <app-milestones-panel [projectId]="projectId" /> }
+    @case ('requests') {
+      <app-client-requests-panel [projectId]="projectId" [isAdmin]="isAdmin()" (openCount)="openRequests.set($event)" />
+    }
+    @case ('builds') {
+      <app-builds-panel [projectId]="projectId" [scope]="isAdmin() ? 'admin' : 'developer'"
+                        [canUpload]="isDeveloper()" [repoConfigured]="!!p.gitHubRepoUrl" />
+    }
+    @case ('settings') {
+      <div class="row g-3">
+        <div class="col-12 col-xl-6">
+          <app-client-access-card [projectId]="projectId" [customerId]="p.customerId" (changed)="loadProject()" />
+        </div>
+        <div class="col-12 col-xl-6">
+          <app-git-settings-card [projectId]="projectId" (changed)="loadProject()" />
+        </div>
+      </div>
+    }
+  }
+} @else if (loading()) {
+  <div class="pw-center"><span class="spinner-border text-primary" aria-hidden="true"></span></div>
+} @else {
+  <div class="card"><div class="pw-center flex-column gap-2">
+    <span class="icon-tile lg tone-warning"><i class="fa-solid fa-triangle-exclamation"></i></span>
+    <h6 class="fw-700 mb-0">{{ 'projectWorkspace.loadFailed' | translate }}</h6>
+    <a class="btn btn-sm btn-light" [routerLink]="backLink()">{{ 'common.back' | translate }}</a>
+  </div></div>
+}

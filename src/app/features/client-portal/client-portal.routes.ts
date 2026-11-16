@@ -1,28 +1,39 @@
 import { Routes } from '@angular/router';
-import { provideClientPortalGateway } from './data/client-portal-gateway.provider';
+import { authGuard } from '../../core/guards/auth.guard';
+import { clientGuard } from '../../core/guards/client.guard';
 
 /**
- * Client portal — Client role only (the role guard also locks clients to this
- * area). The gateway is provided once on the parent so both pages share it.
+ * `/portal` — the client's whole app, in its own minimal shell (no staff
+ * sidebar). Client role only; staff guards send a Client here, and this guard
+ * sends staff back to their home.
  */
 export const CLIENT_PORTAL_ROUTES: Routes = [
   {
-    path: 'client-portal',
-    data: { roles: ['Client'] },
-    providers: [provideClientPortalGateway()],
+    path: 'portal',
+    canActivate: [authGuard, clientGuard],
+    loadComponent: () =>
+      import('./pages/client-layout/client-layout.component').then((m) => m.ClientLayoutComponent),
     children: [
       {
         path: '',
         title: 'مشاريعي',
-        loadComponent: () =>
-          import('./pages/client-projects/client-projects.component').then((m) => m.ClientProjectsComponent),
+        loadComponent: () => import('./pages/portal-home/portal-home.component').then((m) => m.PortalHomeComponent),
       },
       {
         path: 'projects/:id',
         title: 'تفاصيل المشروع',
         loadComponent: () =>
-          import('./pages/client-project/client-project.component').then((m) => m.ClientProjectComponent),
+          import('./pages/portal-project/portal-project.component').then((m) => m.PortalProjectComponent),
       },
+      {
+        path: 'requests/:id',
+        title: 'طلبي',
+        loadComponent: () =>
+          import('./pages/portal-request/portal-request.component').then((m) => m.PortalRequestComponent),
+      },
+      { path: '**', redirectTo: '' },
     ],
   },
+  // Old preview link.
+  { path: 'client-portal', redirectTo: 'portal' },
 ];

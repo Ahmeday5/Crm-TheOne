@@ -28,7 +28,18 @@ export type NotificationType =
   | 'ContractExpired'
   /** Creator + admins, except whoever renewed it. */
   | 'ContractRenewed'
+  // ── project workspace / client portal (2026-11-16) ──
+  | 'ClientRequestCreated'
+  | 'ClientRequestUpdated'
+  | 'ClientRequestComment'
+  | 'ProjectBuildPushed'
+  | 'ProjectBuildFailed'
   | (string & {});
+
+/** `relatedEntityType`s of the project workspace — `relatedEntityId` is that row's id. */
+export const CLIENT_REQUEST_ENTITY = 'ClientRequest';
+export const PROJECT_BUILD_ENTITY = 'ProjectBuild';
+export const PROJECT_ENTITY = 'Project';
 
 /** `relatedEntityType` of a contract notification — `relatedEntityId` is the contract id. */
 export const CONTRACT_ENTITY = 'Contract';

@@ -3,6 +3,8 @@ import { TranslationFile } from '../i18n.types';
 const common: TranslationFile<'common'> = {
   common: {
     save: 'Save',
+    optional: 'optional',
+    moreActions: 'More actions',
     cancel: 'Cancel',
     confirm: 'Confirm',
     search: 'Search',

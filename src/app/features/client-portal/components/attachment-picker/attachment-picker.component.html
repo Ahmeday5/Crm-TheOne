@@ -1,0 +1,38 @@
+@if (compact()) {
+  <label class="btn btn-light ap-clip" [class.disabled]="disabled()"
+         [title]="'clientPortal.attach.button' | translate" [attr.aria-label]="'clientPortal.attach.button' | translate">
+    <input type="file" class="d-none" multiple [accept]="accept" [disabled]="disabled()" (change)="onInput($event)" />
+    <i class="fa-solid fa-paperclip" aria-hidden="true"></i>
+    @if (picked().length) { <span class="ap-clip__n">{{ picked().length }}</span> }
+  </label>
+} @else {
+  <label class="ap-drop" [class.is-over]="over()" [class.is-disabled]="disabled()"
+         (dragover)="onDragOver($event)" (dragleave)="over.set(false)" (drop)="onDrop($event)">
+    <input type="file" class="d-none" multiple [accept]="accept" [disabled]="disabled()" (change)="onInput($event)" />
+    <i class="fa-solid fa-images" aria-hidden="true"></i>
+    <span>{{ 'clientPortal.attach.drop' | translate }}</span>
+    <span class="ap-drop__hint">{{ 'clientPortal.attach.rules' | translate }}</span>
+  </label>
+}
+
+@if (picked().length && !compact()) {
+  <ul class="ap-list" role="list">
+    @for (p of picked(); track $index) {
+      <li class="ap-item">
+        @if (p.preview) {
+          <img [src]="p.preview" alt="" class="ap-thumb" />
+        } @else {
+          <span class="ap-thumb ap-thumb--file"><i class="fa-regular fa-file" aria-hidden="true"></i></span>
+        }
+        <span class="ap-name" dir="auto" [title]="p.file.name">{{ p.file.name }}</span>
+        <span class="ap-size">{{ fmtBytes(p.file.size) }}</span>
+        <button type="button" class="ap-remove" [disabled]="disabled()" (click)="remove($index)"
+                [attr.aria-label]="'common.delete' | translate"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </li>
+    }
+  </ul>
+}
+
+@if (skipped(); as s) {
+  <p class="ap-skip"><i class="fa-solid fa-circle-exclamation me-1" aria-hidden="true"></i>{{ 'clientPortal.attach.skipped.' + s | translate }}</p>
+}

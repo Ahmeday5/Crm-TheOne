@@ -94,6 +94,11 @@ const whatsapp: TranslationFile<'whatsapp'> = {
     },
 
     thread: {
+      delete: 'Delete conversation',
+      deleteTitle: 'Delete this conversation?',
+      deleteMessage: 'It disappears from the inbox. If the customer writes again, it comes back.',
+      deleteConfirm: 'Delete',
+      deleteFailed: 'Couldn’t delete the conversation',
       selectTitle: 'Pick a conversation',
       selectHint: 'Choose a conversation from the list to read it and reply',
       back: 'Back to conversations',

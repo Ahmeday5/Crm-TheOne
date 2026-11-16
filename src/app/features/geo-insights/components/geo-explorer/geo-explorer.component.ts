@@ -43,8 +43,6 @@ import { scatterPoints } from '../../utils/scatter.util';
 import { GeoBubbleDatum, GeoMapComponent, GeoPointDatum, GeoRegionDatum } from '../geo-map/geo-map.component';
 import { MapRankingComponent, RankRow } from '../map-ranking/map-ranking.component';
 
-/** Largest markets get a pulsing ring. */
-const HOTSPOTS = 3;
 const UNKNOWN_KEY = '__unknown__';
 const NO_GOVERNORATE_KEY = '__no_governorate__';
 const EGYPT_ISO2 = 'EG';
@@ -141,14 +139,17 @@ export class GeoExplorerComponent {
       .map((r) => ({ key: r.key, value: r.count, color: this.colorFor(r.count) }));
   });
 
-  /** Shapeless regions as bubbles, plus pulsing rings on the top markets. */
+  /**
+   * Bubbles only where a region has no shape to colour (tiny country / missing
+   * boundary). A shaped region is already coloured by its count — no big circle
+   * on top of it, and never on the Egypt map (customers show as small dots).
+   */
   protected readonly geoBubbles = computed<GeoBubbleDatum[]>(() => {
+    if (this.level() === 'egypt') return [];
     const shapes = this.shapeKeys();
-    const regions = this.levelRegions();
-    const hot = new Set(regions.slice(0, HOTSPOTS).map((r) => r.key));
-    return regions
-      .filter((r) => (!shapes.has(r.key) || hot.has(r.key)) && Number.isFinite(r.lat) && Number.isFinite(r.lng))
-      .map((r) => ({ key: r.key, lng: r.lng, lat: r.lat, value: r.count, color: this.colorFor(r.count), pulse: hot.has(r.key) }));
+    return this.levelRegions()
+      .filter((r) => !shapes.has(r.key) && Number.isFinite(r.lat) && Number.isFinite(r.lng))
+      .map((r) => ({ key: r.key, lng: r.lng, lat: r.lat, value: r.count, color: this.colorFor(r.count) }));
   });
 
   /** The page's records, scattered into individual dots around their centroid. */

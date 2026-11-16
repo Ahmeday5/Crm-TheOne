@@ -29,12 +29,6 @@ export const ROLE_LABELS_EN: Record<UserRole, string> = {
   Client: 'Client',
 };
 
-/**
- * The only pages a Client may open (first URL segment). Everything else —
- * even pages open to "every employee" — is staff-only.
- */
-export const CLIENT_ALLOWED_SEGMENTS: ReadonlySet<string> = new Set(['client-portal', 'account', '404']);
-
 export function roleLabel(role: UserRole | null | undefined, lang: 'ar' | 'en' = 'ar'): string {
   if (!role) return '';
   return (lang === 'en' ? ROLE_LABELS_EN : ROLE_LABELS_AR)[role] ?? role;

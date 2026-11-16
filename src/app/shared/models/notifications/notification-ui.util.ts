@@ -3,8 +3,11 @@ import { UserRole } from '../../../core/models/auth.model';
 import { Lang } from '../../../core/services/language.service';
 import {
   ANNOUNCEMENT_ENTITY,
+  CLIENT_REQUEST_ENTITY,
   CONTRACT_ENTITY,
   LEAVE_REQUEST_ENTITY,
+  PROJECT_BUILD_ENTITY,
+  PROJECT_ENTITY,
   NotificationType,
   WHATSAPP_CHAT_ENTITY,
   isContractNotification,
@@ -41,6 +44,11 @@ export function notificationIcon(type: NotificationType): string {
     case 'ContractExpiringSoon': return 'fa-solid fa-hourglass-half';
     case 'ContractExpired': return 'fa-solid fa-file-circle-xmark';
     case 'ContractRenewed': return 'fa-solid fa-file-circle-check';
+    case 'ClientRequestCreated': return 'fa-solid fa-comment-medical';
+    case 'ClientRequestUpdated': return 'fa-solid fa-comment-dots';
+    case 'ClientRequestComment': return 'fa-solid fa-comments';
+    case 'ProjectBuildPushed': return 'fa-brands fa-github';
+    case 'ProjectBuildFailed': return 'fa-solid fa-triangle-exclamation';
     // Unknown / future types still render — with the generic bell.
     default: return 'fa-solid fa-bell';
   }
@@ -66,6 +74,11 @@ export function notificationTone(type: NotificationType): string {
     case 'ContractExpiringSoon': return 'warning';
     case 'ContractExpired': return 'danger';
     case 'ContractRenewed': return 'success';
+    case 'ClientRequestCreated': return 'warning';
+    case 'ClientRequestUpdated': return 'info';
+    case 'ClientRequestComment': return 'primary';
+    case 'ProjectBuildPushed': return 'success';
+    case 'ProjectBuildFailed': return 'danger';
     default: return 'primary';
   }
 }
@@ -89,6 +102,23 @@ export function notificationRoute(n: NotificationTarget, role: UserRole | null):
     const chatId = n.relatedEntityType === WHATSAPP_CHAT_ENTITY ? n.relatedEntityId : null;
     return chatId ? ['/whatsapp', 'chats', String(chatId)] : ['/whatsapp'];
   }
+
+  // Client requests: the client opens the request itself. Staff can't be
+  // routed — the payload carries the request id but not its project.
+  if (entityType === CLIENT_REQUEST_ENTITY || String(notifType).startsWith('ClientRequest')) {
+    if (role === 'Client' && entityType === CLIENT_REQUEST_ENTITY && n.relatedEntityId) {
+      return ['/portal', 'requests', String(n.relatedEntityId)];
+    }
+    return role === 'Client' ? ['/portal'] : null;
+  }
+
+  // A project (e.g. "you were added to a project"): its workspace.
+  if (entityType === PROJECT_ENTITY && n.relatedEntityId) {
+    return role === 'Admin' || role === 'Developer' ? ['/projects', String(n.relatedEntityId)] : null;
+  }
+
+  // Builds: same limitation as requests (no project id) — mark read only.
+  if (entityType === PROJECT_BUILD_ENTITY || String(notifType).startsWith('ProjectBuild')) return null;
 
   // Contracts: the contract's page (Admin / Sales — the only roles that receive them).
   if (isContractNotification(n)) {

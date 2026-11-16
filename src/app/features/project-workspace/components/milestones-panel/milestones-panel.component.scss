@@ -1,0 +1,60 @@
+@use 'breakpoints' as bp;
+
+.ms-count { font-size: var(--fs-sm); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.ms-hint { margin: 0 0 0.85rem; font-size: var(--fs-xs); color: var(--text-3); }
+
+.ms-list { display: flex; flex-direction: column; gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
+
+.ms-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+  transition: border-color 150ms ease, background-color 150ms ease, opacity 150ms ease;
+
+  &.is-dragging { opacity: 0.45; }
+  &.is-over { border-color: var(--brand-500); border-style: dashed; background: var(--brand-soft); }
+  &[data-status='Done'] .ms-title { color: var(--text-3); text-decoration: line-through; }
+}
+
+.ms-handle { color: var(--text-muted, var(--text-3)); cursor: grab; padding-inline: 0.15rem; }
+.ms-check {
+  font-size: 1.1rem;
+  color: var(--text-3);
+  .ms-row[data-status='Done'] & { color: var(--success); }
+  .ms-row[data-status='InProgress'] & { color: var(--brand-500); }
+}
+
+.ms-main { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.ms-title { font-weight: var(--fw-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-sub { font-size: var(--fs-xs); color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ms-status { width: auto; flex: 0 0 9rem; }
+.ms-done { flex: 0 0 auto; white-space: nowrap; }
+.ms-actions { display: inline-flex; gap: 0.25rem; flex: 0 0 auto; }
+
+.ms-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+  padding: 2rem 1rem; text-align: center;
+}
+
+.ms-sk {
+  display: flex; flex-direction: column; gap: 0.45rem;
+  span { height: 3rem; border-radius: var(--radius-md); background: var(--surface-1); animation: ms-pulse 1.4s ease-in-out infinite; }
+}
+@keyframes ms-pulse { 50% { opacity: 0.5; } }
+
+@include bp.down(md) {
+  .ms-row { flex-wrap: wrap; }
+  .ms-handle { display: none; }
+  .ms-main { flex-basis: calc(100% - 2rem); }
+  .ms-status { flex: 1 1 8rem; }
+  .ms-actions { margin-inline-start: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ms-sk span { animation: none; }
+}

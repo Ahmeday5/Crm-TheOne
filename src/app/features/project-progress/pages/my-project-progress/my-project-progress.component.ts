@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -59,7 +59,14 @@ export class MyProjectProgressComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly language = inject(LanguageService);
 
-  readonly projectId = Number(this.route.snapshot.paramMap.get('projectId'));
+  /** Set when embedded in the project workspace (else the route's `:projectId`). */
+  readonly forProject = input<number | null>(null);
+  /** Inside the workspace: no page header / overall bar (the workspace shows them). */
+  readonly embedded = input(false);
+
+  get projectId(): number {
+    return this.forProject() ?? Number(this.route.snapshot.paramMap.get('projectId'));
+  }
 
   readonly project = signal<ProjectDetail | null>(null);
   readonly myProgress = signal<ProjectTeamMemberResponseDto | null>(null);

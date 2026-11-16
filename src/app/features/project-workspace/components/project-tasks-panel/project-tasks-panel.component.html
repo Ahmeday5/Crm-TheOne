@@ -1,0 +1,46 @@
+<div class="card">
+  <div class="card-header d-flex align-items-center gap-2 flex-wrap">
+    <i class="fa-solid fa-list-check text-primary" aria-hidden="true"></i>
+    <h5 class="mb-0 me-auto">{{ 'projectWorkspace.tabs.tasks' | translate }}
+      @if (!loading()) { <span class="text-muted fw-normal small">({{ total() }})</span> }</h5>
+    <a class="btn btn-sm btn-light" routerLink="/TasksManage">
+      <i class="fa-solid fa-arrow-up-right-from-square me-1" aria-hidden="true"></i>{{ 'projectWorkspace.openTasks' | translate }}
+    </a>
+  </div>
+
+  <div class="card-body p-0">
+    @if (loading()) {
+      <div class="pt-center"><span class="spinner-border text-primary" aria-hidden="true"></span></div>
+    } @else if (loadFailed()) {
+      <div class="pt-empty">
+        <h6 class="fw-700 mb-2">{{ 'projectWorkspace.loadFailedSection' | translate }}</h6>
+        <button type="button" class="btn btn-sm btn-light" (click)="load()">{{ 'common.retry' | translate }}</button>
+      </div>
+    } @else if (rows().length === 0) {
+      <div class="pt-empty">
+        <span class="icon-tile lg tone-secondary"><i class="fa-solid fa-list-check"></i></span>
+        <h6 class="fw-700 mb-0">{{ 'projectWorkspace.noTasks' | translate }}</h6>
+      </div>
+    } @else {
+      <ul class="pt-list" role="list">
+        @for (t of rows(); track t.id) {
+          <li class="pt-row">
+            <span class="pt-main">
+              <span class="pt-title">{{ t.title }}</span>
+              <span class="pt-sub">
+                <i class="fa-solid fa-user" aria-hidden="true"></i> {{ assignees(t) }}
+                @if (t.dueDate) {
+                  · <span [class.text-danger]="isOverdue(t)"><i class="fa-regular fa-calendar" aria-hidden="true"></i> {{ t.dueDate | cairoDate: 'date' }}</span>
+                }
+              </span>
+            </span>
+            <span class="pt-badges">
+              <span class="badge" [class]="priorityClass(t.priority)">{{ 'projects.manage.priorities.' + t.priority | translate }}</span>
+              <span class="badge" [class]="statusClass(t.status)">{{ 'projects.tasksManage.statuses.' + t.status | translate }}</span>
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>

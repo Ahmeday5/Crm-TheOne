@@ -1,48 +1,42 @@
 /**
- * Client portal — what the customer who owns a project sees, and the requests
- * (issues / change requests / questions) they raise about it. Staff answer the
- * same requests from the project workspace.
- *
- * Backend contract: `ClientPortal/*` + `ManagerProjects/{id}/client-requests`
- * (see the backend prompt). Mock-served today via `MockClientPortalGateway`.
+ * Client portal (`ClientPortal/*`, role `Client`) and the client requests both
+ * sides share (`ManagerProjects/{id}/client-requests` for staff). Backend
+ * changes of 2026-11-16 — enums travel as their string names.
  */
+import { ProjectStatusName } from '../../../shared/models';
+import { TimelineEvent } from '../../project-workspace/models/workspace.models';
 
-export type ClientProjectStatus = 'Planned' | 'InProgress' | 'Completed' | 'OnHold' | 'Cancelled';
+export type { TimelineEvent };
 
-export type MilestoneStatus = 'Done' | 'InProgress' | 'Pending';
+// ─────────── projects ───────────
 
-export interface Milestone {
-  id: string;
-  title: string;
-  status: MilestoneStatus;
-  completedAt: string | null;
-}
-
-/** A project as the client sees it — nothing internal (no git, no credentials). */
-export interface ClientProjectSummary {
+export interface ClientProject {
   projectId: number;
   name: string;
-  status: ClientProjectStatus;
-  /** 0–100, computed server-side. */
+  status: ProjectStatusName;
+  /** 0–100, computed server-side — display as is. */
   progressPercent: number;
   startDate: string;
   expectedEndDate: string;
   lastUpdateAt: string;
-  openRequests: number;
 }
 
-export interface ClientProjectDetail extends ClientProjectSummary {
-  milestones: Milestone[];
-}
+export type ClientMilestoneStatus = 'Done' | 'InProgress' | 'Pending';
 
-export type TimelineKind = 'milestone' | 'release' | 'request' | 'update';
-
-export interface TimelineEvent {
-  id: string;
-  kind: TimelineKind;
+export interface ClientMilestone {
+  id: number;
   title: string;
-  at: string;
+  status: ClientMilestoneStatus;
+  dueDate: string | null;
+  completedAt: string | null;
 }
+
+export interface ClientProjectDetails extends ClientProject {
+  description: string | null;
+  milestones: ClientMilestone[];
+}
+
+// ─────────── requests ───────────
 
 export type RequestType = 'Issue' | 'ChangeRequest' | 'Question';
 export type RequestStatus = 'Open' | 'InReview' | 'InProgress' | 'Resolved' | 'Closed';
@@ -53,51 +47,103 @@ export const REQUEST_STATUSES: ReadonlyArray<RequestStatus> = ['Open', 'InReview
 export const REQUEST_PRIORITIES: ReadonlyArray<RequestPriority> = ['High', 'Medium', 'Low'];
 
 export interface RequestAttachment {
-  name: string;
+  id: number;
+  /** Server-relative — resolve with `resolveAssetUrl`. */
+  fileUrl: string;
+  fileName: string;
+  contentType: string | null;
   sizeBytes: number;
-  /** Server-relative URL; `null` in the preview (nothing is uploaded). */
-  url: string | null;
 }
 
-export interface ClientRequest {
-  id: string;
+export interface ClientRequestListItem {
+  id: number;
   projectId: number;
-  projectName: string;
+  projectName: string | null;
   type: RequestType;
   title: string;
-  description: string;
   status: RequestStatus;
-  /** Set by staff; `null` until triaged. */
   priority: RequestPriority | null;
-  attachments: RequestAttachment[];
-  createdByName: string;
-  createdAt: string;
-  updatedAt: string;
+  clientName: string | null;
+  /** Always `null` in the client portal. */
+  assignedToId: string | null;
+  assignedToName: string | null;
   commentsCount: number;
+  attachmentsCount: number;
+  createdAt: string;
+  updatedAt: string | null;
 }
 
-export type CommentAuthorRole = 'Client' | 'Staff';
+export type CommentAuthorRole = 'Client' | 'Admin' | 'Developer';
 
-export interface RequestComment {
-  id: string;
-  requestId: string;
-  authorName: string;
+export interface ClientRequestComment {
+  id: number;
+  authorName: string | null;
   authorRole: CommentAuthorRole;
+  isMine: boolean;
   body: string;
   attachments: RequestAttachment[];
   createdAt: string;
 }
 
-export interface NewRequestDraft {
-  projectId: number;
+export interface ClientRequestDetails extends ClientRequestListItem {
+  description: string;
+  resolvedAt: string | null;
+  attachments: RequestAttachment[];
+  /** Oldest first. */
+  comments: ClientRequestComment[];
+}
+
+export interface RequestListQuery {
+  status?: RequestStatus | null;
+  type?: RequestType | null;
+  pageIndex?: number;
+  pageSize?: number;
+}
+
+export interface NewRequestInput {
   type: RequestType;
   title: string;
   description: string;
-  files: File[];
+  attachments: File[];
 }
 
-/** Staff-side triage. */
+/** Staff triage — any field left out is unchanged; `assignedToId: ''` unassigns. */
 export interface RequestPatch {
   status?: RequestStatus;
-  priority?: RequestPriority | null;
+  priority?: RequestPriority;
+  assignedToId?: string;
+}
+
+// ─────────── upload rules (mirror the backend) ───────────
+
+export const REQUEST_MAX_FILES = 10;
+export const REQUEST_MAX_FILE_BYTES = 20 * 1024 * 1024;
+export const REQUEST_TITLE_MAX = 200;
+export const REQUEST_TEXT_MAX = 5000;
+
+const ALLOWED_EXT = new Set([
+  'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'heic',
+  'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv',
+  'zip', 'rar', '7z',
+  'mp4', 'mov', 'webm', 'mp3', 'm4a', 'ogg',
+]);
+
+export const REQUEST_ACCEPT = [...ALLOWED_EXT].map((e) => `.${e}`).join(',');
+
+export type AttachmentProblem = 'type' | 'size' | 'empty';
+
+export function checkRequestFile(file: Pick<File, 'name' | 'size'>): AttachmentProblem | null {
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+  if (!ALLOWED_EXT.has(ext)) return 'type';
+  if (file.size === 0) return 'empty';
+  if (file.size > REQUEST_MAX_FILE_BYTES) return 'size';
+  return null;
+}
+
+export function isImageAttachment(a: { contentType: string | null; fileName: string }): boolean {
+  return (a.contentType ?? '').startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(a.fileName);
+}
+
+export function isRequestOpen(status: RequestStatus): boolean {
+  return status !== 'Resolved' && status !== 'Closed';
 }

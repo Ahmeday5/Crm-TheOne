@@ -1,0 +1,66 @@
+<div class="card">
+  <div class="card-header d-flex align-items-center gap-2">
+    <i class="fa-solid fa-file-lines text-primary" aria-hidden="true"></i>
+    <h5 class="mb-0 me-auto">{{ 'projectWorkspace.tabs.reports' | translate }}
+      @if (!loading()) { <span class="text-muted fw-normal small">({{ count() }})</span> }</h5>
+  </div>
+
+  <div class="rp-filters">
+    <label class="rp-field">
+      <span>{{ 'projectProgress.myReports.filterFrom' | translate }}</span>
+      <input type="date" class="form-control form-control-sm" [ngModel]="from()" (ngModelChange)="setFilter({ from: $event })" />
+    </label>
+    <label class="rp-field">
+      <span>{{ 'projectProgress.myReports.filterTo' | translate }}</span>
+      <input type="date" class="form-control form-control-sm" [ngModel]="to()" (ngModelChange)="setFilter({ to: $event })" />
+    </label>
+    <label class="rp-field rp-field--wide">
+      <span>{{ 'projectProgress.admin.reports.filterDeveloper' | translate }}</span>
+      <select class="form-select form-select-sm" [ngModel]="developerId()" (ngModelChange)="setFilter({ developerId: $event })">
+        <option value="">{{ 'projectProgress.admin.reports.allDevelopers' | translate }}</option>
+        @for (d of developers(); track d.id) { <option [value]="d.id">{{ d.name }}</option> }
+      </select>
+    </label>
+    @if (from() || to() || developerId()) {
+      <button type="button" class="btn btn-sm btn-link rp-clear" (click)="clearFilters()">{{ 'projectWorkspace.clearFilters' | translate }}</button>
+    }
+  </div>
+
+  <div class="card-body p-0">
+    @if (loading() && !rows().length) {
+      <div class="rp-center"><span class="spinner-border text-primary" aria-hidden="true"></span></div>
+    } @else if (loadFailed()) {
+      <div class="rp-empty">
+        <h6 class="fw-700 mb-2">{{ 'projectWorkspace.loadFailedSection' | translate }}</h6>
+        <button type="button" class="btn btn-sm btn-light" (click)="load()">{{ 'common.retry' | translate }}</button>
+      </div>
+    } @else if (!rows().length) {
+      <div class="rp-empty">
+        <span class="icon-tile lg tone-secondary"><i class="fa-solid fa-file-lines"></i></span>
+        <h6 class="fw-700 mb-0">{{ 'projectProgress.admin.reports.empty' | translate }}</h6>
+      </div>
+    } @else {
+      <ul class="rp-list" role="list" [class.is-busy]="loading()">
+        @for (r of rows(); track r.id) {
+          <li>
+            <a class="rp-row" [routerLink]="['/ProjectManage', 'reports', r.id]">
+              <span class="rp-date">
+                <b>{{ r.reportDate | cairoDate: 'date' }}</b>
+                <small>{{ r.developerName || r.developerId }}</small>
+              </span>
+              <span class="rp-preview">{{ r.completedWorkPreview }}</span>
+              <span class="badge bg-primary-subtle text-primary rp-contrib">+{{ r.appliedProgressContribution }}%</span>
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  @if (count() > pageSize()) {
+    <div class="card-footer">
+      <app-pagination [pageIndex]="pageIndex()" [pageSize]="pageSize()" [count]="count()" [disabled]="loading()"
+                      (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
+    </div>
+  }
+</div>

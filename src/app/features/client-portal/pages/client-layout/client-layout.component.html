@@ -1,0 +1,38 @@
+<header class="cl-bar">
+  <div class="cl-bar__inner">
+    <a class="cl-brand" routerLink="/portal">
+      <img [src]="brandLogo() || fallbackLogo" alt="" class="cl-brand__logo" (error)="onLogoError($event)" />
+      <span class="cl-brand__name">{{ brandName() || ('header.app' | translate) }}</span>
+    </a>
+
+    <nav class="cl-nav" [attr.aria-label]="'clientPortal.nav' | translate">
+      <a routerLink="/portal" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: false }">
+        <i class="fa-solid fa-diagram-project" aria-hidden="true"></i><span>{{ 'clientPortal.home.title' | translate }}</span>
+      </a>
+    </nav>
+
+    <div class="cl-actions">
+      <app-language-toggle />
+      <app-theme-toggle />
+      <app-notifications-bell />
+      <span class="cl-user">
+        <app-user-avatar [name]="user()?.fullName || user()?.email" [imageUrl]="user()?.imageUrl" size="sm" />
+        <span class="cl-user__name">{{ user()?.fullName || user()?.email }}</span>
+      </span>
+      <button type="button" class="btn btn-sm btn-light" (click)="logout()" [attr.aria-label]="'clientPortal.logout' | translate"
+              [title]="'clientPortal.logout' | translate">
+        <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="cl-main">
+  <router-outlet />
+</main>
+
+<footer class="cl-foot">© {{ year }} {{ brandName() || ('header.app' | translate) }}</footer>
+
+<!-- Live notification toasts (a reply from the team, a status change…) -->
+<app-notification-toasts />
+

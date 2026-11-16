@@ -39,3 +39,16 @@
 
   .project-title-cell { max-width: none; }
 }
+
+/* Row actions: one primary "open" + the ⋯ menu, always on one line. */
+.pm-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+.pm-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
