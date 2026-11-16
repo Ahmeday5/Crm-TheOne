@@ -17,6 +17,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       marketingSales: 'التسويق والمبيعات',
       operations: 'التشغيل',
       communication: 'التواصل',
+      clientPortal: 'بوابة العميل',
       performance: 'الأداء والتقارير',
       system: 'إدارة النظام',
       // Kept for older references.
@@ -71,7 +72,9 @@ const sidebar: TranslationFile<'sidebar'> = {
       projects: 'المشاريع والمهام',
       devAnalytics: 'تحليلات المطورين',
       myProjectReports: 'تقاريري',
-      // Communication
+      // Communication — the inbox is multi-channel (WhatsApp + Messenger + Instagram).
+      inbox: 'محادثات العملاء',
+      inboxSettings: 'إعدادات القنوات',
       whatsapp: 'واتساب العملاء',
       teamChat: 'الدردشة الداخلية',
       whatsappNumbers: 'إعدادات واتساب',
@@ -87,6 +90,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       services: 'إدارة الخدمات',
       resources: 'إدارة الموارد',
       vault: 'خزنة الحسابات',
+      myProjects: 'مشاريعي',
       // Not in the menu right now
       reports: 'التقارير والتحليلات',
       improvements: 'تحسينات النظام',

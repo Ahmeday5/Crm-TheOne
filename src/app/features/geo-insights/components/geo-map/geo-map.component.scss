@@ -94,6 +94,13 @@
   }
 }
 
+:host ::ng-deep .gm-pin {
+  min-width: 120px;
+
+  &__name { font-weight: 700; font-size: var(--fs-sm); color: var(--text-1); }
+  &__sub { margin-top: 2px; font-size: 11px; color: var(--text-3); }
+}
+
 // Opacity only: MapLibre positions the popup with `transform`.
 @keyframes gm-pop { from { opacity: 0; } }
 

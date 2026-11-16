@@ -1,0 +1,109 @@
+<div class="vl">
+  <div class="card vl-card">
+    <span class="vl-badge" [class.is-new]="mode() === 'setup'" aria-hidden="true">
+      <i class="fa-solid" [class.fa-lock]="mode() !== 'setup'" [class.fa-key]="mode() === 'setup'"></i>
+    </span>
+
+    @switch (mode()) {
+      @case ('loading') {
+        <div class="vl-loading"><span class="spinner-border text-primary" aria-hidden="true"></span></div>
+      }
+
+      @case ('error') {
+        <h4 class="vl-title">{{ 'vaultLock.statusFailed' | translate }}</h4>
+        <button type="button" class="btn btn-primary w-100" (click)="loadStatus()">
+          <i class="fa-solid fa-rotate me-1" aria-hidden="true"></i>{{ 'common.retry' | translate }}
+        </button>
+      }
+
+      <!-- ── First time: create the vault password ── -->
+      @case ('setup') {
+        <h4 class="vl-title">{{ 'vaultLock.setup.title' | translate }}</h4>
+        <p class="vl-sub">{{ 'vaultLock.setup.subtitle' | translate }}</p>
+
+        <ul class="vl-facts" role="list">
+          <li><i class="fa-solid fa-user-shield" aria-hidden="true"></i>{{ 'vaultLock.setup.fact1' | translate }}</li>
+          <li><i class="fa-solid fa-key" aria-hidden="true"></i>{{ 'vaultLock.setup.fact2' | translate }}</li>
+          <li><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>{{ 'vaultLock.setup.fact3' | translate }}</li>
+        </ul>
+
+        <form class="vl-form" (ngSubmit)="submitSetup()" autocomplete="off">
+          <label class="form-label" for="vl-new">{{ 'vaultLock.setup.password' | translate }}</label>
+          <div class="vl-field">
+            <input #pw id="vl-new" class="form-control" autocomplete="new-password" dir="ltr"
+                   [type]="reveal() ? 'text' : 'password'" name="password"
+                   [ngModel]="password()" (ngModelChange)="password.set($event)" />
+            <button type="button" class="vl-eye" (click)="reveal.set(!reveal())"
+                    [attr.aria-label]="(reveal() ? 'vaultLock.hide' : 'vaultLock.show') | translate">
+              <i class="fa-regular" [class.fa-eye]="!reveal()" [class.fa-eye-slash]="reveal()" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <ul class="vl-rules" role="list" aria-live="polite">
+            <li [class.ok]="rules().length"><i class="fa-solid" [class.fa-check]="rules().length" [class.fa-circle]="!rules().length" aria-hidden="true"></i>{{ 'vaultLock.rules.length' | translate }}</li>
+            <li [class.ok]="rules().letter"><i class="fa-solid" [class.fa-check]="rules().letter" [class.fa-circle]="!rules().letter" aria-hidden="true"></i>{{ 'vaultLock.rules.letter' | translate }}</li>
+            <li [class.ok]="rules().digit"><i class="fa-solid" [class.fa-check]="rules().digit" [class.fa-circle]="!rules().digit" aria-hidden="true"></i>{{ 'vaultLock.rules.digit' | translate }}</li>
+          </ul>
+
+          <label class="form-label" for="vl-confirm">{{ 'vaultLock.setup.confirm' | translate }}</label>
+          <input id="vl-confirm" class="form-control" autocomplete="new-password" dir="ltr"
+                 [type]="reveal() ? 'text' : 'password'" name="confirm"
+                 [class.is-invalid]="confirm() && !matches()" [class.is-valid]="matches()"
+                 [ngModel]="confirm()" (ngModelChange)="confirm.set($event)" />
+          @if (confirm() && !matches()) {
+            <div class="invalid-feedback d-block">{{ 'vaultLock.setup.mismatch' | translate }}</div>
+          }
+
+          @if (error(); as e) { <div class="alert alert-danger py-2 mt-3 mb-0 small">{{ e.key | translate: { n: e.n ?? '' } }}</div> }
+
+          <button type="submit" class="btn btn-primary w-100 mt-3" [disabled]="!canSetup()">
+            @if (busy()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+            @else { <i class="fa-solid fa-lock me-1" aria-hidden="true"></i> }
+            {{ 'vaultLock.setup.submit' | translate }}
+          </button>
+        </form>
+      }
+
+      <!-- ── Unlock ── -->
+      @case ('unlock') {
+        <h4 class="vl-title">{{ 'vaultLock.unlock.title' | translate }}</h4>
+        <p class="vl-sub">{{ 'vaultLock.unlock.subtitle' | translate }}</p>
+
+        @if (setupRaced()) {
+          <div class="alert alert-info py-2 small">{{ 'vaultLock.unlock.raced' | translate }}</div>
+        }
+
+        <form class="vl-form" (ngSubmit)="submitUnlock()" autocomplete="off">
+          <label class="visually-hidden" for="vl-pw">{{ 'vaultLock.unlock.password' | translate }}</label>
+          <div class="vl-field">
+            <input #pw id="vl-pw" class="form-control form-control-lg" autocomplete="current-password" dir="ltr"
+                   [placeholder]="'vaultLock.unlock.password' | translate"
+                   [type]="reveal() ? 'text' : 'password'" name="password" [disabled]="lockedFor() > 0"
+                   [class.is-invalid]="!!error()"
+                   [ngModel]="password()" (ngModelChange)="password.set($event); error.set(null)" />
+            <button type="button" class="vl-eye" (click)="reveal.set(!reveal())"
+                    [attr.aria-label]="(reveal() ? 'vaultLock.hide' : 'vaultLock.show') | translate">
+              <i class="fa-regular" [class.fa-eye]="!reveal()" [class.fa-eye-slash]="reveal()" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          @if (lockedFor() > 0) {
+            <div class="alert alert-warning py-2 mt-3 mb-0 small" role="status">
+              <i class="fa-solid fa-hourglass-half me-1" aria-hidden="true"></i>{{ 'vaultLock.errors.lockedOut' | translate: { n: lockedFor() } }}
+            </div>
+          } @else if (error()) {
+            <div class="alert alert-danger py-2 mt-3 mb-0 small" role="alert">{{ error()!.key | translate: { n: error()!.n ?? '' } }}</div>
+          }
+
+          <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" [disabled]="!canUnlock()">
+            @if (busy()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+            @else { <i class="fa-solid fa-lock-open me-1" aria-hidden="true"></i> }
+            {{ 'vaultLock.unlock.submit' | translate }}
+          </button>
+        </form>
+
+        <p class="vl-foot"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>{{ 'vaultLock.unlock.forgot' | translate }}</p>
+      }
+    }
+  </div>
+</div>

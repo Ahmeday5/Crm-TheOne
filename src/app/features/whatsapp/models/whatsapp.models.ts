@@ -21,7 +21,7 @@ export interface Pagination<T> {
 
 // ─────────────── channels ───────────────
 
-export type WaChannelType = 'whatsapp_cloud' | 'messenger';
+export type WaChannelType = 'whatsapp_cloud' | 'messenger' | 'instagram';
 
 /** Connection state of a channel on Mihwar. */
 export type WaInstanceStatus = 'CONNECTED' | 'DISCONNECTED' | 'INACTIVE' | 'UNKNOWN';

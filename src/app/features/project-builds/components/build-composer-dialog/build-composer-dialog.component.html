@@ -1,0 +1,73 @@
+<app-modal [open]="true" [title]="'projectBuilds.composer.title' | translate"
+           icon="fa-solid fa-cloud-arrow-up" size="md" (closed)="closed.emit()">
+  <form class="d-flex flex-column gap-3" (ngSubmit)="submit()">
+    <div class="row g-3">
+      <div class="col-12 col-sm-6">
+        <label class="form-label">{{ 'projectBuilds.composer.version' | translate }}</label>
+        <input type="text" class="form-control" dir="ltr" placeholder="1.4.0"
+               [ngModel]="versionName()" (ngModelChange)="versionName.set($event)" name="version" />
+      </div>
+      <div class="col-12 col-sm-6">
+        <label class="form-label">{{ 'projectBuilds.composer.platform' | translate }}</label>
+        <select class="form-select" [ngModel]="platform()" (ngModelChange)="platform.set($event)" name="platform">
+          @for (p of platforms; track p) {
+            <option [value]="p">{{ 'projectBuilds.platform.' + p | translate }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label class="form-label">{{ 'projectBuilds.composer.artifact' | translate }}</label>
+      <label class="bc-drop" [class.has-file]="file()">
+        <input type="file" class="d-none" (change)="onFile($event)" />
+        @if (file(); as f) {
+          <i class="fa-solid fa-file-zipper" aria-hidden="true"></i>
+          <span class="bc-drop__name">{{ f.name }}</span>
+          <span class="bc-drop__size">{{ fmtBytes(f.size) }}</span>
+        } @else {
+          <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+          <span>{{ 'projectBuilds.composer.pickFile' | translate }}</span>
+        }
+      </label>
+      <p class="form-text">{{ 'projectBuilds.composer.gitHint' | translate }}</p>
+    </div>
+
+    <div>
+      <label class="form-label">{{ 'projectBuilds.composer.notes' | translate }}</label>
+      <textarea class="form-control" rows="3" [ngModel]="notes()" (ngModelChange)="notes.set($event)"
+                name="notes" [placeholder]="'projectBuilds.composer.notesPlaceholder' | translate"></textarea>
+    </div>
+
+    @if (error(); as e) {
+      <div class="alert alert-danger py-2 mb-0 small">{{ e }}</div>
+    }
+  </form>
+
+  <div modal-footer class="d-flex justify-content-end gap-2">
+    <button type="button" class="btn btn-light" (click)="closed.emit()">{{ 'common.cancel' | translate }}</button>
+    <button type="button" class="btn btn-primary" [disabled]="!canSubmit" (click)="submit()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-cloud-arrow-up me-1" aria-hidden="true"></i>
+      }
+      {{ 'projectBuilds.composer.publish' | translate }}
+    </button>
+  </div>
+</app-modal>
+
+<style>
+  .bc-drop {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.4rem; width: 100%; padding: 1.4rem; cursor: pointer; text-align: center;
+    border: 2px dashed var(--border); border-radius: var(--radius-md);
+    background: var(--surface-1); color: var(--text-3);
+    transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+  }
+  .bc-drop:hover { border-color: var(--brand-500); color: var(--brand-500); }
+  .bc-drop i { font-size: 1.5rem; }
+  .bc-drop.has-file { border-style: solid; border-color: var(--brand-500); color: var(--text-1); }
+  .bc-drop__name { font-weight: var(--fw-600); word-break: break-all; }
+  .bc-drop__size { font-size: var(--fs-xs); color: var(--text-3); }
+</style>

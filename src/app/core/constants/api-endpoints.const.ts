@@ -120,6 +120,15 @@ export const API_ENDPOINTS = {
     byId: (id: number | string) => `Vault/${id}`,
     /** GET `{ id, password }`. */
     password: (id: number | string) => `Vault/${id}/password`,
+    // ── Page lock (separate password; every call above then needs `X-Vault-Token`) ──
+    /** GET `{ isConfigured }`. */
+    lockStatus: 'Vault/lock-status',
+    /** POST `{ password }` — first time only (409 once configured). */
+    lockSetup: 'Vault/lock/setup',
+    /** POST `{ password }` → `{ vaultToken, expiresAt }`; 401 wrong, 429 locked out. */
+    unlock: 'Vault/unlock',
+    /** POST `{ currentPassword, newPassword }` — revokes every open vault token. */
+    lockChangePassword: 'Vault/lock/change-password',
   },
   appointments: {
     list: 'Appointments/GetAppointments',

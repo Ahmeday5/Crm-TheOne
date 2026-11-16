@@ -88,6 +88,7 @@
 
   /* Messenger's own blue — a solid brand colour. */
   &[data-type='messenger'] { background: color-mix(in srgb, #0866ff 12%, transparent); color: #0866ff; }
+  &[data-type='instagram'] { background: color-mix(in srgb, #d62976 12%, transparent); color: #d62976; }
 }
 .wa-ch__main {
   flex: 1;

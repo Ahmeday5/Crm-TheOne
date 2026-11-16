@@ -4,7 +4,9 @@ export type UserRole =
   | 'Developer'
   | 'Sales'
   | 'Marketing'
-  | 'Support';
+  | 'Support'
+  /** External: the customer who owns a project — sees only the client portal. */
+  | 'Client';
 
 /** Body of POST /Auth/login */
 export interface LoginRequest {

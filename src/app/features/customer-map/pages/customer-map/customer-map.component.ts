@@ -10,17 +10,21 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import {
   GeoAggregate,
   GeoExplorerComponent,
+  GeoPointInput,
   GeoUnitLabels,
   MapSelection,
+  PinScope,
   RegionPanelComponent,
   regionFilterOf,
   share,
 } from '../../../geo-insights';
+import { CustomerDetailsDialogComponent } from '../../../leads/components/customer-details-dialog/customer-details-dialog.component';
 import { resolveCustomerStatus } from '../../../leads/utils/customer-status.util';
 import { CustomerRegionListComponent } from '../../components/customer-region-list/customer-region-list.component';
 import { MapFiltersComponent } from '../../components/map-filters/map-filters.component';
 import { CustomerMapQuery } from '../../models/customer-map.models';
 import { CustomerMapService } from '../../services/customer-map.service';
+import { CustomerPinsService } from '../../services/customer-pins.service';
 
 const FILTER_DEBOUNCE_MS = 300;
 
@@ -44,6 +48,7 @@ type Load = { ok: true; data: GeoAggregate } | { ok: false };
     GeoExplorerComponent,
     RegionPanelComponent,
     CustomerRegionListComponent,
+    CustomerDetailsDialogComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-map.component.html',
@@ -51,6 +56,7 @@ type Load = { ok: true; data: GeoAggregate } | { ok: false };
 })
 export class CustomerMapComponent {
   private readonly service = inject(CustomerMapService);
+  private readonly pinsService = inject(CustomerPinsService);
   private readonly auth = inject(AuthService);
   private readonly language = inject(LanguageService);
 
@@ -62,6 +68,23 @@ export class CustomerMapComponent {
   protected readonly failed = signal(false);
   protected readonly selection = signal<MapSelection | null>(null);
   private readonly fetch$ = new Subject<{ query: CustomerMapQuery; debounce: boolean }>();
+
+  /** Customer pins for the current scope + whether they're still loading. */
+  protected readonly pins = signal<GeoPointInput[]>([]);
+  protected readonly pinsLoading = signal(false);
+  /** Customer opened from a pin (details dialog). */
+  protected readonly pinCustomerId = signal<number | null>(null);
+  private readonly pinScope$ = new Subject<PinScope | null>();
+  private lastPinScope: PinScope | null = null;
+
+  /** Governorate id → centroid, for projecting customers onto the map. */
+  private readonly centroids = computed(() => {
+    const map = new Map<number, { lat: number; lng: number; name: string; nameEn: string }>();
+    for (const g of this.data()?.governorates ?? []) {
+      map.set(g.governorateId, { lat: g.lat, lng: g.lng, name: g.name, nameEn: g.nameEn });
+    }
+    return map;
+  });
 
   protected readonly labels: GeoUnitLabels = {
     unitKey: 'customerMap.unit',
@@ -107,12 +130,44 @@ export class CustomerMapComponent {
         if (res.ok) this.data.set(res.data);
       });
 
+    // Pin scope changed → load every customer in it (latest scope wins).
+    this.pinScope$
+      .pipe(
+        tap((scope) => {
+          if (!scope) this.pins.set([]);
+          this.pinsLoading.set(!!scope);
+        }),
+        switchMap((scope) => {
+          if (!scope) return of<GeoPointInput[]>([]);
+          const gid = scope.kind === 'governorate' ? scope.governorateId : null;
+          return this.pinsService.load(gid, this.centroids(), this.query()).pipe(
+            catchError(() => of<GeoPointInput[]>([])),
+          );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((points) => {
+        this.pinsLoading.set(false);
+        this.pins.set(points);
+      });
+
     this.fetch$.next({ query: this.query(), debounce: false });
+  }
+
+  protected onPinScope(scope: PinScope | null): void {
+    this.lastPinScope = scope;
+    this.pinScope$.next(scope);
+  }
+
+  protected onPinSelect(id: number): void {
+    this.pinCustomerId.set(id);
   }
 
   protected onFilters(query: CustomerMapQuery): void {
     this.query.set(query);
     this.fetch$.next({ query, debounce: true });
+    // Keep active pins consistent with the new filters.
+    if (this.lastPinScope) this.pinScope$.next(this.lastPinScope);
   }
 
   protected retry(): void {

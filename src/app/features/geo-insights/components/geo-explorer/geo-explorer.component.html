@@ -34,6 +34,19 @@
         <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
         {{ 'geo.map.allEgypt' | translate }} <b>{{ (egypt()?.count ?? 0) | number }}</b>
       </button>
+      @if (enablePins()) {
+        <button type="button" class="gx-chip is-pins" [class.is-active]="pinMode() === 'all'"
+                (click)="pinMode() === 'all' ? clearPins() : showAllPins()">
+          <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+          {{ (pinMode() === 'all' ? 'geo.map.hidePins' : 'geo.map.showAllPins') | translate }}
+        </button>
+        @if (pinMode() !== null && pinMode() !== 'all') {
+          <button type="button" class="gx-chip" (click)="clearPins()">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            {{ 'geo.map.hidePins' | translate }}
+          </button>
+        }
+      }
       @if (data()?.egyptWithoutGovernorate) {
         <button type="button" class="gx-chip" (click)="openNoGovernorate()">
           <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
@@ -69,6 +82,7 @@
               [geo]="activeGeo() ?? null"
               [regions]="geoRegions()"
               [bubbles]="geoBubbles()"
+              [points]="geoPoints()"
               [palette]="p"
               [dark]="dark()"
               [lang]="lang()"
@@ -76,12 +90,17 @@
               [tooltip]="tooltipFor"
               [ariaLabel]="mapAria()"
               [errorText]="'geo.map.unavailable' | translate"
-              (regionClick)="onRegion($event)" />
+              (regionClick)="onRegion($event)"
+              (pointClick)="onPoint($event)" />
           }
         }
         @if (loading() && data()) {
           <span class="gx-map__busy" role="status">
             <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>{{ 'geo.updating' | translate }}
+          </span>
+        } @else if (pinsLoading()) {
+          <span class="gx-map__busy" role="status">
+            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>{{ 'geo.map.pinsLoading' | translate }}
           </span>
         }
       </div>

@@ -1,0 +1,122 @@
+<div class="card bp-card">
+  <div class="card-header d-flex align-items-center gap-2 flex-wrap">
+    <i class="fa-solid fa-code-branch text-primary" aria-hidden="true"></i>
+    <h5 class="mb-0 me-auto">{{ 'projectBuilds.title' | translate }}</h5>
+    @if (latestPushed(); as lb) {
+      <span class="bp-latest">
+        <i class="fa-solid fa-tag" aria-hidden="true"></i>
+        {{ 'projectBuilds.latest' | translate }} <b dir="ltr">{{ lb.gitTag || lb.versionName }}</b>
+      </span>
+    }
+    @if (canPublish()) {
+      <button type="button" class="btn btn-sm btn-primary" (click)="composerOpen.set(true)">
+        <i class="fa-solid fa-cloud-arrow-up me-1" aria-hidden="true"></i>{{ 'projectBuilds.publish' | translate }}
+      </button>
+    }
+  </div>
+
+  <div class="card-body p-0">
+    @if (rows().length === 0) {
+      <div class="bp-empty">
+        <span class="icon-tile lg tone-secondary"><i class="fa-solid fa-box-open"></i></span>
+        <h6 class="fw-700 mb-1">{{ 'projectBuilds.emptyTitle' | translate }}</h6>
+        <p class="text-muted small mb-0">{{ 'projectBuilds.emptyHint' | translate }}</p>
+      </div>
+    } @else {
+      <!-- Desktop table -->
+      <div class="table-responsive bp-table">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>{{ 'projectBuilds.col.version' | translate }}</th>
+              <th>{{ 'projectBuilds.col.platform' | translate }}</th>
+              <th>{{ 'projectBuilds.col.developer' | translate }}</th>
+              <th>{{ 'projectBuilds.col.artifact' | translate }}</th>
+              <th>{{ 'projectBuilds.col.git' | translate }}</th>
+              <th>{{ 'projectBuilds.col.status' | translate }}</th>
+              <th>{{ 'projectBuilds.col.date' | translate }}</th>
+              <th class="text-end"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of rows(); track b.id) {
+              <tr>
+                <td>
+                  <span class="bp-ver" dir="ltr">{{ b.versionName }}</span>
+                  <span class="bp-num">#{{ b.buildNumber }}</span>
+                  @if (b.notes) { <div class="bp-notes" [title]="b.notes">{{ b.notes }}</div> }
+                </td>
+                <td><i [class]="platformIcon(b.platform)" class="me-1" aria-hidden="true"></i>{{ 'projectBuilds.platform.' + b.platform | translate }}</td>
+                <td>{{ b.developerName }}@if (isMine(b.developerId)) { <span class="bp-me">{{ 'projectBuilds.you' | translate }}</span> }</td>
+                <td>
+                  @if (b.artifactName) {
+                    <span class="bp-artifact" dir="ltr">{{ b.artifactName }}</span>
+                    <span class="bp-size">{{ fmtBytes(b.artifactSizeBytes) }}</span>
+                  } @else { <span class="text-muted">—</span> }
+                </td>
+                <td>
+                  @if (b.gitCommitSha) {
+                    <a class="bp-git" dir="ltr" [href]="b.gitRepoUrl" target="_blank" rel="noopener">
+                      <i class="fa-brands fa-github" aria-hidden="true"></i>{{ b.gitTag || b.gitCommitSha }}
+                    </a>
+                  } @else { <span class="text-muted">—</span> }
+                </td>
+                <td>
+                  <span class="badge" [class]="statusClass(b.status)">
+                    @if (b.status === 'Uploading' || b.status === 'Pending') {
+                      <span class="spinner-border spinner-border-sm bp-spin" aria-hidden="true"></span>
+                    }
+                    {{ statusKey(b.status) | translate }}
+                  </span>
+                  @if (b.errorMessage && b.status === 'Failed') { <div class="bp-err" [title]="b.errorMessage">{{ b.errorMessage }}</div> }
+                </td>
+                <td class="text-nowrap small text-muted">{{ b.createdAt | cairoDate: 'date' }}</td>
+                <td class="text-end">
+                  @if (b.artifactUrl && b.artifactUrl !== '#') {
+                    <a class="btn btn-sm btn-light" [href]="b.artifactUrl" download [attr.aria-label]="'projectBuilds.download' | translate">
+                      <i class="fa-solid fa-download" aria-hidden="true"></i>
+                    </a>
+                  } @else if (b.artifactUrl === '#') {
+                    <button type="button" class="btn btn-sm btn-light" disabled [title]="'projectBuilds.downloadMock' | translate">
+                      <i class="fa-solid fa-download" aria-hidden="true"></i>
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <ul class="bp-cards" role="list">
+        @for (b of rows(); track b.id) {
+          <li class="bp-cardrow">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <i [class]="platformIcon(b.platform)" class="text-primary" aria-hidden="true"></i>
+              <span class="bp-ver" dir="ltr">{{ b.versionName }}</span>
+              <span class="bp-num">#{{ b.buildNumber }}</span>
+              <span class="badge ms-auto" [class]="statusClass(b.status)">
+                @if (b.status === 'Uploading' || b.status === 'Pending') { <span class="spinner-border spinner-border-sm bp-spin" aria-hidden="true"></span> }
+                {{ statusKey(b.status) | translate }}
+              </span>
+            </div>
+            @if (b.notes) { <p class="bp-notes mb-1">{{ b.notes }}</p> }
+            <div class="bp-meta">
+              <span><i class="fa-solid fa-user" aria-hidden="true"></i> {{ b.developerName }}</span>
+              @if (b.artifactName) { <span dir="ltr"><i class="fa-solid fa-file-zipper"></i> {{ b.artifactName }} · {{ fmtBytes(b.artifactSizeBytes) }}</span> }
+              @if (b.gitTag) { <span dir="ltr"><i class="fa-brands fa-github"></i> {{ b.gitTag }}</span> }
+              <span class="text-muted">{{ b.createdAt | cairoDate: 'date' }}</span>
+            </div>
+            @if (b.errorMessage && b.status === 'Failed') { <div class="bp-err mt-1">{{ b.errorMessage }}</div> }
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>
+
+@if (composerOpen()) {
+  <app-build-composer-dialog [projectId]="projectId()"
+                             (closed)="composerOpen.set(false)" (published)="composerOpen.set(false)" />
+}

@@ -34,6 +34,9 @@ import attendance from './attendance.ar';
 import customerMap from './customerMap.ar';
 import vault from './vault.ar';
 import geo from './geo.ar';
+import projectWorkspace from './projectWorkspace.ar';
+import clientPortal from './clientPortal.ar';
+import vaultLock from './vaultLock.ar';
 
 const ar: Translations = {
   ...common,
@@ -71,6 +74,9 @@ const ar: Translations = {
   ...customerMap,
   ...vault,
   ...geo,
+  ...projectWorkspace,
+  ...clientPortal,
+  ...vaultLock,
 };
 
 export default ar;

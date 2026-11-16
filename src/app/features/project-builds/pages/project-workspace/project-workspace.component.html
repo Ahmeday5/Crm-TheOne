@@ -1,0 +1,62 @@
+@if (project(); as p) {
+  <app-page-header [title]="p.title" [subtitle]="p.customerName" icon="fa-solid fa-diagram-project">
+    <a class="btn btn-light" [routerLink]="isAdmin() ? '/ProjectManage' : '/developer-dashboard'">
+      <i class="fa-solid fa-arrow-right me-1" aria-hidden="true"></i>{{ 'common.back' | translate }}
+    </a>
+  </app-page-header>
+
+  <!-- Project summary strip -->
+  <div class="card pw-summary mb-3">
+    <div class="pw-summary__grid">
+      <div class="pw-stat">
+        <span class="pw-stat__label">{{ 'projectWorkspace.status' | translate }}</span>
+        <span class="badge" [class]="statusClass(p.status)">{{ 'projects.manage.statuses.' + p.status | translate }}</span>
+      </div>
+      <div class="pw-stat">
+        <span class="pw-stat__label">{{ 'projectWorkspace.progress' | translate }}</span>
+        <div class="pw-progress">
+          <div class="pw-progress__bar"><span [style.width.%]="p.overallProgressPercentage ?? p.progress"></span></div>
+          <b>{{ p.overallProgressPercentage ?? p.progress }}%</b>
+        </div>
+      </div>
+      <div class="pw-stat">
+        <span class="pw-stat__label">{{ 'projectWorkspace.team' | translate }}</span>
+        <span class="pw-stat__value"><i class="fa-solid fa-users me-1" aria-hidden="true"></i>{{ p.teamMembersCount }}</span>
+      </div>
+      <div class="pw-stat">
+        <span class="pw-stat__label">{{ 'projectWorkspace.client' | translate }}</span>
+        <span class="pw-stat__value text-truncate">{{ p.customerName }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="pw-tabs" role="tablist">
+    <button type="button" role="tab" class="pw-tab" [class.is-active]="tab() === 'team'"
+            [attr.aria-selected]="tab() === 'team'" (click)="tab.set('team')">
+      <i class="fa-solid fa-people-group" aria-hidden="true"></i>{{ 'projectTeam.title' | translate }}
+    </button>
+    <button type="button" role="tab" class="pw-tab" [class.is-active]="tab() === 'builds'"
+            [attr.aria-selected]="tab() === 'builds'" (click)="tab.set('builds')">
+      <i class="fa-solid fa-code-branch" aria-hidden="true"></i>{{ 'projectBuilds.title' | translate }}
+    </button>
+    <button type="button" role="tab" class="pw-tab" [class.is-active]="tab() === 'requests'"
+            [attr.aria-selected]="tab() === 'requests'" (click)="tab.set('requests')">
+      <i class="fa-solid fa-message" aria-hidden="true"></i>{{ 'clientPortal.requests.staffTitle' | translate }}
+    </button>
+  </div>
+
+  @switch (tab()) {
+    @case ('team') { <app-team-allocation [projectId]="projectId()" [canEdit]="isAdmin()" /> }
+    @case ('builds') { <app-builds-panel [projectId]="projectId()" [canPublish]="true" /> }
+    @case ('requests') { <app-requests-list [projectId]="projectId()" [staff]="true" /> }
+  }
+} @else if (loading()) {
+  <div class="pw-center"><span class="spinner-border text-primary" aria-hidden="true"></span></div>
+} @else {
+  <div class="card"><div class="pw-center flex-column gap-2">
+    <span class="icon-tile lg tone-warning"><i class="fa-solid fa-triangle-exclamation"></i></span>
+    <h6 class="fw-700 mb-0">{{ 'projectWorkspace.loadFailed' | translate }}</h6>
+    <a class="btn btn-sm btn-light" [routerLink]="isAdmin() ? '/ProjectManage' : '/developer-dashboard'">{{ 'common.back' | translate }}</a>
+  </div></div>
+}

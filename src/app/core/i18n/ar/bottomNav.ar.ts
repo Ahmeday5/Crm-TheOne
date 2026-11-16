@@ -10,6 +10,8 @@ const bottomNav: TranslationFile<'bottomNav'> = {
     chat: 'الدردشة',
     notifications: 'الإشعارات',
     menu: 'القائمة',
+    myProjects: 'مشاريعي',
+    requests: 'طلباتي',
   },
 };
 

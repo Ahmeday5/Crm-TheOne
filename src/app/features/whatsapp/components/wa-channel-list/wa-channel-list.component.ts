@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output } f
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { WaInstance } from '../../models/whatsapp.models';
 import { WhatsAppSessionStore } from '../../state/whatsapp-session.store';
-import { InstanceStatusMeta, channelLabel, instanceStatusMeta, isChannelActive } from '../../utils/whatsapp.util';
+import { InstanceStatusMeta, channelLabel, channelTypeIcon, instanceStatusMeta, isChannelActive } from '../../utils/whatsapp.util';
 
 /**
  * Admin: every channel (WhatsApp numbers and Messenger pages), like a
@@ -26,15 +26,23 @@ export class WaChannelListComponent {
 
   readonly selected = output<string | null>();
 
-  /** Present first, then WhatsApp before Messenger, connected first, then by name. */
+  protected readonly channelIcon = channelTypeIcon;
+
+  /**
+   * Channels removed from the provider ("محذوفة من محور") are hidden entirely —
+   * a deleted channel never shows. Of the rest: WhatsApp before Messenger before
+   * Instagram, connected first, then by name.
+   */
   protected readonly channels = computed(() =>
-    [...this.session.channels()].sort(
-      (a, b) =>
-        Number(isChannelActive(b)) - Number(isChannelActive(a)) ||
-        Number(b.type === 'whatsapp_cloud') - Number(a.type === 'whatsapp_cloud') ||
-        Number(b.canSend) - Number(a.canSend) ||
-        channelLabel(a).localeCompare(channelLabel(b)),
-    ),
+    this.session
+      .channels()
+      .filter((c) => isChannelActive(c))
+      .sort(
+        (a, b) =>
+          Number(b.type === 'whatsapp_cloud') - Number(a.type === 'whatsapp_cloud') ||
+          Number(b.canSend) - Number(a.canSend) ||
+          channelLabel(a).localeCompare(channelLabel(b)),
+      ),
   );
 
   protected label(c: WaInstance): string {

@@ -91,6 +91,15 @@ export function isWhatsAppChannel(channel: Pick<WaInstance, 'type'> | null | und
   return channel?.type === 'whatsapp_cloud';
 }
 
+/** Font-Awesome brand icon for a channel type (WhatsApp / Messenger / Instagram). */
+export function channelTypeIcon(type: WaChannelType | null | undefined): string {
+  switch (type) {
+    case 'messenger': return 'fa-brands fa-facebook-messenger';
+    case 'instagram': return 'fa-brands fa-instagram';
+    default: return 'fa-brands fa-whatsapp';
+  }
+}
+
 /** A channel the admin can still act on (it exists on the provider). */
 export function isChannelActive(instance: Pick<WaInstance, 'existsInProvider'>): boolean {
   return instance.existsInProvider !== false;
@@ -126,7 +135,7 @@ export function chatDisplayName(
  */
 export function normalizeChat(raw: WaChat): WaChat {
   const channelType: WaChannelType =
-    raw.channelType === 'messenger' || raw.channelType === 'whatsapp_cloud'
+    raw.channelType === 'messenger' || raw.channelType === 'whatsapp_cloud' || raw.channelType === 'instagram'
       ? raw.channelType
       : raw.phone
         ? 'whatsapp_cloud'
@@ -143,10 +152,12 @@ export function normalizeChat(raw: WaChat): WaChat {
 
 /** Same idea for channels: an unknown `type` is a WhatsApp number; missing `existsInProvider` = present. */
 export function normalizeChannel(raw: WaInstance): WaInstance {
+  const type: WaChannelType =
+    raw.type === 'messenger' || raw.type === 'instagram' ? raw.type : 'whatsapp_cloud';
   return {
     ...raw,
     id: String(raw.id),
-    type: raw.type === 'messenger' ? 'messenger' : 'whatsapp_cloud',
+    type,
     existsInProvider: raw.existsInProvider ?? true,
   };
 }

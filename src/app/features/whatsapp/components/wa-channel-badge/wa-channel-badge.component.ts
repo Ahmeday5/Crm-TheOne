@@ -41,8 +41,9 @@ import { WaChannelType } from '../../models/whatsapp.models';
       font-weight: var(--fw-600);
       line-height: 1.5;
     }
-    /* Messenger's own blue — a solid brand colour, not a theme token. */
+    /* Messenger's own blue / Instagram's magenta — solid brand colours, not theme tokens. */
     .wa-cb[data-type='messenger'] { --wa-cb-color: #0866ff; }
+    .wa-cb[data-type='instagram'] { --wa-cb-color: #d62976; }
     .wa-cb.is-compact { padding: 0; width: 1.35rem; height: 1.35rem; justify-content: center; }
     .wa-cb__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   `,
@@ -53,11 +54,19 @@ export class WaChannelBadgeComponent {
   readonly name = input<string | null>(null);
   readonly compact = input(false);
 
-  protected readonly icon = computed(() =>
-    this.type() === 'messenger' ? 'fa-brands fa-facebook-messenger' : 'fa-brands fa-whatsapp',
-  );
-  /** Anything but Messenger reads as WhatsApp — never a raw `…undefined` key. */
-  protected readonly typeKey = computed(() =>
-    this.type() === 'messenger' ? 'whatsapp.channelType.messenger' : 'whatsapp.channelType.whatsapp_cloud',
-  );
+  protected readonly icon = computed(() => {
+    switch (this.type()) {
+      case 'messenger': return 'fa-brands fa-facebook-messenger';
+      case 'instagram': return 'fa-brands fa-instagram';
+      default: return 'fa-brands fa-whatsapp';
+    }
+  });
+  /** Anything unknown reads as WhatsApp — never a raw `…undefined` key. */
+  protected readonly typeKey = computed(() => {
+    switch (this.type()) {
+      case 'messenger': return 'whatsapp.channelType.messenger';
+      case 'instagram': return 'whatsapp.channelType.instagram';
+      default: return 'whatsapp.channelType.whatsapp_cloud';
+    }
+  });
 }

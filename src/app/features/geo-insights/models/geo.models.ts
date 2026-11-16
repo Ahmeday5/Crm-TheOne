@@ -63,6 +63,34 @@ export interface GeoAggregate {
 export type MapLevel = 'world' | 'egypt';
 
 /**
+ * What the page should drop as individual pins on the Egypt map.
+ *
+ *   `null`          — nothing (world view, or pins turned off)
+ *   `allEgypt`      — every located Egyptian customer, across all governorates
+ *   `governorate`   — just one governorate's customers
+ *
+ * The explorer only knows the *scope*; the owning page fetches the records and
+ * feeds them back as `GeoPointInput[]` (it owns the entity-specific endpoint).
+ */
+export type PinScope =
+  | { kind: 'allEgypt' }
+  | { kind: 'governorate'; governorateId: number };
+
+/**
+ * A record the page hands the explorer to place as a pin. Coordinates are the
+ * governorate centroid — the explorer scatters them so each record gets a
+ * distinct dot (see `scatterPoints`).
+ */
+export interface GeoPointInput {
+  id: number;
+  label: string;
+  sub?: string;
+  /** Governorate centroid to scatter around. */
+  lat: number;
+  lng: number;
+}
+
+/**
  * A region the user drilled into (side panel). `unknown` and
  * `egyptNoGovernorate` are the two buckets that have no shape on a map.
  */

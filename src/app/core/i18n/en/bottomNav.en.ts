@@ -10,6 +10,8 @@ const bottomNav: TranslationFile<'bottomNav'> = {
     chat: 'Chat',
     notifications: 'Alerts',
     menu: 'Menu',
+    myProjects: 'My projects',
+    requests: 'My requests',
   },
 };
 

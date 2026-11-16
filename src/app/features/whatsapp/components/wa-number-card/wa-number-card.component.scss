@@ -44,6 +44,7 @@
   &.tone-gray { color: var(--text-3); font-size: 1rem; }
   /* Messenger's own blue — a solid brand colour. */
   &[data-type='messenger'] { color: #0866ff; }
+  &[data-type='instagram'] { color: #d62976; }
 }
 .wa-nc--bad .wa-nc__icon { color: var(--danger); }
 

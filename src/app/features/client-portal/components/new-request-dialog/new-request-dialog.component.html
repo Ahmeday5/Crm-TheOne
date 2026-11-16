@@ -1,0 +1,75 @@
+<app-modal [open]="true" [title]="'clientPortal.newRequest.title' | translate"
+           icon="fa-solid fa-message" size="md" (closed)="closed.emit()">
+  <div class="d-flex flex-column gap-3">
+    <!-- 1. What kind -->
+    <div>
+      <label class="form-label">{{ 'clientPortal.newRequest.kind' | translate }}</label>
+      <div class="nr-types" role="radiogroup">
+        @for (t of types; track t) {
+          <button type="button" class="nr-type" role="radio" [attr.aria-checked]="type() === t"
+                  [class.is-active]="type() === t" (click)="type.set(t)">
+            <i [class]="typeIcon(t)" aria-hidden="true"></i>
+            <span class="nr-type__name">{{ 'clientPortal.type.' + t | translate }}</span>
+            <span class="nr-type__hint">{{ 'clientPortal.typeHint.' + t | translate }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- 2. Title -->
+    <div>
+      <label class="form-label" for="nr-title">{{ 'clientPortal.newRequest.titleLabel' | translate }}</label>
+      <input id="nr-title" type="text" class="form-control" maxlength="120"
+             [placeholder]="'clientPortal.newRequest.titlePlaceholder' | translate"
+             [ngModel]="title()" (ngModelChange)="title.set($event)" />
+    </div>
+
+    <!-- 3. Details -->
+    <div>
+      <label class="form-label" for="nr-desc">{{ 'clientPortal.newRequest.details' | translate }}</label>
+      <textarea id="nr-desc" class="form-control" rows="4" maxlength="2000"
+                [placeholder]="'clientPortal.newRequest.detailsPlaceholder' | translate"
+                [ngModel]="description()" (ngModelChange)="description.set($event)"></textarea>
+    </div>
+
+    <!-- Attachments -->
+    <div>
+      <label class="nr-attach btn btn-sm btn-light">
+        <input type="file" class="d-none" multiple accept="image/*,.pdf,.doc,.docx,.zip" (change)="onFiles($event)" />
+        <i class="fa-solid fa-paperclip me-1" aria-hidden="true"></i>{{ 'clientPortal.newRequest.attach' | translate }}
+      </label>
+      <span class="form-text ms-2">{{ 'clientPortal.newRequest.attachHint' | translate }}</span>
+      @if (files().length) {
+        <ul class="nr-files" role="list">
+          @for (f of files(); track $index) {
+            <li>
+              <i class="fa-regular fa-file" aria-hidden="true"></i>
+              <span class="nr-files__name" dir="auto">{{ f.name }}</span>
+              <span class="text-muted small">{{ fmtBytes(f.size) }}</span>
+              <button type="button" class="btn btn-sm btn-link text-danger p-0" (click)="removeFile($index)"
+                      [attr.aria-label]="'common.delete' | translate">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    @if (error()) {
+      <div class="alert alert-danger py-2 mb-0 small">{{ 'clientPortal.errors.send' | translate }}</div>
+    }
+  </div>
+
+  <div modal-footer class="d-flex justify-content-end gap-2">
+    <button type="button" class="btn btn-light" (click)="closed.emit()">{{ 'common.cancel' | translate }}</button>
+    <button type="button" class="btn btn-primary" [disabled]="!canSubmit()" (click)="submit()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+      } @else {
+        <i class="fa-solid fa-paper-plane me-1" aria-hidden="true"></i>
+      }
+      {{ 'clientPortal.newRequest.send' | translate }}
+    </button>
+  </div>
+</app-modal>

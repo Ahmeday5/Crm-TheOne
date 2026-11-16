@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { WaChannelType, WaInstanceStatus } from '../../models/whatsapp.models';
 import { WhatsAppSessionStore } from '../../state/whatsapp-session.store';
-import { InstanceStatusMeta, channelLabel, instanceStatusMeta, isChannelActive } from '../../utils/whatsapp.util';
+import { InstanceStatusMeta, channelLabel, channelTypeIcon, instanceStatusMeta, isChannelActive } from '../../utils/whatsapp.util';
 
 /** One line of the card: a channel the employee owns. */
 interface OwnChannelRow {
@@ -49,7 +49,7 @@ interface OwnChannelRow {
         @for (row of rows(); track row.id) {
           <li class="wa-nc" [class.wa-nc--ok]="row.canSend" [class.wa-nc--bad]="!row.canSend">
             <span class="wa-nc__icon" [attr.data-type]="row.type">
-              <i [class]="row.type === 'messenger' ? 'fa-brands fa-facebook-messenger' : 'fa-brands fa-whatsapp'"></i>
+              <i [class]="channelIcon(row.type)"></i>
             </span>
             <span class="wa-nc__body">
               <span class="wa-nc__phone" dir="auto">{{ row.label }}</span>
@@ -70,6 +70,8 @@ interface OwnChannelRow {
 })
 export class WaNumberCardComponent {
   protected readonly session = inject(WhatsAppSessionStore);
+
+  protected readonly channelIcon = channelTypeIcon;
 
   /** `/instances` (own channels); falls back to `/status` before the list is known. */
   protected readonly rows = computed<OwnChannelRow[]>(() => {

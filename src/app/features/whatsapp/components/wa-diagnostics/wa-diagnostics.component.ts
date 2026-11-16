@@ -85,7 +85,7 @@ export class WaDiagnosticsComponent implements OnInit {
       const id = String(c.id);
       return {
         id,
-        type: c.type === 'messenger' || c.type === 'whatsapp_cloud' ? c.type : null,
+        type: c.type === 'messenger' || c.type === 'whatsapp_cloud' || c.type === 'instagram' ? c.type : null,
         label: channelLabel({ id, name: c.name ?? null, phoneNumber: c.phoneNumber ?? null }),
         status: c.status ?? null,
         tone: instanceStatusMeta(c.status).tone,

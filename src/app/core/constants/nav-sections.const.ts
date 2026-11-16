@@ -47,8 +47,14 @@ export function isNavGroup(entry: NavEntry): entry is NavGroup {
   return (entry as NavGroup).kind === 'group';
 }
 
+/**
+ * Staff see items open to everyone (`roles` omitted); a Client sees ONLY the
+ * items that name `Client` explicitly — "everyone" never includes externals.
+ */
 export function canSeeNavItem(item: NavItem, role: UserRole | null): boolean {
-  return !!role && (!item.roles || item.roles.includes(role));
+  if (!role) return false;
+  if (role === 'Client') return !!item.roles?.includes('Client');
+  return !item.roles || item.roles.includes(role);
 }
 
 /** Every link in the tree, groups flattened (permissions matrix, search…). */
@@ -69,6 +75,20 @@ export function isNavItemActive(item: NavItem, url: string): boolean {
 }
 
 export const NAV_SECTIONS: NavSection[] = [
+  // ── Client portal (Client role only) ─────────────────────────
+  {
+    titleKey: 'sidebar.sections.clientPortal',
+    items: [
+      {
+        labelKey: 'sidebar.items.myProjects',
+        path: '/client-portal',
+        icon: 'fa-solid fa-diagram-project',
+        roles: ['Client'],
+        matchSubroutes: true,
+      },
+    ],
+  },
+
   // ── Overview ────────────────────────────────────────────────
   {
     titleKey: 'sidebar.sections.overview',
@@ -317,13 +337,14 @@ export const NAV_SECTIONS: NavSection[] = [
         kind: 'group',
         id: 'chats',
         labelKey: 'sidebar.groups.chats',
-        icon: 'fa-solid fa-comments',
+        icon: 'fa-solid fa-inbox',
         children: [
-          // Customer inbox (WhatsApp + Messenger) — each employee chats from their own channels.
+          // Unified customer inbox — WhatsApp + Messenger + Instagram. Channel-
+          // neutral label/icon; each employee chats from their own channels.
           {
-            labelKey: 'sidebar.items.whatsapp',
+            labelKey: 'sidebar.items.inbox',
             path: '/whatsapp',
-            icon: 'fa-brands fa-whatsapp',
+            icon: 'fa-solid fa-comments',
             roles: ['Admin', 'Sales', 'Support'],
             matchSubroutes: true,
           },
@@ -335,9 +356,9 @@ export const NAV_SECTIONS: NavSection[] = [
             matchSubroutes: true,
           },
           {
-            labelKey: 'sidebar.items.whatsappNumbers',
+            labelKey: 'sidebar.items.inboxSettings',
             path: '/whatsapp/settings',
-            icon: 'fa-solid fa-gear',
+            icon: 'fa-solid fa-sliders',
             roles: ['Admin'],
           },
         ],
@@ -443,6 +464,9 @@ export const ROUTE_ROLE_MAP: Readonly<Record<string, UserRole[]>> = {
   // Developer modules
   ProjectManage: ['Admin', 'Developer'],
   TasksManage: ['Admin', 'Developer'],
+  // `/projects/:id/workspace` — team allocation + build archive.
+  projects: ['Admin', 'Developer'],
+  'client-portal': ['Client'],
   'developer-analytics': ['Admin', 'Developer'],
   webhooks: ['Admin', 'Developer'],
 

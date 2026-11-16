@@ -20,9 +20,11 @@ import { ThemeService } from '../../../../core/services/theme.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import {
   GeoAggregate,
+  GeoPointInput,
   GeoUnitLabels,
   MapLevel,
   MapSelection,
+  PinScope,
   StatusCount,
 } from '../../models/geo.models';
 import { GeoBoundariesService, GeoJson } from '../../services/geo-boundaries.service';
@@ -37,7 +39,8 @@ import {
   share,
 } from '../../utils/geo.util';
 import { MapPalette, readMapPalette } from '../../utils/map-palette.util';
-import { GeoBubbleDatum, GeoMapComponent, GeoRegionDatum } from '../geo-map/geo-map.component';
+import { scatterPoints } from '../../utils/scatter.util';
+import { GeoBubbleDatum, GeoMapComponent, GeoPointDatum, GeoRegionDatum } from '../geo-map/geo-map.component';
 import { MapRankingComponent, RankRow } from '../map-ranking/map-ranking.component';
 
 /** Largest markets get a pulsing ring. */
@@ -77,7 +80,20 @@ export class GeoExplorerComponent {
   readonly selection = model<MapSelection | null>(null);
   readonly levelChange = output<MapLevel>();
 
+  /** Records the page wants dropped as pins (already filtered to the active scope). */
+  readonly points = input<GeoPointInput[]>([]);
+  /** Whether per-record pins are supported for this map at all (customers: yes). */
+  readonly enablePins = input(false);
+  /** The page is currently fetching the records for the active pin scope. */
+  readonly pinsLoading = input(false);
+  /** The scope of records the page should load and pass back via `points`. */
+  readonly pinScopeChange = output<PinScope | null>();
+  /** A pin was clicked — the record's id. */
+  readonly pointSelect = output<number>();
+
   protected readonly level = signal<MapLevel>('world');
+  /** Which governorate's pins are shown: an id, `'all'`, or `null` (none). */
+  protected readonly pinMode = signal<number | 'all' | null>(null);
   protected readonly mobileView = signal<'list' | 'map'>('list');
   private readonly worldGeo = signal<GeoJson | null | undefined>(undefined);
   private readonly egyptGeo = signal<GeoJson | null | undefined>(undefined);
@@ -135,6 +151,16 @@ export class GeoExplorerComponent {
       .map((r) => ({ key: r.key, lng: r.lng, lat: r.lat, value: r.count, color: this.colorFor(r.count), pulse: hot.has(r.key) }));
   });
 
+  /** The page's records, scattered into individual dots around their centroid. */
+  protected readonly geoPoints = computed<GeoPointDatum[]>(() => {
+    if (this.level() !== 'egypt' || this.pinMode() === null) return [];
+    const byId = new Map(this.points().map((p) => [p.id, p]));
+    return scatterPoints(this.points().map((p) => ({ id: p.id, lat: p.lat, lng: p.lng }))).map((s) => {
+      const src = byId.get(s.id)!;
+      return { id: s.id, lat: s.lat, lng: s.lng, label: src.label, sub: src.sub };
+    });
+  });
+
   protected readonly rankRows = computed<RankRow[]>(() => {
     const d = this.data();
     if (!d) return [];
@@ -179,6 +205,14 @@ export class GeoExplorerComponent {
     }
   });
 
+  /** Scope the page should fetch for pins — derived from the level + pin mode. */
+  protected readonly pinScope = computed<PinScope | null>(() => {
+    if (this.level() !== 'egypt' || !this.enablePins()) return null;
+    const mode = this.pinMode();
+    if (mode === null) return null;
+    return mode === 'all' ? { kind: 'allEgypt' } : { kind: 'governorate', governorateId: mode };
+  });
+
   protected readonly tooltipFor = (key: string): string => this.tooltipHtml(key);
 
   protected readonly mapAria = computed(() =>
@@ -203,6 +237,12 @@ export class GeoExplorerComponent {
       const d = this.data();
       if (d) untracked(() => this.refreshSelection(d));
     });
+
+    // Tell the page which records to load for pins whenever the scope changes.
+    effect(() => {
+      const scope = this.pinScope();
+      untracked(() => this.pinScopeChange.emit(scope));
+    });
   }
 
   // ─────────── interaction ───────────
@@ -226,11 +266,27 @@ export class GeoExplorerComponent {
       return;
     }
     const governorate = d.governorates.find((g) => governorateKey(g) === key);
-    if (governorate) this.selection.set({ kind: 'governorate', governorate });
+    if (governorate) {
+      this.selection.set({ kind: 'governorate', governorate });
+      // Clicking a governorate also drops its customers as pins.
+      if (this.enablePins()) this.pinMode.set(governorate.governorateId);
+    }
+  }
+
+  /** Show every located Egyptian customer as pins (the "all governorates" action). */
+  protected showAllPins(): void {
+    this.selection.set(null);
+    this.pinMode.set('all');
+  }
+
+  /** Turn pins off and return to the plain choropleth. */
+  protected clearPins(): void {
+    this.pinMode.set(null);
   }
 
   protected drillIntoEgypt(): void {
     this.selection.set(null);
+    this.pinMode.set(null);
     this.level.set('egypt');
     this.levelChange.emit('egypt');
     if (this.egyptGeo() === undefined) {
@@ -240,6 +296,7 @@ export class GeoExplorerComponent {
 
   protected backToWorld(): void {
     this.selection.set(null);
+    this.pinMode.set(null);
     this.level.set('world');
     this.levelChange.emit('world');
   }
@@ -247,6 +304,10 @@ export class GeoExplorerComponent {
   protected openEgyptPanel(): void {
     const egypt = this.egypt();
     if (egypt) this.selection.set({ kind: 'country', country: egypt });
+  }
+
+  protected onPoint(id: number): void {
+    this.pointSelect.emit(id);
   }
 
   protected openUnknown(): void {

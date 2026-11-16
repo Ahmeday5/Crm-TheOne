@@ -76,10 +76,21 @@ export class WhatsAppInboxStore {
   readonly refreshing = signal(false);
   readonly error = signal<string | null>(null);
 
-  /** The open chat always shows as read — the thread marks it read itself. */
+  /** Channels removed from the provider — their chats are deleted and never shown. */
+  private readonly removedChannelIds = computed(
+    () => new Set(this.session.channels().filter((c) => c.existsInProvider === false).map((c) => c.id)),
+  );
+
+  /**
+   * The open chat always shows as read — the thread marks it read itself.
+   * Chats belonging to a channel deleted from the provider are hidden entirely.
+   */
   readonly chats = computed<WaChat[]>(() => {
     const active = this.activeChatId();
-    return this.items().map((c) => (c.id === active && c.unreadCount ? { ...c, unreadCount: 0 } : c));
+    const removed = this.removedChannelIds();
+    return this.items()
+      .filter((c) => c.id === active || !removed.has(c.instanceId))
+      .map((c) => (c.id === active && c.unreadCount ? { ...c, unreadCount: 0 } : c));
   });
   readonly hasMore = computed(() => this.items().length < this.total());
   /** The open chat as the server reports it (real unread count — the thread decides on marking read). */

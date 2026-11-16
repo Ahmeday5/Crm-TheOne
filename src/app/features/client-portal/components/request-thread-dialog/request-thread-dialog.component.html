@@ -1,0 +1,85 @@
+@let r = request();
+<app-modal [open]="true" [title]="r.title" [icon]="typeIcon(r.type)" size="lg" (closed)="closed.emit()">
+  <!-- Meta row -->
+  <div class="rt-meta">
+    <span class="badge" [class]="statusClass(r.status)">{{ 'clientPortal.status.' + r.status | translate }}</span>
+    @if (r.priority) {
+      <span class="badge" [class]="priorityClass(r.priority)">{{ 'clientPortal.priority.' + r.priority | translate }}</span>
+    }
+    <span class="rt-meta__text"><i class="fa-solid fa-tag" aria-hidden="true"></i>{{ 'clientPortal.type.' + r.type | translate }}</span>
+    <span class="rt-meta__text"><i class="fa-regular fa-clock" aria-hidden="true"></i>{{ r.createdAt | cairoDate: 'date' }}</span>
+  </div>
+
+  <!-- Staff triage -->
+  @if (staff()) {
+    <div class="rt-triage">
+      <label class="rt-triage__field">
+        <span>{{ 'clientPortal.staff.status' | translate }}</span>
+        <select class="form-select form-select-sm" [ngModel]="r.status" (ngModelChange)="setStatus($event)" [disabled]="saving()">
+          @for (s of statuses; track s) { <option [value]="s">{{ 'clientPortal.status.' + s | translate }}</option> }
+        </select>
+      </label>
+      <label class="rt-triage__field">
+        <span>{{ 'clientPortal.staff.priority' | translate }}</span>
+        <select class="form-select form-select-sm" [ngModel]="r.priority ?? ''" (ngModelChange)="setPriority($event)" [disabled]="saving()">
+          <option value="">{{ 'clientPortal.priority.none' | translate }}</option>
+          @for (p of priorities; track p) { <option [value]="p">{{ 'clientPortal.priority.' + p | translate }}</option> }
+        </select>
+      </label>
+      @if (saving()) { <span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span> }
+    </div>
+  }
+
+  <!-- Original request -->
+  <div class="rt-msg is-client">
+    <div class="rt-msg__head">
+      <b>{{ r.createdByName }}</b>
+      <span class="rt-role">{{ 'clientPortal.role.Client' | translate }}</span>
+    </div>
+    <p class="rt-msg__body">{{ r.description }}</p>
+    @if (r.attachments.length) {
+      <ul class="rt-files" role="list">
+        @for (a of r.attachments; track $index) {
+          <li><i class="fa-regular fa-file" aria-hidden="true"></i><span dir="auto">{{ a.name }}</span><span class="text-muted">{{ fmtBytes(a.sizeBytes) }}</span></li>
+        }
+      </ul>
+    }
+  </div>
+
+  <!-- Conversation -->
+  @for (c of comments(); track c.id) {
+    <div class="rt-msg" [class.is-client]="c.authorRole === 'Client'" [class.is-staff]="c.authorRole === 'Staff'">
+      <div class="rt-msg__head">
+        <b>{{ c.authorName }}</b>
+        <span class="rt-role">{{ 'clientPortal.role.' + c.authorRole | translate }}</span>
+        <span class="rt-msg__time">{{ c.createdAt | cairoDate: 'datetime' }}</span>
+      </div>
+      <p class="rt-msg__body">{{ c.body }}</p>
+    </div>
+  } @empty {
+    <p class="rt-empty"><i class="fa-regular fa-comments" aria-hidden="true"></i>{{ 'clientPortal.thread.noReplies' | translate }}</p>
+  }
+
+  @if (error()) {
+    <div class="alert alert-danger py-2 mt-2 mb-0 small">{{ 'clientPortal.errors.send' | translate }}</div>
+  }
+
+  <div modal-footer class="rt-reply">
+    @if (locked()) {
+      <p class="text-muted small mb-0"><i class="fa-solid fa-lock me-1" aria-hidden="true"></i>{{ 'clientPortal.thread.closed' | translate }}</p>
+    } @else {
+      <textarea class="form-control" rows="2" maxlength="2000"
+                [placeholder]="'clientPortal.thread.replyPlaceholder' | translate"
+                [ngModel]="reply()" (ngModelChange)="reply.set($event)"
+                (keydown.control.enter)="send()"></textarea>
+      <button type="button" class="btn btn-primary" [disabled]="!reply().trim() || sending()" (click)="send()">
+        @if (sending()) {
+          <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        } @else {
+          <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+        }
+        <span class="d-none d-sm-inline ms-1">{{ 'clientPortal.thread.send' | translate }}</span>
+      </button>
+    }
+  </div>
+</app-modal>

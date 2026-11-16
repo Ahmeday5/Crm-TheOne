@@ -73,6 +73,14 @@ $stage-h: clamp(420px, 64vh, 680px);
   &:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 2px; }
   &.is-brand { background: var(--brand-soft); border-color: transparent; color: var(--brand-500); }
   &.is-brand:hover { background: var(--brand-500); color: #fff; b { color: #fff; } }
+
+  // Pins toggle: outlined when off, solid brand when active.
+  &.is-pins.is-active {
+    background: var(--brand-500);
+    border-color: transparent;
+    color: #fff;
+  }
+  &.is-pins.is-active:hover { background: var(--brand-600, var(--brand-500)); color: #fff; transform: translateY(-1px); }
 }
 
 .gx-switch {

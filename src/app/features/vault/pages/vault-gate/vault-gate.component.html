@@ -1,0 +1,24 @@
+@if (session.isUnlocked()) {
+  <div class="vg-bar" role="status">
+    <span class="vg-chip" [class.is-expiring]="expiring()">
+      <i class="fa-solid fa-lock-open" aria-hidden="true"></i>
+      {{ 'vaultLock.session.open' | translate }}
+      <b dir="ltr">{{ countdown() }}</b>
+    </span>
+    <span class="vg-bar__spacer"></span>
+    <button type="button" class="btn btn-sm btn-light" (click)="changeOpen.set(true)">
+      <i class="fa-solid fa-key me-1" aria-hidden="true"></i>{{ 'vaultLock.change.button' | translate }}
+    </button>
+    <button type="button" class="btn btn-sm btn-dark" (click)="session.lock()">
+      <i class="fa-solid fa-lock me-1" aria-hidden="true"></i>{{ 'vaultLock.session.lockNow' | translate }}
+    </button>
+  </div>
+
+  <app-vault-list />
+} @else {
+  <app-vault-lock-screen />
+}
+
+@if (changeOpen() && session.isUnlocked()) {
+  <app-vault-change-password-dialog (closed)="changeOpen.set(false)" />
+}

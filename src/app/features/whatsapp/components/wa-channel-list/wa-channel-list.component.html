@@ -45,7 +45,7 @@
                   [title]="isActive ? (st.tone === 'danger' ? ('whatsapp.channels.relinkHint' | translate) : '') : ('whatsapp.channels.removedHint' | translate)"
                   (click)="selected.emit(c.id)">
             <span class="wa-ch__icon" [attr.data-type]="c.type">
-              <i [class]="c.type === 'messenger' ? 'fa-brands fa-facebook-messenger' : 'fa-brands fa-whatsapp'"></i>
+              <i [class]="channelIcon(c.type)"></i>
             </span>
             <span class="wa-ch__main">
               <span class="wa-ch__name">

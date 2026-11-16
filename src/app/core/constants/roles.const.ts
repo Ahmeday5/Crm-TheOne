@@ -7,6 +7,7 @@ export const ALL_ROLES: ReadonlyArray<UserRole> = [
   'Sales',
   'Marketing',
   'Support',
+  'Client',
 ];
 
 /** Display labels — used in topbar profile + role guards. */
@@ -16,6 +17,7 @@ export const ROLE_LABELS_AR: Record<UserRole, string> = {
   Sales: 'مبيعات',
   Marketing: 'تسويق',
   Support: 'الدعم الفني',
+  Client: 'عميل',
 };
 
 export const ROLE_LABELS_EN: Record<UserRole, string> = {
@@ -24,7 +26,14 @@ export const ROLE_LABELS_EN: Record<UserRole, string> = {
   Sales: 'Sales',
   Marketing: 'Marketing',
   Support: 'Support',
+  Client: 'Client',
 };
+
+/**
+ * The only pages a Client may open (first URL segment). Everything else —
+ * even pages open to "every employee" — is staff-only.
+ */
+export const CLIENT_ALLOWED_SEGMENTS: ReadonlySet<string> = new Set(['client-portal', 'account', '404']);
 
 export function roleLabel(role: UserRole | null | undefined, lang: 'ar' | 'en' = 'ar'): string {
   if (!role) return '';

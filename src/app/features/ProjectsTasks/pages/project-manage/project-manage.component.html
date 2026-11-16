@@ -262,6 +262,12 @@
        [title]="'projectProgress.entryButton' | translate">
       <i class="fa-solid fa-chart-line"></i>
     </a>
+    <a [routerLink]="['/projects', row.id, 'workspace']"
+       class="btn btn-sm btn-light"
+       [attr.aria-label]="'projectTeam.title' | translate"
+       [title]="'projectWorkspace.team' | translate">
+      <i class="fa-solid fa-diagram-project"></i>
+    </a>
     @if (isAdmin()) {
       <button type="button"
               class="btn btn-sm btn-light"

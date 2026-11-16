@@ -12,6 +12,7 @@ import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { provideAnnouncements } from './features/announcements';
 import { provideAttendance } from './features/attendance';
 import { provideWhatsApp } from './features/whatsapp/whatsapp.providers';
+import { vaultTokenInterceptor } from './features/vault/data/vault-token.interceptor';
 
 /**
  * Interceptor order matters:
@@ -19,7 +20,8 @@ import { provideWhatsApp } from './features/whatsapp/whatsapp.providers';
  *   2. loader   — show the global overlay for everything that actually hits
  *                 the network.
  *   3. auth     — attach the bearer token; refresh & retry on 401.
- *   4. error    — last so it sees post-refresh failures and normalizes
+ *   4. vault    — attach `X-Vault-Token` to vault calls (inert while mocked).
+ *   5. error    — last so it sees post-refresh failures and normalizes
  *                 every error into `ApiError`.
  */
 export const appConfig: ApplicationConfig = {
@@ -37,6 +39,7 @@ export const appConfig: ApplicationConfig = {
         cacheInterceptor,
         loaderInterceptor,
         authInterceptor,
+        vaultTokenInterceptor,
         errorInterceptor,
       ]),
     ),

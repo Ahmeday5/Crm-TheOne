@@ -34,6 +34,9 @@ import attendance from './attendance.en';
 import customerMap from './customerMap.en';
 import vault from './vault.en';
 import geo from './geo.en';
+import projectWorkspace from './projectWorkspace.en';
+import clientPortal from './clientPortal.en';
+import vaultLock from './vaultLock.en';
 
 const en: Translations = {
   ...common,
@@ -71,6 +74,9 @@ const en: Translations = {
   ...customerMap,
   ...vault,
   ...geo,
+  ...projectWorkspace,
+  ...clientPortal,
+  ...vaultLock,
 };
 
 export default en;

@@ -50,11 +50,25 @@
     </div>
   </div>
 } @else {
-  <app-geo-explorer [data]="data()" [loading]="loading()" [labels]="labels" [showInferred]="true" [(selection)]="selection" />
+  <app-geo-explorer
+    [data]="data()"
+    [loading]="loading()"
+    [labels]="labels"
+    [showInferred]="true"
+    [enablePins]="true"
+    [points]="pins()"
+    [pinsLoading]="pinsLoading()"
+    [(selection)]="selection"
+    (pinScopeChange)="onPinScope($event)"
+    (pointSelect)="onPinSelect($event)" />
 }
 
 @if (selection(); as s) {
   <app-region-panel [selection]="s" [labels]="labels" (closed)="selection.set(null)">
     <app-customer-region-list [region]="regionFilter()!" [mapQuery]="query()" [showGovernorate]="s.kind === 'country'" />
   </app-region-panel>
+}
+
+@if (pinCustomerId(); as id) {
+  <app-customer-details-dialog [customerId]="id" (closed)="pinCustomerId.set(null)" />
 }

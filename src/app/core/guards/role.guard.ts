@@ -4,6 +4,8 @@ import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 import { UserRole } from '../models/auth.model';
 import { ROUTE_ROLE_MAP } from '../constants/nav-sections.const';
+import { ROLE_HOME } from '../constants/role-home.const';
+import { CLIENT_ALLOWED_SEGMENTS } from '../constants/roles.const';
 
 /**
  * Generic role guard:
@@ -34,15 +36,26 @@ export const roleGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
+  // Clients are external: an allow-list, never "anything not restricted".
+  if (role === 'Client') {
+    if (CLIENT_ALLOWED_SEGMENTS.has(firstSegment(state.url))) return true;
+    router.navigateByUrl(ROLE_HOME.Client);
+    return false;
+  }
+
   const allowed = (route.data?.['roles'] as UserRole[] | undefined) ?? rolesFromUrl(state.url);
   if (!allowed?.length) return true;
 
   if (allowed.includes(role)) return true;
 
   toast.warning('ليس لديك صلاحية للوصول إلى هذه الصفحة');
-  router.navigateByUrl(homeForRole(role));
+  router.navigateByUrl(ROLE_HOME[role]);
   return false;
 };
+
+function firstSegment(url: string): string {
+  return (url ?? '').split(/[?#]/)[0].replace(/^\//, '').split('/')[0] ?? '';
+}
 
 /**
  * Pulls the first non-empty path segment and looks it up in the static map.
@@ -52,18 +65,5 @@ export const roleGuard: CanActivateFn = (route, state) => {
  */
 function rolesFromUrl(url: string): UserRole[] | undefined {
   if (!url) return undefined;
-  const path = url.split('?')[0];
-  const seg = path.replace(/^\//, '').split('/')[0] ?? '';
-  return ROUTE_ROLE_MAP[seg];
-}
-
-/** Where each role lands when redirected away from a forbidden route. */
-function homeForRole(role: UserRole): string {
-  switch (role) {
-    case 'Admin':     return '/';
-    case 'Marketing': return '/marketing-dashboard';
-    case 'Sales':     return '/sales-dashboard';
-    case 'Support':   return '/appsupport-dashboard';
-    case 'Developer': return '/developer-dashboard';
-  }
+  return ROUTE_ROLE_MAP[firstSegment(url)];
 }

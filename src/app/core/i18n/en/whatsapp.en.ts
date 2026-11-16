@@ -10,6 +10,7 @@ const whatsapp: TranslationFile<'whatsapp'> = {
     channelType: {
       whatsapp_cloud: 'WhatsApp',
       messenger: 'Messenger',
+      instagram: 'Instagram',
     },
 
     errors: {

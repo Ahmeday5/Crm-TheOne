@@ -1,0 +1,109 @@
+<div class="card ta-card">
+  <div class="card-header d-flex align-items-center gap-2 flex-wrap">
+    <i class="fa-solid fa-people-group text-primary" aria-hidden="true"></i>
+    <h5 class="mb-0 me-auto">{{ 'projectTeam.title' | translate }}</h5>
+
+    <!-- Allocation budget meter -->
+    <span class="ta-budget" [class.is-over]="overBudget()">
+      <i class="fa-solid fa-percent" aria-hidden="true"></i>
+      {{ total() }}<span class="ta-budget__max">/100</span>
+    </span>
+
+    @if (canEdit() && !isEditing()) {
+      <button type="button" class="btn btn-sm btn-light" (click)="startEdit()">
+        <i class="fa-solid fa-pen me-1" aria-hidden="true"></i>{{ 'projectTeam.edit' | translate }}
+      </button>
+    }
+  </div>
+
+  <div class="card-body">
+    @if (rows().length === 0 && !isEditing()) {
+      <div class="ta-empty">
+        <span class="icon-tile lg tone-secondary"><i class="fa-solid fa-user-plus"></i></span>
+        <h6 class="fw-700 mb-1">{{ 'projectTeam.emptyTitle' | translate }}</h6>
+        <p class="text-muted small mb-2">{{ 'projectTeam.emptyHint' | translate }}</p>
+        @if (canEdit()) {
+          <button type="button" class="btn btn-sm btn-primary" (click)="startEdit()">
+            <i class="fa-solid fa-user-plus me-1" aria-hidden="true"></i>{{ 'projectTeam.addFirst' | translate }}
+          </button>
+        }
+      </div>
+    } @else {
+      <ul class="ta-list" role="list">
+        @for (r of rows(); track r.developerId) {
+          <li class="ta-row">
+            <app-user-avatar [name]="r.developerName" [imageUrl]="r.developerImageUrl" size="md" />
+            <div class="ta-who">
+              <span class="ta-name">{{ r.developerName }}</span>
+              @if (isEditing()) {
+                <input type="text" class="form-control form-control-sm ta-role-input"
+                       [ngModel]="r.roleOnProject" (ngModelChange)="setRole(r.developerId, $event)"
+                       [placeholder]="'projectTeam.rolePlaceholder' | translate" />
+              } @else {
+                <span class="ta-role">{{ r.roleOnProject || ('projectTeam.noRole' | translate) }}</span>
+              }
+            </div>
+
+            @if (!isEditing()) {
+              @let p = progressById().get(r.developerId);
+              <div class="ta-progress" [title]="'projectTeam.tasksProgress' | translate">
+                <div class="ta-bar"><span [style.width.%]="p && p.total ? (p.done / p.total) * 100 : 0"></span></div>
+                <span class="ta-tasks">{{ p?.done ?? 0 }}/{{ p?.total ?? 0 }}</span>
+              </div>
+            }
+
+            @if (isEditing()) {
+              <div class="ta-pct-edit">
+                <input type="number" min="0" max="100" class="form-control form-control-sm"
+                       [ngModel]="r.allocationPercent" (ngModelChange)="setPercent(r.developerId, $event)" />
+                <span>%</span>
+              </div>
+              <button type="button" class="btn btn-sm btn-light ta-remove" (click)="remove(r.developerId)"
+                      [attr.aria-label]="'projectTeam.remove' | translate">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            } @else {
+              <span class="ta-pct">{{ r.allocationPercent }}%</span>
+            }
+          </li>
+        }
+      </ul>
+
+      @if (isEditing()) {
+        <div class="ta-editbar">
+          @if (adding()) {
+            <select class="form-select form-select-sm ta-add-select" (change)="addDeveloper($any($event.target).value); $any($event.target).value=''">
+              <option value="" selected disabled>{{ 'projectTeam.pickDeveloper' | translate }}</option>
+              @for (d of available(); track d.userId) {
+                <option [value]="d.userId">{{ d.fullName }}@if (d.specialty) { — {{ d.specialty }} }</option>
+              }
+            </select>
+            <button type="button" class="btn btn-sm btn-light" (click)="adding.set(false)">{{ 'common.cancel' | translate }}</button>
+          } @else {
+            <button type="button" class="btn btn-sm btn-light" (click)="adding.set(true)" [disabled]="available().length === 0">
+              <i class="fa-solid fa-user-plus me-1" aria-hidden="true"></i>{{ 'projectTeam.addDeveloper' | translate }}
+            </button>
+          }
+          <button type="button" class="btn btn-sm btn-light" (click)="distributeEvenly()">
+            <i class="fa-solid fa-scale-balanced me-1" aria-hidden="true"></i>{{ 'projectTeam.distribute' | translate }}
+          </button>
+        </div>
+
+        @if (overBudget()) {
+          <div class="alert alert-warning py-2 mb-0 mt-2 small">
+            <i class="fa-solid fa-triangle-exclamation me-1"></i>{{ 'projectTeam.overBudget' | translate }}
+          </div>
+        }
+        @if (error(); as e) { <div class="alert alert-danger py-2 mb-0 mt-2 small">{{ e }}</div> }
+
+        <div class="d-flex justify-content-end gap-2 mt-3">
+          <button type="button" class="btn btn-light" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+          <button type="button" class="btn btn-primary" [disabled]="overBudget() || saving()" (click)="save()">
+            @if (saving()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+            {{ 'common.save' | translate }}
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>

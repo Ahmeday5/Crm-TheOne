@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ROLE_HOME } from '../../../../core/constants/role-home.const';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { UserRole } from '../../../../core/models/auth.model';
@@ -134,11 +135,5 @@ export class LoginComponent {
 
 /** Where each role lands right after a successful login. */
 function homeForRole(role: UserRole): string {
-  switch (role) {
-    case 'Admin':     return '/';
-    case 'Marketing': return '/marketing-dashboard';
-    case 'Sales':     return '/sales-dashboard';
-    case 'Support':   return '/appsupport-dashboard';
-    case 'Developer': return '/developer-dashboard';
-  }
+  return ROLE_HOME[role] ?? '/';
 }
