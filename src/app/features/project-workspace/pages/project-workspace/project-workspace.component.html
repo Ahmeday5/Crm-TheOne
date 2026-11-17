@@ -39,7 +39,7 @@
           </div>
           <div class="pw-stat">
             <span class="pw-stat__label">{{ 'projectWorkspace.progress' | translate }}</span>
-            @let pct = summary()?.overallProgressPercentage ?? p.overallProgressPercentage ?? p.progress;
+            @let pct = progressPercent();
             <div class="pw-progress">
               <div class="pw-progress__bar"><span [style.width.%]="pct"></span></div>
               <b>{{ pct }}%</b>
@@ -56,27 +56,21 @@
           <div class="pw-stat">
             <span class="pw-stat__label">{{ 'projectWorkspace.client' | translate }}</span>
             <span class="pw-stat__value text-truncate">{{ p.customerName }}</span>
-            @if (p.hasClientAccess) {
-              <span class="pw-flag is-on"><i class="fa-solid fa-user-check" aria-hidden="true"></i>{{ 'projectWorkspace.hasPortal' | translate }}</span>
+            @if (p.hasClientLink) {
+              <button type="button" class="pw-flag is-on" (click)="isAdmin() && selectTab('client')">
+                <i class="fa-solid fa-link" aria-hidden="true"></i>{{ 'projectWorkspace.hasPortal' | translate }}
+              </button>
             } @else if (isAdmin()) {
-              <button type="button" class="pw-flag" (click)="selectTab('settings')">
-                <i class="fa-solid fa-user-plus" aria-hidden="true"></i>{{ 'projectWorkspace.noPortal' | translate }}
+              <button type="button" class="pw-flag" (click)="selectTab('client')">
+                <i class="fa-solid fa-link" aria-hidden="true"></i>{{ 'projectWorkspace.noPortal' | translate }}
               </button>
             }
           </div>
           <div class="pw-stat">
-            <span class="pw-stat__label">GitHub</span>
-            @if (p.gitHubRepoUrl) {
-              <a class="pw-stat__value small text-truncate" dir="ltr" [href]="p.gitHubRepoUrl" target="_blank" rel="noopener">
-                <i class="fa-brands fa-github me-1" aria-hidden="true"></i>{{ p.gitBranch || 'main' }}
-              </a>
-            } @else if (isAdmin()) {
-              <button type="button" class="pw-flag" (click)="selectTab('settings')">
-                <i class="fa-solid fa-link" aria-hidden="true"></i>{{ 'projectWorkspace.linkRepo' | translate }}
-              </button>
-            } @else {
-              <span class="text-muted small">—</span>
-            }
+            <span class="pw-stat__label">{{ 'projectWorkspace.tabs.deliverables' | translate }}</span>
+            <button type="button" class="pw-flag" (click)="selectTab('deliverables')">
+              <i class="fa-solid fa-box-open" aria-hidden="true"></i>{{ 'projectWorkspace.openDeliverables' | translate }}
+            </button>
           </div>
         </div>
         @if (p.description) { <p class="pw-desc">{{ p.description }}</p> }
@@ -108,21 +102,15 @@
     @case ('tasks') { <app-project-tasks-panel [projectId]="projectId" [isAdmin]="isAdmin()" /> }
     @case ('reports') { <app-project-reports-panel [projectId]="projectId" /> }
     @case ('myReport') { <app-my-project-progress [forProject]="projectId" [embedded]="true" /> }
-    @case ('milestones') { <app-milestones-panel [projectId]="projectId" /> }
+    @case ('milestones') { <app-milestones-panel [projectId]="projectId" [scope]="scope()" /> }
     @case ('requests') {
       <app-client-requests-panel [projectId]="projectId" [isAdmin]="isAdmin()" (openCount)="openRequests.set($event)" />
     }
-    @case ('builds') {
-      <app-builds-panel [projectId]="projectId" [scope]="isAdmin() ? 'admin' : 'developer'"
-                        [canUpload]="isDeveloper()" [repoConfigured]="!!p.gitHubRepoUrl" />
-    }
-    @case ('settings') {
+    @case ('deliverables') { <app-deliverables-panel [projectId]="projectId" [scope]="scope()" /> }
+    @case ('client') {
       <div class="row g-3">
-        <div class="col-12 col-xl-6">
-          <app-client-access-card [projectId]="projectId" [customerId]="p.customerId" (changed)="loadProject()" />
-        </div>
-        <div class="col-12 col-xl-6">
-          <app-git-settings-card [projectId]="projectId" (changed)="loadProject()" />
+        <div class="col-12 col-xl-8">
+          <app-client-link-card [projectId]="projectId" [projectName]="p.title" (changed)="loadProject()" />
         </div>
       </div>
     }

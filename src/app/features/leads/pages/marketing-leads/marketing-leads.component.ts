@@ -32,8 +32,10 @@ import { TipDirective } from '../../../../shared/directives/tip.directive';
 import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import {
   CustomerListItem,
+  CustomerListQuery,
   CustomerNoteResponse,
   CustomerStatus,
+  SalesPerson,
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ChannelSourcesService } from '../../../marketing-campaigns/services/channel-sources.service';
@@ -54,6 +56,13 @@ import {
 } from '../../utils/customer-status.util';
 import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
+import {
+  UNASSIGNED_SALES,
+  fetchAllPages,
+  lastPage,
+  matchesSalesPerson,
+  pageSlice,
+} from '../../utils/sales-person-filter.util';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -113,6 +122,15 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
   readonly searchSignal = signal('');
   readonly selectedStatusId = signal<number | null>(null);
   readonly selectedSourceId = signal<number | null>(null);
+
+  /** Sales-rep filter — `UNASSIGNED_SALES` = not assigned yet. Applied client-side, see the util. */
+  readonly selectedSalesPersonId = signal<string | null>(null);
+  readonly salesTeam = signal<SalesPerson[]>([]);
+  readonly unassignedSales = UNASSIGNED_SALES;
+  /** Every row matching the server filters + the rep, while a rep is selected. */
+  private repRows: CustomerListItem[] | null = null;
+  /** Drops answers of superseded loads (fast filter switching). */
+  private loadSeq = 0;
 
   // ─────────── data ───────────
   readonly rows = signal<CustomerListItem[]>([]);
@@ -199,33 +217,68 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
     this.channelSources.list().subscribe({
       next: (items: SourceItem[]) => this.sources.set(items),
     });
+    this.customers.salesTeam().subscribe({
+      next: (team) => this.salesTeam.set([...(team ?? [])].sort((a, b) => (a.fullName ?? '').localeCompare(b.fullName ?? '', 'ar'))),
+      error: () => undefined,
+    });
+  }
+
+  /** The list query for the current server-side filters (table, export). */
+  private listQuery(pageIndex: number, pageSize: number): CustomerListQuery {
+    return {
+      PageIndex: pageIndex,
+      PageSize: pageSize,
+      Search: this.searchSignal().trim() || undefined,
+      CustomerStatusId: this.selectedStatusId() ?? undefined,
+      SourceId: this.selectedSourceId() ?? undefined,
+    };
   }
 
   reload(force = false): void {
+    const seq = ++this.loadSeq;
     this.loading.set(true);
     this.loadError.set(null);
-    this.customers
-      .list(
-        {
-          PageIndex: this.pageIndex(),
-          PageSize: this.pageSize(),
-          Search: this.searchSignal().trim() || undefined,
-          CustomerStatusId: this.selectedStatusId() ?? undefined,
-          SourceId: this.selectedSourceId() ?? undefined,
-        },
-        force,
-      )
-      .subscribe({
-        next: (page) => {
-          this.rows.set(page.data ?? []);
-          this.count.set(page.count ?? 0);
+    this.repRows = null;
+
+    const rep = this.selectedSalesPersonId();
+    if (rep) {
+      fetchAllPages((pageIndex, pageSize) => this.customers.list(this.listQuery(pageIndex, pageSize), force))
+        .then((all) => {
+          if (seq !== this.loadSeq) return;
+          this.repRows = all.filter((r) => matchesSalesPerson(r, rep, this.salesTeam()));
+          this.showRepPage();
           this.loading.set(false);
-        },
-        error: () => {
+        })
+        .catch(() => {
+          if (seq !== this.loadSeq) return;
           this.loading.set(false);
           this.loadError.set(this.t('customers.messages.loadFailed'));
-        },
-      });
+        });
+      return;
+    }
+
+    this.customers.list(this.listQuery(this.pageIndex(), this.pageSize()), force).subscribe({
+      next: (page) => {
+        if (seq !== this.loadSeq) return;
+        this.rows.set(page.data ?? []);
+        this.count.set(page.count ?? 0);
+        this.loading.set(false);
+      },
+      error: () => {
+        if (seq !== this.loadSeq) return;
+        this.loading.set(false);
+        this.loadError.set(this.t('customers.messages.loadFailed'));
+      },
+    });
+  }
+
+  /** Pages the rep-filtered set locally (no refetch). */
+  private showRepPage(): void {
+    const all = this.repRows ?? [];
+    const last = lastPage(all.length, this.pageSize());
+    if (this.pageIndex() > last) this.pageIndex.set(last);
+    this.count.set(all.length);
+    this.rows.set(pageSlice(all, this.pageIndex(), this.pageSize()));
   }
 
   // ─────────── search / filters / pagination ───────────
@@ -247,15 +300,23 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
     this.reload();
   }
 
+  onSalesPersonChange(id: string): void {
+    this.selectedSalesPersonId.set(id || null);
+    this.pageIndex.set(1);
+    this.reload();
+  }
+
   onPageChange(page: number): void {
     this.pageIndex.set(page);
-    this.reload();
+    if (this.repRows) this.showRepPage();
+    else this.reload();
   }
 
   onPageSizeChange(size: number): void {
     this.pageSize.set(size);
     this.pageIndex.set(1);
-    this.reload();
+    if (this.repRows) this.showRepPage();
+    else this.reload();
   }
 
   // ─────────── navigation ───────────
@@ -357,7 +418,7 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
   }
 
   onNoteSaved(res: CustomerNoteResponse): void {
-    this.rows.update((list) =>
+    const patch = (list: CustomerListItem[]) =>
       list.map((row) =>
         row.id === res.customerId
           ? {
@@ -367,8 +428,9 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
               noteSupport: res.noteSupport,
             }
           : row,
-      ),
-    );
+      );
+    this.rows.update(patch);
+    if (this.repRows) this.repRows = patch(this.repRows);
     this.closeNote();
   }
 
@@ -483,15 +545,8 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
 
   /** Pulls every page using the active filters (for "all pages" export/print). */
   readonly fetchAllRows = async (): Promise<CustomerListItem[]> => {
-    const page = await firstValueFrom(
-      this.customers.list({
-        PageIndex: 1,
-        PageSize: this.count() || this.pageSize(),
-        Search: this.searchSignal().trim() || undefined,
-        CustomerStatusId: this.selectedStatusId() ?? undefined,
-        SourceId: this.selectedSourceId() ?? undefined,
-      }),
-    );
+    if (this.repRows) return [...this.repRows];
+    const page = await firstValueFrom(this.customers.list(this.listQuery(1, this.count() || this.pageSize())));
     return page.data ?? [];
   };
 

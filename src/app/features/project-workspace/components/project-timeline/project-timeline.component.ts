@@ -10,7 +10,10 @@ export function timelineIcon(type: TimelineEventType): string {
   switch (type) {
     case 'MilestoneCompleted': return 'fa-solid fa-flag-checkered';
     case 'MilestoneAdded': return 'fa-solid fa-flag';
-    case 'BuildReleased': return 'fa-solid fa-rocket';
+    case 'MilestoneStatusChanged': return 'fa-solid fa-list-check';
+    case 'ReleasePublished': return 'fa-solid fa-rocket';
+    case 'CredentialAdded':
+    case 'CredentialUpdated': return 'fa-solid fa-key';
     case 'StatusChanged': return 'fa-solid fa-arrows-rotate';
     case 'RequestCreated': return 'fa-solid fa-message';
     case 'RequestStatusChanged': return 'fa-solid fa-comment-dots';
@@ -56,7 +59,7 @@ export function timelineIcon(type: TimelineEventType): string {
           </ul>
           @if (hasMore()) {
             <button type="button" class="btn btn-sm btn-light w-100 mb-2" [disabled]="loading()" (click)="load(page() + 1)">
-              {{ 'projectBuilds.loadMore' | translate }}
+              {{ 'common.loadMore' | translate }}
             </button>
           }
         }

@@ -5,7 +5,7 @@ import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { RequestThreadComponent, ThreadReply } from '../../components/request-thread/request-thread.component';
 import { ClientRequestDetails } from '../../models/client-portal.models';
-import { ClientPortalService } from '../../services/client-portal.service';
+import { CLIENT_PORTAL_GATEWAY } from '../../data/client-portal.gateway';
 import { requestStatusClass, requestTypeIcon } from '../../utils/client-portal-ui.util';
 
 /**
@@ -65,7 +65,7 @@ import { requestStatusClass, requestTypeIcon } from '../../utils/client-portal-u
   `,
 })
 export class PortalRequestComponent {
-  private readonly api = inject(ClientPortalService);
+  private readonly api = inject(CLIENT_PORTAL_GATEWAY);
   private readonly id = Number(inject(ActivatedRoute).snapshot.paramMap.get('id')) || 0;
 
   protected readonly request = signal<ClientRequestDetails | null>(null);

@@ -7,15 +7,15 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { ProjectDetail, ProjectProgressSummaryDto, projectStatusBadgeClass } from '../../../../shared/models';
 import { MyProjectProgressComponent } from '../../../project-progress/pages/my-project-progress/my-project-progress.component';
 import { ProjectProgressService } from '../../../project-progress/services/project-progress.service';
+import { ProjectProgressSyncService } from '../../../project-progress/services/project-progress-sync.service';
 import { ProjectReportsPanelComponent } from '../../components/project-reports-panel/project-reports-panel.component';
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ProjectsService } from '../../../ProjectsTasks/services/projects.service';
 import { ClientRequestsPanelComponent } from '../../../client-portal/components/client-requests-panel/client-requests-panel.component';
 import { ClientRequestsStaffService } from '../../../client-portal/services/client-requests-staff.service';
-import { BuildsPanelComponent } from '../../components/builds-panel/builds-panel.component';
-import { ClientAccessCardComponent } from '../../components/client-access-card/client-access-card.component';
-import { GitSettingsCardComponent } from '../../components/git-settings-card/git-settings-card.component';
+import { ClientLinkCardComponent } from '../../components/client-link-card/client-link-card.component';
+import { DeliverablesPanelComponent } from '../../components/deliverables-panel/deliverables-panel.component';
 import { MilestonesPanelComponent } from '../../components/milestones-panel/milestones-panel.component';
 import { ProjectTasksPanelComponent } from '../../components/project-tasks-panel/project-tasks-panel.component';
 import { ProjectTimelineComponent } from '../../components/project-timeline/project-timeline.component';
@@ -29,8 +29,8 @@ export type WorkspaceTab =
   | 'myReport'
   | 'milestones'
   | 'requests'
-  | 'builds'
-  | 'settings';
+  | 'deliverables'
+  | 'client';
 
 interface TabDef {
   id: WorkspaceTab;
@@ -46,16 +46,17 @@ const TABS: ReadonlyArray<TabDef> = [
   { id: 'team', icon: 'fa-solid fa-people-group', labelKey: 'projectWorkspace.tabs.team' },
   { id: 'tasks', icon: 'fa-solid fa-list-check', labelKey: 'projectWorkspace.tabs.tasks' },
   { id: 'reports', icon: 'fa-solid fa-file-lines', labelKey: 'projectWorkspace.tabs.reports', only: 'admin' },
-  { id: 'milestones', icon: 'fa-solid fa-flag-checkered', labelKey: 'projectWorkspace.tabs.milestones', only: 'admin' },
+  { id: 'milestones', icon: 'fa-solid fa-flag-checkered', labelKey: 'projectWorkspace.tabs.milestones' },
   { id: 'requests', icon: 'fa-solid fa-message', labelKey: 'projectWorkspace.tabs.requests' },
-  { id: 'builds', icon: 'fa-solid fa-code-branch', labelKey: 'projectWorkspace.tabs.builds' },
-  { id: 'settings', icon: 'fa-solid fa-sliders', labelKey: 'projectWorkspace.tabs.settings', only: 'admin' },
+  { id: 'deliverables', icon: 'fa-solid fa-box-open', labelKey: 'projectWorkspace.tabs.deliverables' },
+  { id: 'client', icon: 'fa-solid fa-link', labelKey: 'projectWorkspace.tabs.client', only: 'admin' },
 ];
 
 /**
  * `/projects/:id` — everything about one project in one place (tabs).
  * Admin: every tab. Developer (assigned): overview with their share, the team
- * read-only, their tasks, client requests, builds (upload). The active tab is
+ * read-only, their tasks, milestones (edit, no delete), client requests and
+ * deliverables (credentials + app releases). The active tab is
  * in the URL (`?tab=`) so links and notifications land on it.
  */
 @Component({
@@ -70,9 +71,8 @@ const TABS: ReadonlyArray<TabDef> = [
     ProjectTasksPanelComponent,
     MilestonesPanelComponent,
     ClientRequestsPanelComponent,
-    BuildsPanelComponent,
-    ClientAccessCardComponent,
-    GitSettingsCardComponent,
+    DeliverablesPanelComponent,
+    ClientLinkCardComponent,
     ProjectTimelineComponent,
     ProjectReportsPanelComponent,
     MyProjectProgressComponent,
@@ -88,9 +88,12 @@ export class ProjectWorkspaceComponent {
   private readonly requestsApi = inject(ClientRequestsStaffService);
   private readonly progressApi = inject(ProjectProgressService);
   private readonly auth = inject(AuthService);
+  private readonly progressSync = inject(ProjectProgressSyncService);
 
   protected readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
   protected readonly isDeveloper = computed(() => this.auth.currentRole() === 'Developer');
+  /** Which endpoint family the shared panels call. */
+  protected readonly scope = computed<'admin' | 'developer'>(() => (this.isAdmin() ? 'admin' : 'developer'));
 
   protected readonly projectId = Number(this.route.snapshot.paramMap.get('id')) || 0;
   protected readonly project = signal<ProjectDetail | null>(null);
@@ -106,13 +109,22 @@ export class ProjectWorkspaceComponent {
 
   /** Progress summary (overall %, working days) — `ProjectProgress/{id}/summary`. */
   protected readonly summary = signal<ProjectProgressSummaryDto | null>(null);
+  /** THE project progress — shared with the projects table and updated live. */
+  protected readonly progressPercent = computed(() => {
+    const p = this.project();
+    const live = this.progressSync.percents()[this.projectId];
+    return live ?? this.summary()?.overallProgressPercentage ?? (p ? this.progressSync.percentFor(p) : 0);
+  });
 
   private readonly queryTab = toSignal(this.route.queryParamMap.pipe(map((q) => q.get('tab'))), {
     initialValue: this.route.snapshot.queryParamMap.get('tab'),
   });
   protected readonly tab = computed<WorkspaceTab>(() => {
     const wanted = this.queryTab();
-    return this.tabs().some((t) => t.id === wanted) ? (wanted as WorkspaceTab) : 'overview';
+    // Old links: ?tab=builds / ?tab=settings.
+    const legacy: Record<string, WorkspaceTab> = { builds: 'deliverables', settings: 'client' };
+    const id = (wanted && legacy[wanted]) || wanted;
+    return this.tabs().some((t) => t.id === id) ? (id as WorkspaceTab) : 'overview';
   });
 
   protected readonly statusClass = projectStatusBadgeClass;
@@ -140,10 +152,13 @@ export class ProjectWorkspaceComponent {
     this.progressApi
       .getSummary(this.projectId, true)
       .pipe(catchError(() => of(null)))
-      .subscribe((s) => this.summary.set(s));
+      .subscribe((s) => {
+        this.summary.set(s);
+        if (s) this.progressSync.set(this.projectId, s.overallProgressPercentage);
+      });
   }
 
-  /** Re-read the header after team / client / git changes. */
+  /** Re-read the header after team / client-link changes. */
   protected loadProject(): void {
     const load$ = this.isAdmin()
       ? this.projectsApi.getById(this.projectId)

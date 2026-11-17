@@ -9,7 +9,10 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { MILESTONE_STATUSES, Milestone, MilestoneInput, MilestoneStatus } from '../../models/workspace.models';
-import { ProjectWorkspaceService } from '../../services/project-workspace.service';
+import { MilestonesService } from '../../data/milestones.gateway';
+import { WorkspaceScope } from '../../models/deliverables.models';
+import { MockRibbonComponent } from '../../../../shared/components/mock-ribbon/mock-ribbon.component';
+import { TimeAgoPipe } from '../../../../shared/pipes/time-ago.pipe';
 
 interface Draft {
   id: number | null;
@@ -22,23 +25,28 @@ interface Draft {
 
 /**
  * The plan the client sees: an ordered checklist. Drag (or ↑↓) to reorder,
- * one-click "تم ✓", add / edit in a small dialog. Marking a milestone done
- * also posts a client-visible timeline event (server-side).
+ * one-click "تم ✓" (optimistic), add / edit in a small dialog. Admin and the
+ * project's developers edit it the same way; only the Admin deletes.
+ * Marking a milestone done also posts a client-visible timeline event.
  */
 @Component({
   selector: 'app-milestones-panel',
   standalone: true,
-  imports: [FormsModule, TranslatePipe, CairoDatePipe, ModalComponent],
+  imports: [FormsModule, TranslatePipe, CairoDatePipe, TimeAgoPipe, ModalComponent, MockRibbonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './milestones-panel.component.html',
   styleUrl: './milestones-panel.component.scss',
 })
 export class MilestonesPanelComponent {
-  private readonly api = inject(ProjectWorkspaceService);
+  private readonly milestones = inject(MilestonesService);
   private readonly dialog = inject(DialogService);
   private readonly language = inject(LanguageService);
 
   readonly projectId = input.required<number>();
+  /** `admin` → ManagerProjects, `developer` → DeveloperProjects (no delete). */
+  readonly scope = input<WorkspaceScope>('admin');
+  protected readonly canDelete = computed(() => this.scope() === 'admin');
+  private readonly api = computed(() => this.milestones.for(this.scope()));
 
   protected readonly statuses = MILESTONE_STATUSES;
   protected readonly items = signal<Milestone[]>([]);
@@ -61,7 +69,7 @@ export class MilestonesPanelComponent {
   protected load(): void {
     this.loading.set(true);
     this.loadFailed.set(false);
-    this.api.milestones(this.projectId()).subscribe({
+    this.api().list(this.projectId()).subscribe({
       next: (list) => {
         this.items.set(sortByOrder(list));
         this.loading.set(false);
@@ -108,8 +116,8 @@ export class MilestonesPanelComponent {
     };
     this.saving.set(true);
     const call$ = d.id === null
-      ? this.api.createMilestone(this.projectId(), body)
-      : this.api.updateMilestone(this.projectId(), d.id, body);
+      ? this.api().create(this.projectId(), body)
+      : this.api().update(this.projectId(), d.id, body);
     call$.subscribe({
       next: (saved) => {
         this.saving.set(false);
@@ -129,17 +137,21 @@ export class MilestonesPanelComponent {
     this.setStatus(m, 'Done');
   }
 
+  /** Optimistic: the new status shows at once, rolled back if the save fails. */
   protected setStatus(m: Milestone, status: MilestoneStatus): void {
     if (m.status === status) return;
+    const previous = m;
+    this.upsert({ ...m, status, completedAt: status === 'Done' ? new Date().toISOString() : null });
     this.busyId.set(m.id);
     this.error.set(null);
-    this.api.updateMilestone(this.projectId(), m.id, toInput(m, { status })).subscribe({
+    this.api().update(this.projectId(), m.id, toInput(m, { status })).subscribe({
       next: (saved) => {
         this.busyId.set(null);
         this.upsert(saved);
       },
       error: (e: ApiError) => {
         this.busyId.set(null);
+        this.upsert(previous);
         this.error.set(e?.message ?? null);
       },
     });
@@ -154,7 +166,7 @@ export class MilestonesPanelComponent {
     });
     if (!ok) return;
     this.busyId.set(m.id);
-    this.api.deleteMilestone(this.projectId(), m.id).subscribe({
+    this.api().remove(this.projectId(), m.id).subscribe({
       next: () => {
         this.busyId.set(null);
         this.items.update((list) => list.filter((x) => x.id !== m.id));
@@ -217,7 +229,7 @@ export class MilestonesPanelComponent {
     if (!changed.length) return;
     this.reordering.set(true);
     this.error.set(null);
-    concat(...changed.map((m) => this.api.updateMilestone(this.projectId(), m.id, toInput(m, {}))))
+    concat(...changed.map((m) => this.api().update(this.projectId(), m.id, toInput(m, {}))))
       .pipe(last())
       .subscribe({
         next: () => this.reordering.set(false),

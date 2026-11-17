@@ -2,6 +2,7 @@
   <div class="card-header d-flex align-items-center gap-2 flex-wrap">
     <i class="fa-solid fa-flag-checkered text-primary" aria-hidden="true"></i>
     <h5 class="mb-0 me-auto">{{ 'milestones.title' | translate }}</h5>
+    @if (scope() === 'developer') { <app-mock-ribbon area="developerMilestones" /> }
     @if (items().length) {
       <span class="ms-count">{{ doneCount() }} / {{ items().length }} {{ 'milestones.done' | translate }}</span>
     }
@@ -56,6 +57,9 @@
                 @if (m.completedAt) { <i class="fa-solid fa-check"></i> {{ m.completedAt | cairoDate: 'date' }} }
                 @else if (m.dueDate) { <i class="fa-regular fa-calendar"></i> {{ m.dueDate | cairoDate: 'date' }} }
                 @if (m.description) { · {{ m.description }} }
+                @if (m.updatedByName && m.updatedAt) {
+                  <span class="ms-by">· {{ 'milestones.updatedBy' | translate: { name: m.updatedByName } }} {{ m.updatedAt | timeAgo }}</span>
+                }
               </span>
             </span>
 
@@ -78,8 +82,10 @@
                       [attr.aria-label]="'milestones.moveDown' | translate"><i class="fa-solid fa-arrow-down"></i></button>
               <button type="button" class="btn btn-sm btn-light" (click)="openEdit(m)"
                       [attr.aria-label]="'common.edit' | translate"><i class="fa-solid fa-pen"></i></button>
-              <button type="button" class="btn btn-sm btn-icon btn-danger-soft" (click)="remove(m)"
-                      [attr.aria-label]="'common.delete' | translate"><i class="fa-solid fa-trash"></i></button>
+              @if (canDelete()) {
+                <button type="button" class="btn btn-sm btn-icon btn-danger-soft" (click)="remove(m)"
+                        [attr.aria-label]="'common.delete' | translate"><i class="fa-solid fa-trash"></i></button>
+              }
             </span>
           </li>
         }

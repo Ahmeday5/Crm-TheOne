@@ -50,6 +50,9 @@ const customers: TranslationFile<'customers'> = {
       searchPlaceholder: 'ابحث بالاسم أو رقم الهاتف...',
       allStatuses: 'جميع الحالات',
       allSources: 'جميع المصادر',
+      salesPerson: 'موظف المبيعات',
+      allSalesPersons: 'كل موظفي المبيعات',
+      unassignedSales: 'بدون موظف مبيعات',
       allServices: 'جميع الخدمات',
     },
 

@@ -83,10 +83,10 @@
               <!-- progress -->
               <div class="ta-progress">
                 @if (r.earned !== null) {
-                  <div class="ta-bar" [title]="'projectTeam.earnedOf' | translate: { earned: r.earned, share: r.allocationPercent }">
+                  <div class="ta-bar" [title]="'projectTeam.shareDoneOf' | translate: { done: (earnedOfShare(r) | number: '1.0-1'), share: r.allocationPercent, earned: (r.earned | number: '1.0-2') }">
                     <span [style.width.%]="earnedOfShare(r)"></span>
                   </div>
-                  <span class="ta-earned">{{ r.earned }}% <small>/ {{ r.allocationPercent }}%</small></span>
+                  <span class="ta-earned">{{ earnedOfShare(r) | number: '1.0-1' }}% <small>{{ 'projectTeam.ofShare' | translate }} · +{{ r.earned | number: '1.0-2' }}% {{ 'projectTeam.ofProject' | translate }}</small></span>
                   @if (r.reportedToday) {
                     <span class="ta-flag is-ok" [title]="'projectProgress.admin.badges.reportedToday' | translate"><i class="fa-solid fa-circle-check"></i></span>
                   } @else {

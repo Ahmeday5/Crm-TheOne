@@ -29,6 +29,41 @@ export interface ProjectTeamMemberResponseDto {
   remainingResponsibilityPercentage: number;
   dailyAllocation: number;
   hasReportedToday: boolean;
+  // ── contract v2 (optional until the backend ships them) ──
+  /** How much of THEIR OWN share is done, 0–100. */
+  shareCompletionPercent?: number;
+  /** Share % per remaining working day to finish on time. */
+  suggestedDailyStep?: number;
+  /** Where the share should be today on a linear plan. */
+  expectedShareCompletionToday?: number;
+  paceStatus?: PaceStatus;
+  /** The project's overall progress (same number as everywhere). */
+  projectProgressPercent?: number;
+  lastReportAt?: string | null;
+}
+
+export type PaceStatus = 'Ahead' | 'OnTrack' | 'Behind';
+
+/**
+ * Share completion (0–100) for a member: the v2 field, else derived from
+ * earned / responsibility (both are % of the project today).
+ */
+export function shareCompletionOf(m: Pick<ProjectTeamMemberResponseDto, 'shareCompletionPercent' | 'earnedProgressPercentage' | 'responsibilityPercentage'>): number {
+  if (m.shareCompletionPercent != null) return clamp100(m.shareCompletionPercent);
+  if (!m.responsibilityPercentage) return 0;
+  return clamp100((m.earnedProgressPercentage / m.responsibilityPercentage) * 100);
+}
+
+/**
+ * Project points a report adds: moving your share from `from`% to `to`%
+ * with a `responsibility`% share. 33% share, 0 → 50 ⇒ 16.5.
+ */
+export function projectContribution(responsibility: number, from: number, to: number): number {
+  return Math.round(((Math.max(0, to - from) * responsibility) / 100) * 100) / 100;
+}
+
+function clamp100(v: number): number {
+  return Math.round(Math.max(0, Math.min(100, Number(v) || 0)) * 100) / 100;
 }
 
 // ─────────── Progress summary ───────────
@@ -75,6 +110,8 @@ export interface CreateProjectDailyReportDto {
   notes?: string;
   /** `null`/omitted ⇒ system applies the developer's auto daily allocation. */
   actualProgressContribution?: number | null;
+  /** Contract v2: cumulative % of the developer's own share (0–100, ≥ current). */
+  shareCompletionPercent?: number;
 }
 
 export interface UpdateProjectDailyReportDto {
@@ -98,6 +135,11 @@ export interface ProjectDailyReportResponseDto {
   notes?: string;
   actualProgressContribution?: number;
   appliedProgressContribution: number;
+  /** Contract v2. */
+  shareCompletionBefore?: number;
+  shareCompletionAfter?: number;
+  responsibilityPercentAtTime?: number;
+  appliedProjectContribution?: number;
   attachmentUrls: string[];
   createdAt: string;
   updatedAt?: string;

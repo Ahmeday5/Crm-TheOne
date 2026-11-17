@@ -60,7 +60,7 @@
   <div class="card mb-4">
     <div class="card-body">
       <div class="row g-3 align-items-end">
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6 col-lg-3">
           <div class="position-relative">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
             <input class="form-control search-input"
@@ -69,7 +69,7 @@
                    (ngModelChange)="onSearchInput($event)" />
           </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-6 col-md-6 col-lg-3">
           <select class="form-select"
                   [ngModel]="selectedStatusId() ?? ''"
                   (ngModelChange)="onStatusChange($event)">
@@ -79,13 +79,25 @@
             }
           </select>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-6 col-md-6 col-lg-3">
           <select class="form-select"
                   [ngModel]="selectedSourceId() ?? ''"
                   (ngModelChange)="onSourceChange($event)">
             <option value="">{{ 'customers.filters.allSources' | translate }}</option>
             @for (src of sources(); track src.id) {
               <option [value]="src.id">{{ src.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <select class="form-select sp-filter" [attr.aria-label]="'customers.filters.salesPerson' | translate"
+                  [class.is-active]="selectedSalesPersonId() !== null"
+                  [ngModel]="selectedSalesPersonId() ?? ''"
+                  (ngModelChange)="onSalesPersonChange($event)">
+            <option value="">{{ 'customers.filters.allSalesPersons' | translate }}</option>
+            <option [value]="unassignedSales">{{ 'customers.filters.unassignedSales' | translate }}</option>
+            @for (sp of salesTeam(); track sp.userId) {
+              <option [value]="sp.userId">{{ sp.fullName || sp.email }}</option>
             }
           </select>
         </div>

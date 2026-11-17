@@ -1,0 +1,48 @@
+<main class="pa">
+  <div class="pa__pattern" aria-hidden="true"></div>
+
+  <header class="pa__brand">
+    <img [src]="brand.logo()" alt="" (error)="$any($event.target).src = brand.fallbackLogo" />
+    <span>{{ brand.name() }}</span>
+  </header>
+
+  <section class="pa__card" [attr.data-tone]="tone()" role="status">
+    <span class="pa__icon"><i [class]="icon()" aria-hidden="true"></i></span>
+    <h1 class="pa__title">{{ 'portal.access.' + reason() + '.title' | translate }}</h1>
+    <p class="pa__text">{{ 'portal.access.' + reason() + '.text' | translate }}</p>
+
+    @if (reason() === 'rate_limited' && waitSec() > 0) {
+      <p class="pa__wait" aria-live="polite">
+        <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
+        {{ 'portal.access.waitFor' | translate }} <b dir="ltr">{{ waitLabel() }}</b>
+      </p>
+    }
+
+    @if (canRetry()) {
+      <button type="button" class="btn btn-primary btn-lg w-100 pa__btn" [disabled]="waitSec() > 0" (click)="retry()">
+        <i class="fa-solid fa-rotate-right me-2" aria-hidden="true"></i>{{ 'common.retry' | translate }}
+      </button>
+    }
+
+    @if (brand.hasContact()) {
+      <div class="pa__contact">
+        <span class="pa__contact-label">{{ 'portal.access.contact' | translate }}</span>
+        <div class="pa__contact-row">
+          @if (brand.whatsAppHref(); as wa) {
+            <a class="pa__chip is-wa" [href]="wa" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i>{{ 'portal.contact.whatsapp' | translate }}</a>
+          }
+          @if (brand.phoneHref(); as tel) {
+            <a class="pa__chip" [href]="tel"><i class="fa-solid fa-phone" aria-hidden="true"></i>{{ 'portal.contact.call' | translate }}</a>
+          }
+          @if (brand.emailHref(); as mail) {
+            <a class="pa__chip" [href]="mail"><i class="fa-regular fa-envelope" aria-hidden="true"></i>{{ 'portal.contact.email' | translate }}</a>
+          }
+        </div>
+      </div>
+    }
+  </section>
+
+  @if (brand.websiteHref(); as site) {
+    <a class="pa__site" [href]="site" target="_blank" rel="noopener">{{ brand.name() }} <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+  }
+</main>

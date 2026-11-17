@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, model, signal } from '@angular/core';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { formatBytes } from '../../../project-workspace/utils/build-ui.util';
+import { formatBytes } from '../../utils/client-portal-ui.util';
 import { REQUEST_ACCEPT, REQUEST_MAX_FILES, checkRequestFile } from '../../models/client-portal.models';
 
 interface Picked {

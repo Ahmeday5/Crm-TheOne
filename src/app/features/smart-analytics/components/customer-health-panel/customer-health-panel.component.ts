@@ -2,7 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, input, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
-import { AnimatedNumberDirective } from '../../directives/animated-number.directive';
+import { AnimatedNumberDirective } from '../../../../shared/directives/animated-number.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { CustomerHealth, HEALTH_CLASSES, HealthClass } from '../../models/smart-analytics.models';
 import { HealthDistribution, healthClass } from '../../utils/customer-health.util';

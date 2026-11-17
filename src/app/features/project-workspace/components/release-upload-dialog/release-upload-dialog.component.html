@@ -1,0 +1,95 @@
+<app-modal [open]="true" [title]="'deliverables.releases.publish' | translate" icon="fa-solid fa-rocket" size="lg"
+           [closeOnBackdrop]="!uploading()" [closeOnEsc]="!uploading()" (closed)="cancel()">
+  <form id="rel-form" class="ru" (ngSubmit)="submit()">
+    <!-- platform -->
+    <div class="ru-platforms" role="radiogroup" [attr.aria-label]="'deliverables.releases.platform' | translate">
+      @for (p of platforms; track p) {
+        <button type="button" role="radio" class="ru-platform" [class.is-active]="form().platform === p" [attr.aria-checked]="form().platform === p"
+                [disabled]="uploading()" (click)="patch({ platform: p })">
+          <i [class]="platformIcon(p)" aria-hidden="true"></i>{{ 'portal.releases.platform.' + p | translate }}
+        </button>
+      }
+    </div>
+
+    <!-- file -->
+    @if (form().file; as f) {
+      <div class="ru-file" [class.is-bad]="fileProblem()">
+        <span class="ru-file__icon"><i [class]="platformIcon(form().platform)" aria-hidden="true"></i></span>
+        <span class="ru-file__main">
+          <b dir="ltr">{{ f.name }}</b>
+          <span>{{ size(f.size) }}</span>
+        </span>
+        @if (!uploading()) {
+          <button type="button" class="btn btn-sm btn-light" (click)="clearFile()" [attr.aria-label]="'common.delete' | translate">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        }
+      </div>
+      @if (fileProblem(); as p) { <p class="ru-error"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ 'deliverables.releases.fileProblem.' + p | translate }}</p> }
+    } @else {
+      <label class="ru-drop" [class.is-over]="dragOver()" (dragover)="onDragOver($event)" (dragleave)="dragOver.set(false)" (drop)="onDrop($event)">
+        <input type="file" class="visually-hidden" [accept]="accept()" (change)="onPick($event)" />
+        <span class="ru-drop__icon"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i></span>
+        <b>{{ 'deliverables.releases.drop' | translate }}</b>
+        <span>{{ 'deliverables.releases.dropHint.' + form().platform | translate }}</span>
+      </label>
+    }
+
+    <div class="row g-3 mt-1">
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="ru-version">{{ 'deliverables.releases.version' | translate }} *</label>
+        <input id="ru-version" class="form-control" name="versionName" dir="ltr" placeholder="1.4.0" maxlength="50"
+               [class.is-invalid]="touched() && !versionOk()" [disabled]="uploading()"
+               [ngModel]="form().versionName" (ngModelChange)="patch({ versionName: $event })" />
+        @if (touched() && !versionOk()) { <div class="invalid-feedback">{{ 'deliverables.releases.versionInvalid' | translate }}</div> }
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="ru-stage">{{ 'deliverables.releases.stage' | translate }}</label>
+        <select id="ru-stage" class="form-select" name="stage" [disabled]="uploading()" [ngModel]="form().stage" (ngModelChange)="patch({ stage: $event })">
+          @for (s of stages; track s) { <option [value]="s">{{ 'portal.releases.stage.' + s | translate }}</option> }
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="ru-link">{{ 'deliverables.releases.externalUrl' | translate }}</label>
+        <input id="ru-link" class="form-control" name="externalUrl" dir="ltr" type="url" placeholder="https://testflight.apple.com/…"
+               [class.is-invalid]="!linkOk()" [disabled]="uploading()"
+               [ngModel]="form().externalUrl" (ngModelChange)="patch({ externalUrl: $event })" />
+        <span class="form-text">{{ 'deliverables.releases.externalUrlHint' | translate }}</span>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="ru-notes">{{ 'portal.releases.whatsNew' | translate }}</label>
+        <textarea id="ru-notes" class="form-control" name="releaseNotes" rows="4" [maxlength]="notesMax" [disabled]="uploading()"
+                  [placeholder]="'deliverables.releases.notesPlaceholder' | translate"
+                  [ngModel]="form().releaseNotes" (ngModelChange)="patch({ releaseNotes: $event })"></textarea>
+      </div>
+      <div class="col-12">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="ru-vis" name="isVisibleToClient" [disabled]="uploading()"
+                 [ngModel]="form().isVisibleToClient" (ngModelChange)="patch({ isVisibleToClient: $event })" />
+          <label class="form-check-label" for="ru-vis">{{ 'deliverables.releases.visibleHint' | translate }}</label>
+        </div>
+      </div>
+    </div>
+
+    @if (touched() && !hasSource()) { <p class="ru-error mt-2"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ 'deliverables.releases.needSource' | translate }}</p> }
+    @if (error(); as e) { <div class="alert alert-danger py-2 mt-3 mb-0 small">{{ e }}</div> }
+
+    @if (progress() !== null) {
+      <div class="ru-progress" aria-live="polite">
+        <div class="ru-progress__bar" role="progressbar" [attr.aria-valuenow]="progress()" aria-valuemin="0" aria-valuemax="100">
+          <span [style.width.%]="progress()"></span>
+        </div>
+        <span>{{ progress() === 100 ? ('deliverables.releases.processing' | translate) : progress() + '%' }}</span>
+      </div>
+    }
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+    <button type="submit" form="rel-form" class="btn btn-primary" [disabled]="uploading()">
+      @if (uploading()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+      @else { <i class="fa-solid fa-rocket me-1" aria-hidden="true"></i> }
+      {{ 'deliverables.releases.publishBtn' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

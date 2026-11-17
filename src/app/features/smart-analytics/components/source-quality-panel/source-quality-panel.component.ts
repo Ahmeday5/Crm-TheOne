@@ -6,7 +6,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 import { TipDirective } from '../../../../shared/directives/tip.directive';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { AnimatedNumberDirective } from '../../directives/animated-number.directive';
+import { AnimatedNumberDirective } from '../../../../shared/directives/animated-number.directive';
 import { SourceChannel, SourceDimension } from '../../models/smart-analytics.models';
 import {
   MIN_SOURCE_SAMPLE,

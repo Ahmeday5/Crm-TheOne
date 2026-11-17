@@ -1,0 +1,196 @@
+<section class="card cl-card">
+  <header class="card-header cl-head">
+    <span class="cl-head__icon"><i class="fa-solid fa-link" aria-hidden="true"></i></span>
+    <div class="cl-head__text">
+      <h5 class="mb-0">{{ 'clientLink.title' | translate }}</h5>
+      <span>{{ 'clientLink.subtitle' | translate }}</span>
+    </div>
+    <app-mock-ribbon area="clientLinks" />
+    @if (state(); as s) {
+      <span class="cl-state" [attr.data-state]="s"><i></i>{{ 'clientLink.state.' + s | translate }}</span>
+    }
+  </header>
+
+  <div class="card-body">
+    @if (loading()) {
+      <div class="cl-center"><span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span></div>
+    } @else if (loadFailed()) {
+      <div class="cl-center">
+        <p class="text-muted small mb-2">{{ 'projectWorkspace.loadFailedSection' | translate }}</p>
+        <button type="button" class="btn btn-sm btn-light" (click)="load()">{{ 'common.retry' | translate }}</button>
+      </div>
+    } @else if (data()) {
+      @let d = data()!;
+      <p class="cl-customer">
+        <i class="fa-regular fa-building" aria-hidden="true"></i>
+        <b>{{ d.customer.companyName || d.customer.name }}</b>
+        @if (d.customer.companyName) { <span>· {{ d.customer.name }}</span> }
+      </p>
+
+      @if (link(); as l) {
+        @if (state() === 'Active') {
+          <!-- the link -->
+          <div class="cl-url" [class.is-copied]="copied()">
+            <i class="fa-solid fa-lock cl-url__lock" aria-hidden="true"></i>
+            <span class="cl-url__text" dir="ltr">{{ fullUrl() || l.urlMasked }}</span>
+            <button type="button" class="btn btn-primary cl-url__copy" (click)="copy()" [disabled]="busy() === 'copy'">
+              @if (busy() === 'copy') { <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> }
+              @else if (copied()) { <i class="fa-solid fa-check me-1" aria-hidden="true"></i>{{ 'clientLink.copied' | translate }} }
+              @else { <i class="fa-regular fa-copy me-1" aria-hidden="true"></i>{{ 'clientLink.copy' | translate }} }
+            </button>
+          </div>
+          <span class="visually-hidden" aria-live="polite">{{ copied() ? ('clientLink.copied' | translate) : '' }}</span>
+
+          <div class="cl-actions btn-row">
+            <button type="button" class="btn btn-light" (click)="open()" [disabled]="busy() === 'open'">
+              <i class="fa-solid fa-arrow-up-right-from-square me-1" aria-hidden="true"></i>{{ 'clientLink.open' | translate }}
+            </button>
+            <button type="button" class="btn btn-light cl-wa" (click)="sendWhatsApp()" [disabled]="busy() === 'wa'">
+              <i class="fa-brands fa-whatsapp me-1" aria-hidden="true"></i>{{ 'clientLink.sendWhatsApp' | translate }}
+            </button>
+            <button type="button" class="btn btn-light" (click)="toggleQr()" [disabled]="busy() === 'qr'" [attr.aria-expanded]="qrOpen()">
+              <i class="fa-solid fa-qrcode me-1" aria-hidden="true"></i>QR
+            </button>
+          </div>
+
+          @if (qrOpen() && fullUrl()) {
+            <div class="cl-qr">
+              <app-qr-code [data]="fullUrl()!" [size]="140" [label]="'clientLink.title' | translate" />
+              <p>{{ 'clientLink.qrHint' | translate }}</p>
+            </div>
+          }
+
+          <!-- facts -->
+          <dl class="cl-facts">
+            <div><dt>{{ 'clientLink.created' | translate }}</dt><dd>{{ l.createdAt | cairoDate: 'date' }}</dd></div>
+            <div><dt>{{ 'clientLink.lastVisit' | translate }}</dt><dd>{{ l.lastUsedAt ? (l.lastUsedAt | timeAgo) : ('clientLink.never' | translate) }}</dd></div>
+            <div><dt>{{ 'clientLink.visits' | translate }}</dt><dd>{{ l.useCount }}</dd></div>
+            <div><dt>{{ 'clientLink.expires' | translate }}</dt><dd>{{ l.expiresAt ? (l.expiresAt | cairoDate: 'date') : ('clientLink.noExpiry' | translate) }}</dd></div>
+            <div><dt>{{ 'clientLink.pin' | translate }}</dt><dd>{{ (l.hasPin ? 'clientLink.pinOn' : 'clientLink.pinOff') | translate }}</dd></div>
+            <div><dt>{{ 'clientLink.scope' | translate }}</dt><dd>{{ 'clientLink.scopes.' + l.scope | translate }}</dd></div>
+          </dl>
+
+          @if (!l.includesThisProject) {
+            <p class="cl-warn"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>{{ 'clientLink.notIncluded' | translate }}</p>
+          }
+
+          <div class="cl-footer">
+            <button type="button" class="btn btn-sm btn-link px-0" (click)="openLog()">
+              <i class="fa-solid fa-clock-rotate-left me-1" aria-hidden="true"></i>{{ 'clientLink.log' | translate }}
+            </button>
+            <button type="button" class="btn btn-sm btn-link px-0" (click)="settingsOpen.set(!settingsOpen())" [attr.aria-expanded]="settingsOpen()">
+              <i class="fa-solid fa-sliders me-1" aria-hidden="true"></i>{{ 'clientLink.settings' | translate }}
+            </button>
+            <span class="ms-auto d-flex gap-2">
+              <button type="button" class="btn btn-sm btn-light" (click)="regenerate()" [disabled]="busy() === 'regen'">
+                @if (busy() === 'regen') { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+                <i class="fa-solid fa-rotate me-1" aria-hidden="true"></i>{{ 'clientLink.regenerate' | translate }}
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="revoke()" [disabled]="busy() === 'revoke'">
+                <i class="fa-solid fa-ban me-1" aria-hidden="true"></i>{{ 'clientLink.revoke' | translate }}
+              </button>
+            </span>
+          </div>
+
+          @if (settingsOpen()) {
+            <ng-container *ngTemplateOutlet="settingsForm; context: { existing: true, hasPin: l.hasPin }" />
+          }
+        } @else {
+          <!-- revoked / expired -->
+          <div class="cl-dead">
+            <i class="fa-solid fa-link-slash" aria-hidden="true"></i>
+            <p>{{ 'clientLink.deadHint.' + state() | translate }}</p>
+          </div>
+          <ng-container *ngTemplateOutlet="settingsForm; context: { existing: false, hasPin: false }" />
+        }
+      } @else {
+        <!-- no link yet -->
+        <div class="cl-empty">
+          <span class="cl-empty__art" aria-hidden="true"><i class="fa-solid fa-paper-plane"></i></span>
+          <h6>{{ 'clientLink.emptyTitle' | translate }}</h6>
+          <p>{{ 'clientLink.emptyHint' | translate }}</p>
+        </div>
+        <ng-container *ngTemplateOutlet="settingsForm; context: { existing: false, hasPin: false }" />
+      }
+
+      @if (error(); as e) { <p class="cl-error" role="alert"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ e }}</p> }
+    }
+  </div>
+</section>
+
+<ng-template #settingsForm let-existing="existing" let-hasPin="hasPin">
+  <form class="cl-form" (ngSubmit)="existing ? saveSettings() : create()">
+    <div class="row g-2">
+      <div class="col-12 col-md-6">
+        <label class="form-label small" for="cl-scope">{{ 'clientLink.scope' | translate }}</label>
+        <select id="cl-scope" class="form-select" name="scope" [ngModel]="settings().scope" (ngModelChange)="patchSettings({ scope: $event })">
+          <option value="AllProjects">{{ 'clientLink.scopes.AllProjects' | translate }}</option>
+          <option value="SelectedProjects">{{ 'clientLink.scopes.SelectedProjects' | translate }}</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label small" for="cl-exp">{{ 'clientLink.expires' | translate }}</label>
+        <input id="cl-exp" type="date" class="form-control" name="expiresOn" [min]="minDate"
+               [ngModel]="settings().expiresOn" (ngModelChange)="patchSettings({ expiresOn: $event })" />
+        <span class="form-text">{{ 'clientLink.expiresHint' | translate }}</span>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label small" for="cl-pin">{{ (hasPin ? 'clientLink.pinChange' : 'clientLink.pinSet') | translate }}</label>
+        <input id="cl-pin" class="form-control" name="pin" inputmode="numeric" maxlength="6" dir="ltr" autocomplete="off"
+               [disabled]="settings().removePin" [class.is-invalid]="!pinOk()"
+               [ngModel]="settings().pin" (ngModelChange)="onPinInput($event)" placeholder="1234" />
+        <span class="form-text">{{ 'clientLink.pinHint' | translate }}</span>
+        @if (hasPin) {
+          <div class="form-check mt-1">
+            <input class="form-check-input" type="checkbox" id="cl-pin-rm" name="removePin"
+                   [ngModel]="settings().removePin" (ngModelChange)="patchSettings({ removePin: $event, pin: '' })" />
+            <label class="form-check-label small" for="cl-pin-rm">{{ 'clientLink.pinRemove' | translate }}</label>
+          </div>
+        }
+      </div>
+    </div>
+    <div class="cl-form__actions">
+      @if (existing) {
+        <button type="button" class="btn btn-light" (click)="settingsOpen.set(false)">{{ 'common.cancel' | translate }}</button>
+      }
+      <button type="submit" class="btn btn-primary" [disabled]="!pinOk() || busy() === 'create' || busy() === 'save'">
+        @if (busy() === 'create' || busy() === 'save') { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+        @if (existing) { {{ 'common.save' | translate }} }
+        @else { <i class="fa-solid fa-wand-magic-sparkles me-1" aria-hidden="true"></i>{{ 'clientLink.create' | translate }} }
+      </button>
+    </div>
+  </form>
+</ng-template>
+
+<app-modal [open]="logOpen()" [title]="'clientLink.log' | translate" icon="fa-solid fa-clock-rotate-left" size="md"
+           [showFooter]="false" (closed)="logOpen.set(false)">
+  @if (log(); as page) {
+    @if (page.data.length === 0) {
+      <p class="text-muted small text-center my-4">{{ 'clientLink.logEmpty' | translate }}</p>
+    } @else {
+      <ul class="cl-log" role="list">
+        @for (e of page.data; track e.id) {
+          <li>
+            <span class="cl-log__icon" [attr.data-event]="e.event"><i [class]="eventIcon(e.event)" aria-hidden="true"></i></span>
+            <span class="cl-log__main">
+              <b>{{ 'clientLink.events.' + e.event | translate }}</b>
+              <span>
+                {{ e.at | cairoDate }}
+                @if (e.visitorName) { · {{ e.visitorName }} }
+                @if (e.projectName) { · {{ e.projectName }} }
+              </span>
+              @if (e.userAgent || e.ip) { <span class="cl-log__dev" dir="ltr">{{ e.userAgent }} {{ e.ip ? '· ' + e.ip : '' }}</span> }
+            </span>
+          </li>
+        }
+      </ul>
+      @if (page.data.length < page.count) {
+        <button type="button" class="btn btn-light btn-sm w-100 mt-2" (click)="loadLog(page.pageIndex + 1)" [disabled]="logLoading()">
+          {{ 'common.loadMore' | translate }}
+        </button>
+      }
+    }
+  } @else {
+    <div class="cl-center"><span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span></div>
+  }
+</app-modal>

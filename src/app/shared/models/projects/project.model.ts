@@ -168,11 +168,24 @@ export interface ProjectListItem {
   /** Only filled by `DeveloperProjects/GetMyProjectById` — the caller's share. */
   myAllocationPercent?: number | null;
   myRoleOnProject?: string | null;
-  /** The project's customer has a client-portal account. */
-  hasClientAccess?: boolean;
-  gitHubRepoUrl?: string | null;
-  gitBranch?: string | null;
-  showBuildsToClient?: boolean;
+  /** The project's customer has an active private portal link. */
+  hasClientLink?: boolean;
+  /**
+   * Contract v2 — THE project progress (0–100), identical on every endpoint
+   * (list, workspace, client portal). Use `projectProgressPercent()`.
+   */
+  progressPercent?: number;
+  progressSource?: 'Team' | 'Milestones' | 'None';
+  progressUpdatedAt?: string | null;
+}
+
+/**
+ * The one progress number to show for a project: the v2 `progressPercent`,
+ * else the team-weighted `overallProgressPercentage`, else the legacy field.
+ */
+export function projectProgressPercent(p: Pick<ProjectListItem, 'progressPercent' | 'overallProgressPercentage' | 'progress'>): number {
+  const v = p.progressPercent ?? p.overallProgressPercentage ?? p.progress ?? 0;
+  return Math.max(0, Math.min(100, Number(v) || 0));
 }
 
 /** Detail read is identical to the list row. */

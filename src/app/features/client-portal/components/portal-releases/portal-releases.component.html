@@ -1,0 +1,101 @@
+<div class="prl-latest">
+  @for (r of latest(); track r.id; let i = $index) {
+    <article class="prl-hero" [attr.data-platform]="r.platform" [style.--d]="i">
+      <div class="prl-hero__main">
+        <span class="prl-hero__icon"><i [class]="icon(r.platform)" aria-hidden="true"></i></span>
+        <div class="prl-hero__info">
+          <span class="prl-hero__eyebrow">{{ 'portal.releases.platform.' + r.platform | translate }} · {{ 'portal.releases.latest' | translate }}</span>
+          <h3 class="prl-hero__version">
+            {{ 'portal.releases.version' | translate }} <span dir="ltr">{{ r.versionName }}</span>
+          </h3>
+          <div class="prl-hero__meta">
+            <span class="badge" [class]="stageClass(r.stage)">{{ 'portal.releases.stage.' + r.stage | translate }}</span>
+            <span><i class="fa-regular fa-calendar" aria-hidden="true"></i>{{ r.createdAt | cairoDate: 'date' }}</span>
+            @if (r.fileSizeBytes) { <span dir="ltr"><i class="fa-solid fa-weight-hanging" aria-hidden="true"></i>{{ size(r.fileSizeBytes) }}</span> }
+          </div>
+        </div>
+      </div>
+
+      @if (notes(r).length) {
+        <div class="prl-notes">
+          <span class="prl-notes__label">{{ 'portal.releases.whatsNew' | translate }}</span>
+          <ul>
+            @for (n of notes(r); track $index) { <li>{{ n }}</li> }
+          </ul>
+        </div>
+      }
+
+      <div class="prl-hero__actions">
+        <button type="button" class="btn btn-primary btn-lg prl-dl" (click)="download(r)" [disabled]="busyId() === r.id">
+          @if (busyId() === r.id) { <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> }
+          @else { <i [class]="r.hasFile ? 'fa-solid fa-download' : 'fa-solid fa-arrow-up-right-from-square'" class="me-2" aria-hidden="true"></i> }
+          {{ (r.hasFile ? (r.platform === 'Android' ? 'portal.releases.downloadApk' : 'portal.releases.download') : 'portal.releases.openLink') | translate }}
+        </button>
+        <button type="button" class="btn btn-light btn-lg prl-qr-btn" (click)="toggleQr(r)" [attr.aria-expanded]="qr()?.id === r.id"
+                [disabled]="qrBusy() === r.id">
+          @if (qrBusy() === r.id) { <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> }
+          @else { <i class="fa-solid fa-qrcode me-2" aria-hidden="true"></i> }
+          {{ 'portal.releases.onPhone' | translate }}
+        </button>
+      </div>
+
+      @if (errorId() === r.id) { <p class="prl-error" role="alert">{{ 'portal.releases.downloadFailed' | translate }}</p> }
+
+      @if (qr(); as q) {
+        @if (q.id === r.id) {
+          <div class="prl-qr">
+            <app-qr-code [data]="q.link.url" [size]="150" [label]="'portal.releases.qrLabel' | translate" />
+            <div class="prl-qr__text">
+              <b>{{ 'portal.releases.qrTitle' | translate }}</b>
+              <p>{{ 'portal.releases.qrHint' | translate }}</p>
+              @if (q.link.expiresAt) {
+                <span class="prl-qr__exp"><i class="fa-regular fa-clock" aria-hidden="true"></i>{{ 'portal.releases.qrExpires' | translate }} {{ q.link.expiresAt | cairoDate: 'time' }}</span>
+              }
+            </div>
+          </div>
+        }
+      }
+
+      @if (r.platform === 'Android' && r.hasFile) {
+        <details class="prl-help">
+          <summary><i class="fa-solid fa-circle-question" aria-hidden="true"></i>{{ 'portal.releases.howTo.title' | translate }}</summary>
+          <ol>
+            <li>{{ 'portal.releases.howTo.step1' | translate }}</li>
+            <li>{{ 'portal.releases.howTo.step2' | translate }}</li>
+            <li>{{ 'portal.releases.howTo.step3' | translate }}</li>
+            <li>{{ 'portal.releases.howTo.step4' | translate }}</li>
+          </ol>
+        </details>
+      }
+    </article>
+  }
+</div>
+
+@if (older().length) {
+  <div class="prl-older">
+    <button type="button" class="prl-older__toggle" (click)="showOlder.set(!showOlder())" [attr.aria-expanded]="showOlder()">
+      <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+      {{ 'portal.releases.older' | translate: { count: older().length } }}
+      <i class="fa-solid fa-chevron-down prl-older__chev" [class.is-open]="showOlder()" aria-hidden="true"></i>
+    </button>
+    @if (showOlder()) {
+      <ul class="prl-older__list" role="list">
+        @for (r of older(); track r.id) {
+          <li class="prl-row">
+            <i [class]="icon(r.platform)" class="prl-row__icon" aria-hidden="true"></i>
+            <span class="prl-row__main">
+              <b dir="ltr">{{ r.versionName }}</b>
+              <span>{{ r.createdAt | cairoDate: 'date' }}@if (r.fileSizeBytes) { · <span dir="ltr">{{ size(r.fileSizeBytes) }}</span> }</span>
+            </span>
+            <span class="badge" [class]="stageClass(r.stage)">{{ 'portal.releases.stage.' + r.stage | translate }}</span>
+            <button type="button" class="btn btn-sm btn-light" (click)="download(r)" [disabled]="busyId() === r.id"
+                    [attr.aria-label]="'portal.releases.download' | translate">
+              @if (busyId() === r.id) { <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> }
+              @else { <i [class]="r.hasFile ? 'fa-solid fa-download' : 'fa-solid fa-arrow-up-right-from-square'" aria-hidden="true"></i> }
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+}

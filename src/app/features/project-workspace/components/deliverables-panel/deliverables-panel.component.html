@@ -1,0 +1,175 @@
+@if (error(); as e) {
+  <div class="alert alert-danger d-flex align-items-center gap-2 py-2 small">
+    <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span class="me-auto">{{ e }}</span>
+    <button type="button" class="btn-close btn-sm" (click)="error.set(null)" [attr.aria-label]="'common.close' | translate"></button>
+  </div>
+}
+
+<div class="dv-grid">
+  <!-- ── access credentials ── -->
+  <section class="card">
+    <header class="card-header dv-head">
+      <span class="dv-head__icon"><i class="fa-solid fa-display" aria-hidden="true"></i></span>
+      <div class="dv-head__text">
+        <h5 class="mb-0">{{ 'deliverables.credentials.title' | translate }}</h5>
+        <span>{{ 'deliverables.credentials.subtitle' | translate }}</span>
+      </div>
+      <app-mock-ribbon area="deliverables" />
+      <button type="button" class="btn btn-sm btn-primary" (click)="credDialog.set({ existing: null })">
+        <i class="fa-solid fa-plus me-1" aria-hidden="true"></i>{{ 'deliverables.credentials.add' | translate }}
+      </button>
+    </header>
+    <div class="card-body">
+      @if (credentials(); as list) {
+        @if (list.length === 0) {
+          <div class="dv-empty">
+            <span class="icon-tile lg tone-secondary"><i class="fa-solid fa-key"></i></span>
+            <h6>{{ 'deliverables.credentials.emptyTitle' | translate }}</h6>
+            <p>{{ 'deliverables.credentials.emptyHint' | translate }}</p>
+          </div>
+        } @else {
+          <ul class="dv-creds" role="list">
+            @for (c of list; track c.id; let i = $index; let first = $first; let last = $last) {
+              <li class="dv-cred" [class.is-hidden]="!c.isVisibleToClient">
+                <div class="dv-cred__top">
+                  <span class="dv-cred__icon"><i [class]="credIcon(c.kind)" aria-hidden="true"></i></span>
+                  <div class="dv-cred__titles">
+                    <b>{{ c.title }}</b>
+                    <a [href]="c.url" target="_blank" rel="noopener noreferrer" dir="ltr">{{ host(c.url) }} <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+                  </div>
+                  <span class="badge" [class]="envClass(c.environment)">{{ 'portal.credentials.env.' + c.environment | translate }}</span>
+                </div>
+
+                <div class="dv-cred__fields">
+                  @if (c.username) {
+                    <span class="dv-field"><i class="fa-regular fa-user" aria-hidden="true"></i><span dir="ltr">{{ c.username }}</span>
+                      <app-copy-button [value]="c.username" [label]="'portal.credentials.copyUsername' | translate" /></span>
+                  }
+                  @if (c.hasPassword) {
+                    <span class="dv-field"><i class="fa-solid fa-lock" aria-hidden="true"></i>
+                      <span dir="ltr" class="dv-secret">{{ revealed()[c.id] || '••••••••' }}</span>
+                      <button type="button" class="dv-icon-btn" (click)="toggleReveal(c)" [disabled]="credBusy() === c.id"
+                              [attr.aria-label]="'portal.credentials.show' | translate">
+                        <i [class]="revealed()[c.id] ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'" aria-hidden="true"></i>
+                      </button>
+                      <app-copy-button [value]="passwordSource(c)" [label]="'portal.credentials.copyPassword' | translate" />
+                    </span>
+                  }
+                </div>
+                @if (c.notes) { <p class="dv-cred__notes">{{ c.notes }}</p> }
+
+                <div class="dv-cred__foot">
+                  <button type="button" class="dv-vis" [class.is-on]="c.isVisibleToClient" (click)="toggleCredentialVisibility(c)"
+                          [disabled]="credBusy() === c.id" [attr.aria-pressed]="c.isVisibleToClient">
+                    <i [class]="c.isVisibleToClient ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash'" aria-hidden="true"></i>
+                    {{ (c.isVisibleToClient ? 'deliverables.clientSees' : 'deliverables.hiddenFromClient') | translate }}
+                  </button>
+                  @if (c.updatedAt) { <span class="dv-meta">{{ c.updatedByName }} · {{ c.updatedAt | timeAgo }}</span> }
+                  <span class="dv-actions">
+                    <button type="button" class="btn btn-sm btn-light" [disabled]="first" (click)="moveCredential(i, -1)" [attr.aria-label]="'milestones.moveUp' | translate"><i class="fa-solid fa-arrow-up"></i></button>
+                    <button type="button" class="btn btn-sm btn-light" [disabled]="last" (click)="moveCredential(i, 1)" [attr.aria-label]="'milestones.moveDown' | translate"><i class="fa-solid fa-arrow-down"></i></button>
+                    <button type="button" class="btn btn-sm btn-light" (click)="credDialog.set({ existing: c })" [attr.aria-label]="'common.edit' | translate"><i class="fa-solid fa-pen"></i></button>
+                    <button type="button" class="btn btn-sm btn-icon btn-danger-soft" (click)="deleteCredential(c)" [attr.aria-label]="'common.delete' | translate"><i class="fa-solid fa-trash"></i></button>
+                  </span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      } @else if (credFailed()) {
+        <div class="dv-empty"><p>{{ 'projectWorkspace.loadFailedSection' | translate }}</p>
+          <button type="button" class="btn btn-sm btn-light" (click)="loadCredentials()">{{ 'common.retry' | translate }}</button></div>
+      } @else {
+        <div class="dv-sk" aria-hidden="true"><span></span><span></span></div>
+      }
+    </div>
+  </section>
+
+  <!-- ── app releases ── -->
+  <section class="card">
+    <header class="card-header dv-head">
+      <span class="dv-head__icon is-success"><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i></span>
+      <div class="dv-head__text">
+        <h5 class="mb-0">{{ 'deliverables.releases.title' | translate }}</h5>
+        <span>{{ 'deliverables.releases.subtitle' | translate }}</span>
+      </div>
+      <button type="button" class="btn btn-sm btn-primary" (click)="openUpload()">
+        <i class="fa-solid fa-rocket me-1" aria-hidden="true"></i>{{ 'deliverables.releases.publish' | translate }}
+      </button>
+    </header>
+    <div class="card-body">
+      <label class="dv-drop" [class.is-over]="dragOver()" (dragover)="onDragOver($event)" (dragleave)="dragOver.set(false)" (drop)="onDrop($event)"
+             (click)="openUpload(); $event.preventDefault()">
+        <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+        <span><b>{{ 'deliverables.releases.dropShort' | translate }}</b> · {{ 'deliverables.releases.dropShortHint' | translate }}</span>
+      </label>
+
+      @if (releases(); as list) {
+        @if (list.length === 0) {
+          <div class="dv-empty">
+            <span class="icon-tile lg tone-secondary"><i class="fa-brands fa-android"></i></span>
+            <h6>{{ 'deliverables.releases.emptyTitle' | translate }}</h6>
+            <p>{{ 'deliverables.releases.emptyHint' | translate }}</p>
+          </div>
+        } @else {
+          <ul class="dv-rels" role="list">
+            @for (r of list; track r.id) {
+              <li class="dv-rel" [class.is-hidden]="!r.isVisibleToClient">
+                <span class="dv-rel__icon" [attr.data-platform]="r.platform"><i [class]="platformIcon(r.platform)" aria-hidden="true"></i></span>
+                <span class="dv-rel__main">
+                  <span class="dv-rel__title">
+                    <b dir="ltr">{{ r.versionName }}</b>
+                    <span class="dv-rel__build">#{{ r.buildNumber }}</span>
+                    @if (r.isLatest) { <span class="dv-latest">{{ 'portal.releases.latest' | translate }}</span> }
+                  </span>
+                  <span class="dv-rel__meta">
+                    {{ r.createdAt | cairoDate: 'date' }}
+                    @if (r.uploadedByName) { · {{ r.uploadedByName }} }
+                    @if (r.fileSizeBytes) { · <span dir="ltr">{{ size(r.fileSizeBytes) }}</span> }
+                    · <i class="fa-solid fa-download" aria-hidden="true"></i> {{ r.downloadCount }}
+                  </span>
+                </span>
+                <select class="form-select form-select-sm dv-stage" [attr.aria-label]="'deliverables.releases.stage' | translate"
+                        [value]="r.stage" (change)="changeStage(r, $any($event.target).value)">
+                  @for (s of stages; track s) { <option [value]="s" [selected]="s === r.stage">{{ 'portal.releases.stage.' + s | translate }}</option> }
+                </select>
+                <span class="dv-actions">
+                  <button type="button" class="dv-vis dv-vis--icon" [class.is-on]="r.isVisibleToClient" (click)="toggleReleaseVisibility(r)"
+                          [attr.aria-pressed]="r.isVisibleToClient"
+                          [title]="(r.isVisibleToClient ? 'deliverables.clientSees' : 'deliverables.hiddenFromClient') | translate">
+                    <i [class]="r.isVisibleToClient ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash'" aria-hidden="true"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-light" (click)="download(r)" [disabled]="relBusy() === r.id"
+                          [attr.aria-label]="'portal.releases.download' | translate">
+                    @if (relBusy() === r.id) { <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> }
+                    @else { <i [class]="r.hasFile ? 'fa-solid fa-download' : 'fa-solid fa-arrow-up-right-from-square'" aria-hidden="true"></i> }
+                  </button>
+                  @if (canDeleteRelease(r)) {
+                    <button type="button" class="btn btn-sm btn-icon btn-danger-soft" (click)="deleteRelease(r)" [attr.aria-label]="'common.delete' | translate">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      } @else if (relFailed()) {
+        <div class="dv-empty"><p>{{ 'projectWorkspace.loadFailedSection' | translate }}</p>
+          <button type="button" class="btn btn-sm btn-light" (click)="loadReleases()">{{ 'common.retry' | translate }}</button></div>
+      } @else {
+        <div class="dv-sk" aria-hidden="true"><span></span><span></span></div>
+      }
+    </div>
+  </section>
+</div>
+
+@if (credDialog(); as d) {
+  <app-credential-dialog [projectId]="projectId()" [scope]="scope()" [existing]="d.existing"
+                         (saved)="onCredentialSaved($event)" (closed)="credDialog.set(null)" />
+}
+
+@if (uploadOpen()) {
+  <app-release-upload-dialog [projectId]="projectId()" [scope]="scope()" [initialFile]="droppedFile()"
+                             (uploaded)="onUploaded()" (closed)="uploadOpen.set(false)" />
+}

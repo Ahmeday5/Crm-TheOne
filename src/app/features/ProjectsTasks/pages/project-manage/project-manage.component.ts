@@ -21,6 +21,7 @@ import {
   takeUntil,
 } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
+import { ProjectProgressSyncService } from '../../../project-progress/services/project-progress-sync.service';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { DialogService } from '../../../../core/services/dialog.service';
@@ -119,6 +120,9 @@ export class ProjectManageComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   readonly rows = signal<ProjectListItem[]>([]);
+  /** The one progress number (same as the workspace), live. */
+  private readonly progressSync = inject(ProjectProgressSyncService);
+  readonly progressOf = (row: ProjectListItem): number => this.progressSync.percentFor(row);
   readonly count = signal(0);
   readonly pageIndex = signal(1);
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
@@ -259,7 +263,7 @@ export class ProjectManageComponent implements OnInit, OnDestroy {
         header: this.t('projects.manage.table.status'),
         value: (r) => this.t('projects.manage.statuses.' + r.status),
       },
-      { header: this.t('projects.manage.table.progress'), value: (r) => `${r.progress}%` },
+      { header: this.t('projects.manage.table.progress'), value: (r) => `${Math.round(this.progressOf(r))}%` },
       { header: this.t('projects.manage.table.price'), value: (r) => r.price },
       { header: this.t('projects.manage.table.team'), value: (r) => r.teamMembersCount },
     ];
@@ -335,6 +339,7 @@ export class ProjectManageComponent implements OnInit, OnDestroy {
         this.rows.set(page.data ?? []);
         this.count.set(page.count ?? 0);
         this.loading.set(false);
+        this.progressSync.hydrate(page.data ?? [], force);
       },
       error: () => {
         this.loading.set(false);

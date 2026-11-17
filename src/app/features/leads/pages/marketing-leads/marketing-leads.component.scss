@@ -20,3 +20,10 @@
 @include bp.down(sm) {
   .page-cta { width: 100%; }
 }
+
+/* Sales-rep filter — highlighted while it narrows the list. */
+.sp-filter.is-active {
+  border-color: var(--brand-500);
+  background-color: var(--brand-soft);
+  font-weight: var(--fw-600);
+}

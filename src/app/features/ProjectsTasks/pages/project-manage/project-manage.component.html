@@ -228,15 +228,16 @@
 </ng-template>
 
 <ng-template #progressCell let-row>
+  @let pct = progressOf(row);
   <div class="d-flex align-items-center gap-2">
     <div class="progress progress-thin flex-grow-1">
-      <div class="progress-bar bg-primary"
+      <div class="progress-bar bg-primary pm-progress-bar"
            role="progressbar"
-           [style.width.%]="row.progress"
-           [attr.aria-valuenow]="row.progress"
+           [style.width.%]="pct"
+           [attr.aria-valuenow]="pct"
            aria-valuemin="0" aria-valuemax="100"></div>
     </div>
-    <span class="small text-muted text-nowrap">{{ row.progress }}%</span>
+    <span class="small text-muted text-nowrap">{{ pct | number: '1.0-1' }}%</span>
   </div>
 </ng-template>
 

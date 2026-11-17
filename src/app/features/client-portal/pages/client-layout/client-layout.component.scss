@@ -1,4 +1,5 @@
 @use 'breakpoints' as bp;
+@use 'motion';
 
 :host {
   display: flex;
@@ -8,33 +9,75 @@
   background: var(--surface-1);
 }
 
+.cl-skip {
+  position: absolute;
+  inset-inline-start: 1rem;
+  top: -3rem;
+  z-index: 2000;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--brand-500);
+  color: #fff;
+
+  &:focus { top: 0.75rem; }
+}
+
+/* ── top bar ── */
 .cl-bar {
   position: sticky;
   top: 0;
   z-index: 1030;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface-0);
+  border-bottom: 1px solid transparent;
+  background: var(--surface-1);
+  transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+
+  &.is-scrolled {
+    border-bottom-color: var(--border);
+    background: var(--surface-0);
+    box-shadow: var(--shadow-sm);
+  }
 
   &__inner {
     display: flex;
     align-items: center;
     gap: 1rem;
-    max-width: 72rem;
+    max-width: 76rem;
     margin: 0 auto;
-    padding: 0.6rem 1rem;
+    padding: 0.7rem 1rem;
+
+    @include bp.down(sm) { gap: 0.5rem; padding: 0.55rem 0.75rem; }
   }
 }
 
 .cl-brand {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.6rem;
   min-width: 0;
   color: var(--text-1);
   text-decoration: none;
 
-  &__logo { width: 34px; height: 34px; border-radius: var(--radius-md); object-fit: contain; flex-shrink: 0; }
-  &__name { font-weight: var(--fw-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  &__mark {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: var(--radius-md);
+    background: var(--surface-0);
+    border: 1px solid var(--border);
+    transition: transform 300ms motion.$ease-spring, border-color 200ms ease;
+
+    img { width: 28px; height: 28px; object-fit: contain; }
+  }
+
+  &:hover &__mark { transform: rotate(-6deg) scale(1.06); border-color: var(--brand-500); }
+
+  &__text { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+  &__name { font-weight: var(--fw-800); font-size: var(--fs-lg); white-space: nowrap; }
+  &__sub { color: var(--text-3); font-size: var(--fs-xs); white-space: nowrap; }
+
+  @include bp.down(sm) { &__sub { display: none; } }
 }
 
 .cl-nav {
@@ -42,53 +85,196 @@
   gap: 0.25rem;
 
   a {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.4rem 0.8rem;
+    padding: 0.45rem 0.9rem;
     border-radius: var(--radius-pill);
     color: var(--text-2);
     font-weight: var(--fw-600);
     font-size: var(--fs-sm);
     text-decoration: none;
-    transition: background-color 150ms ease, color 150ms ease;
+    transition: background-color 160ms ease, color 160ms ease;
 
     &:hover { background: var(--surface-2); color: var(--text-1); }
     &.is-active { background: var(--brand-soft); color: var(--brand-500); }
   }
+
+  @include bp.down(md) { display: none; }
 }
 
 .cl-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   margin-inline-start: auto;
 }
 
-.cl-user {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  &__name { font-size: var(--fs-sm); font-weight: var(--fw-600); max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cl-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--text-2);
+  font-size: 1.15rem;
+  text-decoration: none;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+
+  &:hover { background: var(--surface-2); transform: translateY(-1px); }
+  &.is-wa:hover { color: #16a34a; }
 }
 
+/* ── who is viewing ── */
+.cl-who {
+  position: relative;
+
+  &__btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 15rem;
+    padding: 0.25rem 0.6rem 0.25rem 0.3rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface-0);
+    color: var(--text-1);
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+
+    &:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+    &:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 2px; }
+  }
+
+  &__text { display: flex; flex-direction: column; min-width: 0; text-align: start; line-height: 1.15; }
+  &__name, &__company { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  &__name { font-weight: var(--fw-700); font-size: var(--fs-sm); }
+  &__company { color: var(--text-3); font-size: var(--fs-xs); }
+  &__chev { font-size: 0.65rem; color: var(--text-3); }
+
+  @include bp.down(sm) {
+    &__text, &__chev { display: none; }
+    &__btn { padding: 0.2rem; }
+  }
+}
+
+.cl-menu {
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 0.4rem);
+  z-index: 10;
+  min-width: 13rem;
+  padding: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-0);
+  box-shadow: var(--shadow-lg);
+  animation: cl-menu-in 180ms motion.$ease-out-expo;
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    min-height: 42px;
+    padding: 0 0.75rem;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-1);
+    font-weight: var(--fw-600);
+    font-size: var(--fs-sm);
+    text-align: start;
+
+    &:hover { background: var(--surface-2); }
+    &.is-danger { color: var(--danger); }
+    i { width: 1rem; text-align: center; }
+  }
+}
+
+@keyframes cl-menu-in { from { opacity: 0; translate: 0 -6px; } }
+
+/* ── content ── */
 .cl-main {
   flex: 1;
   width: 100%;
-  max-width: 72rem;
+  max-width: 76rem;
   margin: 0 auto;
-  padding: 1.5rem 1rem 2.5rem;
+  padding: 1.25rem 1rem 2.5rem;
+
+  &:focus { outline: none; }
+  @include bp.down(sm) { padding: 1rem 0.75rem 6rem; }
 }
 
+/* ── footer ── */
 .cl-foot {
-  padding: 1rem;
-  text-align: center;
-  font-size: var(--fs-xs);
-  color: var(--text-3);
+  border-top: 1px solid var(--border);
+  background: var(--surface-0);
+
+  &__inner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem 2rem;
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: 1.5rem 1rem;
+
+    @include bp.down(md) { grid-template-columns: 1fr; }
+  }
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    img { width: 40px; height: 40px; object-fit: contain; }
+    div { display: flex; flex-direction: column; }
+    b { font-size: var(--fs-lg); }
+    span { color: var(--text-3); font-size: var(--fs-sm); }
+  }
+
+  &__contact {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1.25rem;
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+
+    span, a { display: inline-flex; align-items: center; gap: 0.4rem; }
+    a { color: var(--text-2); text-decoration: none; transition: color 160ms ease; }
+    a:hover { color: var(--brand-500); }
+  }
+
+  &__bottom {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border);
+    color: var(--text-3);
+    font-size: var(--fs-xs);
+  }
+
+  &__social {
+    display: flex;
+    gap: 0.35rem;
+
+    a {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: var(--text-3);
+      transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+
+      &:hover { background: var(--brand-soft); color: var(--brand-500); transform: translateY(-2px); }
+    }
+  }
 }
 
-@include bp.down(md) {
-  .cl-brand__name, .cl-user__name, .cl-nav span { display: none; }
-  .cl-bar__inner { gap: 0.5rem; }
-  .cl-main { padding-top: 1rem; }
-}
+@include motion.calm-everything;

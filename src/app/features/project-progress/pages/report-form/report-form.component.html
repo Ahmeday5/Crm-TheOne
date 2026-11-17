@@ -23,20 +23,6 @@
       <div class="card-body">
         <form [formGroup]="form" novalidate (ngSubmit)="submit()">
           <div class="row g-3">
-            <div class="col-12 col-md-6">
-              <label for="edit-contribution" class="form-label fw-600">
-                {{ 'projectProgress.form.contribution' | translate }}
-              </label>
-              <div class="input-group">
-                <input id="edit-contribution"
-                       type="number"
-                       min="0"
-                       max="100"
-                       class="form-control"
-                       formControlName="actualProgressContribution" />
-                <span class="input-group-text">%</span>
-              </div>
-            </div>
 
             <div class="col-12">
               <label for="edit-completed" class="form-label fw-600">

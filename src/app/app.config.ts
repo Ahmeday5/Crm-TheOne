@@ -13,15 +13,18 @@ import { provideAnnouncements } from './features/announcements';
 import { provideAttendance } from './features/attendance';
 import { provideWhatsApp } from './features/whatsapp/whatsapp.providers';
 import { vaultTokenInterceptor } from './features/vault/data/vault-token.interceptor';
+import { portalSessionInterceptor } from './features/client-portal/data/portal-session.interceptor';
 
 /**
  * Interceptor order matters:
  *   1. cache    — short-circuit a cache hit before any other interceptor runs.
  *   2. loader   — show the global overlay for everything that actually hits
  *                 the network.
- *   3. auth     — attach the bearer token; refresh & retry on 401.
- *   4. vault    — attach `X-Vault-Token` to vault calls (inert while mocked).
- *   5. error    — last so it sees post-refresh failures and normalizes
+ *   3. portal   — `ClientPortal/*` gets the client's magic-link JWT (and
+ *                 skips the staff token); silent re-exchange on expiry.
+ *   4. auth     — attach the bearer token; refresh & retry on 401.
+ *   5. vault    — attach `X-Vault-Token` to vault calls (inert while mocked).
+ *   6. error    — last so it sees post-refresh failures and normalizes
  *                 every error into `ApiError`.
  */
 export const appConfig: ApplicationConfig = {
@@ -38,6 +41,7 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([
         cacheInterceptor,
         loaderInterceptor,
+        portalSessionInterceptor,
         authInterceptor,
         vaultTokenInterceptor,
         errorInterceptor,

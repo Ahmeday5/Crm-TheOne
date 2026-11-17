@@ -69,7 +69,8 @@ export class ReportFormComponent implements OnInit {
           remainingWork: r.remainingWork ?? '',
           blockers: r.blockers ?? '',
           notes: r.notes ?? '',
-          actualProgressContribution: r.actualProgressContribution ?? null,
+          // Text-only edits: keep the points this report already applied.
+          actualProgressContribution: r.actualProgressContribution ?? r.appliedProgressContribution ?? null,
         });
         this.loading.set(false);
       },

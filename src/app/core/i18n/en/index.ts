@@ -36,6 +36,8 @@ import vault from './vault.en';
 import geo from './geo.en';
 import projectWorkspace from './projectWorkspace.en';
 import clientPortal from './clientPortal.en';
+import portal from './portal.en';
+import deliverables from './deliverables.en';
 import vaultLock from './vaultLock.en';
 
 const en: Translations = {
@@ -76,6 +78,8 @@ const en: Translations = {
   ...geo,
   ...projectWorkspace,
   ...clientPortal,
+  ...portal,
+  ...deliverables,
   ...vaultLock,
 };
 

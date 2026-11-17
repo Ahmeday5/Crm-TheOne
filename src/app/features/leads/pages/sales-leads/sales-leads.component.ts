@@ -37,6 +37,7 @@ import {
   CustomerStatus,
   EGYPT_COUNTRY_ID,
   Governorate,
+  SalesPerson,
 } from '../../../../shared/models';
 import { LocationLookupsService } from '../../../../core/services/location-lookups.service';
 import { CustomerLocationComponent } from '../../../../shared/components/customer-location/customer-location.component';
@@ -64,6 +65,13 @@ import {
 } from '../../utils/customer-status.util';
 import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
+import {
+  UNASSIGNED_SALES,
+  fetchAllPages,
+  lastPage,
+  matchesSalesPerson,
+  pageSlice,
+} from '../../utils/sales-person-filter.util';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -134,6 +142,15 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   readonly countries = signal<Country[]>([]);
   readonly governorates = signal<Governorate[]>([]);
 
+  /** Sales-rep filter (Admin only) — `UNASSIGNED_SALES` = no rep. Applied client-side, see the util. */
+  readonly selectedSalesPersonId = signal<string | null>(null);
+  readonly salesTeam = signal<SalesPerson[]>([]);
+  readonly unassignedSales = UNASSIGNED_SALES;
+  /** Every row matching the server filters + the rep, while a rep is selected. */
+  private repRows: CustomerListItem[] | null = null;
+  /** Drops answers of superseded loads (fast filter switching). */
+  private loadSeq = 0;
+
   /** Governorates only narrow Egypt (or "any country"). */
   readonly governorateFilterApplies = computed(() => {
     const country = this.selectedCountryId();
@@ -146,7 +163,8 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
       this.selectedStatusId() !== null ||
       this.selectedSourceId() !== null ||
       this.selectedCountryId() !== null ||
-      this.selectedGovernorateId() !== null,
+      this.selectedGovernorateId() !== null ||
+      this.selectedSalesPersonId() !== null,
   );
 
   // ─────────── data ───────────
@@ -260,6 +278,12 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     });
     this.locations.countries().subscribe({ next: (rows) => this.countries.set(rows), error: () => undefined });
     this.locations.governorates().subscribe({ next: (rows) => this.governorates.set(rows), error: () => undefined });
+    if (this.isAdmin()) {
+      this.customers.salesTeam().subscribe({
+        next: (team) => this.salesTeam.set([...(team ?? [])].sort((a, b) => (a.fullName ?? '').localeCompare(b.fullName ?? '', 'ar'))),
+        error: () => undefined,
+      });
+    }
   }
 
   /** The list query for the current filters (table, export). */
@@ -276,21 +300,58 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   }
 
   reload(force = false): void {
+    const seq = ++this.loadSeq;
     this.loading.set(true);
     this.loadError.set(null);
+    this.repRows = null;
+
+    const rep = this.selectedSalesPersonId();
+    if (rep) {
+      fetchAllPages((pageIndex, pageSize) => this.customers.listForSales(this.listQuery(pageIndex, pageSize), force))
+        .then((all) => {
+          if (seq !== this.loadSeq) return;
+          this.repRows = all.filter((r) => matchesSalesPerson(r, rep, this.salesTeam()));
+          this.showRepPage();
+          this.loading.set(false);
+        })
+        .catch(() => {
+          if (seq !== this.loadSeq) return;
+          this.loading.set(false);
+          this.loadError.set(this.t('customers.messages.loadFailed'));
+        });
+      return;
+    }
+
     this.customers
       .listForSales(this.listQuery(this.pageIndex(), this.pageSize()), force)
       .subscribe({
         next: (page) => {
+          if (seq !== this.loadSeq) return;
           this.rows.set(page.data ?? []);
           this.count.set(page.count ?? 0);
           this.loading.set(false);
         },
         error: () => {
+          if (seq !== this.loadSeq) return;
           this.loading.set(false);
           this.loadError.set(this.t('customers.messages.loadFailed'));
         },
       });
+  }
+
+  /** Pages the rep-filtered set locally (no refetch). */
+  private showRepPage(): void {
+    const all = this.repRows ?? [];
+    const last = lastPage(all.length, this.pageSize());
+    if (this.pageIndex() > last) this.pageIndex.set(last);
+    this.count.set(all.length);
+    this.rows.set(pageSlice(all, this.pageIndex(), this.pageSize()));
+  }
+
+  /** Applies a row patch to the visible page AND the rep-filtered set. */
+  private patchRows(mapper: (list: CustomerListItem[]) => CustomerListItem[]): void {
+    this.rows.update(mapper);
+    if (this.repRows) this.repRows = mapper(this.repRows);
   }
 
   // ─────────── search / filters / pagination ───────────
@@ -320,6 +381,12 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     this.reload();
   }
 
+  onSalesPersonChange(id: string): void {
+    this.selectedSalesPersonId.set(id || null);
+    this.pageIndex.set(1);
+    this.reload();
+  }
+
   onGovernorateChange(id: string): void {
     this.selectedGovernorateId.set(id === '' || id == null ? null : Number(id));
     this.pageIndex.set(1);
@@ -328,13 +395,15 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
   onPageChange(page: number): void {
     this.pageIndex.set(page);
-    this.reload();
+    if (this.repRows) this.showRepPage();
+    else this.reload();
   }
 
   onPageSizeChange(size: number): void {
     this.pageSize.set(size);
     this.pageIndex.set(1);
-    this.reload();
+    if (this.repRows) this.showRepPage();
+    else this.reload();
   }
 
   // ─────────── navigation ───────────
@@ -376,7 +445,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
       this.reload();
       return;
     }
-    this.rows.update((list) =>
+    this.patchRows((list) =>
       list.map((row) => (row.id === updated.id ? { ...row, ...updated } : row)),
     );
   }
@@ -403,7 +472,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   }
 
   onFollowUpUpdated(res: CustomerFollowUpResponse): void {
-    this.rows.update((list) =>
+    this.patchRows((list) =>
       list.map((row) =>
         row.id === res.id
           ? {
@@ -426,7 +495,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   }
 
   onContactLogged(res: CustomerFollowUpResponse): void {
-    this.rows.update((list) =>
+    this.patchRows((list) =>
       list.map((row) =>
         row.id === res.id
           ? { ...row, lastFollowUpDate: res.lastFollowUpDate, nextFollowUpDate: null }
@@ -453,7 +522,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   }
 
   onNoteSaved(res: CustomerNoteResponse): void {
-    this.rows.update((list) =>
+    this.patchRows((list) =>
       list.map((row) =>
         row.id === res.customerId
           ? {
@@ -647,6 +716,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   }
 
   readonly fetchAllRows = async (): Promise<CustomerListItem[]> => {
+    if (this.repRows) return [...this.repRows];
     const page = await firstValueFrom(
       this.customers.listForSales(this.listQuery(1, this.count() || this.pageSize())),
     );

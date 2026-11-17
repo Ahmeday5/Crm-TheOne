@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
+import { shareCompletionOf } from '../../../../shared/models';
+import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { catchError, of } from 'rxjs';
@@ -25,6 +27,8 @@ interface Row {
   tasksTotal: number | null;
   /** From `ProjectProgress` — how much of the share is done, and today's report. */
   earned: number | null;
+  /** % of their OWN share done (0–100) — contract v2, derived until then. */
+  shareDone: number | null;
   reportedToday: boolean | null;
 }
 
@@ -42,7 +46,7 @@ interface Row {
 @Component({
   selector: 'app-team-allocation',
   standalone: true,
-  imports: [
+  imports: [DecimalPipe, 
     FormsModule,
     TranslatePipe,
     UserAvatarComponent,
@@ -121,6 +125,7 @@ export class TeamAllocationComponent {
                 tasksDone: d.tasksDone,
                 tasksTotal: d.tasksTotal,
                 earned: null,
+              shareDone: null,
                 reportedToday: null,
               })),
             ),
@@ -144,6 +149,7 @@ export class TeamAllocationComponent {
                 tasksDone: null,
                 tasksTotal: null,
                 earned: m.earnedProgressPercentage,
+                shareDone: shareCompletionOf(m),
                 reportedToday: m.hasReportedToday,
               })),
             );
@@ -189,6 +195,7 @@ export class TeamAllocationComponent {
         tasksDone: 0,
         tasksTotal: 0,
         earned: null,
+        shareDone: null,
         reportedToday: null,
       },
     ]);
@@ -233,6 +240,7 @@ export class TeamAllocationComponent {
               tasksDone: d.tasksDone,
               tasksTotal: d.tasksTotal,
               earned: null,
+              shareDone: null,
               reportedToday: null,
             })),
           );
@@ -282,7 +290,9 @@ export class TeamAllocationComponent {
   }
 
   /** Share of the developer's allocation already delivered (0–100 of their bar). */
+  /** Bar width: how much of their own share is done. */
   protected earnedOfShare(r: Row): number {
+    if (r.shareDone != null) return r.shareDone;
     return r.earned != null && r.allocationPercent ? Math.min(100, (r.earned / r.allocationPercent) * 100) : 0;
   }
 
@@ -290,7 +300,7 @@ export class TeamAllocationComponent {
 
   private withProgress(r: Row): Row {
     const m = this.progress().get(r.developerId);
-    return m ? { ...r, earned: m.earnedProgressPercentage, reportedToday: m.hasReportedToday } : r;
+    return m ? { ...r, earned: m.earnedProgressPercentage, shareDone: shareCompletionOf(m), reportedToday: m.hasReportedToday } : r;
   }
 
   private apply(rows: Row[]): void {

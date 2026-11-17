@@ -1,16 +1,28 @@
 import { Routes } from '@angular/router';
-import { authGuard } from '../../core/guards/auth.guard';
-import { clientGuard } from '../../core/guards/client.guard';
+import { portalSessionGuard } from './data/portal-session.guard';
 
 /**
- * `/portal` — the client's whole app, in its own minimal shell (no staff
- * sidebar). Client role only; staff guards send a Client here, and this guard
- * sends staff back to their home.
+ * Client portal — opened ONLY from the customer's private link, never with a
+ * username / password.
+ *
+ *   /p/:token        the link: branded intro → session → /portal
+ *   /portal/access   why the portal can't open (revoked, expired, no link…)
+ *   /portal/**       the portal itself, in its own shell (no staff chrome)
  */
 export const CLIENT_PORTAL_ROUTES: Routes = [
   {
+    path: 'p/:token',
+    title: 'TheOne',
+    loadComponent: () => import('./pages/portal-entry/portal-entry.component').then((m) => m.PortalEntryComponent),
+  },
+  {
+    path: 'portal/access',
+    title: 'TheOne',
+    loadComponent: () => import('./pages/portal-access/portal-access.component').then((m) => m.PortalAccessComponent),
+  },
+  {
     path: 'portal',
-    canActivate: [authGuard, clientGuard],
+    canActivate: [portalSessionGuard],
     loadComponent: () =>
       import('./pages/client-layout/client-layout.component').then((m) => m.ClientLayoutComponent),
     children: [

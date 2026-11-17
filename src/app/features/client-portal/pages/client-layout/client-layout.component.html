@@ -1,8 +1,15 @@
-<header class="cl-bar">
+<a class="cl-skip" href="#portal-main">{{ 'portal.layout.skip' | translate }}</a>
+
+<header class="cl-bar" [class.is-scrolled]="scrolled()">
   <div class="cl-bar__inner">
-    <a class="cl-brand" routerLink="/portal">
-      <img [src]="brandLogo() || fallbackLogo" alt="" class="cl-brand__logo" (error)="onLogoError($event)" />
-      <span class="cl-brand__name">{{ brandName() || ('header.app' | translate) }}</span>
+    <a class="cl-brand" routerLink="/portal" [attr.aria-label]="brand.name()">
+      <span class="cl-brand__mark">
+        <img [src]="brand.logo()" alt="" (error)="$any($event.target).src = brand.fallbackLogo" />
+      </span>
+      <span class="cl-brand__text">
+        <span class="cl-brand__name">{{ brand.name() }}</span>
+        <span class="cl-brand__sub">{{ 'portal.layout.clientArea' | translate }}</span>
+      </span>
     </a>
 
     <nav class="cl-nav" [attr.aria-label]="'clientPortal.nav' | translate">
@@ -11,28 +18,97 @@
       </a>
     </nav>
 
+    <app-mock-ribbon area="clientPortal" />
+
     <div class="cl-actions">
+      @if (brand.whatsAppHref(); as wa) {
+        <a class="cl-icon-btn is-wa" [href]="wa" target="_blank" rel="noopener"
+           [attr.aria-label]="'portal.contact.whatsapp' | translate" [title]="'portal.contact.whatsapp' | translate">
+          <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+        </a>
+      }
       <app-language-toggle />
       <app-theme-toggle />
-      <app-notifications-bell />
-      <span class="cl-user">
-        <app-user-avatar [name]="user()?.fullName || user()?.email" [imageUrl]="user()?.imageUrl" size="sm" />
-        <span class="cl-user__name">{{ user()?.fullName || user()?.email }}</span>
-      </span>
-      <button type="button" class="btn btn-sm btn-light" (click)="logout()" [attr.aria-label]="'clientPortal.logout' | translate"
-              [title]="'clientPortal.logout' | translate">
-        <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
-      </button>
+
+      <div class="cl-who">
+        <button type="button" class="cl-who__btn" (click)="toggleMenu($event)" [attr.aria-expanded]="menuOpen()" aria-haspopup="menu">
+          <app-user-avatar [name]="session.displayName()" size="sm" />
+          <span class="cl-who__text">
+            <span class="cl-who__name">{{ session.displayName() }}</span>
+            @if (company() && company() !== session.displayName()) { <span class="cl-who__company">{{ company() }}</span> }
+          </span>
+          <i class="fa-solid fa-chevron-down cl-who__chev" aria-hidden="true"></i>
+        </button>
+        @if (menuOpen()) {
+          <div class="cl-menu" role="menu" (click)="$event.stopPropagation()">
+            <button type="button" role="menuitem" (click)="openRename()">
+              <i class="fa-solid fa-user-pen" aria-hidden="true"></i>{{ 'portal.layout.changeName' | translate }}
+            </button>
+            <button type="button" role="menuitem" class="is-danger" (click)="signOut()">
+              <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>{{ 'portal.layout.signOut' | translate }}
+            </button>
+          </div>
+        }
+      </div>
     </div>
   </div>
 </header>
 
-<main class="cl-main">
+<main class="cl-main" id="portal-main" tabindex="-1">
   <router-outlet />
 </main>
 
-<footer class="cl-foot">© {{ year }} {{ brandName() || ('header.app' | translate) }}</footer>
+<footer class="cl-foot">
+  <div class="cl-foot__inner">
+    <div class="cl-foot__brand">
+      <img [src]="brand.logo()" alt="" (error)="$any($event.target).src = brand.fallbackLogo" />
+      <div>
+        <b>{{ brand.name() }}</b>
+        @if (brand.tagline()) { <span>{{ brand.tagline() }}</span> }
+      </div>
+    </div>
 
-<!-- Live notification toasts (a reply from the team, a status change…) -->
-<app-notification-toasts />
+    <div class="cl-foot__contact">
+      @if (brand.branding()?.workingHours; as hours) {
+        <span><i class="fa-regular fa-clock" aria-hidden="true"></i>{{ hours }}</span>
+      }
+      @if (brand.whatsAppHref(); as wa) {
+        <a [href]="wa" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i>{{ 'portal.contact.whatsapp' | translate }}</a>
+      }
+      @if (brand.phoneHref(); as tel) {
+        <a [href]="tel" dir="ltr"><i class="fa-solid fa-phone" aria-hidden="true"></i>{{ brand.branding()?.supportPhone }}</a>
+      }
+      @if (brand.emailHref(); as mail) {
+        <a [href]="mail"><i class="fa-regular fa-envelope" aria-hidden="true"></i>{{ brand.branding()?.supportEmail }}</a>
+      }
+    </div>
 
+    <div class="cl-foot__bottom">
+      <span>© {{ year }} {{ brand.name() }} — {{ 'portal.layout.rights' | translate }}</span>
+      <span class="cl-foot__social">
+        @for (s of brand.branding()?.socials ?? []; track s.url) {
+          <a [href]="s.url" target="_blank" rel="noopener" [attr.aria-label]="s.kind">
+            <i [class]="s.kind === 'Website' ? 'fa-solid fa-globe' : 'fa-brands fa-' + (s.kind === 'X' ? 'x-twitter' : s.kind.toLowerCase())" aria-hidden="true"></i>
+          </a>
+        }
+      </span>
+    </div>
+  </div>
+</footer>
+
+<app-modal [open]="renameOpen()" [title]="'portal.layout.changeName' | translate" icon="fa-solid fa-user-pen" size="sm"
+           (closed)="renameOpen.set(false)">
+  <form (ngSubmit)="saveName()" id="cl-rename">
+    <p class="text-muted small mb-2">{{ 'portal.entry.nameHint' | translate }}</p>
+    <input class="form-control" maxlength="60" autocomplete="name" name="visitorName"
+           [placeholder]="'portal.entry.namePlaceholder' | translate"
+           [ngModel]="nameDraft()" (ngModelChange)="nameDraft.set($event)" />
+  </form>
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" (click)="renameOpen.set(false)">{{ 'common.cancel' | translate }}</button>
+    <button type="submit" form="cl-rename" class="btn btn-primary" [disabled]="renaming()">
+      @if (renaming()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+      {{ 'common.save' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

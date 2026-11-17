@@ -1,0 +1,144 @@
+@use 'motion';
+@use 'breakpoints' as bp;
+
+@include motion.reveal-keyframes;
+
+:host { display: block; background: var(--surface-1); }
+
+.pa {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 2rem 1rem;
+  overflow: hidden;
+}
+
+.pa__pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--border-strong) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 60% 55% at 50% 45%, #000 30%, transparent 75%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.pa__brand {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-800);
+  color: var(--text-1);
+  @include motion.reveal(0.8s, 0s);
+
+  img { width: 40px; height: 40px; object-fit: contain; border-radius: var(--radius-md); }
+}
+
+.pa__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(100%, 28rem);
+  padding: 2rem 1.75rem;
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--brand-500);
+  border-radius: var(--radius-xl);
+  background: var(--surface-0);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  @include motion.reveal(0.8s, 0.15s);
+
+  &[data-tone='danger'] { border-top-color: var(--danger); --tone: var(--danger); --tone-soft: var(--danger-soft); }
+  &[data-tone='warning'] { border-top-color: var(--warning); --tone: var(--warning); --tone-soft: var(--warning-soft); }
+  &[data-tone='brand'] { --tone: var(--brand-500); --tone-soft: var(--brand-soft); }
+
+  @include bp.down(sm) { padding: 1.75rem 1.25rem; }
+}
+
+.pa__icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--tone-soft);
+  color: var(--tone);
+  font-size: 1.5rem;
+  animation: pa-pop 700ms motion.$ease-spring both 250ms;
+}
+
+.pa__title { margin: 0.25rem 0 0; font-size: var(--fs-xl); font-weight: var(--fw-700); }
+.pa__text { margin: 0; color: var(--text-2); line-height: var(--lh-base); }
+
+.pa__wait {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius-pill);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-weight: var(--fw-600);
+
+  b { font-variant-numeric: tabular-nums; }
+}
+
+.pa__btn { margin-top: 0.5rem; }
+
+.pa__contact {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.pa__contact-label { display: block; margin-bottom: 0.6rem; color: var(--text-3); font-size: var(--fs-sm); }
+
+.pa__contact-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.pa__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-0);
+  color: var(--text-1);
+  font-weight: var(--fw-600);
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+
+  &:hover { border-color: var(--brand-500); color: var(--brand-500); transform: translateY(-2px); }
+  &.is-wa:hover { border-color: #16a34a; color: #16a34a; }
+}
+
+.pa__site {
+  position: relative;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  text-decoration: none;
+  @include motion.reveal(0.8s, 0.4s);
+
+  &:hover { color: var(--brand-500); }
+}
+
+@keyframes pa-pop { from { scale: 0.5; opacity: 0; } }
+
+@include motion.calm-everything;

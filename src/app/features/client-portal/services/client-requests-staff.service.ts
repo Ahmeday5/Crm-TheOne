@@ -12,7 +12,7 @@ import {
   RequestListQuery,
   RequestPatch,
 } from '../models/client-portal.models';
-import { toCommentForm } from './client-portal.service';
+import { toCommentForm } from '../data/http-client-portal.gateway';
 
 /** Someone a request can be assigned to. */
 export interface StaffOption {

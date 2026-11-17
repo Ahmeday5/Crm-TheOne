@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { AnimatedNumberDirective } from '../../directives/animated-number.directive';
+import { AnimatedNumberDirective } from '../../../../shared/directives/animated-number.directive';
 import { HealthClass } from '../../models/smart-analytics.models';
 
 export type HealthRingSize = 'sm' | 'md' | 'lg';

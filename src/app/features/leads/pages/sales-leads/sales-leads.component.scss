@@ -114,3 +114,10 @@ td.fu-cell-tomorrow { animation: fu-fill-tomorrow 3s   ease-in-out infinite; }
   color: #92400e;
   i { opacity: 1; color: #b45309; }
 }
+
+/* Sales-rep filter — highlighted while it narrows the list. */
+.sp-filter.is-active {
+  border-color: var(--brand-500);
+  background-color: var(--brand-soft);
+  font-weight: var(--fw-600);
+}

@@ -32,13 +32,19 @@ export type NotificationType =
   | 'ClientRequestCreated'
   | 'ClientRequestUpdated'
   | 'ClientRequestComment'
-  | 'ProjectBuildPushed'
-  | 'ProjectBuildFailed'
+  // ── contract v2 (2026-11-17) — payload carries `projectId` ──
+  /** A new app version is visible to the client. */
+  | 'ProjectReleasePublished'
+  /** A developer added / completed a milestone (to Admin / PM). */
+  | 'MilestoneUpdatedByDeveloper'
+  /** Progress hit 100% — the Admin closes the project. */
+  | 'ProjectReachedFullProgress'
   | (string & {});
 
 /** `relatedEntityType`s of the project workspace — `relatedEntityId` is that row's id. */
 export const CLIENT_REQUEST_ENTITY = 'ClientRequest';
-export const PROJECT_BUILD_ENTITY = 'ProjectBuild';
+export const PROJECT_RELEASE_ENTITY = 'ProjectRelease';
+export const PROJECT_MILESTONE_ENTITY = 'ProjectMilestone';
 export const PROJECT_ENTITY = 'Project';
 
 /** `relatedEntityType` of a contract notification — `relatedEntityId` is the contract id. */

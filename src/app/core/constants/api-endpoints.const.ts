@@ -178,40 +178,58 @@ export const API_ENDPOINTS = {
     /** GET list · PUT replaces the whole team `{ developers: [...] }`. */
     developers: (pid: number | string) => `ManagerProjects/${pid}/developers`,
     developer: (pid: number | string, devId: string) => `ManagerProjects/${pid}/developers/${devId}`,
-    milestones: (pid: number | string) => `ManagerProjects/${pid}/milestones`,
-    milestone: (pid: number | string, id: number | string) => `ManagerProjects/${pid}/milestones/${id}`,
     /** Paged, newest first. */
     timeline: (pid: number | string) => `ManagerProjects/${pid}/timeline`,
-    /** GET status · POST create / re-invite · DELETE revoke. */
-    clientAccess: (pid: number | string) => `ManagerProjects/${pid}/client-access`,
-    gitSettings: (pid: number | string) => `ManagerProjects/${pid}/git-settings`,
+    /** GET the customer's portal link as seen from this project · POST create one. */
+    clientLink: (pid: number | string) => `ManagerProjects/${pid}/client-link`,
     clientRequests: (pid: number | string) => `ManagerProjects/${pid}/client-requests`,
     clientRequest: (pid: number | string, id: number | string) => `ManagerProjects/${pid}/client-requests/${id}`,
     clientRequestComments: (pid: number | string, id: number | string) =>
       `ManagerProjects/${pid}/client-requests/${id}/comments`,
-    builds: (pid: number | string) => `ManagerProjects/${pid}/builds`,
-    build: (pid: number | string, id: number | string) => `ManagerProjects/${pid}/builds/${id}`,
-    buildRetry: (pid: number | string, id: number | string) => `ManagerProjects/${pid}/builds/${id}/retry`,
+    ...projectDeliverables('ManagerProjects'),
   },
   /** Developer-facing, read-only view scoped to the signed-in developer. */
   developerProjects: {
     myProjects: 'DeveloperProjects/GetMyProjects',
     myActive: 'DeveloperProjects/GetMyActiveProjects',
     myById: (id: number | string) => `DeveloperProjects/GetMyProjectById/${id}`,
-    /** GET paged list · POST multipart upload (202, status Pending). */
-    builds: (pid: number | string) => `DeveloperProjects/${pid}/builds`,
-    build: (pid: number | string, id: number | string) => `DeveloperProjects/${pid}/builds/${id}`,
-    buildRetry: (pid: number | string, id: number | string) => `DeveloperProjects/${pid}/builds/${id}/retry`,
+    ...projectDeliverables('DeveloperProjects'),
   },
-  /** Client portal — role `Client`, scoped server-side to the client's own customer. */
+  /**
+   * Client portal — opened from a private magic link (no username/password).
+   * `session` trades the link token for a short-lived portal JWT; everything
+   * else is scoped server-side to that link's customer.
+   */
   clientPortal: {
+    session: 'ClientPortal/session',
+    /** Anonymous, cacheable — company identity for the portal chrome. */
+    branding: 'ClientPortal/branding',
+    me: 'ClientPortal/me',
     myProjects: 'ClientPortal/MyProjects',
     project: (pid: number | string) => `ClientPortal/Projects/${pid}`,
+    progressHistory: (pid: number | string) => `ClientPortal/Projects/${pid}/progress-history`,
     timeline: (pid: number | string) => `ClientPortal/Projects/${pid}/timeline`,
+    credentials: (pid: number | string) => `ClientPortal/Projects/${pid}/credentials`,
+    credentialReveal: (pid: number | string, id: number | string) =>
+      `ClientPortal/Projects/${pid}/credentials/${id}/reveal`,
+    releases: (pid: number | string) => `ClientPortal/Projects/${pid}/releases`,
+    releasesLatest: (pid: number | string) => `ClientPortal/Projects/${pid}/releases/latest`,
+    /** POST → `{ url, expiresAt }` — a signed, session-free URL (QR / phone install). */
+    releaseDownloadLink: (pid: number | string, id: number | string) =>
+      `ClientPortal/Projects/${pid}/releases/${id}/download-link`,
     /** GET paged (own) · POST multipart create. */
     requests: (pid: number | string) => `ClientPortal/Projects/${pid}/requests`,
     request: (id: number | string) => `ClientPortal/requests/${id}`,
     requestComments: (id: number | string) => `ClientPortal/requests/${id}/comments`,
+  },
+  /** Admin — the per-customer private portal links. */
+  clientPortalLinks: {
+    list: 'ClientPortalLinks',
+    create: 'ClientPortalLinks',
+    byId: (id: number | string) => `ClientPortalLinks/${id}`,
+    reveal: (id: number | string) => `ClientPortalLinks/${id}/reveal`,
+    regenerate: (id: number | string) => `ClientPortalLinks/${id}/regenerate`,
+    accessLog: (id: number | string) => `ClientPortalLinks/${id}/access-log`,
   },
   /** Admin-facing task management — full CRUD + board statistics + control panel. */
   managerTasks: {
@@ -435,3 +453,22 @@ export const API_ENDPOINTS = {
     },
   },
 } as const;
+
+/**
+ * Milestones + deliverables (access credentials, app releases) — the same
+ * contract under `ManagerProjects/{pid}` (Admin) and `DeveloperProjects/{pid}`
+ * (developers assigned to the project).
+ */
+function projectDeliverables(root: 'ManagerProjects' | 'DeveloperProjects') {
+  return {
+    milestones: (pid: number | string) => `${root}/${pid}/milestones`,
+    milestone: (pid: number | string, id: number | string) => `${root}/${pid}/milestones/${id}`,
+    credentials: (pid: number | string) => `${root}/${pid}/credentials`,
+    credential: (pid: number | string, id: number | string) => `${root}/${pid}/credentials/${id}`,
+    credentialReveal: (pid: number | string, id: number | string) => `${root}/${pid}/credentials/${id}/reveal`,
+    credentialsOrder: (pid: number | string) => `${root}/${pid}/credentials/order`,
+    releases: (pid: number | string) => `${root}/${pid}/releases`,
+    release: (pid: number | string, id: number | string) => `${root}/${pid}/releases/${id}`,
+    releaseDownload: (pid: number | string, id: number | string) => `${root}/${pid}/releases/${id}/download`,
+  } as const;
+}

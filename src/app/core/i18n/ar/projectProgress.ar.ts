@@ -2,6 +2,7 @@ import { TranslationFile } from '../i18n.types';
 
 const projectProgress: TranslationFile<'projectProgress'> = {
   projectProgress: {
+    pace: { Ahead: 'سابق الخطة', OnTrack: 'ماشي مع الخطة', Behind: 'متأخر عن الخطة' },
     entryButton: 'متابعة التقدم',
 
     admin: {
@@ -99,6 +100,7 @@ const projectProgress: TranslationFile<'projectProgress'> = {
     },
 
     my: {
+      shareDone: 'إنجاز نصيبك',
       title: 'تقدمي في المشروع',
       responsibility: 'نسبة مسؤوليتي',
       earned: 'المكتسب حتى الآن',
@@ -111,6 +113,11 @@ const projectProgress: TranslationFile<'projectProgress'> = {
     },
 
     form: {
+      shareQuestion: 'خلصت كام في المية من الجزء بتاعك؟',
+      sharePreview: '= +{points}% من المشروع (نصيبك {share}%)',
+      shareHint: 'نصيبك واصل دلوقتي {current}%',
+      shareSuggested: 'المقترح النهارده +{step}%',
+      shareBelowCurrent: 'مينفعش تقل عن {current}% — الأدمن بس يقدر ينزّلها',
       newTitle: 'تقرير العمل اليومي',
       editTitle: 'تعديل تقرير العمل',
       reportDate: 'تاريخ التقرير',

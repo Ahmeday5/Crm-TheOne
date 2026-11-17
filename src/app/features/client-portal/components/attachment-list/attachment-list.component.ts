@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { AssetUrlPipe } from '../../../../shared/pipes/asset-url.pipe';
-import { formatBytes } from '../../../project-workspace/utils/build-ui.util';
+import { formatBytes } from '../../utils/client-portal-ui.util';
 import { RequestAttachment, isImageAttachment } from '../../models/client-portal.models';
 
 /** Attachments of a request / comment: images as thumbnails, other files as chips. */

@@ -6,7 +6,6 @@ import {
   CLIENT_REQUEST_ENTITY,
   CONTRACT_ENTITY,
   LEAVE_REQUEST_ENTITY,
-  PROJECT_BUILD_ENTITY,
   PROJECT_ENTITY,
   NotificationType,
   WHATSAPP_CHAT_ENTITY,
@@ -19,6 +18,8 @@ export interface NotificationTarget {
   type: NotificationType;
   relatedEntityType: string | null;
   relatedEntityId: number | null;
+  /** Contract v2: the project of a client-request / release / milestone notification. */
+  projectId?: number | null;
 }
 
 /** Roles that chat with customers on WhatsApp inside the CRM. */
@@ -47,8 +48,9 @@ export function notificationIcon(type: NotificationType): string {
     case 'ClientRequestCreated': return 'fa-solid fa-comment-medical';
     case 'ClientRequestUpdated': return 'fa-solid fa-comment-dots';
     case 'ClientRequestComment': return 'fa-solid fa-comments';
-    case 'ProjectBuildPushed': return 'fa-brands fa-github';
-    case 'ProjectBuildFailed': return 'fa-solid fa-triangle-exclamation';
+    case 'ProjectReleasePublished': return 'fa-solid fa-rocket';
+    case 'MilestoneUpdatedByDeveloper': return 'fa-solid fa-flag-checkered';
+    case 'ProjectReachedFullProgress': return 'fa-solid fa-trophy';
     // Unknown / future types still render — with the generic bell.
     default: return 'fa-solid fa-bell';
   }
@@ -77,8 +79,9 @@ export function notificationTone(type: NotificationType): string {
     case 'ClientRequestCreated': return 'warning';
     case 'ClientRequestUpdated': return 'info';
     case 'ClientRequestComment': return 'primary';
-    case 'ProjectBuildPushed': return 'success';
-    case 'ProjectBuildFailed': return 'danger';
+    case 'ProjectReleasePublished': return 'success';
+    case 'MilestoneUpdatedByDeveloper': return 'info';
+    case 'ProjectReachedFullProgress': return 'warning';
     default: return 'primary';
   }
 }
@@ -103,13 +106,17 @@ export function notificationRoute(n: NotificationTarget, role: UserRole | null):
     return chatId ? ['/whatsapp', 'chats', String(chatId)] : ['/whatsapp'];
   }
 
-  // Client requests: the client opens the request itself. Staff can't be
-  // routed — the payload carries the request id but not its project.
+  const staff = role === 'Admin' || role === 'Developer';
+
+  // Client requests: staff open the project's requests tab (needs v2 `projectId`).
   if (entityType === CLIENT_REQUEST_ENTITY || String(notifType).startsWith('ClientRequest')) {
-    if (role === 'Client' && entityType === CLIENT_REQUEST_ENTITY && n.relatedEntityId) {
-      return ['/portal', 'requests', String(n.relatedEntityId)];
-    }
-    return role === 'Client' ? ['/portal'] : null;
+    return staff && n.projectId ? ['/projects', String(n.projectId)] : null;
+  }
+
+  // Releases / milestones / 100%: the project's workspace.
+  if (notifType === 'ProjectReleasePublished' || notifType === 'MilestoneUpdatedByDeveloper' || notifType === 'ProjectReachedFullProgress') {
+    const pid = n.projectId ?? (entityType === PROJECT_ENTITY ? n.relatedEntityId : null);
+    return staff && pid ? ['/projects', String(pid)] : null;
   }
 
   // A project (e.g. "you were added to a project"): its workspace.
@@ -117,8 +124,8 @@ export function notificationRoute(n: NotificationTarget, role: UserRole | null):
     return role === 'Admin' || role === 'Developer' ? ['/projects', String(n.relatedEntityId)] : null;
   }
 
-  // Builds: same limitation as requests (no project id) — mark read only.
-  if (entityType === PROJECT_BUILD_ENTITY || String(notifType).startsWith('ProjectBuild')) return null;
+  // Old GitHub build notifications (feature removed): mark read only.
+  if (String(notifType).startsWith('ProjectBuild')) return null;
 
   // Contracts: the contract's page (Admin / Sales — the only roles that receive them).
   if (isContractNotification(n)) {

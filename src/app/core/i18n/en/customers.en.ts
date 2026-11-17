@@ -50,6 +50,9 @@ const customers: TranslationFile<'customers'> = {
       searchPlaceholder: 'Search by name or phone...',
       allStatuses: 'All statuses',
       allSources: 'All sources',
+      salesPerson: 'Sales rep',
+      allSalesPersons: 'All sales reps',
+      unassignedSales: 'No sales rep',
       allServices: 'All services',
     },
 

@@ -1,0 +1,77 @@
+<main class="pe" [class.is-leaving]="step() === 'leaving'">
+  <div class="pe__pattern" aria-hidden="true"></div>
+
+  <section class="pe__card" [attr.data-step]="step()" aria-live="polite">
+    <!-- Logo mark: the ring draws around it while the link opens -->
+    <div class="pe__logo" [class.is-busy]="busy()">
+      <svg class="pe__orbit" viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="pe__orbit-track" cx="60" cy="60" r="56" />
+        <circle class="pe__orbit-arc" cx="60" cy="60" r="56" pathLength="100" />
+      </svg>
+      <img [src]="brand.mark()" [alt]="brand.name()" (error)="$any($event.target).src = brand.fallbackLogo" />
+    </div>
+
+    <h1 class="pe__brand">{{ brand.name() }}</h1>
+    @if (brand.tagline()) { <p class="pe__tagline">{{ brand.tagline() }}</p> }
+
+    @switch (step()) {
+      @case ('opening') {
+        <p class="pe__status">
+          <span class="pe__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          {{ 'portal.entry.opening' | translate }}
+        </p>
+      }
+
+      @case ('pin') {
+        <form class="pe__form" (ngSubmit)="submitPin()" [class.is-shake]="pinError() === 'pin_invalid'">
+          <span class="pe__icon"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>
+          <h2 class="pe__title">{{ 'portal.entry.pinTitle' | translate }}</h2>
+          <p class="pe__hint">{{ 'portal.entry.pinHint' | translate }}</p>
+
+          <label class="visually-hidden" for="pe-pin">{{ 'portal.entry.pinTitle' | translate }}</label>
+          <input id="pe-pin" class="pe__pin" type="password" inputmode="numeric" autocomplete="one-time-code"
+                 maxlength="6" dir="ltr" autofocus [disabled]="lockedFor() > 0"
+                 [ngModel]="pin()" (ngModelChange)="onPinInput($event)" name="pin" placeholder="••••" />
+
+          @if (pinError() === 'pin_invalid') {
+            <p class="pe__error" role="alert"><i class="fa-solid fa-circle-xmark" aria-hidden="true"></i>{{ 'portal.entry.pinInvalid' | translate }}</p>
+          } @else if (pinError() === 'pin_locked') {
+            <p class="pe__error" role="alert"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>{{ 'portal.entry.pinLocked' | translate: { seconds: lockedFor() } }}</p>
+          }
+
+          <button type="submit" class="btn btn-primary btn-lg w-100 pe__btn" [disabled]="!pinValid() || busy() || lockedFor() > 0">
+            @if (busy()) { <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> }
+            {{ 'portal.entry.pinSubmit' | translate }}
+          </button>
+        </form>
+      }
+
+      @case ('name') {
+        <form class="pe__form" (ngSubmit)="saveName()">
+          <span class="pe__icon is-wave" aria-hidden="true">👋</span>
+          <h2 class="pe__title">
+            {{ 'portal.entry.welcome' | translate }}@if (customerName()) {<span>، {{ customerName() }}</span>}
+          </h2>
+          <p class="pe__hint">{{ 'portal.entry.nameHint' | translate }}</p>
+          <label class="visually-hidden" for="pe-name">{{ 'portal.entry.nameLabel' | translate }}</label>
+          <input id="pe-name" class="form-control form-control-lg" maxlength="60" autofocus autocomplete="name"
+                 [placeholder]="'portal.entry.namePlaceholder' | translate"
+                 [ngModel]="visitorName()" (ngModelChange)="visitorName.set($event)" name="visitorName" />
+          <div class="pe__actions">
+            <button type="submit" class="btn btn-primary btn-lg pe__btn" [disabled]="!visitorName().trim() || busy()">
+              @if (busy()) { <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> }
+              {{ 'portal.entry.nameSave' | translate }}
+            </button>
+            <button type="button" class="btn btn-light btn-lg" (click)="skipName()" [disabled]="busy()">{{ 'portal.entry.nameSkip' | translate }}</button>
+          </div>
+        </form>
+      }
+
+      @case ('leaving') {
+        <p class="pe__status"><i class="fa-solid fa-circle-check text-success" aria-hidden="true"></i>{{ 'portal.entry.ready' | translate }}</p>
+      }
+    }
+  </section>
+
+  <p class="pe__secure"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>{{ 'portal.entry.secure' | translate }}</p>
+</main>
