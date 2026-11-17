@@ -95,6 +95,15 @@ export function notificationTone(type: NotificationType): string {
  * `relatedEntityType` is the preferred signal; `type` is the fallback when the
  * backend didn't set an entity.
  */
+/** Contract v2 §11: which project-workspace tab a staff notification opens on. */
+export function notificationQuery(n: NotificationTarget): Record<string, string> | undefined {
+  const t = String(n.type);
+  if (t.startsWith('ClientRequest')) return { tab: 'requests' };
+  if (t === 'ProjectReleasePublished') return { tab: 'deliverables' };
+  if (t === 'MilestoneUpdatedByDeveloper') return { tab: 'milestones' };
+  return undefined;
+}
+
 export function notificationRoute(n: NotificationTarget, role: UserRole | null): string[] | null {
   const entityType = n.relatedEntityType;
   const notifType = n.type;

@@ -40,6 +40,37 @@ export interface ProjectTeamMemberResponseDto {
   /** The project's overall progress (same number as everywhere). */
   projectProgressPercent?: number;
   lastReportAt?: string | null;
+  // ── contract v2 names (`GET {pid}/my-progress`, `GET {pid}/team`) ──
+  responsibilityPercent?: number;
+  earnedProjectPercent?: number;
+  earnedPercent?: number;
+  remainingSharePercent?: number;
+  workingDays?: number;
+  elapsedWorkingDays?: number;
+  remainingWorkingDays?: number;
+}
+
+/**
+ * The backend renamed the progress fields in contract v2
+ * (`responsibilityPercent`, `earnedProjectPercent` / `earnedPercent`…).
+ * Everything in the app reads the original names, so every response is
+ * normalised here once: v2 name first, legacy name as the fallback.
+ */
+export function normalizeTeamMember(raw: ProjectTeamMemberResponseDto): ProjectTeamMemberResponseDto {
+  const num = (...values: Array<number | null | undefined>): number => {
+    for (const v of values) if (v != null && Number.isFinite(Number(v))) return Number(v);
+    return 0;
+  };
+  const responsibility = num(raw.responsibilityPercent, raw.responsibilityPercentage);
+  const earned = num(raw.earnedProjectPercent, raw.earnedPercent, raw.earnedProgressPercentage);
+  return {
+    ...raw,
+    responsibilityPercentage: responsibility,
+    earnedProgressPercentage: earned,
+    remainingResponsibilityPercentage: num(raw.remainingResponsibilityPercentage, Math.max(0, responsibility - earned)),
+    dailyAllocation: num(raw.dailyAllocation),
+    hasReportedToday: !!raw.hasReportedToday,
+  };
 }
 
 export type PaceStatus = 'Ahead' | 'OnTrack' | 'Behind';

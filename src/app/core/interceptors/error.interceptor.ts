@@ -7,6 +7,7 @@ import { ApiError, ApiFieldErrors } from '../models/api-response.model';
 import { API_ENDPOINTS } from '../constants/api-endpoints.const';
 import { environment } from '../../../environments/environment';
 import { LanguageService } from '../services/language.service';
+import { reasonMessage } from '../constants/api-reasons.const';
 
 /**
  * Normalizes every HTTP failure into an `ApiError` and (unless the caller
@@ -79,15 +80,17 @@ function normalizeError(err: HttpErrorResponse, isAr: boolean): ApiError {
       : undefined;
 
   const reason: string | undefined = body?.data?.reason || err.headers?.get('X-Vault-Error') || undefined;
-  const retryAfter = Number(err.headers?.get('Retry-After'));
+  const retryAfter = Number(err.headers?.get('Retry-After') ?? body?.data?.retryAfterSeconds);
+
+  const retryAfterSec = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined;
 
   return {
     status,
     code: body?.code,
-    message,
+    message: reasonMessage(reason, body?.data, isAr, retryAfterSec) ?? message,
     fieldErrors,
     reason,
-    retryAfterSec: Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined,
+    retryAfterSec,
     raw: body,
   };
 }

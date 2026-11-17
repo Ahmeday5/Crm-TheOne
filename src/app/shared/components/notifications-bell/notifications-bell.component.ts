@@ -22,6 +22,7 @@ import { PushNotificationsService } from '../../../core/services/push-notificati
 import { AppNotification } from '../../models';
 import {
   notificationIcon,
+  notificationQuery,
   notificationRoute,
   notificationTone,
   relativeTime,
@@ -101,7 +102,7 @@ export class NotificationsBellComponent implements OnInit {
     const route = notificationRoute(n, this.auth.currentRole());
     if (route) {
       this.close();
-      this.router.navigate(route);
+      this.router.navigate(route, { queryParams: notificationQuery(n) });
     }
   }
 

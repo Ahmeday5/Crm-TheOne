@@ -100,6 +100,11 @@ const projectProgress: TranslationFile<'projectProgress'> = {
     },
 
     my: {
+      responsibilityHint: 'نصيبك من المشروع كله',
+      earnedHint: 'اللي ضفته للمشروع لحد دلوقتي',
+      remainingHint: 'فاضل من نصيبك (من المشروع)',
+      shareDoneHint: 'خلصت قد إيه من الجزء بتاعك',
+      editingToday: 'بعتّ تقرير النهارده — أي تعديل هنا هيتحفظ على نفس التقرير.',
       shareDone: 'إنجاز نصيبك',
       title: 'تقدمي في المشروع',
       responsibility: 'نسبة مسؤوليتي',
@@ -113,6 +118,12 @@ const projectProgress: TranslationFile<'projectProgress'> = {
     },
 
     form: {
+      editTodayTitle: 'تعديل تقرير النهارده',
+      done100: 'خلصت نصيبي',
+      projectAfter: 'المشروع هيبقى {value}%',
+      paceLine: 'المتوقع النهارده {expected}% — خطوة مقترحة {step}% يومياً',
+      fileTooLarge: 'الملف أكبر من 10 ميجا',
+      tooManyFiles: 'أقصى عدد 10 ملفات',
       shareQuestion: 'خلصت كام في المية من الجزء بتاعك؟',
       sharePreview: '= +{points}% من المشروع (نصيبك {share}%)',
       shareHint: 'نصيبك واصل دلوقتي {current}%',

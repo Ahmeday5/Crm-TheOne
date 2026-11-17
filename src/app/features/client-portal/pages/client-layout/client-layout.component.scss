@@ -2,11 +2,32 @@
 @use 'motion';
 
 :host {
+  /* Portal palette — solid shades derived from the active brand colour, so the
+   * blue / purple / green schemes all stay coherent. No gradients. */
+  --p-deep: color-mix(in srgb, var(--brand-700) 78%, #000);
+  --p-mid: color-mix(in srgb, var(--brand-500) 84%, #000);
+  --p-light: color-mix(in srgb, var(--brand-500) 72%, #fff);
+  --cl-bar-bg: var(--p-deep);
+  --cl-bar-fg: #ffffff;
+  --cl-bar-muted: rgba(255, 255, 255, 0.68);
+  --cl-bar-hover: rgba(255, 255, 255, 0.12);
+  --cl-page: #eef3fa;
+  --cl-dot: rgba(0, 61, 122, 0.07);
+
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--surface-1);
+  background-color: var(--cl-page);
+  /* a low-contrast dot pattern (a texture, not a gradient fill) */
+  background-image: radial-gradient(var(--cl-dot) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+}
+
+:host-context([data-theme='dark']) {
+  --cl-bar-bg: #0a1222;
+  --cl-page: var(--surface-2);
+  --cl-dot: rgba(148, 163, 184, 0.07);
 }
 
 .cl-skip {
@@ -27,23 +48,41 @@
   position: sticky;
   top: 0;
   z-index: 1030;
-  border-bottom: 1px solid transparent;
-  background: var(--surface-1);
-  transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--cl-bar-bg);
+  color: var(--cl-bar-fg);
+  transition: box-shadow 220ms ease, padding 220ms ease;
 
-  &.is-scrolled {
-    border-bottom-color: var(--border);
-    background: var(--surface-0);
-    box-shadow: var(--shadow-sm);
+  &.is-scrolled { box-shadow: 0 10px 28px rgba(0, 26, 55, 0.28); }
+
+  /* a thin solid accent line under the bar */
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: -1px;
+    height: 3px;
+    background: var(--p-light);
+    transform-origin: inline-start;
+    animation: cl-line 900ms motion.$ease-out-expo both;
+  }
+
+  /* shared header controls (language / theme) read on the dark bar */
+  ::ng-deep .btn-icon {
+    color: var(--cl-bar-fg) !important;
+    background: transparent;
+    border-radius: var(--radius-pill);
+    transition: background-color 160ms ease, transform 160ms ease;
+    &:hover { background: var(--cl-bar-hover) !important; transform: translateY(-1px); }
   }
 
   &__inner {
     display: flex;
     align-items: center;
     gap: 1rem;
-    max-width: 76rem;
+    max-width: 84rem;
     margin: 0 auto;
-    padding: 0.7rem 1rem;
+    padding: 0.8rem clamp(1rem, 3vw, 2.5rem);
 
     @include bp.down(sm) { gap: 0.5rem; padding: 0.55rem 0.75rem; }
   }
@@ -54,28 +93,29 @@
   align-items: center;
   gap: 0.6rem;
   min-width: 0;
-  color: var(--text-1);
+  color: var(--cl-bar-fg);
   text-decoration: none;
 
   &__mark {
     display: grid;
     place-items: center;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     flex-shrink: 0;
     border-radius: var(--radius-md);
-    background: var(--surface-0);
-    border: 1px solid var(--border);
+    background: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
     transition: transform 300ms motion.$ease-spring, border-color 200ms ease;
 
-    img { width: 28px; height: 28px; object-fit: contain; }
+    img { width: 30px; height: 30px; object-fit: contain; }
   }
 
-  &:hover &__mark { transform: rotate(-6deg) scale(1.06); border-color: var(--brand-500); }
+  &:hover &__mark { transform: rotate(-6deg) scale(1.08); border-color: var(--p-light); }
 
   &__text { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
   &__name { font-weight: var(--fw-800); font-size: var(--fs-lg); white-space: nowrap; }
-  &__sub { color: var(--text-3); font-size: var(--fs-xs); white-space: nowrap; }
+  &__sub { color: var(--cl-bar-muted); font-size: var(--fs-xs); white-space: nowrap; }
 
   @include bp.down(sm) { &__sub { display: none; } }
 }
@@ -91,14 +131,14 @@
     gap: 0.4rem;
     padding: 0.45rem 0.9rem;
     border-radius: var(--radius-pill);
-    color: var(--text-2);
+    color: var(--cl-bar-muted);
     font-weight: var(--fw-600);
     font-size: var(--fs-sm);
     text-decoration: none;
     transition: background-color 160ms ease, color 160ms ease;
 
-    &:hover { background: var(--surface-2); color: var(--text-1); }
-    &.is-active { background: var(--brand-soft); color: var(--brand-500); }
+    &:hover { background: var(--cl-bar-hover); color: var(--cl-bar-fg); }
+    &.is-active { background: #ffffff; color: var(--brand-700); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
   }
 
   @include bp.down(md) { display: none; }
@@ -117,13 +157,14 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  color: var(--text-2);
+  color: var(--cl-bar-fg);
   font-size: 1.15rem;
   text-decoration: none;
   transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
 
-  &:hover { background: var(--surface-2); transform: translateY(-1px); }
-  &.is-wa:hover { color: #16a34a; }
+  &:hover { background: var(--cl-bar-hover); transform: translateY(-1px); }
+  &.is-wa { background: #16a34a; }
+  &.is-wa:hover { background: #15803d; transform: translateY(-1px) scale(1.05); }
 }
 
 /* ── who is viewing ── */
@@ -136,21 +177,21 @@
     gap: 0.5rem;
     max-width: 15rem;
     padding: 0.25rem 0.6rem 0.25rem 0.3rem;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: var(--radius-pill);
-    background: var(--surface-0);
-    color: var(--text-1);
-    transition: border-color 160ms ease, box-shadow 160ms ease;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--cl-bar-fg);
+    transition: background-color 160ms ease, border-color 160ms ease;
 
-    &:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
-    &:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 2px; }
+    &:hover { background: var(--cl-bar-hover); border-color: rgba(255, 255, 255, 0.3); }
+    &:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
   }
 
   &__text { display: flex; flex-direction: column; min-width: 0; text-align: start; line-height: 1.15; }
   &__name, &__company { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   &__name { font-weight: var(--fw-700); font-size: var(--fs-sm); }
-  &__company { color: var(--text-3); font-size: var(--fs-xs); }
-  &__chev { font-size: 0.65rem; color: var(--text-3); }
+  &__company { color: var(--cl-bar-muted); font-size: var(--fs-xs); }
+  &__chev { font-size: 0.65rem; color: var(--cl-bar-muted); }
 
   @include bp.down(sm) {
     &__text, &__chev { display: none; }
@@ -193,14 +234,15 @@
 }
 
 @keyframes cl-menu-in { from { opacity: 0; translate: 0 -6px; } }
+@keyframes cl-line { from { transform: scaleX(0); } }
 
 /* ── content ── */
 .cl-main {
   flex: 1;
   width: 100%;
-  max-width: none;
+  max-width: 84rem;
   margin: 0 auto;
-  padding: 1.25rem clamp(1rem, 3vw, 3rem) 2.5rem;
+  padding: 1.75rem clamp(1rem, 3vw, 2.5rem) 3rem;
 
   &:focus { outline: none; }
   @include bp.down(sm) { padding: 1rem 0.75rem 6rem; }
@@ -215,9 +257,9 @@
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 1rem 2rem;
-    max-width: 76rem;
+    max-width: 84rem;
     margin: 0 auto;
-    padding: 1.5rem 1rem;
+    padding: 1.75rem clamp(1rem, 3vw, 2.5rem);
 
     @include bp.down(md) { grid-template-columns: 1fr; }
   }

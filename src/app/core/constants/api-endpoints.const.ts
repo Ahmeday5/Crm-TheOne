@@ -463,6 +463,8 @@ function projectDeliverables(root: 'ManagerProjects' | 'DeveloperProjects') {
   return {
     milestones: (pid: number | string) => `${root}/${pid}/milestones`,
     milestone: (pid: number | string, id: number | string) => `${root}/${pid}/milestones/${id}`,
+    milestoneStatus: (pid: number | string, id: number | string) => `${root}/${pid}/milestones/${id}/status`,
+    milestonesOrder: (pid: number | string) => `${root}/${pid}/milestones/order`,
     credentials: (pid: number | string) => `${root}/${pid}/credentials`,
     credential: (pid: number | string, id: number | string) => `${root}/${pid}/credentials/${id}`,
     credentialReveal: (pid: number | string, id: number | string) => `${root}/${pid}/credentials/${id}/reveal`,

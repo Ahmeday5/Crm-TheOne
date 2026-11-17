@@ -126,9 +126,8 @@ export class ReportFormComponent implements OnInit {
     if (v.remainingWork?.trim()) fd.append('RemainingWork', v.remainingWork.trim());
     if (v.blockers?.trim()) fd.append('Blockers', v.blockers.trim());
     if (v.notes?.trim()) fd.append('Notes', v.notes.trim());
-    if (v.actualProgressContribution !== null && v.actualProgressContribution !== undefined) {
-      fd.append('ActualProgressContribution', String(v.actualProgressContribution));
-    }
+    // Contract v2: progress is not edited here (ShareCompletionPercent is optional
+    // on PUT and only allowed on the latest report) — the applied value is kept.
     for (const file of this.newAttachments()) fd.append('newAttachments', file);
 
     this.submitting.set(true);

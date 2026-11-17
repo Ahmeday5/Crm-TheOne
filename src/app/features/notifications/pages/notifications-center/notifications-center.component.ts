@@ -29,6 +29,7 @@ import { AppNotification, PagedResult } from '../../../../shared/models';
 import { AppUser } from '../../../../core/models/user.model';
 import {
   notificationIcon,
+  notificationQuery,
   notificationRoute,
   notificationTone,
   relativeTime,
@@ -171,7 +172,7 @@ export class NotificationsCenterComponent implements OnInit, AfterViewInit, OnDe
   openNotification(n: AppNotification): void {
     this.markRead(n);
     const route = notificationRoute(n, this.auth.currentRole());
-    if (route) this.router.navigate(route);
+    if (route) this.router.navigate(route, { queryParams: notificationQuery(n) });
   }
 
   markAllRead(): void {

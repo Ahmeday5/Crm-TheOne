@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { concat, last } from 'rxjs';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
@@ -144,7 +143,7 @@ export class MilestonesPanelComponent {
     this.upsert({ ...m, status, completedAt: status === 'Done' ? new Date().toISOString() : null });
     this.busyId.set(m.id);
     this.error.set(null);
-    this.api().update(this.projectId(), m.id, toInput(m, { status })).subscribe({
+    this.api().setStatus(this.projectId(), m.id, status).subscribe({
       next: (saved) => {
         this.busyId.set(null);
         this.upsert(saved);
@@ -220,7 +219,7 @@ export class MilestonesPanelComponent {
     this.overId.set(null);
   }
 
-  /** Optimistic: show the new order, then PUT each milestone whose index changed. */
+  /** Optimistic: show the new order, then `PUT …/milestones/order` with all ids. */
   private commitOrder(list: Milestone[]): void {
     const previous = this.items();
     const renumbered = list.map((m, i) => ({ ...m, orderIndex: i }));
@@ -229,8 +228,8 @@ export class MilestonesPanelComponent {
     if (!changed.length) return;
     this.reordering.set(true);
     this.error.set(null);
-    concat(...changed.map((m) => this.api().update(this.projectId(), m.id, toInput(m, {}))))
-      .pipe(last())
+    this.api()
+      .reorder(this.projectId(), renumbered.map((m) => m.id))
       .subscribe({
         next: () => this.reordering.set(false),
         error: (e: ApiError) => {
@@ -254,15 +253,4 @@ export class MilestonesPanelComponent {
 
 function sortByOrder(list: Milestone[]): Milestone[] {
   return [...list].sort((a, b) => a.orderIndex - b.orderIndex || a.id - b.id);
-}
-
-function toInput(m: Milestone, patch: Partial<MilestoneInput>): MilestoneInput {
-  return {
-    title: m.title,
-    description: m.description,
-    status: m.status,
-    dueDate: m.dueDate,
-    orderIndex: m.orderIndex,
-    ...patch,
-  };
 }

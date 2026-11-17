@@ -9,6 +9,7 @@ import {
 import { NotificationsStore } from '../../../core/services/notifications.store';
 import {
   notificationIcon,
+  notificationQuery,
   notificationRoute,
   notificationTone,
 } from '../../models/notifications/notification-ui.util';
@@ -48,7 +49,7 @@ export class NotificationToastsComponent {
     this.store.markRead(t.id);
     this.toastService.dismiss(t.id);
     const route = notificationRoute(t, this.auth.currentRole());
-    if (route) this.router.navigate(route);
+    if (route) this.router.navigate(route, { queryParams: notificationQuery(t) });
   }
 
   dismiss(t: NotificationToast, event: Event): void {

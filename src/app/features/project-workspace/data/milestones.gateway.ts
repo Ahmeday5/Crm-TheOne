@@ -6,18 +6,19 @@ import { withInlineHandling, withSkipLoader } from '../../../core/http/http-cont
 import { MockStore, daysFromNow, fail, mockReply, nowIso } from '../../../core/mocks/mock-http.util';
 import { ApiService } from '../../../core/services/api.service';
 import { WorkspaceScope } from '../models/deliverables.models';
-import { Milestone, MilestoneInput } from '../models/workspace.models';
+import { Milestone, MilestoneInput, MilestoneStatus } from '../models/workspace.models';
 
 /**
  * A project's milestones — the same contract for Admin (`ManagerProjects`)
- * and assigned developers (`DeveloperProjects`). Status changes and reorder
- * go through `PUT …/milestones/{id}` (works on both sides today); delete is
- * Admin-only.
+ * and assigned developers (`DeveloperProjects`). Status → `PATCH …/{id}/status`,
+ * reorder → `PUT …/milestones/order`; delete is Admin-only.
  */
 export interface MilestonesGateway {
   list(projectId: number): Observable<Milestone[]>;
   create(projectId: number, body: MilestoneInput): Observable<Milestone>;
   update(projectId: number, id: number, body: MilestoneInput): Observable<Milestone>;
+  setStatus(projectId: number, id: number, status: MilestoneStatus): Observable<Milestone>;
+  reorder(projectId: number, ids: number[]): Observable<unknown>;
   remove(projectId: number, id: number): Observable<unknown>;
 }
 
@@ -57,6 +58,14 @@ class HttpMilestonesGateway implements MilestonesGateway {
 
   update(projectId: number, id: number, body: MilestoneInput): Observable<Milestone> {
     return this.api.put<Milestone>(this.ep.milestone(projectId, id), body, { context: withInlineHandling() });
+  }
+
+  setStatus(projectId: number, id: number, status: MilestoneStatus): Observable<Milestone> {
+    return this.api.patch<Milestone>(this.ep.milestoneStatus(projectId, id), { status }, { context: withInlineHandling() });
+  }
+
+  reorder(projectId: number, ids: number[]): Observable<unknown> {
+    return this.api.put(this.ep.milestonesOrder(projectId), { ids }, { context: withInlineHandling() });
   }
 
   remove(projectId: number, id: number): Observable<unknown> {
@@ -108,6 +117,17 @@ export class MockDeveloperMilestonesGateway implements MilestonesGateway {
         if (m.status !== 'Done') m.completedAt = null;
       });
       return strip(m);
+    });
+  }
+
+  setStatus(projectId: number, id: number, status: MilestoneStatus): Observable<Milestone> {
+    return this.update(projectId, id, { status } as MilestoneInput);
+  }
+
+  reorder(projectId: number, ids: number[]): Observable<unknown> {
+    return mockReply(() => {
+      this.db.update((d) => d.items.forEach((m) => m.projectId === projectId && ids.includes(m.id) && (m.orderIndex = ids.indexOf(m.id))));
+      return null;
     });
   }
 

@@ -209,7 +209,7 @@ export class ClientLinkCardComponent {
       this.api.update(l.id, {
         scope: s.scope,
         projectIds: s.scope === 'SelectedProjects' ? [this.projectId()] : [],
-        expiresAt: s.expiresOn ? `${s.expiresOn}T23:59:59Z` : null,
+        ...(s.expiresOn ? { expiresAt: `${s.expiresOn}T23:59:59Z` } : { clearExpiry: true }),
         ...(s.removePin ? { pin: '' } : s.pin ? { pin: s.pin } : {}),
       }),
     );

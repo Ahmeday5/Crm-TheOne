@@ -1,100 +1,173 @@
-<section class="ph-hero">
-  <div class="ph-hero__text">
-    <span class="ph-hero__eyebrow">{{ greetingKey() | translate }}</span>
-    <h1 class="ph-hero__title">
+<!-- ── welcome banner ── -->
+<section class="ph-welcome">
+  <span class="ph-welcome__shape is-a" aria-hidden="true"></span>
+  <span class="ph-welcome__shape is-b" aria-hidden="true"></span>
+  <span class="ph-welcome__shape is-c" aria-hidden="true"></span>
+  <span class="ph-welcome__ring" aria-hidden="true"></span>
+
+  <div class="ph-welcome__text">
+    <span class="ph-welcome__eyebrow">
+      <i class="fa-regular fa-sun" aria-hidden="true"></i>{{ greetingKey() | translate }}
+      <span class="ph-welcome__sep" aria-hidden="true"></span>
+      {{ today | cairoDate: 'date' }}
+    </span>
+    <h1 class="ph-welcome__title">
       @if (firstName()) { {{ 'portal.home.hello' | translate: { name: firstName() } }} }
       @else { {{ 'clientPortal.home.title' | translate }} }
     </h1>
-    <p class="ph-hero__sub">{{ 'portal.home.subtitle' | translate: { company: brand.name() } }}</p>
+    <p class="ph-welcome__sub">{{ 'portal.home.subtitle' | translate: { company: brand.name() } }}</p>
+    <span class="ph-welcome__live"><i aria-hidden="true"></i>{{ 'portal.home.live' | translate }}</span>
   </div>
 
-  @if (projects(); as list) {
-    @if (list.length) {
-      <dl class="ph-stats">
-        <div class="ph-stat" style="--d: 0">
-          <dt><i class="fa-solid fa-diagram-project" aria-hidden="true"></i>{{ 'portal.home.stats.projects' | translate }}</dt>
-          <dd [appAnimatedNumber]="stats().projects"></dd>
-        </div>
-        <div class="ph-stat" style="--d: 1">
-          <dt><i class="fa-solid fa-chart-line" aria-hidden="true"></i>{{ 'portal.home.stats.avgProgress' | translate }}</dt>
-          <dd [appAnimatedNumber]="stats().avgProgress" suffix="%"></dd>
-        </div>
-        <div class="ph-stat" style="--d: 2">
-          <dt><i class="fa-solid fa-message" aria-hidden="true"></i>{{ 'portal.home.stats.openRequests' | translate }}</dt>
-          <dd [appAnimatedNumber]="stats().openRequests"></dd>
-        </div>
-        <div class="ph-stat" style="--d: 3">
-          <dt><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i>{{ 'portal.home.stats.apps' | translate }}</dt>
-          <dd [appAnimatedNumber]="stats().releases"></dd>
-        </div>
-      </dl>
-    }
-  }
+  <div class="ph-welcome__mark" aria-hidden="true">
+    <img [src]="brand.logo()" alt="" (error)="$any($event.target).src = brand.fallbackLogo" />
+  </div>
 </section>
 
+<!-- ── summary ── -->
+@if (projects()?.length) {
+  <dl class="ph-stats">
+    @for (s of statTiles(); track s.key; let i = $index) {
+      <div class="ph-stat" [attr.data-tone]="s.tone" [style.--d]="i">
+        <span class="ph-stat__icon"><i [class]="s.icon" aria-hidden="true"></i></span>
+        <div class="ph-stat__body">
+          <dt>{{ 'portal.home.stats.' + s.key | translate }}</dt>
+          <dd [appAnimatedNumber]="s.value" [suffix]="s.suffix"></dd>
+          <span class="ph-stat__hint">{{ 'portal.home.statHints.' + s.key | translate }}</span>
+        </div>
+      </div>
+    }
+  </dl>
+}
+
 @if (failed()) {
-  <div class="card ph-state">
+  <div class="ph-state">
     <span class="icon-tile lg tone-warning"><i class="fa-solid fa-triangle-exclamation"></i></span>
     <h2 class="h6 fw-700 mb-2">{{ 'clientPortal.errors.load' | translate }}</h2>
     <button type="button" class="btn btn-sm btn-primary" (click)="load()">{{ 'common.retry' | translate }}</button>
   </div>
-} @else if (projects()) {
-  @let list = projects()!;
-  @if (list.length === 0) {
-    <div class="card ph-state">
-      <span class="icon-tile lg tone-secondary"><i class="fa-solid fa-folder-open"></i></span>
-      <h2 class="h6 fw-700 mb-1">{{ 'portal.home.empty' | translate }}</h2>
-      <p class="text-muted small mb-0">{{ 'portal.home.emptyHint' | translate }}</p>
-    </div>
-  } @else {
-    <h2 class="ph-section">{{ 'clientPortal.home.title' | translate }}</h2>
-    <div class="ph-grid">
-      @for (p of list; track p.projectId; let i = $index) {
-        <a class="ph-card" [routerLink]="['/portal', 'projects', p.projectId]" [style.--d]="i">
-          <div class="ph-card__head">
-            <div class="ph-card__titles">
-              <h3 class="ph-card__name">{{ p.name }}</h3>
-              @if (p.shortDescription) { <p class="ph-card__desc">{{ p.shortDescription }}</p> }
-            </div>
-            <span class="badge" [class]="statusClass(p.status)">{{ 'projects.manage.statuses.' + p.status | translate }}</span>
-          </div>
-
-          <div class="ph-card__body">
-            <app-progress-ring [value]="p.progressPercent" [size]="104" [tone]="healthTone(p.scheduleHealth)"
-                               [caption]="'clientPortal.project.done' | translate"
-                               [ariaLabel]="'clientPortal.project.progress' | translate" />
-            <ul class="ph-facts">
-              <li class="ph-health" [attr.data-tone]="healthTone(p.scheduleHealth)">
-                <i [class]="healthIcon(p.scheduleHealth)" aria-hidden="true"></i>{{ 'portal.health.' + p.scheduleHealth | translate }}
-              </li>
-              <li>
-                <i class="fa-regular fa-calendar-check" aria-hidden="true"></i>
-                @if (p.status === 'Completed') { {{ 'portal.home.delivered' | translate }} }
-                @else if (p.daysRemaining >= 0) { {{ 'portal.home.daysLeft' | translate: { days: p.daysRemaining } }} }
-                @else { {{ 'portal.home.overdue' | translate: { days: -p.daysRemaining } }} }
-              </li>
-              @if (p.nextMilestone; as m) {
-                <li class="ph-facts__clip"><i class="fa-solid fa-flag" aria-hidden="true"></i>{{ m.title }}</li>
-              }
-              @if (p.latestRelease; as r) {
-                <li><i [class]="platformIcon(r.platform)" aria-hidden="true"></i>{{ 'portal.home.version' | translate: { version: r.versionName } }}</li>
-              }
-            </ul>
-          </div>
-
-          <div class="ph-card__foot">
-            <span class="ph-card__updated"><i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ 'clientPortal.project.lastUpdate' | translate }} {{ p.lastUpdateAt | timeAgo }}</span>
-            @if (p.openRequestsCount) {
-              <span class="badge bg-warning-subtle text-warning">{{ p.openRequestsCount }} {{ 'clientPortal.requests.openShort' | translate }}</span>
-            }
-            <span class="ph-card__go" aria-hidden="true"><i class="fa-solid fa-arrow-left"></i></span>
-          </div>
-        </a>
-      }
-    </div>
-  }
 } @else {
-  <div class="ph-grid" aria-hidden="true">
-    @for (_ of [1, 2]; track $index) { <div class="ph-card ph-card--sk"><span></span><span></span><span></span></div> }
+  <div class="ph-layout">
+    <!-- ── projects ── -->
+    <section class="ph-main" aria-labelledby="ph-projects-title">
+      <header class="ph-head">
+        <h2 id="ph-projects-title"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i>{{ 'clientPortal.home.title' | translate }}</h2>
+        @if (projects(); as list) {
+          <span class="ph-head__count">{{ 'portal.home.projectsCount' | translate: { count: list.length } }}</span>
+        }
+      </header>
+
+      @if (projects(); as list) {
+        @if (list.length === 0) {
+          <div class="ph-state">
+            <span class="icon-tile lg tone-secondary"><i class="fa-solid fa-folder-open"></i></span>
+            <h3 class="h6 fw-700 mb-1">{{ 'portal.home.empty' | translate }}</h3>
+            <p class="text-muted small mb-0">{{ 'portal.home.emptyHint' | translate }}</p>
+          </div>
+        } @else {
+          <div class="ph-grid">
+            @for (p of list; track p.projectId; let i = $index) {
+              <a class="ph-card" [routerLink]="['/portal', 'projects', p.projectId]" [style.--d]="i"
+                 [attr.data-tone]="healthTone(p.scheduleHealth)">
+                <div class="ph-card__head">
+                  <span class="ph-card__avatar" aria-hidden="true">{{ initial(p.name) }}</span>
+                  <div class="ph-card__titles">
+                    <h3 class="ph-card__name">{{ p.name }}</h3>
+                    @if (p.shortDescription) { <p class="ph-card__desc">{{ p.shortDescription }}</p> }
+                  </div>
+                  <span class="badge ph-card__status" [class]="statusClass(p.status)">{{ 'projects.manage.statuses.' + p.status | translate }}</span>
+                </div>
+
+                <div class="ph-card__body">
+                  <div class="ph-card__ring">
+                    <app-progress-ring [value]="p.progressPercent" [size]="118" [tone]="healthTone(p.scheduleHealth)"
+                                       [caption]="'clientPortal.project.done' | translate"
+                                       [ariaLabel]="'clientPortal.project.progress' | translate" />
+                  </div>
+                  <ul class="ph-facts">
+                    <li class="ph-facts__health" [attr.data-tone]="healthTone(p.scheduleHealth)">
+                      <span class="ph-facts__icon"><i [class]="healthIcon(p.scheduleHealth)" aria-hidden="true"></i></span>
+                      {{ 'portal.health.' + p.scheduleHealth | translate }}
+                    </li>
+                    <li>
+                      <span class="ph-facts__icon"><i class="fa-regular fa-calendar-check" aria-hidden="true"></i></span>
+                      @if (p.status === 'Completed') { {{ 'portal.home.delivered' | translate }} }
+                      @else if (p.daysRemaining >= 0) { {{ 'portal.home.daysLeft' | translate: { days: p.daysRemaining } }} }
+                      @else { <span class="text-danger">{{ 'portal.home.overdue' | translate: { days: -p.daysRemaining } }}</span> }
+                    </li>
+                    @if (p.nextMilestone; as m) {
+                      <li class="ph-facts__clip">
+                        <span class="ph-facts__icon"><i class="fa-solid fa-flag" aria-hidden="true"></i></span>
+                        <span class="ph-facts__text">{{ m.title }}</span>
+                      </li>
+                    }
+                    @if (p.latestRelease; as r) {
+                      <li>
+                        <span class="ph-facts__icon"><i [class]="platformIcon(r.platform)" aria-hidden="true"></i></span>
+                        {{ 'portal.home.version' | translate: { version: r.versionName } }}
+                      </li>
+                    }
+                  </ul>
+                </div>
+
+                <div class="ph-card__bar" role="presentation">
+                  <span class="ph-card__bar-label">{{ 'portal.home.progressLabel' | translate }}</span>
+                  <span class="ph-card__bar-track"><span [style.--w]="p.progressPercent / 100"></span></span>
+                </div>
+
+                <div class="ph-card__foot">
+                  <span class="ph-card__updated"><i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ p.lastUpdateAt | timeAgo }}</span>
+                  @if (p.openRequestsCount) {
+                    <span class="ph-card__req"><i class="fa-solid fa-message" aria-hidden="true"></i>{{ p.openRequestsCount }} {{ 'clientPortal.requests.openShort' | translate }}</span>
+                  }
+                  <span class="ph-card__go">{{ 'portal.home.viewProject' | translate }}<i class="fa-solid fa-arrow-left" aria-hidden="true"></i></span>
+                </div>
+              </a>
+            }
+          </div>
+        }
+      } @else {
+        <div class="ph-grid" aria-hidden="true">
+          @for (_ of [1, 2]; track $index) { <div class="ph-card ph-card--sk"><span></span><span></span><span></span></div> }
+        </div>
+      }
+    </section>
+
+    <!-- ── side: support + what you can do ── -->
+    <aside class="ph-side">
+      <section class="ph-support">
+        <span class="ph-support__icon" aria-hidden="true"><i class="fa-solid fa-headset"></i></span>
+        <h2>{{ 'portal.home.support.title' | translate }}</h2>
+        <p>{{ 'portal.home.support.text' | translate: { company: brand.name() } }}</p>
+        <div class="ph-support__actions">
+          @if (brand.whatsAppHref(); as wa) {
+            <a class="ph-support__btn is-wa" [href]="wa" target="_blank" rel="noopener">
+              <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>{{ 'portal.contact.whatsapp' | translate }}
+            </a>
+          }
+          @if (brand.phoneHref(); as tel) {
+            <a class="ph-support__btn" [href]="tel"><i class="fa-solid fa-phone" aria-hidden="true"></i>{{ 'portal.contact.call' | translate }}</a>
+          }
+          @if (brand.emailHref(); as mail) {
+            <a class="ph-support__btn" [href]="mail"><i class="fa-regular fa-envelope" aria-hidden="true"></i>{{ 'portal.contact.email' | translate }}</a>
+          }
+        </div>
+        @if (brand.branding()?.workingHours; as hours) {
+          <span class="ph-support__hours"><i class="fa-regular fa-clock" aria-hidden="true"></i>{{ hours }}</span>
+        }
+      </section>
+
+      <section class="ph-tips">
+        <h2>{{ 'portal.home.tips.title' | translate }}</h2>
+        <ul role="list">
+          @for (t of tips; track t.key; let i = $index) {
+            <li [attr.data-tone]="t.tone" [style.--d]="i">
+              <span class="ph-tips__icon"><i [class]="t.icon" aria-hidden="true"></i></span>
+              {{ 'portal.home.tips.' + t.key | translate }}
+            </li>
+          }
+        </ul>
+      </section>
+    </aside>
   </div>
 }

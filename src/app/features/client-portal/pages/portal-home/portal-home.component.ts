@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ProgressRingComponent } from '../../../../shared/components/progress-ring/progress-ring.component';
 import { AnimatedNumberDirective } from '../../../../shared/directives/animated-number.directive';
 import { projectStatusBadgeClass } from '../../../../shared/models';
+import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TimeAgoPipe } from '../../../../shared/pipes/time-ago.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { CLIENT_PORTAL_GATEWAY } from '../../data/client-portal.gateway';
@@ -13,15 +14,26 @@ import { PortalLiveService } from '../../services/portal-live.service';
 import { PortalSessionService } from '../../services/portal-session.service';
 import { healthIcon, healthTone, platformIcon } from '../../utils/client-portal-ui.util';
 
+type Tone = 'brand' | 'success' | 'warning' | 'info';
+
+interface StatTile {
+  key: 'projects' | 'avgProgress' | 'openRequests' | 'apps';
+  icon: string;
+  tone: Tone;
+  value: number;
+  suffix: string;
+}
+
 /**
- * The client's landing page: a warm greeting, a summary strip (counts up),
- * then one card per project — ring, status, schedule health, next milestone,
- * latest app version, open requests. Progress updates live.
+ * The client's landing page: a branded welcome banner, four summary tiles
+ * (count up), project cards (ring, health, next milestone, latest version,
+ * open requests — progress updates live) and a side column with support
+ * contacts and what the portal offers.
  */
 @Component({
   selector: 'app-portal-home',
   standalone: true,
-  imports: [RouterLink, TranslatePipe, TimeAgoPipe, ProgressRingComponent, AnimatedNumberDirective],
+  imports: [RouterLink, TranslatePipe, TimeAgoPipe, CairoDatePipe, ProgressRingComponent, AnimatedNumberDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './portal-home.component.html',
   styleUrl: './portal-home.component.scss',
@@ -52,6 +64,25 @@ export class PortalHomeComponent {
     };
   });
 
+  protected readonly statTiles = computed<StatTile[]>(() => {
+    const s = this.stats();
+    return [
+      { key: 'projects', icon: 'fa-solid fa-diagram-project', tone: 'brand', value: s.projects, suffix: '' },
+      { key: 'avgProgress', icon: 'fa-solid fa-chart-line', tone: 'success', value: s.avgProgress, suffix: '%' },
+      { key: 'openRequests', icon: 'fa-solid fa-message', tone: 'warning', value: s.openRequests, suffix: '' },
+      { key: 'apps', icon: 'fa-solid fa-mobile-screen', tone: 'info', value: s.releases, suffix: '' },
+    ];
+  });
+
+  protected readonly tips: ReadonlyArray<{ key: string; icon: string; tone: Tone }> = [
+    { key: 'progress', icon: 'fa-solid fa-gauge-high', tone: 'brand' },
+    { key: 'app', icon: 'fa-brands fa-android', tone: 'success' },
+    { key: 'try', icon: 'fa-solid fa-display', tone: 'info' },
+    { key: 'request', icon: 'fa-solid fa-comment-medical', tone: 'warning' },
+  ];
+
+  protected readonly today = new Date().toISOString();
+
   protected readonly statusClass = projectStatusBadgeClass;
   protected readonly healthTone = healthTone;
   protected readonly healthIcon = healthIcon;
@@ -68,6 +99,10 @@ export class PortalHomeComponent {
           ) ?? list,
         ),
       );
+  }
+
+  protected initial(name: string): string {
+    return (name.trim()[0] ?? '#').toUpperCase();
   }
 
   protected load(): void {

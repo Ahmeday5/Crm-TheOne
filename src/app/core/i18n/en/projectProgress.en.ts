@@ -100,6 +100,11 @@ const projectProgress: TranslationFile<'projectProgress'> = {
     },
 
     my: {
+      responsibilityHint: 'Your share of the whole project',
+      earnedHint: 'What you added to the project so far',
+      remainingHint: 'Left of your share (project points)',
+      shareDoneHint: 'How much of your part is done',
+      editingToday: 'You already reported today — changes here update that report.',
       shareDone: 'Your share done',
       title: 'My Project Progress',
       responsibility: 'My Responsibility',
@@ -113,6 +118,12 @@ const projectProgress: TranslationFile<'projectProgress'> = {
     },
 
     form: {
+      editTodayTitle: "Edit today's report",
+      done100: 'My part is done',
+      projectAfter: 'Project will be {value}%',
+      paceLine: 'Expected today {expected}% — suggested step {step}% a day',
+      fileTooLarge: 'The file is larger than 10 MB',
+      tooManyFiles: 'At most 10 files',
       shareQuestion: 'How much of YOUR part is done?',
       sharePreview: '= +{points}% of the project (your share {share}%)',
       shareHint: 'Your share is at {current}% now',

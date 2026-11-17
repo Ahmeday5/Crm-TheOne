@@ -1,63 +1,31 @@
 <a class="pp-back" routerLink="/portal"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>{{ 'clientPortal.project.back' | translate }}</a>
 
 @if (project(); as p) {
-  <!-- ── hero ── -->
+  <!-- ── hero banner ── -->
   <section class="pp-hero" id="pp-overview">
+    <span class="pp-hero__shape is-a" aria-hidden="true"></span>
+    <span class="pp-hero__shape is-b" aria-hidden="true"></span>
+    <span class="pp-hero__deco" aria-hidden="true"></span>
+
     <div class="pp-hero__main">
       <div class="pp-hero__badges">
-        <span class="badge" [class]="statusClass(p.status)">{{ 'projects.manage.statuses.' + p.status | translate }}</span>
-        <span class="pp-health" [attr.data-tone]="healthTone(p.scheduleHealth)">
+        <span class="pp-chip">{{ 'projects.manage.statuses.' + p.status | translate }}</span>
+        <span class="pp-chip pp-chip--health" [attr.data-tone]="healthTone(p.scheduleHealth)">
           <i [class]="healthIcon(p.scheduleHealth)" aria-hidden="true"></i>{{ 'portal.health.' + p.scheduleHealth | translate }}
         </span>
       </div>
       <h1 class="pp-hero__name">{{ p.name }}</h1>
       @if (p.description) { <p class="pp-hero__desc">{{ p.description }}</p> }
 
-      <dl class="pp-facts">
-        <div style="--d: 0">
-          <dt><i class="fa-regular fa-calendar" aria-hidden="true"></i>{{ 'portal.project.start' | translate }}</dt>
-          <dd>{{ p.startDate | cairoDate: 'date' }}</dd>
-        </div>
-        <div style="--d: 1">
-          <dt><i class="fa-regular fa-calendar-check" aria-hidden="true"></i>{{ 'clientPortal.project.expectedEnd' | translate }}</dt>
-          <dd>{{ p.expectedEndDate | cairoDate: 'date' }}</dd>
-        </div>
-        <div style="--d: 2">
-          <dt><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>{{ 'portal.project.remaining' | translate }}</dt>
-          <dd>
-            @if (p.status === 'Completed') { {{ 'portal.home.delivered' | translate }} }
-            @else if (p.daysRemaining >= 0) { {{ 'portal.project.days' | translate: { days: p.daysRemaining } }} }
-            @else { <span class="text-danger">{{ 'portal.home.overdue' | translate: { days: -p.daysRemaining } }}</span> }
-          </dd>
-        </div>
-        <div style="--d: 3">
-          <dt><i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ 'clientPortal.project.lastUpdate' | translate }}</dt>
-          <dd>{{ p.lastUpdateAt | timeAgo }}</dd>
-        </div>
-      </dl>
-
       <div class="pp-hero__actions">
-        <button type="button" class="btn btn-primary btn-lg pp-cta" (click)="composerOpen.set(true)">
-          <i class="fa-solid fa-comment-medical me-2" aria-hidden="true"></i>{{ 'clientPortal.project.cta' | translate }}
+        <button type="button" class="pp-btn pp-btn--light" (click)="composerOpen.set(true)">
+          <i class="fa-solid fa-comment-medical" aria-hidden="true"></i>{{ 'clientPortal.project.cta' | translate }}
         </button>
         @if (androidLatest()) {
-          <button type="button" class="btn btn-light btn-lg pp-cta" (click)="downloadLatestApk()">
-            <i class="fa-brands fa-android me-2" aria-hidden="true"></i>{{ 'portal.project.getApp' | translate }}
+          <button type="button" class="pp-btn pp-btn--success" (click)="downloadLatestApk()">
+            <i class="fa-brands fa-android" aria-hidden="true"></i>{{ 'portal.project.getApp' | translate }}
           </button>
         }
-      </div>
-    </div>
-
-    <aside class="pp-hero__side">
-      <div class="pp-ring" [class.is-pulse]="pulse()">
-        <app-progress-ring [value]="p.progressPercent" [size]="184" [decimals]="0" [tone]="healthTone(p.scheduleHealth)"
-                           [caption]="'clientPortal.project.done' | translate"
-                           [ariaLabel]="'clientPortal.project.progress' | translate" />
-        <span class="pp-ring__live" aria-hidden="true"><i></i>{{ 'portal.project.live' | translate }}</span>
-      </div>
-      <div class="pp-plan-mini">
-        <span>{{ 'portal.project.planDone' | translate: { done: doneCount(), total: p.milestones.length } }}</span>
-        <div class="pp-bar"><span [style.width.%]="planPercent()"></span></div>
       </div>
 
       @if (p.projectManager; as pm) {
@@ -74,16 +42,57 @@
           }
         </div>
       }
+    </div>
+
+    <aside class="pp-hero__side">
+      <div class="pp-ring" [class.is-pulse]="pulse()">
+        <app-progress-ring [value]="p.progressPercent" [size]="164" [decimals]="0" [tone]="healthTone(p.scheduleHealth)"
+                           [caption]="'clientPortal.project.done' | translate"
+                           [ariaLabel]="'clientPortal.project.progress' | translate" />
+        <span class="pp-ring__live" aria-hidden="true"><i></i>{{ 'portal.project.live' | translate }}</span>
+      </div>
+      <div class="pp-plan-mini">
+        <span>{{ 'portal.project.planDone' | translate: { done: doneCount(), total: p.milestones.length } }}</span>
+        <div class="pp-bar"><span [style.--w]="planPercent() / 100"></span></div>
+      </div>
     </aside>
   </section>
 
+  <!-- ── key facts (overlap the banner) ── -->
+  <dl class="pp-facts">
+    <div class="pp-fact" data-tone="brand" style="--d: 0">
+      <span class="pp-fact__icon"><i class="fa-regular fa-calendar" aria-hidden="true"></i></span>
+      <div><dt>{{ 'portal.project.start' | translate }}</dt><dd>{{ p.startDate | cairoDate: 'date' }}</dd></div>
+    </div>
+    <div class="pp-fact" data-tone="info" style="--d: 1">
+      <span class="pp-fact__icon"><i class="fa-regular fa-calendar-check" aria-hidden="true"></i></span>
+      <div><dt>{{ 'clientPortal.project.expectedEnd' | translate }}</dt><dd>{{ p.expectedEndDate | cairoDate: 'date' }}</dd></div>
+    </div>
+    <div class="pp-fact" [attr.data-tone]="p.status !== 'Completed' && p.daysRemaining < 0 ? 'danger' : 'warning'" style="--d: 2">
+      <span class="pp-fact__icon"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i></span>
+      <div>
+        <dt>{{ 'portal.project.remaining' | translate }}</dt>
+        <dd>
+          @if (p.status === 'Completed') { {{ 'portal.home.delivered' | translate }} }
+          @else if (p.daysRemaining >= 0) { {{ 'portal.project.days' | translate: { days: p.daysRemaining } }} }
+          @else { {{ 'portal.home.overdue' | translate: { days: -p.daysRemaining } }} }
+        </dd>
+      </div>
+    </div>
+    <div class="pp-fact" data-tone="success" style="--d: 3">
+      <span class="pp-fact__icon"><i class="fa-solid fa-rotate" aria-hidden="true"></i></span>
+      <div><dt>{{ 'clientPortal.project.lastUpdate' | translate }}</dt><dd>{{ p.lastUpdateAt | timeAgo }}</dd></div>
+    </div>
+  </dl>
+
   <!-- ── section bar ── -->
-  <nav class="pp-nav" [attr.aria-label]="'portal.project.nav.label' | translate">
+  <nav class="pp-nav" id="pp-nav" [attr.aria-label]="'portal.project.nav.label' | translate">
     @for (s of sections(); track s.id) {
       <button type="button" [class.is-active]="activeSection() === s.id"
               [attr.aria-current]="activeSection() === s.id ? 'page' : null"
               (click)="selectSection(s.id)">
         <i [class]="s.icon" aria-hidden="true"></i><span>{{ s.labelKey | translate }}</span>
+        @if (s.id === 'requests' && openCount()) { <span class="pp-nav__count">{{ openCount() }}</span> }
       </button>
     }
   </nav>
@@ -92,20 +101,68 @@
     @switch (activeSection()) {
       @case ('overview') {
         <div class="pp-panel" id="pp-panel-overview">
-          <section class="pp-card pp-card--chart">
-            <app-portal-progress-chart [projectId]="projectId" [current]="p.progressPercent" />
+          <section aria-labelledby="pp-quick-title">
+            <h2 class="visually-hidden" id="pp-quick-title">{{ 'portal.project.quick' | translate }}</h2>
+            <div class="pp-quick">
+              @for (q of quickLinks(); track q.id; let i = $index) {
+                <button type="button" class="pp-quick__tile" [attr.data-tone]="q.tone" [style.--d]="i" (click)="selectSection(q.id)">
+                  <span class="pp-quick__icon"><i [class]="q.icon" aria-hidden="true"></i></span>
+                  <span class="pp-quick__text">
+                    <b>{{ q.labelKey | translate }}</b>
+                    <small>{{ q.hintKey | translate: q.hintParams }}</small>
+                  </span>
+                  <i class="fa-solid fa-arrow-left pp-quick__go" aria-hidden="true"></i>
+                </button>
+              }
+            </div>
           </section>
 
-          <div class="pp-overview__grid">
+          <div class="pp-overview">
+            <section class="pp-card pp-card--chart">
+              <app-portal-progress-chart [projectId]="projectId" [current]="p.progressPercent" />
+            </section>
+
+            <section class="pp-card">
+              <header class="pp-card__head">
+                <span class="pp-card__icon"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i></span>
+                <h2>{{ 'portal.project.nextUp' | translate }}</h2>
+                @if (p.milestones.length) {
+                  <button type="button" class="pp-link" (click)="selectSection('plan')">{{ 'portal.project.viewAll' | translate }}</button>
+                }
+              </header>
+              @if (p.milestones.length === 0) {
+                <div class="pp-empty"><i class="fa-regular fa-flag" aria-hidden="true"></i><p>{{ 'clientPortal.project.noMilestones' | translate }}</p></div>
+              } @else if (nextMilestones().length === 0) {
+                <div class="pp-empty is-done"><i class="fa-solid fa-trophy" aria-hidden="true"></i><p>{{ 'portal.project.allDone' | translate }}</p></div>
+              } @else {
+                <ol class="pp-next">
+                  @for (m of nextMilestones(); track m.id; let i = $index) {
+                    <li [attr.data-status]="m.status" [style.--d]="i">
+                      <span class="pp-next__dot" aria-hidden="true"></span>
+                      <span class="pp-next__text">
+                        <b>{{ m.title }}</b>
+                        <small>
+                          @if (m.status === 'InProgress') { {{ 'clientPortal.milestone.InProgress' | translate }} }
+                          @else if (m.dueDate) { {{ 'clientPortal.milestone.due' | translate }} {{ m.dueDate | cairoDate: 'date' }} }
+                          @else { {{ 'clientPortal.milestone.Pending' | translate }} }
+                        </small>
+                      </span>
+                    </li>
+                  }
+                </ol>
+              }
+            </section>
+
             @if (p.team?.length) {
               <section class="pp-card">
                 <header class="pp-card__head">
-                  <i class="fa-solid fa-people-group" aria-hidden="true"></i>
+                  <span class="pp-card__icon is-info"><i class="fa-solid fa-people-group" aria-hidden="true"></i></span>
                   <h2>{{ 'portal.project.team' | translate }}</h2>
+                  <span class="pp-card__count">{{ p.team!.length }}</span>
                 </header>
                 <ul class="pp-team" role="list">
-                  @for (t of p.team; track t.name) {
-                    <li>
+                  @for (t of p.team; track t.name; let i = $index) {
+                    <li [style.--d]="i">
                       <app-user-avatar [name]="t.name" [imageUrl]="t.avatarUrl" size="sm" />
                       <span class="pp-team__name">{{ t.name }}</span>
                       @if (t.roleOnProject) { <span class="pp-team__role">{{ t.roleOnProject }}</span> }
@@ -118,8 +175,9 @@
             @if (news().length) {
               <section class="pp-card">
                 <header class="pp-card__head">
-                  <i class="fa-solid fa-newspaper" aria-hidden="true"></i>
+                  <span class="pp-card__icon is-success"><i class="fa-solid fa-newspaper" aria-hidden="true"></i></span>
                   <h2>{{ 'clientPortal.project.news' | translate }}</h2>
+                  <button type="button" class="pp-link" (click)="selectSection('news')">{{ 'portal.project.viewAll' | translate }}</button>
                 </header>
                 <ul class="pp-news" role="list">
                   @for (e of news().slice(0, 3); track e.id) {
@@ -141,12 +199,12 @@
       @case ('plan') {
         <section class="pp-panel pp-card" id="pp-panel-plan">
           <header class="pp-card__head">
-            <i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>
+            <span class="pp-card__icon"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i></span>
             <h2>{{ 'clientPortal.project.milestones' | translate }}</h2>
             @if (p.milestones.length) { <span class="pp-card__count">{{ doneCount() }} / {{ p.milestones.length }}</span> }
           </header>
           @if (p.milestones.length === 0) {
-            <div class="pp-empty"><p>{{ 'clientPortal.project.noMilestones' | translate }}</p></div>
+            <div class="pp-empty"><i class="fa-regular fa-flag" aria-hidden="true"></i><p>{{ 'clientPortal.project.noMilestones' | translate }}</p></div>
           } @else {
             <ol class="pp-steps">
               @for (m of p.milestones; track m.id; let i = $index) {
@@ -160,6 +218,7 @@
                   </span>
                   <span class="pp-step__text">
                     <span class="pp-step__title">{{ m.title }}</span>
+                    @if (m.description) { <span class="pp-step__desc">{{ m.description }}</span> }
                     <span class="pp-step__sub">
                       @if (m.completedAt) { {{ 'clientPortal.milestone.Done' | translate }} · {{ m.completedAt | cairoDate: 'date' }} }
                       @else if (m.status === 'InProgress') { {{ 'clientPortal.milestone.InProgress' | translate }} }
@@ -175,8 +234,8 @@
       }
 
       @case ('try') {
-        <section class="pp-panel pp-card pp-panel--feature" id="pp-panel-try">
-          <header class="pp-section__head">
+        <section class="pp-panel pp-card" id="pp-panel-try">
+          <header class="pp-section__head" data-tone="info">
             <span class="pp-section__icon"><i class="fa-solid fa-display" aria-hidden="true"></i></span>
             <div>
               <h2>{{ 'portal.credentials.title' | translate }}</h2>
@@ -188,9 +247,9 @@
       }
 
       @case ('app') {
-        <section class="pp-panel pp-card pp-panel--feature" id="pp-panel-app">
-          <header class="pp-section__head">
-            <span class="pp-section__icon is-success"><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i></span>
+        <section class="pp-panel pp-card" id="pp-panel-app">
+          <header class="pp-section__head" data-tone="success">
+            <span class="pp-section__icon"><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i></span>
             <div>
               <h2>{{ 'portal.releases.title' | translate }}</h2>
               <p>{{ 'portal.releases.subtitle' | translate }}</p>
@@ -203,11 +262,11 @@
       @case ('requests') {
         <section class="pp-panel pp-card" id="pp-panel-requests">
           <header class="pp-card__head">
-            <i class="fa-solid fa-message" aria-hidden="true"></i>
+            <span class="pp-card__icon is-warning"><i class="fa-solid fa-message" aria-hidden="true"></i></span>
             <h2>{{ 'clientPortal.requests.title' | translate }}</h2>
-            @if (openCount()) { <span class="badge bg-warning-subtle text-warning">{{ openCount() }} {{ 'clientPortal.requests.openShort' | translate }}</span> }
-            <button type="button" class="btn btn-sm btn-primary ms-auto" (click)="composerOpen.set(true)">
-              <i class="fa-solid fa-plus me-1" aria-hidden="true"></i>{{ 'portal.project.newRequest' | translate }}
+            @if (openCount()) { <span class="pp-card__count is-warning">{{ openCount() }} {{ 'clientPortal.requests.openShort' | translate }}</span> }
+            <button type="button" class="pp-btn pp-btn--primary pp-btn--sm pp-card__action" (click)="composerOpen.set(true)">
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>{{ 'portal.project.newRequest' | translate }}
             </button>
           </header>
           @if (requests(); as list) {
@@ -218,8 +277,8 @@
               </div>
             } @else {
               <ul class="pp-req" role="list">
-                @for (r of list; track r.id) {
-                  <li>
+                @for (r of list; track r.id; let i = $index) {
+                  <li [style.--d]="i">
                     <a class="pp-req__row" [routerLink]="['/portal', 'requests', r.id]">
                       <span class="pp-req__icon" [attr.data-type]="r.type"><i [class]="typeIcon(r.type)" aria-hidden="true"></i></span>
                       <span class="pp-req__main">
@@ -243,15 +302,16 @@
       @case ('news') {
         <section class="pp-panel pp-card" id="pp-panel-news">
           <header class="pp-card__head">
-            <i class="fa-solid fa-newspaper" aria-hidden="true"></i>
+            <span class="pp-card__icon is-success"><i class="fa-solid fa-newspaper" aria-hidden="true"></i></span>
             <h2>{{ 'clientPortal.project.news' | translate }}</h2>
           </header>
-          <ul class="pp-news" role="list">
+          <ul class="pp-news pp-news--full" role="list">
             @for (e of news(); track e.id) {
               <li>
                 <span class="pp-news__icon" [attr.data-type]="e.type"><i [class]="newsIcon(e.type)" aria-hidden="true"></i></span>
                 <span class="pp-news__text">
                   <span class="pp-news__title">{{ e.title }}</span>
+                  @if (e.description) { <span class="pp-news__desc">{{ e.description }}</span> }
                   <span class="pp-news__at">{{ e.createdAt | timeAgo }}</span>
                 </span>
               </li>
@@ -264,12 +324,12 @@
 
   <!-- phones: actions always one tap away -->
   <div class="pp-dock">
-    <button type="button" class="btn btn-primary" (click)="composerOpen.set(true)">
-      <i class="fa-solid fa-comment-medical me-2" aria-hidden="true"></i>{{ 'portal.project.newRequest' | translate }}
+    <button type="button" class="pp-btn pp-btn--primary" (click)="composerOpen.set(true)">
+      <i class="fa-solid fa-comment-medical" aria-hidden="true"></i>{{ 'portal.project.newRequest' | translate }}
     </button>
     @if (androidLatest()) {
-      <button type="button" class="btn btn-light" (click)="downloadLatestApk()">
-        <i class="fa-brands fa-android me-2" aria-hidden="true"></i>{{ 'portal.project.getAppShort' | translate }}
+      <button type="button" class="pp-btn pp-btn--success" (click)="downloadLatestApk()">
+        <i class="fa-brands fa-android" aria-hidden="true"></i>{{ 'portal.project.getAppShort' | translate }}
       </button>
     }
   </div>
@@ -282,7 +342,8 @@
 } @else {
   <div class="pp-sk" aria-hidden="true">
     <div class="pp-sk__hero"></div>
-    <div class="pp-sk__row"><span></span><span></span></div>
+    <div class="pp-sk__row"><span></span><span></span><span></span><span></span></div>
+    <div class="pp-sk__body"></div>
   </div>
 }
 

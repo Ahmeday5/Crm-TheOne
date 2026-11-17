@@ -61,12 +61,13 @@ export interface CreateLinkInput {
   pin?: string | null;
 }
 
-/** `PATCH ClientPortalLinks/{id}` — omitted = unchanged; `expiresAt: null` clears; `pin: ""` removes. */
+/** `PATCH ClientPortalLinks/{id}` — omitted = unchanged; `clearExpiry: true` removes the expiry; `pin: ""` removes. */
 export interface UpdateLinkInput {
   label?: string | null;
   scope?: LinkScope;
   projectIds?: number[];
   expiresAt?: string | null;
+  clearExpiry?: boolean;
   pin?: string;
 }
 

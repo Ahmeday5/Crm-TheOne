@@ -27,10 +27,16 @@ import { waHref } from '../../services/portal-branding.service';
 import { PortalLiveService } from '../../services/portal-live.service';
 import { healthIcon, healthTone, requestStatusClass, requestTypeIcon } from '../../utils/client-portal-ui.util';
 
+type Tone = 'brand' | 'success' | 'warning' | 'info' | 'secondary';
+
 interface SectionLink {
   id: string;
   labelKey: string;
   icon: string;
+  tone: Tone;
+  /** Overview "quick access" tile subtitle. */
+  hintKey: string;
+  hintParams?: Record<string, string | number>;
 }
 
 /**
@@ -90,16 +96,38 @@ export class PortalProjectComponent {
   });
 
   protected readonly sections = computed<SectionLink[]>(() => {
+    const total = this.project()?.milestones.length ?? 0;
     const list: SectionLink[] = [
-      { id: 'overview', labelKey: 'portal.project.nav.overview', icon: 'fa-solid fa-gauge' },
-      { id: 'plan', labelKey: 'portal.project.nav.plan', icon: 'fa-solid fa-flag-checkered' },
+      { id: 'overview', labelKey: 'portal.project.nav.overview', icon: 'fa-solid fa-gauge', tone: 'brand', hintKey: '' },
+      {
+        id: 'plan', labelKey: 'portal.project.nav.plan', icon: 'fa-solid fa-flag-checkered', tone: 'brand',
+        hintKey: 'portal.project.quickHints.plan', hintParams: { done: this.doneCount(), total },
+      },
     ];
-    if (this.credentials().length) list.push({ id: 'try', labelKey: 'portal.project.nav.try', icon: 'fa-solid fa-display' });
-    if (this.releases().length) list.push({ id: 'app', labelKey: 'portal.project.nav.app', icon: 'fa-solid fa-mobile-screen' });
-    list.push({ id: 'requests', labelKey: 'portal.project.nav.requests', icon: 'fa-solid fa-message' });
-    if (this.news().length) list.push({ id: 'news', labelKey: 'portal.project.nav.news', icon: 'fa-solid fa-newspaper' });
+    if (this.credentials().length) {
+      list.push({
+        id: 'try', labelKey: 'portal.project.nav.try', icon: 'fa-solid fa-display', tone: 'info',
+        hintKey: 'portal.project.quickHints.try', hintParams: { count: this.credentials().length },
+      });
+    }
+    if (this.releases().length) {
+      list.push({ id: 'app', labelKey: 'portal.project.nav.app', icon: 'fa-solid fa-mobile-screen', tone: 'success', hintKey: 'portal.project.quickHints.app' });
+    }
+    list.push({
+      id: 'requests', labelKey: 'portal.project.nav.requests', icon: 'fa-solid fa-message', tone: 'warning',
+      hintKey: 'portal.project.quickHints.requests', hintParams: { count: this.openCount() },
+    });
+    if (this.news().length) {
+      list.push({ id: 'news', labelKey: 'portal.project.nav.news', icon: 'fa-solid fa-newspaper', tone: 'secondary', hintKey: 'portal.project.quickHints.news' });
+    }
     return list;
   });
+
+  /** Overview shortcuts: every section except the overview itself. */
+  protected readonly quickLinks = computed(() => this.sections().filter((s) => s.id !== 'overview'));
+
+  /** The next (up to 3) milestones that are not done yet. */
+  protected readonly nextMilestones = computed(() => (this.project()?.milestones ?? []).filter((m) => m.status !== 'Done').slice(0, 3));
 
   protected readonly statusClass = projectStatusBadgeClass;
   protected readonly requestStatusClass = requestStatusClass;
@@ -143,6 +171,11 @@ export class PortalProjectComponent {
   protected selectSection(id: string): void {
     if (!this.sections().some((section) => section.id === id)) return;
     this.activeSection.set(id);
+    // Bring the section bar into view when jumping from further down the page.
+    const nav = document.getElementById('pp-nav');
+    if (nav && nav.getBoundingClientRect().top < 0) {
+      nav.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    }
   }
 
   protected downloadLatestApk(): void {

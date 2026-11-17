@@ -48,6 +48,8 @@ export interface Milestone {
   /** Audit (contract v2) — optional until the backend ships them. */
   createdByName?: string | null;
   updatedByName?: string | null;
+  completedByName?: string | null;
+  createdAt?: string;
   updatedAt?: string | null;
 }
 
@@ -80,4 +82,6 @@ export interface TimelineEvent {
   createdAt: string;
   /** Admin only — `null` in the client portal. */
   isClientVisible: boolean | null;
+  /** Who did it (portal: "TheOne team"). */
+  actorName?: string | null;
 }

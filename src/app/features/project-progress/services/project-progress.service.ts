@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
@@ -20,6 +20,7 @@ import {
   ProjectProgressHistoryDto,
   ProjectProgressSummaryDto,
   ProjectTeamMemberResponseDto,
+  normalizeTeamMember,
 } from '../../../shared/models';
 
 const INVALIDATE_TAGS = ['ProjectProgress'];
@@ -40,7 +41,7 @@ export class ProjectProgressService {
     return this.api.get<ProjectTeamMemberResponseDto[]>(
       API_ENDPOINTS.projectProgress.team(projectId),
       { context: withCache({ ttlMs: CACHE_TTL.SHORT }) },
-    );
+    ).pipe(map((list) => (list ?? []).map(normalizeTeamMember)));
   }
 
   assignTeam(projectId: number, payload: AssignProjectTeamDto): Observable<unknown> {
@@ -57,20 +58,19 @@ export class ProjectProgressService {
     const ctx = force
       ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
       : withCache({ ttlMs: CACHE_TTL.SHORT });
-    return this.api.get<ProjectProgressSummaryDto>(
-      API_ENDPOINTS.projectProgress.summary(projectId),
-      { context: ctx },
-    );
+    return this.api
+      .get<ProjectProgressSummaryDto & { progressPercent?: number }>(API_ENDPOINTS.projectProgress.summary(projectId), { context: ctx })
+      // v2 `progressPercent` is the single source; the old name is an alias.
+      .pipe(map((s) => ({ ...s, overallProgressPercentage: s.progressPercent ?? s.overallProgressPercentage ?? 0 })));
   }
 
   getMyProgress(projectId: number, force = false): Observable<ProjectTeamMemberResponseDto> {
     const ctx = force
       ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
       : withCache({ ttlMs: CACHE_TTL.SHORT });
-    return this.api.get<ProjectTeamMemberResponseDto>(
-      API_ENDPOINTS.projectProgress.myProgress(projectId),
-      { context: ctx },
-    );
+    return this.api
+      .get<ProjectTeamMemberResponseDto>(API_ENDPOINTS.projectProgress.myProgress(projectId), { context: ctx })
+      .pipe(map(normalizeTeamMember));
   }
 
   // ─────────── progress adjustment + history (Admin) ───────────
