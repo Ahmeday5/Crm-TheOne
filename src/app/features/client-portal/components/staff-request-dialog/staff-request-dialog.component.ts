@@ -31,6 +31,7 @@ export class StaffRequestDialogComponent {
 
   readonly projectId = input.required<number>();
   readonly requestId = input.required<number>();
+  readonly isAdmin = input(false);
   readonly assignees = input<StaffOption[]>([]);
 
   /** The request changed (status, priority, assignee, new reply) — refresh the list row. */
@@ -75,6 +76,7 @@ export class StaffRequestDialogComponent {
   }
 
   protected setAssignee(value: string): void {
+    if (!this.isAdmin()) return;
     this.patch({ assignedToId: value });
   }
 

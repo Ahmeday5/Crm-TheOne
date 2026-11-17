@@ -38,42 +38,6 @@
       </div>
     </div>
 
-    <!-- My stats -->
-    <div class="row g-3 mb-4">
-      <div class="col-6 col-md-3">
-        <div class="card h-100">
-          <div class="card-body text-center">
-            <div class="text-muted small mb-1">{{ 'projectProgress.my.responsibility' | translate }}</div>
-            <div class="fw-700 fs-4 text-primary">{{ mp.responsibilityPercentage }}%</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="card h-100">
-          <div class="card-body text-center">
-            <div class="text-muted small mb-1">{{ 'projectProgress.my.earned' | translate }}</div>
-            <div class="fw-700 fs-4 text-success">{{ mp.earnedProgressPercentage }}%</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="card h-100">
-          <div class="card-body text-center">
-            <div class="text-muted small mb-1">{{ 'projectProgress.my.remaining' | translate }}</div>
-            <div class="fw-700 fs-4 text-warning">{{ mp.remainingResponsibilityPercentage }}%</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="card h-100">
-          <div class="card-body text-center">
-            <div class="text-muted small mb-1">{{ 'projectProgress.my.shareDone' | translate }}</div>
-            <div class="fw-700 fs-4 text-info">{{ currentShare() | number: '1.0-1' }}%</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Overall project progress (the workspace overview already shows it) -->
     @if (!embedded() && summary()) {
       @let s = summary()!;
@@ -126,40 +90,6 @@
                      [max]="maxDate()"
                      [class.is-invalid]="isInvalid('reportDate')" />
               <app-form-error [control]="form.controls.reportDate" [label]="'projectProgress.form.reportDate' | translate" />
-            </div>
-
-            <div class="col-12">
-              <label for="report-share" class="form-label fw-600">
-                {{ 'projectProgress.form.shareQuestion' | translate }} <span class="text-danger">*</span>
-              </label>
-              <div class="share-row">
-                <input id="report-share-range" type="range" class="form-range share-range" min="0" max="100" step="1"
-                       formControlName="shareCompletionPercent" [attr.aria-label]="'projectProgress.form.shareQuestion' | translate" />
-                <div class="input-group share-input">
-                  <input id="report-share" type="number" min="0" max="100" step="0.5" class="form-control"
-                         formControlName="shareCompletionPercent"
-                         [class.is-invalid]="isInvalid('shareCompletionPercent') || belowCurrent()" />
-                  <span class="input-group-text">%</span>
-                </div>
-              </div>
-              <div class="share-preview" [class.is-zero]="previewContribution() === 0">
-                <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
-                <span>{{ 'projectProgress.form.sharePreview' | translate: { points: (previewContribution() | number: '1.0-2'), share: mp.responsibilityPercentage } }}</span>
-              </div>
-              <small class="text-muted d-block mt-1">
-                {{ 'projectProgress.form.shareHint' | translate: { current: (currentShare() | number: '1.0-1') } }}
-                @if (mp.suggestedDailyStep) { · {{ 'projectProgress.form.shareSuggested' | translate: { step: (mp.suggestedDailyStep | number: '1.0-1') } }} }
-              </small>
-              @if (mp.paceStatus; as pace) {
-                <span class="badge mt-1" [class]="pace === 'Behind' ? 'bg-warning-subtle text-warning' : pace === 'Ahead' ? 'bg-success-subtle text-success' : 'bg-info-subtle text-info'">
-                  {{ 'projectProgress.pace.' + pace | translate }}
-                </span>
-              }
-              @if (belowCurrent()) {
-                <div class="text-danger small mt-1">
-                  <i class="fa-solid fa-circle-exclamation me-1"></i>{{ 'projectProgress.form.shareBelowCurrent' | translate: { current: (currentShare() | number: '1.0-1') } }}
-                </div>
-              }
             </div>
 
             <div class="col-12">

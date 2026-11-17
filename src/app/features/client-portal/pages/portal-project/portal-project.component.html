@@ -80,22 +80,102 @@
   <!-- ── section bar ── -->
   <nav class="pp-nav" [attr.aria-label]="'portal.project.nav.label' | translate">
     @for (s of sections(); track s.id) {
-      <button type="button" [class.is-active]="activeSection() === s.id" (click)="scrollTo(s.id)">
+      <button type="button" [class.is-active]="activeSection() === s.id"
+              [attr.aria-current]="activeSection() === s.id ? 'page' : null"
+              (click)="selectSection(s.id)">
         <i [class]="s.icon" aria-hidden="true"></i><span>{{ s.labelKey | translate }}</span>
       </button>
     }
   </nav>
 
-  <div class="pp-layout">
-    <div class="pp-col">
-      <!-- progress over time -->
-      <section class="pp-card">
-        <app-portal-progress-chart [projectId]="projectId" [current]="p.progressPercent" />
-      </section>
+  <div class="pp-content">
+    @switch (activeSection()) {
+      @case ('overview') {
+        <div class="pp-panel" id="pp-panel-overview">
+          <section class="pp-card pp-card--chart">
+            <app-portal-progress-chart [projectId]="projectId" [current]="p.progressPercent" />
+          </section>
 
-      <!-- try the system -->
-      @if (credentials().length) {
-        <section class="pp-section" id="pp-try">
+          <div class="pp-overview__grid">
+            @if (p.team?.length) {
+              <section class="pp-card">
+                <header class="pp-card__head">
+                  <i class="fa-solid fa-people-group" aria-hidden="true"></i>
+                  <h2>{{ 'portal.project.team' | translate }}</h2>
+                </header>
+                <ul class="pp-team" role="list">
+                  @for (t of p.team; track t.name) {
+                    <li>
+                      <app-user-avatar [name]="t.name" [imageUrl]="t.avatarUrl" size="sm" />
+                      <span class="pp-team__name">{{ t.name }}</span>
+                      @if (t.roleOnProject) { <span class="pp-team__role">{{ t.roleOnProject }}</span> }
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+
+            @if (news().length) {
+              <section class="pp-card">
+                <header class="pp-card__head">
+                  <i class="fa-solid fa-newspaper" aria-hidden="true"></i>
+                  <h2>{{ 'clientPortal.project.news' | translate }}</h2>
+                </header>
+                <ul class="pp-news" role="list">
+                  @for (e of news().slice(0, 3); track e.id) {
+                    <li>
+                      <span class="pp-news__icon" [attr.data-type]="e.type"><i [class]="newsIcon(e.type)" aria-hidden="true"></i></span>
+                      <span class="pp-news__text">
+                        <span class="pp-news__title">{{ e.title }}</span>
+                        <span class="pp-news__at">{{ e.createdAt | timeAgo }}</span>
+                      </span>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+          </div>
+        </div>
+      }
+
+      @case ('plan') {
+        <section class="pp-panel pp-card" id="pp-panel-plan">
+          <header class="pp-card__head">
+            <i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>
+            <h2>{{ 'clientPortal.project.milestones' | translate }}</h2>
+            @if (p.milestones.length) { <span class="pp-card__count">{{ doneCount() }} / {{ p.milestones.length }}</span> }
+          </header>
+          @if (p.milestones.length === 0) {
+            <div class="pp-empty"><p>{{ 'clientPortal.project.noMilestones' | translate }}</p></div>
+          } @else {
+            <ol class="pp-steps">
+              @for (m of p.milestones; track m.id; let i = $index) {
+                <li class="pp-step" [attr.data-status]="m.status" [style.--d]="i">
+                  <span class="pp-step__dot" aria-hidden="true">
+                    @switch (m.status) {
+                      @case ('Done') { <i class="fa-solid fa-check"></i> }
+                      @case ('InProgress') { <span class="pp-step__live"></span> }
+                      @default { <span class="pp-step__num">{{ i + 1 }}</span> }
+                    }
+                  </span>
+                  <span class="pp-step__text">
+                    <span class="pp-step__title">{{ m.title }}</span>
+                    <span class="pp-step__sub">
+                      @if (m.completedAt) { {{ 'clientPortal.milestone.Done' | translate }} · {{ m.completedAt | cairoDate: 'date' }} }
+                      @else if (m.status === 'InProgress') { {{ 'clientPortal.milestone.InProgress' | translate }} }
+                      @else if (m.dueDate) { {{ 'clientPortal.milestone.due' | translate }} {{ m.dueDate | cairoDate: 'date' }} }
+                      @else { {{ 'clientPortal.milestone.Pending' | translate }} }
+                    </span>
+                  </span>
+                </li>
+              }
+            </ol>
+          }
+        </section>
+      }
+
+      @case ('try') {
+        <section class="pp-panel pp-card pp-panel--feature" id="pp-panel-try">
           <header class="pp-section__head">
             <span class="pp-section__icon"><i class="fa-solid fa-display" aria-hidden="true"></i></span>
             <div>
@@ -107,9 +187,8 @@
         </section>
       }
 
-      <!-- download the app -->
-      @if (releases().length) {
-        <section class="pp-section" id="pp-app">
+      @case ('app') {
+        <section class="pp-panel pp-card pp-panel--feature" id="pp-panel-app">
           <header class="pp-section__head">
             <span class="pp-section__icon is-success"><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i></span>
             <div>
@@ -121,104 +200,48 @@
         </section>
       }
 
-      <!-- requests -->
-      <section class="pp-card" id="pp-requests">
-        <header class="pp-card__head">
-          <i class="fa-solid fa-message" aria-hidden="true"></i>
-          <h2>{{ 'clientPortal.requests.title' | translate }}</h2>
-          @if (openCount()) { <span class="badge bg-warning-subtle text-warning">{{ openCount() }} {{ 'clientPortal.requests.openShort' | translate }}</span> }
-          <button type="button" class="btn btn-sm btn-light ms-auto" (click)="composerOpen.set(true)">
-            <i class="fa-solid fa-plus me-1" aria-hidden="true"></i>{{ 'portal.project.newRequest' | translate }}
-          </button>
-        </header>
-        @if (requests(); as list) {
-          @if (list.length === 0) {
-            <div class="pp-empty">
-              <i class="fa-regular fa-comments" aria-hidden="true"></i>
-              <p>{{ 'clientPortal.requests.emptyHint' | translate }}</p>
-            </div>
-          } @else {
-            <ul class="pp-req" role="list">
-              @for (r of list; track r.id) {
-                <li>
-                  <a class="pp-req__row" [routerLink]="['/portal', 'requests', r.id]">
-                    <span class="pp-req__icon" [attr.data-type]="r.type"><i [class]="typeIcon(r.type)" aria-hidden="true"></i></span>
-                    <span class="pp-req__main">
-                      <span class="pp-req__title">{{ r.title }}</span>
-                      <span class="pp-req__sub">{{ (r.updatedAt || r.createdAt) | timeAgo }}
-                        @if (r.commentsCount) { · <i class="fa-regular fa-comment" aria-hidden="true"></i> {{ r.commentsCount }} }</span>
-                    </span>
-                    <span class="badge" [class]="requestStatusClass(r.status)">{{ 'clientPortal.status.' + r.status | translate }}</span>
-                    <i class="fa-solid fa-chevron-left pp-req__go" aria-hidden="true"></i>
-                  </a>
-                </li>
-              }
-            </ul>
-          }
-        } @else {
-          <div class="pp-empty"><span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span></div>
-        }
-      </section>
-    </div>
-
-    <div class="pp-col pp-col--side">
-      <!-- the plan -->
-      <section class="pp-card" id="pp-plan">
-        <header class="pp-card__head">
-          <i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>
-          <h2>{{ 'clientPortal.project.milestones' | translate }}</h2>
-          @if (p.milestones.length) { <span class="pp-card__count">{{ doneCount() }} / {{ p.milestones.length }}</span> }
-        </header>
-        @if (p.milestones.length === 0) {
-          <div class="pp-empty"><p>{{ 'clientPortal.project.noMilestones' | translate }}</p></div>
-        } @else {
-          <ol class="pp-steps">
-            @for (m of p.milestones; track m.id; let i = $index) {
-              <li class="pp-step" [attr.data-status]="m.status" [style.--d]="i">
-                <span class="pp-step__dot" aria-hidden="true">
-                  @switch (m.status) {
-                    @case ('Done') { <i class="fa-solid fa-check"></i> }
-                    @case ('InProgress') { <span class="pp-step__live"></span> }
-                    @default { <span class="pp-step__num">{{ i + 1 }}</span> }
-                  }
-                </span>
-                <span class="pp-step__text">
-                  <span class="pp-step__title">{{ m.title }}</span>
-                  <span class="pp-step__sub">
-                    @if (m.completedAt) { {{ 'clientPortal.milestone.Done' | translate }} · {{ m.completedAt | cairoDate: 'date' }} }
-                    @else if (m.status === 'InProgress') { {{ 'clientPortal.milestone.InProgress' | translate }} }
-                    @else if (m.dueDate) { {{ 'clientPortal.milestone.due' | translate }} {{ m.dueDate | cairoDate: 'date' }} }
-                    @else { {{ 'clientPortal.milestone.Pending' | translate }} }
-                  </span>
-                </span>
-              </li>
-            }
-          </ol>
-        }
-      </section>
-
-      <!-- team -->
-      @if (p.team?.length) {
-        <section class="pp-card">
+      @case ('requests') {
+        <section class="pp-panel pp-card" id="pp-panel-requests">
           <header class="pp-card__head">
-            <i class="fa-solid fa-people-group" aria-hidden="true"></i>
-            <h2>{{ 'portal.project.team' | translate }}</h2>
+            <i class="fa-solid fa-message" aria-hidden="true"></i>
+            <h2>{{ 'clientPortal.requests.title' | translate }}</h2>
+            @if (openCount()) { <span class="badge bg-warning-subtle text-warning">{{ openCount() }} {{ 'clientPortal.requests.openShort' | translate }}</span> }
+            <button type="button" class="btn btn-sm btn-primary ms-auto" (click)="composerOpen.set(true)">
+              <i class="fa-solid fa-plus me-1" aria-hidden="true"></i>{{ 'portal.project.newRequest' | translate }}
+            </button>
           </header>
-          <ul class="pp-team" role="list">
-            @for (t of p.team; track t.name) {
-              <li>
-                <app-user-avatar [name]="t.name" [imageUrl]="t.avatarUrl" size="sm" />
-                <span class="pp-team__name">{{ t.name }}</span>
-                @if (t.roleOnProject) { <span class="pp-team__role">{{ t.roleOnProject }}</span> }
-              </li>
+          @if (requests(); as list) {
+            @if (list.length === 0) {
+              <div class="pp-empty">
+                <i class="fa-regular fa-comments" aria-hidden="true"></i>
+                <p>{{ 'clientPortal.requests.emptyHint' | translate }}</p>
+              </div>
+            } @else {
+              <ul class="pp-req" role="list">
+                @for (r of list; track r.id) {
+                  <li>
+                    <a class="pp-req__row" [routerLink]="['/portal', 'requests', r.id]">
+                      <span class="pp-req__icon" [attr.data-type]="r.type"><i [class]="typeIcon(r.type)" aria-hidden="true"></i></span>
+                      <span class="pp-req__main">
+                        <span class="pp-req__title">{{ r.title }}</span>
+                        <span class="pp-req__sub">{{ (r.updatedAt || r.createdAt) | timeAgo }}
+                          @if (r.commentsCount) { · <i class="fa-regular fa-comment" aria-hidden="true"></i> {{ r.commentsCount }} }</span>
+                      </span>
+                      <span class="badge" [class]="requestStatusClass(r.status)">{{ 'clientPortal.status.' + r.status | translate }}</span>
+                      <i class="fa-solid fa-chevron-left pp-req__go" aria-hidden="true"></i>
+                    </a>
+                  </li>
+                }
+              </ul>
             }
-          </ul>
+          } @else {
+            <div class="pp-empty"><span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span></div>
+          }
         </section>
       }
 
-      <!-- news -->
-      @if (news().length) {
-        <section class="pp-card" id="pp-news">
+      @case ('news') {
+        <section class="pp-panel pp-card" id="pp-panel-news">
           <header class="pp-card__head">
             <i class="fa-solid fa-newspaper" aria-hidden="true"></i>
             <h2>{{ 'clientPortal.project.news' | translate }}</h2>
@@ -236,7 +259,7 @@
           </ul>
         </section>
       }
-    </div>
+    }
   </div>
 
   <!-- phones: actions always one tap away -->

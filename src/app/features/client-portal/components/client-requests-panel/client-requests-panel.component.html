@@ -64,6 +64,6 @@
 </div>
 
 @if (openId(); as id) {
-  <app-staff-request-dialog [projectId]="projectId()" [requestId]="id" [assignees]="assignees()"
+  <app-staff-request-dialog [projectId]="projectId()" [requestId]="id" [isAdmin]="isAdmin()" [assignees]="assignees()"
                             (updated)="onUpdated($event)" (closed)="openId.set(null)" />
 }

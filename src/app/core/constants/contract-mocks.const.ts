@@ -11,13 +11,13 @@
  */
 export const CONTRACT_MOCKS = {
   /** `ClientPortal/*` — magic-link session + the whole client portal. */
-  clientPortal: true,
+  clientPortal: false,
   /** `ClientPortalLinks/*` + `ManagerProjects/{id}/client-link` — the admin link card. */
-  clientLinks: true,
+  clientLinks: false,
   /** `…/{id}/credentials` + `…/{id}/releases` — the deliverables tab. */
-  deliverables: true,
+  deliverables: false,
   /** `DeveloperProjects/{id}/milestones` — developers editing milestones (admin side is live). */
-  developerMilestones: true,
+  developerMilestones: false,
 } as const;
 
 export type ContractArea = keyof typeof CONTRACT_MOCKS;

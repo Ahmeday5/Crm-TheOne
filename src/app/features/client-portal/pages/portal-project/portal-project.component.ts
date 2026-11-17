@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
@@ -37,8 +37,8 @@ interface SectionLink {
  * One project, as its owner sees it: hero (live progress ring, schedule
  * health, dates, project manager), progress over time, the plan, "try the
  * system" (credentials), "download the app" (APK + QR), requests and news.
- * A sticky section bar on top; on phones a bottom action bar keeps
- * "new request" / "download app" one tap away.
+ * A section switcher keeps the project workspace focused; on phones a bottom
+ * action bar keeps "new request" / "download app" one tap away.
  */
 @Component({
   selector: 'app-portal-project',
@@ -108,8 +108,6 @@ export class PortalProjectComponent {
   protected readonly healthTone = healthTone;
   protected readonly healthIcon = healthIcon;
 
-  private observer: IntersectionObserver | null = null;
-
   constructor() {
     this.load();
 
@@ -131,7 +129,6 @@ export class PortalProjectComponent {
         this.loadNews();
       });
 
-    inject(DestroyRef).onDestroy(() => this.observer?.disconnect());
   }
 
   protected load(): void {
@@ -143,13 +140,13 @@ export class PortalProjectComponent {
     this.loadReleases();
   }
 
-  protected scrollTo(id: string): void {
+  protected selectSection(id: string): void {
+    if (!this.sections().some((section) => section.id === id)) return;
     this.activeSection.set(id);
-    document.getElementById(`pp-${id}`)?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
   }
 
   protected downloadLatestApk(): void {
-    this.scrollTo('app');
+    this.selectSection('app');
   }
 
   protected onCreated(r: ClientRequestDetails): void {
@@ -157,28 +154,9 @@ export class PortalProjectComponent {
     this.router.navigate(['/portal', 'requests', r.id]);
   }
 
-  /** Highlights the section bar item for whatever is on screen. */
-  protected watchSections(): void {
-    this.observer?.disconnect();
-    this.observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (visible) this.activeSection.set(visible.target.id.replace(/^pp-/, ''));
-      },
-      { rootMargin: '-120px 0px -55% 0px' },
-    );
-    for (const s of this.sections()) {
-      const el = document.getElementById(`pp-${s.id}`);
-      if (el) this.observer.observe(el);
-    }
-  }
-
   private loadProject(): void {
     this.api.project(this.projectId).subscribe({
-      next: (p) => {
-        this.project.set(p);
-        setTimeout(() => this.watchSections());
-      },
+      next: (p) => this.project.set(p),
       error: () => this.failed.set(true),
     });
   }
@@ -198,13 +176,6 @@ export class PortalProjectComponent {
   }
 
   private loadReleases(): void {
-    this.api.releases(this.projectId).pipe(catchError(() => of([]))).subscribe((list) => {
-      this.releases.set(list);
-      setTimeout(() => this.watchSections());
-    });
+    this.api.releases(this.projectId).pipe(catchError(() => of([]))).subscribe((list) => this.releases.set(list));
   }
-}
-
-function prefersReducedMotion(): boolean {
-  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }

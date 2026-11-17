@@ -15,8 +15,6 @@ import {
   ProjectTeamMemberResponseDto,
   isWorkingDay,
   parseIsoDate,
-  projectContribution,
-  shareCompletionOf,
   toIsoDate,
 } from '../../../../shared/models';
 import { ProjectProgressSyncService } from '../../services/project-progress-sync.service';
@@ -47,17 +45,6 @@ function workingDayValidator(): ValidatorFn {
       @use 'breakpoints' as bp;
 
       .progress-lg { height: 10px; }
-
-      .share-row { display: flex; align-items: center; gap: 1rem; }
-      .share-range { flex: 1; }
-      .share-input { width: 8.5rem; flex-shrink: 0; }
-      .share-preview {
-        display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.5rem;
-        padding: 0.35rem 0.75rem; border-radius: var(--radius-pill);
-        background: var(--brand-soft); color: var(--brand-500); font-weight: var(--fw-700); font-size: var(--fs-sm);
-        transition: background-color 200ms ease, color 200ms ease;
-      }
-      .share-preview.is-zero { background: var(--surface-2); color: var(--text-3); }
 
       @include bp.down(md) {
         .submit-btn { width: 100%; }
@@ -102,22 +89,6 @@ export class MyProjectProgressComponent implements OnInit {
     remainingWork: [''],
     blockers: [''],
     notes: [''],
-    /** Cumulative % of MY share done (0–100) — not % of the project. */
-    shareCompletionPercent: this.fb.control<number | null>(null, [Validators.required, Validators.max(100)]),
-  });
-
-  /** Where my share stands now (before this report). */
-  readonly currentShare = computed(() => {
-    const mp = this.myProgress();
-    return mp ? shareCompletionOf(mp) : 0;
-  });
-
-  /** "= +16.5% of the project" for what is typed now. */
-  readonly previewContribution = computed(() => {
-    const mp = this.myProgress();
-    if (!mp) return 0;
-    const to = this.contributionValue() ?? this.currentShare();
-    return projectContribution(mp.responsibilityPercentage, this.currentShare(), to);
   });
 
   readonly minDate = computed(() => {
@@ -143,15 +114,6 @@ export class MyProjectProgressComponent implements OnInit {
     () => this.isSelectedDateToday() && !!this.myProgress()?.hasReportedToday,
   );
 
-  /** Signal mirror of `actualProgressContribution`'s value for the same reason. */
-  private readonly contributionValue = signal<number | null>(null);
-
-  /** Typed a share below where it already is (only an admin can lower it). */
-  readonly belowCurrent = computed(() => {
-    const v = this.contributionValue();
-    return v !== null && v < this.currentShare();
-  });
-
   readonly canSubmit = computed(
     () => !this.isWeekendSelected() && !this.blockedByAlreadyReported(),
   );
@@ -161,9 +123,6 @@ export class MyProjectProgressComponent implements OnInit {
     this.form.controls.reportDate.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe((value) => this.reportDateValue.set(value));
-    this.form.controls.shareCompletionPercent.valueChanges
-      .pipe(takeUntilDestroyed())
-      .subscribe((value) => this.contributionValue.set(value === null || value === undefined ? null : Number(value)));
   }
 
   reload(): void {
@@ -179,10 +138,6 @@ export class MyProjectProgressComponent implements OnInit {
       next: (mp) => {
         this.myProgress.set(mp);
         this.loading.set(false);
-        // Start the slider where my share stands now.
-        if (!this.form.controls.shareCompletionPercent.dirty) {
-          this.form.controls.shareCompletionPercent.setValue(Math.round(shareCompletionOf(mp) * 100) / 100);
-        }
         if (mp.projectProgressPercent != null) this.progressSync.set(this.projectId, mp.projectProgressPercent);
       },
       error: () => {
@@ -241,7 +196,7 @@ export class MyProjectProgressComponent implements OnInit {
 
   submit(): void {
     if (this.submitting()) return;
-    if (this.form.invalid || !this.canSubmit() || this.belowCurrent()) {
+    if (this.form.invalid || !this.canSubmit()) {
       this.form.markAllAsTouched();
       return;
     }
@@ -254,17 +209,6 @@ export class MyProjectProgressComponent implements OnInit {
     if (v.remainingWork?.trim()) fd.append('RemainingWork', v.remainingWork.trim());
     if (v.blockers?.trim()) fd.append('Blockers', v.blockers.trim());
     if (v.notes?.trim()) fd.append('Notes', v.notes.trim());
-    // Contract v2: the cumulative share of MY part. Until the backend reads it,
-    // the same move is also sent as project points (what the old API expects),
-    // capped to what is left of my share so it is never rejected.
-    const mp = this.myProgress();
-    const share = Math.max(this.currentShare(), Math.min(100, Number(v.shareCompletionPercent ?? this.currentShare())));
-    fd.append('ShareCompletionPercent', String(share));
-    if (mp) {
-      const points = projectContribution(mp.responsibilityPercentage, this.currentShare(), share);
-      const left = Math.max(0, mp.remainingResponsibilityPercentage ?? mp.responsibilityPercentage - mp.earnedProgressPercentage);
-      fd.append('ActualProgressContribution', String(Math.floor(Math.min(points, left) * 100) / 100));
-    }
     for (const file of this.attachments()) fd.append('attachments', file);
 
     this.submitting.set(true);
@@ -291,7 +235,6 @@ export class MyProjectProgressComponent implements OnInit {
       remainingWork: '',
       blockers: '',
       notes: '',
-      shareCompletionPercent: null,
     });
     this.revokeAll();
   }

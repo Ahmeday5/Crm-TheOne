@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output, si
 import { catchError, forkJoin, map, of } from 'rxjs';
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { ProjectProgressService } from '../../../project-progress/services/project-progress.service';
 import { ProjectWorkspaceService } from '../../../project-workspace/services/project-workspace.service';
 import {
   ClientRequestDetails,
@@ -31,7 +30,6 @@ type Filter = RequestStatus | 'all';
 export class ClientRequestsPanelComponent {
   private readonly api = inject(ClientRequestsStaffService);
   private readonly workspace = inject(ProjectWorkspaceService);
-  private readonly progress = inject(ProjectProgressService);
 
   readonly projectId = input.required<number>();
   readonly isAdmin = input(false);
@@ -62,7 +60,7 @@ export class ClientRequestsPanelComponent {
 
   ngOnInit(): void {
     this.load();
-    this.loadAssignees();
+    if (this.isAdmin()) this.loadAssignees();
   }
 
   protected load(): void {
@@ -109,13 +107,9 @@ export class ClientRequestsPanelComponent {
 
   /** Project developers (+ admins) — who a request can be assigned to. */
   private loadAssignees(): void {
-    const devs$ = this.isAdmin()
-      ? this.workspace.developers(this.projectId()).pipe(
-          map((list) => list.map((d) => ({ userId: d.developerId, fullName: d.developerName ?? '—' }))),
-        )
-      : this.progress.getTeam(this.projectId()).pipe(
-          map((list) => list.map((m) => ({ userId: m.developerId, fullName: m.developerName ?? '—' }))),
-        );
+    const devs$ = this.workspace.developers(this.projectId()).pipe(
+      map((list) => list.map((d) => ({ userId: d.developerId, fullName: d.developerName ?? '—' }))),
+    );
     forkJoin([devs$.pipe(catchError(() => of([]))), this.api.admins().pipe(catchError(() => of([])))]).subscribe(
       ([devs, admins]) => {
         const seen = new Set<string>();

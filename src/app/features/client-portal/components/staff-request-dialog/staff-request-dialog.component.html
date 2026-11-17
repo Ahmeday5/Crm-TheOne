@@ -20,16 +20,27 @@
           @for (p of priorities; track p) { <option [value]="p">{{ 'clientPortal.priority.' + p | translate }}</option> }
         </select>
       </label>
-      <label class="sr-field">
-        <span>{{ 'clientPortal.staff.assignee' | translate }}</span>
-        <select class="form-select form-select-sm" [disabled]="saving()" [ngModel]="r.assignedToId ?? ''" (ngModelChange)="setAssignee($event)">
-          <option value="">{{ 'clientPortal.staff.unassigned' | translate }}</option>
-          @for (a of assignees(); track a.userId) { <option [value]="a.userId">{{ a.fullName }}</option> }
-          @if (r.assignedToId && !isKnownAssignee(r.assignedToId)) {
-            <option [value]="r.assignedToId">{{ r.assignedToName }}</option>
+      @if (isAdmin()) {
+        <label class="sr-field">
+          <span>{{ 'clientPortal.staff.assignee' | translate }}</span>
+          <select class="form-select form-select-sm" [disabled]="saving()" [ngModel]="r.assignedToId ?? ''" (ngModelChange)="setAssignee($event)">
+            <option value="">{{ 'clientPortal.staff.unassigned' | translate }}</option>
+            @for (a of assignees(); track a.userId) { <option [value]="a.userId">{{ a.fullName }}</option> }
+            @if (r.assignedToId && !isKnownAssignee(r.assignedToId)) {
+              <option [value]="r.assignedToId">{{ r.assignedToName }}</option>
+            }
+          </select>
+        </label>
+      } @else {
+        <div class="sr-field">
+          <span>{{ 'clientPortal.staff.assignee' | translate }}</span>
+          @if (r.assignedToName) {
+            <div class="form-control form-control-sm">{{ r.assignedToName }}</div>
+          } @else {
+            <div class="form-control form-control-sm text-muted">{{ 'clientPortal.staff.unassigned' | translate }}</div>
           }
-        </select>
-      </label>
+        </div>
+      }
       @if (saving()) { <span class="spinner-border spinner-border-sm text-primary align-self-center" aria-hidden="true"></span> }
     </div>
     @if (error(); as e) { <div class="alert alert-danger py-2 small">{{ e }}</div> }
