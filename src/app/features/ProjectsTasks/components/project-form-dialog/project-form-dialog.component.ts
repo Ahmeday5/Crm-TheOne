@@ -103,7 +103,7 @@ export class ProjectFormDialogComponent implements OnInit, OnChanges {
       Validators.min(0),
     ]),
     start: ['', Validators.required],
-    end: ['', Validators.required],
+    end: [''],
     engineerIds: this.fb.nonNullable.control<string[]>([], nonEmptyArray),
   });
 
@@ -173,7 +173,7 @@ export class ProjectFormDialogComponent implements OnInit, OnChanges {
       priority: v.priority,
       price: Number(v.price) || 0,
       start: this.toIso(v.start),
-      end: this.toIso(v.end),
+      end: v.end ? this.toIso(v.end) : null,
       engineerIds: v.engineerIds,
     };
 

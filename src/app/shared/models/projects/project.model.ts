@@ -157,8 +157,8 @@ export interface ProjectListItem {
   price: number;
   /** ISO date-time. */
   start: string;
-  /** ISO date-time. */
-  end: string;
+  /** ISO date-time — optional, `null` when the project has no end date. */
+  end: string | null;
   progress: number;
   /** Weighted completion across the team (0–100) — returned by `GetActiveProjects`. */
   overallProgressPercentage?: number;
@@ -206,8 +206,8 @@ export interface CreateProjectRequest {
   price: number;
   /** ISO date-time. */
   start: string;
-  /** ISO date-time. */
-  end: string;
+  /** ISO date-time — optional; `null` = no end date. */
+  end: string | null;
   engineerIds: string[];
 }
 
@@ -227,8 +227,8 @@ export interface UpdateProjectRequest {
   price: number;
   /** ISO date-time. */
   start: string;
-  /** ISO date-time. */
-  end: string;
+  /** ISO date-time — optional; `null` = no end date. */
+  end: string | null;
   engineerIds?: string[] | null;
 }
 
