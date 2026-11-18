@@ -1,0 +1,53 @@
+@let p = provider();
+<div class="pwo" [class.pwo--primary]="primary()">
+  @if (primary()) {
+    <a class="pwo-cta" [href]="appUrl()" rel="noopener">
+      <i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i>
+      {{ 'payments.pay.openApp' | translate: { app: p.appName } }}
+      <i class="fa-solid fa-arrow-up-right-from-square pwo-cta__ext" aria-hidden="true"></i>
+    </a>
+    <p class="pwo-hint">{{ (platform() === 'ios' ? 'payments.pay.iosHint' : 'payments.pay.storeHint') | translate }}</p>
+  } @else {
+    <div class="pwo-row">
+      <app-payment-method-logo [type]="payerType()" />
+      <span class="pwo-row__name">{{ 'payments.providers.' + payerType() | translate }}</span>
+      <div class="pwo-row__actions">
+        <a class="pwo-btn" [href]="appUrl()" rel="noopener">
+          <i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i>{{ 'payments.pay.openAppShort' | translate }}
+        </a>
+        @if (ussd()) {
+          <button type="button" class="pwo-btn" [class.is-on]="showCode()" [attr.aria-expanded]="showCode()" (click)="showCode.set(!showCode())">
+            <i class="fa-solid fa-hashtag" aria-hidden="true"></i>{{ 'payments.pay.ussdShort' | translate }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  @if (codeVisible() && ussd(); as u) {
+    <div class="pwo-ussd">
+      @if (primary()) {
+        <p class="pwo-ussd__title">{{ 'payments.pay.ussdTitle' | translate }}</p>
+      }
+      <div class="pwo-ussd__code">
+        <code dir="ltr">{{ u.code }}</code>
+        <app-copy-button [value]="u.code" [label]="'payments.pay.copyCode' | translate" />
+        @if (platform() !== 'ios') {
+          <a class="pwo-ussd__dial" [href]="u.telUrl">
+            <i class="fa-solid fa-phone" aria-hidden="true"></i>{{ 'payments.pay.dial' | translate }}
+          </a>
+        }
+      </div>
+      <p class="pwo-hint">
+        @if (u.direct) {
+          {{ 'payments.pay.ussdDirectHint' | translate: { provider: ('payments.providers.' + payerType() | translate) } }}
+        } @else {
+          {{ 'payments.pay.ussdMenuHint' | translate: { code: u.code, phone: phone(), amount: amountText() } }}
+        }
+      </p>
+      @if (platform() === 'ios') {
+        <p class="pwo-hint">{{ 'payments.pay.iosUssd' | translate }}</p>
+      }
+    </div>
+  }
+</div>

@@ -8,8 +8,10 @@ import {
   LEAVE_REQUEST_ENTITY,
   PROJECT_ENTITY,
   NotificationType,
+  PAYMENT_REQUEST_ENTITY,
   WHATSAPP_CHAT_ENTITY,
   isContractNotification,
+  isPaymentNotification,
   isWhatsAppNotification,
 } from './notification.model';
 
@@ -28,6 +30,7 @@ const WHATSAPP_ROLES: readonly UserRole[] = ['Admin', 'Sales', 'Support'];
 /** Font-Awesome icon for a notification type. */
 export function notificationIcon(type: NotificationType): string {
   if (isWhatsAppNotification({ type, relatedEntityType: null })) return 'fa-brands fa-whatsapp';
+  if (isPaymentNotification({ type, relatedEntityType: null })) return 'fa-solid fa-money-check-dollar';
   switch (type) {
     case 'NewSupportTicket': return 'fa-solid fa-headset';
     case 'CustomerReturnedToSales': return 'fa-solid fa-rotate-left';
@@ -59,6 +62,7 @@ export function notificationIcon(type: NotificationType): string {
 /** `.icon-tile.tone-*` modifier for the type's avatar. */
 export function notificationTone(type: NotificationType): string {
   if (isWhatsAppNotification({ type, relatedEntityType: null })) return 'success';
+  if (isPaymentNotification({ type, relatedEntityType: null })) return 'info';
   switch (type) {
     case 'NewSupportTicket': return 'warning';
     case 'CustomerReturnedToSales': return 'info';
@@ -97,6 +101,11 @@ export function notificationTone(type: NotificationType): string {
  */
 /** Contract v2 §11: which project-workspace tab a staff notification opens on. */
 export function notificationQuery(n: NotificationTarget): Record<string, string> | undefined {
+  // Payment: `/payments?request=<id>` opens that request's details.
+  if (isPaymentNotification(n)) {
+    const id = n.relatedEntityType === PAYMENT_REQUEST_ENTITY ? n.relatedEntityId : null;
+    return id ? { request: String(id) } : { status: 'CustomerConfirmed' };
+  }
   const t = String(n.type);
   if (t.startsWith('ClientRequest')) return { tab: 'requests' };
   if (t === 'ProjectReleasePublished') return { tab: 'deliverables' };
@@ -113,6 +122,10 @@ export function notificationRoute(n: NotificationTarget, role: UserRole | null):
     // Older payloads may carry no chat id — the inbox is still the right place.
     const chatId = n.relatedEntityType === WHATSAPP_CHAT_ENTITY ? n.relatedEntityId : null;
     return chatId ? ['/whatsapp', 'chats', String(chatId)] : ['/whatsapp'];
+  }
+
+  if (isPaymentNotification(n)) {
+    return role && WHATSAPP_ROLES.includes(role) ? ['/payments'] : null;
   }
 
   const staff = role === 'Admin' || role === 'Developer';

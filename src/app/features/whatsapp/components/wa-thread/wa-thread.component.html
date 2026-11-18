@@ -91,8 +91,18 @@
     [state]="store.composer()"
     [contactName]="contactName()"
     [isAdmin]="session.isAdmin()"
+    [canRequestPayment]="store.kind() === 'chat'"
     (submitted)="onSubmit($event)"
-    (templateRequested)="templateOpen.set(true)" />
+    (templateRequested)="templateOpen.set(true)"
+    (paymentRequested)="paymentOpen.set(true)" />
+}
+
+@if (store.kind() === 'chat') {
+  <app-payment-request-panel
+    [open]="paymentOpen()"
+    [context]="paymentContext()"
+    (created)="onPaymentCreated($event)"
+    (closed)="paymentOpen.set(false)" />
 }
 
 @if (templateOpen()) {

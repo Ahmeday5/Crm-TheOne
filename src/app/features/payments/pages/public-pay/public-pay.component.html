@@ -1,0 +1,227 @@
+<div class="pp">
+  <div class="pp-top">
+    <span class="pp-top__secure"><i class="fa-solid fa-lock" aria-hidden="true"></i>{{ 'payments.pay.pageTitle' | translate }}</span>
+    <app-mock-ribbon area="payments" />
+    <app-language-toggle />
+  </div>
+
+  <main class="pp-card">
+    @switch (state()) {
+      @case ('loading') {
+        <div class="pp-skel" aria-busy="true">
+          <span class="pp-skel__hero"></span><span></span><span></span><span class="pp-skel__btn"></span>
+        </div>
+      }
+      @case ('notFound') {
+        <div class="pp-state">
+          <span class="pp-state__icon tone-danger"><i class="fa-solid fa-link-slash"></i></span>
+          <h1 class="pp-state__title">{{ 'payments.pay.state.notFoundTitle' | translate }}</h1>
+          <p class="pp-state__hint">{{ 'payments.pay.state.notFoundHint' | translate }}</p>
+        </div>
+      }
+      @case ('error') {
+        <div class="pp-state">
+          <span class="pp-state__icon tone-warning"><i class="fa-solid fa-triangle-exclamation"></i></span>
+          <h1 class="pp-state__title">{{ 'payments.pay.state.errorTitle' | translate }}</h1>
+          <p class="pp-state__hint">{{ 'payments.pay.state.errorHint' | translate }}</p>
+          <button type="button" class="btn btn-primary" (click)="load()">
+            <i class="fa-solid fa-rotate me-1"></i>{{ 'common.retry' | translate }}
+          </button>
+        </div>
+      }
+      @case ('ready') {
+        @let p = payment()!;
+        @let m = method()!;
+
+        <!-- Hero -->
+        <header class="pp-hero">
+          <p class="pp-hero__from">{{ 'payments.pay.requestFrom' | translate }} <strong dir="auto">{{ p.merchantName }}</strong></p>
+          <p class="pp-hero__label">{{ 'payments.pay.amount' | translate }}</p>
+          <p class="pp-hero__amount" dir="ltr">
+            {{ amountText() }} <small>EGP</small>
+            <app-copy-button [value]="amountText()" [label]="'payments.pay.copyAmount' | translate" />
+          </p>
+          @if (p.description) {
+            <p class="pp-hero__for"><span>{{ 'payments.pay.for' | translate }}:</span> <span dir="auto">{{ p.description }}</span></p>
+          }
+          @if (p.status === 'Pending') {
+            <p class="pp-hero__valid">
+              <i class="fa-regular fa-clock" aria-hidden="true"></i>
+              {{ 'payments.pay.validUntil' | translate: { date: (p.expiresAt | cairoDate: 'date') } }}
+            </p>
+          }
+        </header>
+
+        @switch (p.status) {
+          @case ('Paid') {
+            <div class="pp-state pp-state--inline">
+              <span class="pp-state__icon tone-success pp-pop"><i class="fa-solid fa-circle-check"></i></span>
+              <h1 class="pp-state__title">{{ 'payments.pay.state.paidTitle' | translate }}</h1>
+              <p class="pp-state__hint">{{ 'payments.pay.state.paidHint' | translate }}</p>
+            </div>
+          }
+          @case ('CustomerConfirmed') {
+            <div class="pp-state pp-state--inline">
+              <span class="pp-state__icon tone-info pp-pop"><i class="fa-solid fa-hourglass-half"></i></span>
+              <h1 class="pp-state__title">{{ 'payments.pay.state.confirmedTitle' | translate }}</h1>
+              <p class="pp-state__hint">{{ 'payments.pay.state.confirmedHint' | translate }}</p>
+            </div>
+          }
+          @case ('Expired') {
+            <div class="pp-state pp-state--inline">
+              <span class="pp-state__icon tone-warning"><i class="fa-solid fa-calendar-xmark"></i></span>
+              <h1 class="pp-state__title">{{ 'payments.pay.state.expiredTitle' | translate }}</h1>
+              <p class="pp-state__hint">{{ 'payments.pay.state.expiredHint' | translate }}</p>
+            </div>
+          }
+          @case ('Cancelled') {
+            <div class="pp-state pp-state--inline">
+              <span class="pp-state__icon tone-danger"><i class="fa-solid fa-ban"></i></span>
+              <h1 class="pp-state__title">{{ 'payments.pay.state.cancelledTitle' | translate }}</h1>
+              <p class="pp-state__hint">{{ 'payments.pay.state.cancelledHint' | translate }}</p>
+            </div>
+          }
+          @default {
+            <!-- Recipient -->
+            <section class="pp-recipient">
+              <p class="pp-section-label">{{ 'payments.pay.recipient' | translate }}</p>
+              <div class="pp-recipient__head">
+                <app-payment-method-logo [type]="m.type" size="lg" />
+                <div class="pp-recipient__who">
+                  <span class="pp-recipient__provider">{{ 'payments.providers.' + m.type | translate }}</span>
+                  <span class="pp-recipient__name" dir="auto">{{ m.accountName }}</span>
+                </div>
+              </div>
+              <dl class="pp-recipient__rows">
+                @if (m.phoneNumber) {
+                  <div>
+                    <dt>{{ (wallet() ? 'payments.pay.walletNumber' : 'payments.pay.mobile') | translate }}</dt>
+                    <dd dir="ltr">{{ recipientPhone() }} <app-copy-button [value]="recipientPhone()" [label]="'payments.pay.copyNumber' | translate" /></dd>
+                  </div>
+                }
+                @if (m.instapayAddress) {
+                  <div>
+                    <dt>{{ 'payments.pay.ipa' | translate }}</dt>
+                    <dd dir="ltr">{{ m.instapayAddress }} <app-copy-button [value]="m.instapayAddress" [label]="'payments.pay.copyIpa' | translate" /></dd>
+                  </div>
+                }
+              </dl>
+              @if (m.instructions) {
+                <p class="pp-instructions"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span dir="auto">{{ m.instructions }}</span></p>
+              }
+            </section>
+
+            @if (platform === 'desktop') {
+              <section class="pp-desktop">
+                <app-qr-code [data]="pageUrl" [size]="148" />
+                <div>
+                  <p class="fw-700 mb-1">{{ 'payments.pay.scan' | translate }}</p>
+                  <p class="text-muted small mb-0">{{ 'payments.pay.desktop' | translate }}</p>
+                </div>
+              </section>
+            }
+
+            <!-- Pay -->
+            <section class="pp-pay">
+              @if (wallet()) {
+                <app-pay-wallet-option [payerType]="m.type" [recipientPhone]="m.phoneNumber" [amount]="p.amount"
+                                       [platform]="platform" [primary]="true" />
+
+                <div class="pp-alt">
+                  <p class="pp-alt__title">{{ 'payments.pay.notYour' | translate: { provider: ('payments.providers.' + m.type | translate) } }}</p>
+                  <p class="pp-alt__hint">{{ 'payments.pay.crossWallet' | translate }}</p>
+                  <div class="pp-alt__list">
+                    @for (t of otherWallets(); track t) {
+                      <app-pay-wallet-option [payerType]="t" [recipientPhone]="m.phoneNumber" [amount]="p.amount" [platform]="platform" />
+                    }
+                    <!-- InstaPay → wallet number -->
+                    <div class="pp-alt__instapay">
+                      <app-payment-method-logo type="InstaPay" />
+                      <div class="flex-grow-1 min-w-0">
+                        <span class="fw-700 d-block">{{ 'payments.pay.fromInstapay' | translate }}</span>
+                        <small class="text-muted">{{ 'payments.pay.instapayToWallet' | translate: { phone: recipientPhone() } }}</small>
+                      </div>
+                      <a class="pp-alt__btn" [href]="instapayAppHref" rel="noopener">
+                        <i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i>{{ 'payments.pay.openAppShort' | translate }}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <a class="pp-cta" [href]="instapayHref()" rel="noopener">
+                  <i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i>
+                  {{ 'payments.pay.openInstapay' | translate }}
+                  <i class="fa-solid fa-arrow-up-right-from-square pp-cta__ext" aria-hidden="true"></i>
+                </a>
+                <p class="pp-hint">
+                  @if (hasInstapayLink()) {
+                    {{ 'payments.pay.instapayLinkHint' | translate }}
+                  } @else if (m.instapayAddress) {
+                    {{ 'payments.pay.instapayToIpa' | translate: { ipa: m.instapayAddress } }}
+                  } @else {
+                    {{ 'payments.pay.instapayToWallet' | translate: { phone: recipientPhone() } }}
+                  }
+                </p>
+                <p class="pp-hint">{{ (platform === 'ios' ? 'payments.pay.iosHint' : 'payments.pay.storeHint') | translate }}</p>
+              }
+            </section>
+
+            <!-- I've paid -->
+            <section class="pp-confirm">
+              <h2 class="pp-confirm__title"><i class="fa-solid fa-receipt" aria-hidden="true"></i>{{ 'payments.pay.confirm.title' | translate }}</h2>
+              <p class="pp-hint mt-0">{{ 'payments.pay.confirm.hint' | translate }}</p>
+              <form (ngSubmit)="confirm()" novalidate>
+                <label class="form-label small fw-600" for="pp-phone">{{ 'payments.pay.confirm.payerPhone' | translate }}</label>
+                <input id="pp-phone" type="tel" inputmode="tel" class="form-control mb-2" dir="ltr" placeholder="01xxxxxxxxx"
+                       name="payerPhone" [(ngModel)]="payerPhone" maxlength="20" autocomplete="tel" />
+                <label class="form-label small fw-600" for="pp-ref">{{ 'payments.pay.confirm.reference' | translate }}</label>
+                <input id="pp-ref" type="text" class="form-control mb-2" dir="ltr" name="payerReference" [(ngModel)]="payerReference" maxlength="100" />
+
+                <label class="form-label small fw-600 d-block" for="pp-receipt">
+                  {{ 'payments.pay.confirm.receipt' | translate }} <span class="text-danger">*</span>
+                </label>
+                @if (receiptPreview(); as src) {
+                  <div class="pp-receipt">
+                    <img [src]="src" [alt]="'payments.pay.confirm.receipt' | translate" />
+                    <div class="pp-receipt__bar">
+                      <span class="text-truncate">{{ receipt()?.name }}</span>
+                      <label class="pp-receipt__btn">
+                        <input type="file" class="visually-hidden" accept="image/jpeg,image/png,image/webp" (change)="onReceipt($event)" />
+                        <i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ 'payments.pay.confirm.changeImage' | translate }}
+                      </label>
+                      <button type="button" class="pp-receipt__btn" (click)="clearReceipt()" [attr.aria-label]="'common.delete' | translate">
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                  </div>
+                } @else {
+                  <label class="pp-file" [class.is-invalid]="receiptMissing()">
+                    <input id="pp-receipt" type="file" class="visually-hidden" accept="image/jpeg,image/png,image/webp"
+                           [attr.aria-invalid]="receiptMissing()" (change)="onReceipt($event)" />
+                    <i class="fa-regular fa-image" aria-hidden="true"></i>
+                    <span>{{ 'payments.pay.confirm.chooseImage' | translate }}</span>
+                  </label>
+                }
+                <p class="pp-hint mt-1">{{ 'payments.pay.confirm.receiptHint' | translate }}</p>
+
+                @if (confirmError(); as e) {
+                  <div class="alert alert-danger py-2 small mt-2 mb-0" role="alert">{{ e }}</div>
+                }
+
+                <button type="submit" class="btn btn-success w-100 mt-3 pp-confirm__submit" [disabled]="confirming()">
+                  @if (confirming()) {
+                    <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>{{ 'payments.pay.confirm.sending' | translate }}
+                  } @else {
+                    <i class="fa-solid fa-check me-1" aria-hidden="true"></i>{{ 'payments.pay.confirm.submit' | translate }}
+                  }
+                </button>
+              </form>
+            </section>
+          }
+        }
+      }
+    }
+  </main>
+
+  <p class="pp-foot"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>{{ 'payments.pay.secure' | translate }}</p>
+</div>

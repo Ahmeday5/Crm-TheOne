@@ -1,0 +1,232 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+  untracked,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
+import { ApiError } from '../../../../core/models/api-response.model';
+import { AuthService } from '../../../../core/services/auth.service';
+import { LanguageService } from '../../../../core/services/language.service';
+import { MockRibbonComponent } from '../../../../shared/components/mock-ribbon/mock-ribbon.component';
+import { SlidePanelComponent } from '../../../../shared/components/slide-panel/slide-panel.component';
+import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { PaymentsService } from '../../data/payments.gateway';
+import { PaymentMethod, PaymentRequest, isWallet } from '../../models/payments.models';
+import { PaymentMethodLogoComponent } from '../payment-method-logo/payment-method-logo.component';
+
+/** Who the request is for — filled from the open chat. */
+export interface PaymentRequestContext {
+  chatId: number | null;
+  customerId: number | null;
+  customerName: string | null;
+  /** Any format; digits are kept. */
+  customerPhone: string | null;
+}
+
+const PHONE_RE = /^\+?\d{8,15}$/;
+
+/** WhatsApp / CRM numbers → `+2010…` (local `01…` becomes `+201…`). */
+function normalizePhone(raw: string | null): string {
+  const digits = (raw ?? '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('0') && digits.length === 11) return `+2${digits}`;
+  return `+${digits}`;
+}
+
+function phoneOrEmail(group: AbstractControl): ValidationErrors | null {
+  const phone = String(group.get('customerPhone')?.value ?? '').trim();
+  const email = String(group.get('customerEmail')?.value ?? '').trim();
+  return phone || email ? null : { contactRequired: true };
+}
+
+function optionalPhone(control: AbstractControl): ValidationErrors | null {
+  const v = String(control.value ?? '').replace(/[\s-]/g, '');
+  return !v || PHONE_RE.test(v) ? null : { phone: true };
+}
+
+/**
+ * "New payment request" drawer, opened from the chat composer:
+ *   1. pick the account (InstaPay / a wallet) the customer pays to,
+ *   2. amount + description + validity,
+ *   3. customer details (pre-filled from the chat).
+ * Emits the created request; the host sends the link in the conversation.
+ */
+@Component({
+  selector: 'app-payment-request-panel',
+  standalone: true,
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe, SlidePanelComponent, MockRibbonComponent, PaymentMethodLogoComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  templateUrl: './payment-request-panel.component.html',
+  styleUrl: './payment-request-panel.component.scss',
+})
+export class PaymentRequestPanelComponent {
+  private readonly fb = inject(FormBuilder);
+  private readonly payments = inject(PaymentsService);
+  private readonly auth = inject(AuthService);
+  private readonly language = inject(LanguageService);
+  private readonly destroyRef = inject(DestroyRef);
+  private contactLookup: Subscription | null = null;
+
+  readonly open = input.required<boolean>();
+  readonly context = input<PaymentRequestContext | null>(null);
+
+  readonly created = output<PaymentRequest>();
+  readonly closed = output<void>();
+
+  protected readonly methods = signal<PaymentMethod[]>([]);
+  protected readonly loadingMethods = signal(false);
+  protected readonly methodsError = signal(false);
+  protected readonly submitting = signal(false);
+  protected readonly error = signal<string | null>(null);
+  protected readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
+  protected readonly isWallet = isWallet;
+
+  protected readonly form = this.fb.group(
+    {
+      methodId: this.fb.control<number | null>(null, Validators.required),
+      amount: this.fb.control<number | null>(null, [Validators.required, Validators.min(1), Validators.max(1_000_000)]),
+      description: this.fb.nonNullable.control('', Validators.maxLength(200)),
+      validityDays: this.fb.nonNullable.control(14, [Validators.required, Validators.min(1), Validators.max(90)]),
+      customerName: this.fb.nonNullable.control('', Validators.maxLength(120)),
+      customerPhone: this.fb.nonNullable.control('', optionalPhone),
+      customerEmail: this.fb.nonNullable.control('', Validators.email),
+    },
+    { validators: phoneOrEmail },
+  );
+
+  private readonly value = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
+  protected readonly amountPreview = computed(() => {
+    const n = Number(this.value().amount);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  });
+  protected readonly selected = computed(() => this.methods().find((m) => m.id === this.value().methodId) ?? null);
+
+  constructor() {
+    // Each opening starts fresh, pre-filled from the chat.
+    effect(() => {
+      if (!this.open()) return;
+      const ctx = this.context();
+      untracked(() => this.reset(ctx));
+    });
+  }
+
+  protected close(): void {
+    if (!this.submitting()) this.closed.emit();
+  }
+
+  protected loadMethods(): void {
+    this.loadingMethods.set(true);
+    this.methodsError.set(false);
+    this.payments.gateway.methods().subscribe({
+      next: (list) => {
+        this.methods.set(list);
+        this.loadingMethods.set(false);
+        if (!this.form.controls.methodId.value && list.length) this.form.controls.methodId.setValue(list[0].id);
+      },
+      error: () => {
+        this.loadingMethods.set(false);
+        this.methodsError.set(true);
+      },
+    });
+  }
+
+  protected invalid(name: keyof typeof this.form.controls): boolean {
+    const c = this.form.controls[name];
+    return c.invalid && (c.touched || c.dirty);
+  }
+
+  protected contactMissing(): boolean {
+    const touched = this.form.controls.customerPhone.touched || this.form.controls.customerEmail.touched;
+    return touched && this.form.hasError('contactRequired');
+  }
+
+  protected submit(): void {
+    if (this.submitting()) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    const v = this.form.getRawValue();
+    const ctx = this.context();
+    this.submitting.set(true);
+    this.error.set(null);
+    this.payments.gateway
+      .createRequest({
+        methodId: v.methodId!,
+        amount: Math.round(Number(v.amount) * 100) / 100,
+        description: v.description.trim() || null,
+        validityDays: v.validityDays,
+        customerName: v.customerName.trim() || null,
+        customerPhone: v.customerPhone.replace(/[\s-]/g, '') || null,
+        customerEmail: v.customerEmail.trim() || null,
+        chatId: ctx?.chatId ?? null,
+        customerId: ctx?.customerId ?? null,
+      })
+      .subscribe({
+        next: (request) => {
+          this.submitting.set(false);
+          this.created.emit(request);
+        },
+        error: (err: ApiError) => {
+          this.submitting.set(false);
+          this.error.set(err?.message || this.t('common.loadFailed'));
+        },
+      });
+  }
+
+  private reset(ctx: PaymentRequestContext | null): void {
+    this.form.reset({
+      methodId: this.form.controls.methodId.value,
+      amount: null,
+      description: '',
+      validityDays: 14,
+      customerName: ctx?.customerName ?? '',
+      customerPhone: normalizePhone(ctx?.customerPhone ?? null),
+      customerEmail: '',
+    });
+    this.error.set(null);
+    this.submitting.set(false);
+    this.loadMethods();
+    this.prefillFromCustomer(ctx?.customerId ?? null);
+  }
+
+  /**
+   * The chat may know only a name (Messenger has no phone) — the linked
+   * customer record usually has phone + email. Fills a field only while it is
+   * still empty and untouched, so nothing the user typed is overwritten.
+   */
+  private prefillFromCustomer(customerId: number | null): void {
+    this.contactLookup?.unsubscribe();
+    if (!customerId) return;
+    this.contactLookup = this.payments
+      .customerContact(customerId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (c) => {
+          const fill = (name: 'customerName' | 'customerPhone' | 'customerEmail', value: string | null) => {
+            const control = this.form.controls[name];
+            if (value && !control.value.trim() && !control.dirty) control.setValue(value);
+          };
+          fill('customerName', c.name);
+          fill('customerPhone', normalizePhone(c.phone));
+          fill('customerEmail', c.email);
+        },
+        error: () => undefined,
+      });
+  }
+
+  private t(key: string): string {
+    return resolveKey(TRANSLATIONS[this.language.lang()], key);
+  }
+}

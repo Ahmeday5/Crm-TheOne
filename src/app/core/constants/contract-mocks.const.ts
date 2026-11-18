@@ -18,6 +18,8 @@ export const CONTRACT_MOCKS = {
   deliverables: false,
   /** `DeveloperProjects/{id}/milestones` — developers editing milestones (admin side is live). */
   developerMilestones: false,
+  /** `PaymentMethods/*`, `PaymentRequests/*`, `PublicPayments/*` — payment links from the chat (`docs/api/payments.md`). */
+  payments: false,
 } as const;
 
 export type ContractArea = keyof typeof CONTRACT_MOCKS;

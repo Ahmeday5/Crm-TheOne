@@ -8,7 +8,7 @@ import { NavBadgesService } from '../../../core/services/nav-badges.service';
 import { WaChat, WaInstance, WaNumberStatus } from '../models/whatsapp.models';
 import { WhatsAppApiService } from '../services/whatsapp-api.service';
 import { WhatsAppRealtimeService } from '../services/whatsapp-realtime.service';
-import { pollWhileVisible } from '../utils/poll-while-visible.util';
+import { pollWhileVisible } from '../../../core/utils/poll-while-visible.util';
 import { canUseWhatsApp, isChannelActive, isWhatsAppChannel, whatsappErrorText } from '../utils/whatsapp.util';
 
 /** Sidebar item the unread total is published on. */

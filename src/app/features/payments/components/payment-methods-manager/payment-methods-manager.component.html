@@ -1,0 +1,171 @@
+<section class="pmm">
+  <header class="pmm-head">
+    <div>
+      <h5 class="fw-700 mb-1 d-flex align-items-center gap-2">
+        {{ 'payments.methods.title' | translate }} <app-mock-ribbon area="payments" />
+      </h5>
+      <p class="text-muted small mb-0">{{ 'payments.methods.subtitle' | translate }}</p>
+    </div>
+    <button type="button" class="btn btn-primary btn-sm" (click)="openAdd()">
+      <i class="fa-solid fa-plus me-1"></i>{{ 'payments.methods.add' | translate }}
+    </button>
+  </header>
+
+  @if (loading() && !methods().length) {
+    <div class="pmm-grid" aria-hidden="true">
+      <div class="pmm-card pmm-card--skel"></div>
+      <div class="pmm-card pmm-card--skel"></div>
+    </div>
+  } @else if (loadError()) {
+    <div class="pmm-empty">
+      <p class="text-muted mb-2">{{ 'common.loadFailed' | translate }}</p>
+      <button type="button" class="btn btn-light btn-sm" (click)="load()">
+        <i class="fa-solid fa-rotate me-1"></i>{{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else if (!methods().length) {
+    <div class="pmm-empty">
+      <span class="icon-tile xl tone-purple mb-3"><i class="fa-solid fa-wallet"></i></span>
+      <h6 class="fw-700 mb-1">{{ 'payments.methods.empty' | translate }}</h6>
+      <p class="text-muted small mb-3">{{ 'payments.methods.emptyHint' | translate }}</p>
+      <button type="button" class="btn btn-primary btn-sm" (click)="openAdd()">
+        <i class="fa-solid fa-plus me-1"></i>{{ 'payments.methods.add' | translate }}
+      </button>
+    </div>
+  } @else {
+    <div class="pmm-grid">
+      @for (m of methods(); track m.id) {
+        <article class="pmm-card" [class.is-off]="!m.isActive">
+          <div class="pmm-card__top">
+            <app-payment-method-logo [type]="m.type" />
+            <div class="pmm-card__info">
+              <span class="pmm-card__type">
+                {{ 'payments.providers.' + m.type | translate }}
+                @if (!m.isActive) { <span class="badge bg-secondary-subtle text-secondary ms-1">{{ 'payments.methods.inactive' | translate }}</span> }
+              </span>
+              <span class="pmm-card__holder" dir="auto">{{ m.accountName }}</span>
+            </div>
+            <div class="form-check form-switch m-0" [title]="'payments.methods.form.active' | translate">
+              <input class="form-check-input" type="checkbox" role="switch" [checked]="m.isActive" (change)="toggleActive(m)"
+                     [attr.aria-label]="'payments.methods.form.active' | translate" />
+            </div>
+          </div>
+          <dl class="pmm-card__meta">
+            @if (m.phoneNumber) {
+              <div><dt><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i></dt><dd dir="ltr">{{ m.phoneNumber }}</dd></div>
+            }
+            @if (m.instapayAddress) {
+              <div><dt><i class="fa-solid fa-at" aria-hidden="true"></i></dt><dd dir="ltr">{{ m.instapayAddress }}</dd></div>
+            }
+            @if (m.instapayLink) {
+              <div><dt><i class="fa-solid fa-link" aria-hidden="true"></i></dt><dd dir="ltr" class="text-truncate">{{ m.instapayLink }}</dd></div>
+            }
+          </dl>
+          <div class="pmm-card__actions btn-row">
+            <button type="button" class="btn btn-light btn-sm" (click)="openEdit(m)">
+              <i class="fa-solid fa-pen me-1"></i>{{ 'common.edit' | translate }}
+            </button>
+            <button type="button" class="btn btn-light btn-sm text-danger" (click)="remove(m)">
+              <i class="fa-solid fa-trash me-1"></i>{{ 'common.delete' | translate }}
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>
+
+<app-modal [open]="editing() !== null" size="md" icon="fa-solid fa-wallet" iconTone="purple"
+           [title]="modalTitle() | translate" [closeOnBackdrop]="!saving()" (closed)="closeForm()">
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate id="pmm-form">
+    <label class="form-label fw-600 small">{{ 'payments.methods.form.type' | translate }}</label>
+    <div class="pmm-types mb-3" role="radiogroup">
+      @for (t of types; track t) {
+        <label class="pmm-type" [class.is-selected]="form.controls.type.value === t">
+          <input type="radio" class="visually-hidden" [value]="t" formControlName="type" />
+          <app-payment-method-logo [type]="t" />
+          <span>{{ 'payments.providers.' + t | translate }}</span>
+        </label>
+      }
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-600 small" for="pmm-name">{{ 'payments.methods.form.accountName' | translate }} <span class="text-danger">*</span></label>
+      <input id="pmm-name" class="form-control" dir="auto" maxlength="120" formControlName="accountName"
+             [class.is-invalid]="form.controls.accountName.invalid && form.controls.accountName.touched" />
+      <small class="text-muted">{{ 'payments.methods.form.accountNameHint' | translate }}</small>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-600 small" for="pmm-phone">
+        {{ (isInstapay() ? 'payments.methods.form.phoneInstapay' : 'payments.methods.form.phone') | translate }}
+        @if (!isInstapay()) { <span class="text-danger">*</span> }
+        @else { <small class="text-muted fw-normal">({{ 'common.optional' | translate }})</small> }
+      </label>
+      <input id="pmm-phone" type="tel" inputmode="numeric" class="form-control" dir="ltr" placeholder="01xxxxxxxxx"
+             formControlName="phoneNumber" [class.is-invalid]="groupError('walletPhone', 'phoneNumber')" />
+      @if (groupError('walletPhone', 'phoneNumber')) {
+        <small class="text-danger">{{ 'payments.methods.form.invalidPhone' | translate }}</small>
+      } @else {
+        <small class="text-muted">{{ 'payments.methods.form.phoneHint' | translate }}</small>
+      }
+    </div>
+
+    @if (isInstapay()) {
+      <div class="mb-3">
+        <label class="form-label fw-600 small" for="pmm-ipa">{{ 'payments.methods.form.ipa' | translate }}</label>
+        <input id="pmm-ipa" class="form-control" dir="ltr" [placeholder]="'payments.methods.form.ipaPh' | translate"
+               formControlName="instapayAddress" [class.is-invalid]="groupError('ipa', 'instapayAddress')" />
+        @if (groupError('ipa', 'instapayAddress')) {
+          <small class="text-danger">{{ 'payments.methods.form.invalidIpa' | translate }}</small>
+        }
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-600 small" for="pmm-link">{{ 'payments.methods.form.link' | translate }}</label>
+        <input id="pmm-link" type="url" class="form-control" dir="ltr" placeholder="https://ipn.eg/S/…"
+               formControlName="instapayLink" [class.is-invalid]="groupError('link', 'instapayLink')" />
+        @if (groupError('link', 'instapayLink')) {
+          <small class="text-danger">{{ 'payments.methods.form.invalidLink' | translate }}</small>
+        } @else {
+          <small class="text-muted">{{ 'payments.methods.form.linkHint' | translate }}</small>
+        }
+      </div>
+      @if (groupError('instapayTarget', 'instapayAddress') || groupError('instapayTarget', 'instapayLink')) {
+        <p class="text-danger small mt-n2">{{ 'payments.methods.form.instapayTarget' | translate }}</p>
+      }
+    }
+
+    <div class="mb-3">
+      <label class="form-label fw-600 small" for="pmm-ins">
+        {{ 'payments.methods.form.instructions' | translate }} <small class="text-muted fw-normal">({{ 'common.optional' | translate }})</small>
+      </label>
+      <textarea id="pmm-ins" class="form-control" rows="2" dir="auto" maxlength="300"
+                [placeholder]="'payments.methods.form.instructionsPh' | translate" formControlName="instructions"></textarea>
+    </div>
+
+    <div class="row g-2 align-items-center">
+      <div class="col-8">
+        <div class="form-check form-switch">
+          <input id="pmm-active" class="form-check-input" type="checkbox" role="switch" formControlName="isActive" />
+          <label class="form-check-label small" for="pmm-active">{{ 'payments.methods.form.active' | translate }}</label>
+        </div>
+      </div>
+      <div class="col-4">
+        <label class="form-label fw-600 small mb-1" for="pmm-order">{{ 'payments.methods.form.sortOrder' | translate }}</label>
+        <input id="pmm-order" type="number" min="0" max="999" class="form-control form-control-sm" formControlName="sortOrder" />
+      </div>
+    </div>
+
+    @if (formError(); as e) {
+      <div class="alert alert-danger py-2 small mt-3 mb-0" role="alert">{{ e }}</div>
+    }
+  </form>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-light" (click)="closeForm()" [disabled]="saving()">{{ 'common.cancel' | translate }}</button>
+    <button type="submit" form="pmm-form" class="btn btn-primary" [disabled]="saving()">
+      @if (saving()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+      {{ 'common.save' | translate }}
+    </button>
+  </ng-container>
+</app-modal>

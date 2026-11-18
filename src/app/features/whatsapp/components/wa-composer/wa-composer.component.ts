@@ -74,9 +74,12 @@ export class WaComposerComponent implements OnDestroy {
   readonly contactName = input<string | null>(null);
   /** Admin hint on a disconnected channel ("re-link it in the Mihwar dashboard"). */
   readonly isAdmin = input(false);
+  /** Show the "Request payment" button (a chat thread, not a customer tab). */
+  readonly canRequestPayment = input(false);
 
   readonly submitted = output<WaComposerSubmit>();
   readonly templateRequested = output<void>();
+  readonly paymentRequested = output<void>();
 
   private readonly textarea = viewChild<ElementRef<HTMLTextAreaElement>>('box');
   private readonly picker = viewChild<ElementRef<HTMLInputElement>>('picker');

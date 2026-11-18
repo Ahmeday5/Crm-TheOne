@@ -39,6 +39,7 @@ import clientPortal from './clientPortal.en';
 import portal from './portal.en';
 import deliverables from './deliverables.en';
 import vaultLock from './vaultLock.en';
+import payments from './payments.en';
 
 const en: Translations = {
   ...common,
@@ -81,6 +82,7 @@ const en: Translations = {
   ...portal,
   ...deliverables,
   ...vaultLock,
+  ...payments,
 };
 
 export default en;

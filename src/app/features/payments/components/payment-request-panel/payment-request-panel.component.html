@@ -1,0 +1,160 @@
+<app-slide-panel [open]="open()" size="md" icon="fa-regular fa-credit-card" iconTone="purple"
+                 [title]="'payments.panel.title' | translate"
+                 [closeOnBackdrop]="!submitting()" [closeOnEsc]="!submitting()"
+                 (closed)="close()">
+  <form class="prp" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <!-- Summary -->
+    <div class="prp-summary">
+      <div>
+        <p class="prp-summary__label">{{ 'payments.panel.amountDue' | translate }}</p>
+        <p class="prp-summary__amount" dir="ltr">
+          <small>EGP</small> {{ amountPreview().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+        </p>
+      </div>
+      <div class="prp-summary__side">
+        <app-mock-ribbon area="payments" />
+        @if (selected(); as m) {
+          <span class="prp-chip">
+            <app-payment-method-logo [type]="m.type" />
+            {{ 'payments.providers.' + m.type | translate }}
+          </span>
+        }
+      </div>
+    </div>
+    <p class="prp-sub">{{ 'payments.panel.subtitle' | translate }}</p>
+
+    <!-- 1. Method -->
+    <section class="prp-step">
+      <h6 class="prp-step__title"><span class="prp-step__num">1</span>{{ 'payments.panel.step1' | translate }}</h6>
+
+      @if (loadingMethods() && !methods().length) {
+        <div class="prp-skel" aria-hidden="true"><span></span><span></span><span></span></div>
+      } @else if (methodsError()) {
+        <div class="prp-empty">
+          <p class="mb-2">{{ 'common.loadFailed' | translate }}</p>
+          <button type="button" class="btn btn-light btn-sm" (click)="loadMethods()">
+            <i class="fa-solid fa-rotate me-1"></i>{{ 'common.retry' | translate }}
+          </button>
+        </div>
+      } @else if (!methods().length) {
+        <div class="prp-empty">
+          <i class="fa-solid fa-wallet prp-empty__icon" aria-hidden="true"></i>
+          <p class="fw-600 mb-1">{{ 'payments.panel.noMethods' | translate }}</p>
+          <p class="text-muted small mb-2">{{ 'payments.panel.noMethodsHint' | translate }}</p>
+          @if (isAdmin()) {
+            <a class="btn btn-primary btn-sm" routerLink="/whatsapp/settings" [queryParams]="{ tab: 'payments' }" (click)="close()">
+              <i class="fa-solid fa-gear me-1"></i>{{ 'payments.panel.manageMethods' | translate }}
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="prp-methods" role="radiogroup" [attr.aria-label]="'payments.panel.step1' | translate">
+          @for (m of methods(); track m.id) {
+            <label class="prp-method" [class.is-selected]="form.controls.methodId.value === m.id">
+              <input type="radio" class="prp-method__radio" [value]="m.id" formControlName="methodId" />
+              <app-payment-method-logo [type]="m.type" />
+              <span class="prp-method__body">
+                <span class="prp-method__name">{{ 'payments.providers.' + m.type | translate }}</span>
+                <span class="prp-method__holder" dir="auto">{{ m.accountName }}</span>
+                <span class="prp-method__target" dir="ltr">{{ m.phoneNumber || m.instapayAddress }}</span>
+              </span>
+              <span class="prp-method__cur">EGP</span>
+            </label>
+          }
+        </div>
+        <p class="prp-note">
+          <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+          {{ 'payments.panel.manualNote' | translate }}
+          @if (selected(); as m) {
+            @if (isWallet(m.type)) { {{ 'payments.panel.walletNote' | translate }} }
+          }
+        </p>
+      }
+    </section>
+
+    <!-- 2. Details -->
+    <section class="prp-step">
+      <h6 class="prp-step__title"><span class="prp-step__num">2</span>{{ 'payments.panel.step2' | translate }}</h6>
+
+      <label class="form-label fw-600 small" for="prp-amount">{{ 'payments.panel.amount' | translate }}</label>
+      <div class="prp-amount" [class.is-invalid]="invalid('amount')">
+        <span class="prp-amount__cur">EGP</span>
+        <input id="prp-amount" type="number" inputmode="decimal" min="1" step="0.01" dir="ltr"
+               class="prp-amount__input" placeholder="0.00" formControlName="amount" />
+      </div>
+      @if (invalid('amount')) {
+        <p class="prp-err">{{ 'payments.panel.amountInvalid' | translate }}</p>
+      }
+
+      <div class="row g-2 mt-1">
+        <div class="col-8">
+          <label class="form-label fw-600 small" for="prp-desc">{{ 'payments.panel.description' | translate }}</label>
+          <input id="prp-desc" type="text" class="form-control" maxlength="200" dir="auto"
+                 [placeholder]="'payments.panel.descriptionPh' | translate" formControlName="description" />
+        </div>
+        <div class="col-4">
+          <label class="form-label fw-600 small" for="prp-days">
+            <i class="fa-regular fa-calendar me-1" aria-hidden="true"></i>{{ 'payments.panel.validity' | translate }}
+          </label>
+          <input id="prp-days" type="number" inputmode="numeric" min="1" max="90" class="form-control text-center"
+                 formControlName="validityDays" [class.is-invalid]="invalid('validityDays')" />
+        </div>
+      </div>
+      @if (invalid('validityDays')) {
+        <p class="prp-err">{{ 'payments.panel.validityInvalid' | translate }}</p>
+      }
+    </section>
+
+    <!-- 3. Customer -->
+    <section class="prp-step">
+      <h6 class="prp-step__title">
+        <span class="prp-step__num">3</span>{{ 'payments.panel.step3' | translate }}
+        <small class="prp-step__hint">{{ 'payments.panel.step3Hint' | translate }}</small>
+      </h6>
+
+      <label class="form-label fw-600 small" for="prp-name">
+        <i class="fa-regular fa-user me-1" aria-hidden="true"></i>{{ 'payments.panel.customerName' | translate }}
+      </label>
+      <input id="prp-name" type="text" class="form-control mb-2" dir="auto" maxlength="120" formControlName="customerName" />
+
+      <div class="row g-2">
+        <div class="col-sm-6">
+          <label class="form-label fw-600 small" for="prp-phone">
+            <i class="fa-solid fa-phone me-1" aria-hidden="true"></i>{{ 'payments.panel.customerPhone' | translate }}
+          </label>
+          <input id="prp-phone" type="tel" class="form-control" dir="ltr" formControlName="customerPhone"
+                 [class.is-invalid]="invalid('customerPhone') || contactMissing()" />
+          @if (invalid('customerPhone')) {
+            <p class="prp-err">{{ 'payments.panel.phoneInvalid' | translate }}</p>
+          }
+        </div>
+        <div class="col-sm-6">
+          <label class="form-label fw-600 small" for="prp-email">
+            <i class="fa-regular fa-envelope me-1" aria-hidden="true"></i>{{ 'payments.panel.customerEmail' | translate }}
+          </label>
+          <input id="prp-email" type="email" class="form-control" dir="ltr" placeholder="customer@example.com"
+                 formControlName="customerEmail" [class.is-invalid]="invalid('customerEmail') || contactMissing()" />
+        </div>
+      </div>
+      @if (contactMissing()) {
+        <p class="prp-err">{{ 'payments.panel.contactRequired' | translate }}</p>
+      }
+    </section>
+
+    @if (error(); as e) {
+      <div class="alert alert-danger py-2 small mb-0" role="alert">{{ e }}</div>
+    }
+
+    <!-- Footer -->
+    <div class="prp-footer">
+      <button type="button" class="btn btn-light" (click)="close()" [disabled]="submitting()">{{ 'common.cancel' | translate }}</button>
+      <button type="submit" class="btn btn-primary prp-footer__submit" [disabled]="submitting() || !methods().length">
+        @if (submitting()) {
+          <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>{{ 'payments.panel.creating' | translate }}
+        } @else {
+          <i class="fa-solid fa-link me-1" aria-hidden="true"></i>{{ 'payments.panel.submit' | translate }}
+        }
+      </button>
+    </div>
+  </form>
+</app-slide-panel>

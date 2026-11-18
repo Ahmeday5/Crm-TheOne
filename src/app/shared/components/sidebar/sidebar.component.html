@@ -42,7 +42,7 @@
 
   <!-- Nav -->
   <nav class="sb-nav">
-    @for (section of sections(); track section.titleKey) {
+    @for (section of sections(); track $index) {
       <div class="sb-section">
         <h6 class="sb-section-title">{{ section.titleKey | translate }}</h6>
 

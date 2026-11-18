@@ -341,6 +341,13 @@ export const NAV_SECTIONS: NavSection[] = [
             icon: 'fa-solid fa-user-group',
             matchSubroutes: true,
           },
+          // Payment links sent from the chat (manual confirmation).
+          {
+            labelKey: 'sidebar.items.paymentRequests',
+            path: '/payments',
+            icon: 'fa-solid fa-file-invoice-dollar',
+            roles: ['Admin', 'Sales', 'Support'],
+          },
           {
             labelKey: 'sidebar.items.inboxSettings',
             path: '/whatsapp/settings',

@@ -39,6 +39,9 @@ export type NotificationType =
   | 'MilestoneUpdatedByDeveloper'
   /** Progress hit 100% — the Admin closes the project. */
   | 'ProjectReachedFullProgress'
+  // ── payment links (2026-11-18) — enum 27, entity `PaymentRequest` ──
+  /** The customer pressed "I've paid" on `/pay/:token` (to the creator + Admins). */
+  | 'PaymentConfirmedByCustomer'
   | (string & {});
 
 /** `relatedEntityType`s of the project workspace — `relatedEntityId` is that row's id. */
@@ -60,6 +63,22 @@ export function isContractNotification(n: { type: NotificationType | number; rel
 export const ANNOUNCEMENT_ENTITY = 'Announcement';
 /** `relatedEntityType` of a leave-request notification. */
 export const LEAVE_REQUEST_ENTITY = 'LeaveRequest';
+
+/** `relatedEntityType` of a payment notification — `relatedEntityId` is the payment request id. */
+export const PAYMENT_REQUEST_ENTITY = 'PaymentRequest';
+
+/**
+ * True for "the customer confirmed a transfer". The payload carries only the
+ * request id — callers fetch `GET PaymentRequests/{id}` for the details.
+ * The enum may serialize by name or by number (27).
+ */
+export function isPaymentNotification(n: { type: NotificationType | number; relatedEntityType: string | null }): boolean {
+  return (
+    n.relatedEntityType === PAYMENT_REQUEST_ENTITY ||
+    n.type === 'PaymentConfirmedByCustomer' ||
+    String(n.type) === '27'
+  );
+}
 
 /** `relatedEntityType` of a WhatsApp notification — `relatedEntityId` is the chat id. */
 export const WHATSAPP_CHAT_ENTITY = 'WhatsAppChat';

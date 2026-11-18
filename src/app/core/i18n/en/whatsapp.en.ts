@@ -19,6 +19,7 @@ const whatsapp: TranslationFile<'whatsapp'> = {
       loadChats: 'Couldn’t load conversations',
       loadMessages: 'Couldn’t load messages',
       sendFailed: 'Couldn’t send the message',
+      rateLimited: 'WhatsApp is busy (too many requests) — wait a minute and try again. The message was not sent.',
       fileTooLarge: 'The file is larger than {max} — pick a smaller one',
       fileEmpty: 'The file is empty and can’t be sent',
       fileType: 'This file type can’t be sent. Allowed: {types}',
@@ -222,6 +223,7 @@ const whatsapp: TranslationFile<'whatsapp'> = {
       tabs: {
         channels: 'Channels',
         diagnostics: 'Diagnostics',
+        payments: 'Payment methods',
       },
     },
 

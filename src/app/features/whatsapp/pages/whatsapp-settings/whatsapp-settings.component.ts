@@ -11,6 +11,7 @@ import { LoadErrorComponent } from '../../../../shared/components/load-error/loa
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
+import { PaymentMethodsManagerComponent } from '../../../payments/components/payment-methods-manager/payment-methods-manager.component';
 import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -33,7 +34,7 @@ import {
   whatsappErrorText,
 } from '../../utils/whatsapp.util';
 
-type SettingsTab = 'channels' | 'diagnostics';
+type SettingsTab = 'channels' | 'diagnostics' | 'payments';
 
 /**
  * `/whatsapp/settings` (Admin) — channels, history import and diagnostics.
@@ -62,6 +63,7 @@ type SettingsTab = 'channels' | 'diagnostics';
     PageHeaderComponent,
     UserAvatarComponent,
     ResponsiveTableDirective,
+    PaymentMethodsManagerComponent,
     ClampTextDirective,
     WaAssignNumberDialogComponent,
     WaChannelBadgeComponent,
@@ -83,7 +85,10 @@ export class WhatsAppSettingsComponent implements OnInit {
 
   protected readonly tab = toSignal(
     inject(ActivatedRoute).queryParamMap.pipe(
-      map((q): SettingsTab => (q.get('tab') === 'diagnostics' ? 'diagnostics' : 'channels')),
+      map((q): SettingsTab => {
+        const tab = q.get('tab');
+        return tab === 'diagnostics' || tab === 'payments' ? tab : 'channels';
+      }),
     ),
     { initialValue: 'channels' as SettingsTab },
   );

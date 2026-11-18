@@ -19,6 +19,7 @@ const whatsapp: TranslationFile<'whatsapp'> = {
       loadChats: 'تعذّر تحميل المحادثات',
       loadMessages: 'تعذّر تحميل الرسائل',
       sendFailed: 'تعذّر إرسال الرسالة',
+      rateLimited: 'واتساب مشغول دلوقتي من كتر الطلبات — استنى دقيقة وجرّب تاني. الرسالة متبعتتش.',
       fileTooLarge: 'حجم الملف أكبر من {max} — اختر ملفًا أصغر',
       fileEmpty: 'الملف فارغ ولا يمكن إرساله',
       fileType: 'لا يمكن إرسال هذا النوع من الملفات. المسموح: {types}',
@@ -222,6 +223,7 @@ const whatsapp: TranslationFile<'whatsapp'> = {
       tabs: {
         channels: 'القنوات',
         diagnostics: 'التشخيص',
+        payments: 'طرق الدفع',
       },
     },
 

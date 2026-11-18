@@ -206,12 +206,17 @@ export class WhatsAppApiService {
       );
   }
 
-  /** Approved templates of my WhatsApp number (admins may pick the channel). */
+  /**
+   * Approved templates of my WhatsApp number (admins may pick the channel).
+   * Cached per number for 5 min: the backend fetches them from Mihwar on every
+   * call and the provider rate-limits ("Too many WhatsApp requests"), while
+   * approvals take hours. Failures are never cached, so "Retry" refetches.
+   */
   templates(instanceId?: string | null): Observable<WaTemplate[]> {
     return this.api
       .get<WaTemplate[] | null>(this.ep.templates, {
         params: { instanceId: instanceId || undefined },
-        context: inline(),
+        context: withCache({ ttlMs: CACHE_TTL.MEDIUM }, inline()),
       })
       .pipe(map(asArray));
   }

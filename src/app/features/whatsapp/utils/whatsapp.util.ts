@@ -421,6 +421,17 @@ export function isTransientError(err: unknown): boolean {
   return status === 0 || status === 502 || status === 503 || status === 504;
 }
 
+/**
+ * The provider / backend throttled WhatsApp calls. Arrives as `429` or — on
+ * the current backend — `400` with "Too many WhatsApp requests" in `message`.
+ * Never auto-retried: retrying only extends the throttle.
+ */
+export function isRateLimited(err: unknown): boolean {
+  const e = err as ApiError | null;
+  if (!e) return false;
+  return e.status === 429 || /rate_?limit/i.test(e.reason ?? '') || /too many/i.test(e.message ?? '');
+}
+
 /** A business-rule rejection (`400` with the reason in `message`) — nothing was sent. */
 export function isRejection(err: unknown): boolean {
   const status = (err as ApiError | null)?.status ?? 0;
@@ -437,6 +448,7 @@ export function whatsappErrorText(
   fallbackKey = 'whatsapp.errors.generic',
 ): string {
   if (isPermissionError(err)) return t('whatsapp.errors.noPermission');
+  if (isRateLimited(err)) return t('whatsapp.errors.rateLimited');
   const message = (err as ApiError | null)?.message?.trim();
   return message || t(fallbackKey);
 }

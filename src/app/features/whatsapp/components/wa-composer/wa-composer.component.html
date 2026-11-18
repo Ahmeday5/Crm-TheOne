@@ -35,6 +35,13 @@
       </button>
       <input #picker type="file" class="d-none" [accept]="accept" (change)="onPick($event)" tabindex="-1" />
       <app-quick-reply-picker (picked)="insertReply($event)" />
+      @if (canRequestPayment()) {
+        <button type="button" class="wa-icon-btn wa-icon-btn--pay" (click)="paymentRequested.emit()"
+                [title]="'payments.composer.button' | translate"
+                [attr.aria-label]="'payments.composer.button' | translate">
+          <i class="fa-regular fa-credit-card"></i>
+        </button>
+      }
 
       <textarea #box
                 class="wa-compose__input"

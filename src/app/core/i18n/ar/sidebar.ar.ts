@@ -74,6 +74,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       myProjectReports: 'تقاريري',
       // Communication — the inbox is multi-channel (WhatsApp + Messenger + Instagram).
       inbox: 'محادثات العملاء',
+      paymentRequests: 'طلبات الدفع',
       inboxSettings: 'إعدادات القنوات',
       whatsapp: 'واتساب العملاء',
       teamChat: 'الدردشة الداخلية',

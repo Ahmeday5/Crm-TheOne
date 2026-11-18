@@ -14,7 +14,18 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
+import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
+import { AuthService } from '../../../../core/services/auth.service';
+import { CompanySettingsService } from '../../../../core/services/company-settings.service';
+import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import {
+  PaymentRequest,
+  PaymentRequestContext,
+  PaymentRequestPanelComponent,
+  buildPaymentMessage,
+  publicPayUrl,
+} from '../../../payments';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -63,6 +74,7 @@ const LOAD_OLDER_PX = 80;
     WaMessageBubbleComponent,
     WaComposerComponent,
     WaTemplatePickerDialogComponent,
+    PaymentRequestPanelComponent,
   ],
   providers: [WhatsAppThreadStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,6 +85,9 @@ export class WaThreadComponent {
   protected readonly store = inject(WhatsAppThreadStore);
   protected readonly session = inject(WhatsAppSessionStore);
   private readonly toast = inject(ToastService);
+  private readonly language = inject(LanguageService);
+  private readonly company = inject(CompanySettingsService);
+  private readonly auth = inject(AuthService);
 
   readonly source = input<ThreadSource | null>(null);
   /** Customer's name — fills `{{customerName}}` in quick replies, shown in the template dialog. */
@@ -98,6 +113,18 @@ export class WaThreadComponent {
   protected readonly unseen = signal(0);
   protected readonly viewer = signal<WaImagePreview | null>(null);
   protected readonly templateOpen = signal(false);
+  /** "Request payment" drawer. */
+  protected readonly paymentOpen = signal(false);
+  protected readonly paymentContext = computed<PaymentRequestContext | null>(() => {
+    const chat = this.store.chat();
+    if (!chat) return null;
+    return {
+      chatId: chat.id,
+      customerId: chat.customerId,
+      customerName: chat.customerName || chat.contactName || this.contactName(),
+      customerPhone: chat.phone,
+    };
+  });
   /** Admins list the templates of the chat's own number. */
   protected readonly templateInstanceId = computed(() => (this.session.isAdmin() ? this.store.instanceId() : null));
   protected readonly sendTemplate = (request: TemplateSend): Observable<WaMessage> => this.store.sendTemplate(request);
@@ -151,6 +178,25 @@ export class WaThreadComponent {
 
   protected onSubmit({ text, file }: WaComposerSubmit): void {
     this.store.send(text, file);
+  }
+
+  /** The request exists — send its link in this chat (or hand the link over when the chat can't take a reply). */
+  protected onPaymentCreated(request: PaymentRequest): void {
+    this.paymentOpen.set(false);
+    const lang = this.language.lang();
+    const message = buildPaymentMessage(request, {
+      lang,
+      company: this.company.tradeName(),
+      agent: this.auth.currentUser()?.fullName,
+      rich: this.store.chat()?.channelType === 'whatsapp_cloud',
+    });
+    if (this.store.send(message)) {
+      this.toast.success(resolveKey(TRANSLATIONS[lang], 'payments.panel.created'));
+      this.scrollToBottom('smooth');
+      return;
+    }
+    navigator.clipboard?.writeText(publicPayUrl(request.token)).catch(() => undefined);
+    this.toast.warning(resolveKey(TRANSLATIONS[lang], 'payments.panel.createdNotSent'));
   }
 
   protected retry(message: ThreadMessage): void {

@@ -425,6 +425,21 @@ export const API_ENDPOINTS = {
     /** SignalR hub — relative to the API origin (without `/api`). */
     hub: 'hubs/whatsapp',
   },
+  /**
+   * Manual payment links — `docs/api/payments.md`. Methods: GET = any staff
+   * (active only), `?includeInactive=true` + writes = Admin. `publicPayment*`
+   * are anonymous (the `/pay/:token` page).
+   */
+  payments: {
+    methods: 'PaymentMethods',
+    method: (id: number | string) => `PaymentMethods/${id}`,
+    requests: 'PaymentRequests',
+    request: (id: number | string) => `PaymentRequests/${id}`,
+    markPaid: (id: number | string) => `PaymentRequests/${id}/mark-paid`,
+    cancel: (id: number | string) => `PaymentRequests/${id}/cancel`,
+    publicPayment: (token: string) => `PublicPayments/${encodeURIComponent(token)}`,
+    publicConfirm: (token: string) => `PublicPayments/${encodeURIComponent(token)}/confirm`,
+  },
   /** Knowledge-base articles — CRUD + category option pickers. */
   articles: {
     list: 'Articles/GetArticles',

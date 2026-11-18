@@ -18,7 +18,7 @@ import { LanguageService } from '../../../core/services/language.service';
 import { Pagination, WaChat, WaChatsQuery } from '../models/whatsapp.models';
 import { WhatsAppApiService } from '../services/whatsapp-api.service';
 import { WhatsAppRealtimeService } from '../services/whatsapp-realtime.service';
-import { pollWhileVisible } from '../utils/poll-while-visible.util';
+import { pollWhileVisible } from '../../../core/utils/poll-while-visible.util';
 import {
   WHATSAPP_CHATS_PAGE_SIZE,
   WHATSAPP_FALLBACK_POLL_MS,

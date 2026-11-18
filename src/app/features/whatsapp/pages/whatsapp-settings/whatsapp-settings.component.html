@@ -23,10 +23,16 @@
           [attr.aria-selected]="tab() === 'diagnostics'" (click)="setTab('diagnostics')">
     <i class="fa-solid fa-stethoscope" aria-hidden="true"></i>{{ 'whatsapp.settings.tabs.diagnostics' | translate }}
   </button>
+  <button type="button" role="tab" class="wa-numbers__tab" [class.is-active]="tab() === 'payments'"
+          [attr.aria-selected]="tab() === 'payments'" (click)="setTab('payments')">
+    <i class="fa-solid fa-wallet" aria-hidden="true"></i>{{ 'whatsapp.settings.tabs.payments' | translate }}
+  </button>
 </div>
 
 @if (tab() === 'diagnostics') {
   <app-wa-diagnostics />
+} @else if (tab() === 'payments') {
+  <app-payment-methods-manager />
 } @else {
   <!-- Where channels come from -->
   <div class="wa-numbers__hint mb-4" role="note">

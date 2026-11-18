@@ -26,6 +26,7 @@ import { CUSTOMER_MAP_ROUTES } from './features/customer-map/customer-map.routes
 import { VAULT_ROUTES } from './features/vault/vault.routes';
 import { PROJECT_WORKSPACE_ROUTES } from './features/project-workspace/project-workspace.routes';
 import { CLIENT_PORTAL_ROUTES } from './features/client-portal/client-portal.routes';
+import { PAYMENTS_PUBLIC_ROUTES, PAYMENTS_STAFF_ROUTES } from './features/payments/payments.routes';
 
 
 export const routes: Routes = [
@@ -33,6 +34,8 @@ export const routes: Routes = [
   // Client portal — its own minimal shell, before the staff shell so `/portal`
   // never falls into the staff routes.
   ...CLIENT_PORTAL_ROUTES,
+  // Customer payment page — anonymous, no staff shell.
+  ...PAYMENTS_PUBLIC_ROUTES,
   {
     path: '',
     canActivate: [authGuard],
@@ -51,6 +54,7 @@ export const routes: Routes = [
       ...SERVICES_ROUTES,
       ...DAILY_REPORTS_ROUTES,
       ...WHATSAPP_ROUTES,
+      ...PAYMENTS_STAFF_ROUTES,
       ...NOTIFICATIONS_ROUTES,
       ...ANNOUNCEMENTS_ROUTES,
       ...TEAM_CHAT_ROUTES,

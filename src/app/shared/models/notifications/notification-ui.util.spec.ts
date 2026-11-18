@@ -1,4 +1,4 @@
-import { notificationIcon, notificationRoute, notificationTone } from './notification-ui.util';
+import { notificationIcon, notificationQuery, notificationRoute, notificationTone } from './notification-ui.util';
 
 describe('contract notifications', () => {
   const n = (type: string, id: number | null = 42) => ({
@@ -31,5 +31,33 @@ describe('contract notifications', () => {
     expect(notificationIcon('SomethingNew')).toBe('fa-solid fa-bell');
     expect(notificationTone('SomethingNew')).toBe('primary');
     expect(notificationRoute({ type: 'SomethingNew', relatedEntityType: 'Mystery', relatedEntityId: 1 }, 'Admin')).toBeNull();
+  });
+});
+
+describe('payment notifications (type 27)', () => {
+  const n = (patch: Partial<{ type: string; relatedEntityType: string | null; relatedEntityId: number | null }> = {}) => ({
+    type: 'PaymentConfirmedByCustomer',
+    relatedEntityType: 'PaymentRequest' as string | null,
+    relatedEntityId: 41 as number | null,
+    ...patch,
+  });
+
+  it('open the payments page with that request for the chat roles only', () => {
+    for (const role of ['Admin', 'Sales', 'Support'] as const) {
+      expect(notificationRoute(n(), role)).toEqual(['/payments']);
+    }
+    expect(notificationRoute(n(), 'Developer')).toBeNull();
+    expect(notificationQuery(n())).toEqual({ request: '41' });
+  });
+
+  it('accept the numeric enum and a missing id', () => {
+    const numeric = n({ type: '27', relatedEntityType: null, relatedEntityId: null });
+    expect(notificationRoute(numeric, 'Sales')).toEqual(['/payments']);
+    expect(notificationQuery(numeric)).toEqual({ status: 'CustomerConfirmed' });
+  });
+
+  it('use the cheque icon in the info tone', () => {
+    expect(notificationIcon('PaymentConfirmedByCustomer')).toContain('money-check');
+    expect(notificationTone('27')).toBe('info');
   });
 });

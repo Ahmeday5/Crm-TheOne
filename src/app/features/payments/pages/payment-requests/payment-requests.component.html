@@ -1,0 +1,204 @@
+<app-page-header [title]="'payments.requests.title' | translate" [subtitle]="'payments.requests.subtitle' | translate" icon="fa-solid fa-file-invoice-dollar">
+  <div class="btn-row">
+    <app-mock-ribbon area="payments" />
+    <app-refresh-button [loading]="loading()" (refresh)="refreshAll()" />
+  </div>
+</app-page-header>
+
+<div class="card">
+  <div class="card-body">
+    <div class="prq-toolbar">
+      <div class="prq-chips" role="tablist">
+        <button type="button" role="tab" class="prq-chip" [class.is-active]="status() === null" (click)="setStatus(null)">
+          {{ 'common.all' | translate }}
+        </button>
+        @for (s of statuses; track s) {
+          <button type="button" role="tab" class="prq-chip prq-chip--{{ tone(s) }}" [class.is-active]="status() === s" (click)="setStatus(s)">
+            {{ 'payments.status.' + s | translate }}
+          </button>
+        }
+      </div>
+      <div class="prq-search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" class="form-control" [placeholder]="'payments.requests.searchPh' | translate"
+               [(ngModel)]="search" (ngModelChange)="onSearch($event)" [attr.aria-label]="'common.search' | translate" />
+      </div>
+    </div>
+
+    @if (error()) {
+      <div class="text-center py-5">
+        <p class="text-muted mb-2">{{ 'common.loadFailed' | translate }}</p>
+        <button type="button" class="btn btn-light btn-sm" (click)="load()"><i class="fa-solid fa-rotate me-1"></i>{{ 'common.retry' | translate }}</button>
+      </div>
+    } @else if (isEmpty()) {
+      <div class="text-center py-5">
+        <span class="icon-tile xl tone-purple mb-3"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+        <h6 class="fw-700 mb-1">{{ 'payments.requests.empty' | translate }}</h6>
+        <p class="text-muted small mb-0">{{ 'payments.requests.emptyHint' | translate }}</p>
+      </div>
+    } @else {
+      <div class="table-responsive" [class.prq-dim]="loading()">
+        <table class="table table-hover align-middle mb-0" appResponsiveTable>
+          <thead>
+            <tr>
+              <th>{{ 'payments.requests.table.customer' | translate }}</th>
+              <th>{{ 'payments.requests.table.amount' | translate }}</th>
+              <th>{{ 'payments.requests.table.method' | translate }}</th>
+              <th>{{ 'payments.requests.table.status' | translate }}</th>
+              <th>{{ 'payments.requests.table.created' | translate }}</th>
+              <th>{{ 'payments.requests.table.expires' | translate }}</th>
+              <th class="text-end actions">{{ 'payments.requests.table.actions' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of rows(); track r.id) {
+              <tr [class.prq-row--attention]="r.status === 'CustomerConfirmed'">
+                <td>
+                  <span class="fw-600 d-block" dir="auto">
+                    {{ r.customerName || r.customerPhone || r.customerEmail || '—' }}
+                    <small class="prq-ref" dir="ltr">#{{ r.id }}</small>
+                  </span>
+                  @if (r.description) { <small class="text-muted d-block text-truncate prq-desc" dir="auto">{{ r.description }}</small> }
+                </td>
+                <td class="fw-700 text-nowrap" dir="ltr">{{ formatAmount(r.amount) }} <small class="text-muted">EGP</small></td>
+                <td>
+                  <span class="d-inline-flex align-items-center gap-2">
+                    <app-payment-method-logo [type]="r.method.type" />
+                    <span class="small">{{ 'payments.providers.' + r.method.type | translate }}</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="badge prq-badge prq-badge--{{ tone(r.status) }}">{{ 'payments.status.' + r.status | translate }}</span>
+                  @if (r.status === 'CustomerConfirmed') {
+                    <small class="d-block text-info fw-600 mt-1">{{ 'payments.requests.needsReview' | translate }}</small>
+                  }
+                </td>
+                <td class="text-nowrap small">
+                  {{ r.createdAt | cairoDate: 'datetime' }}
+                  <small class="d-block text-muted">{{ r.createdByName }}</small>
+                </td>
+                <td class="text-nowrap small">{{ r.expiresAt | cairoDate: 'date' }}</td>
+                <td class="text-end">
+                  <div class="prq-actions">
+                    <button type="button" class="btn btn-light btn-sm" (click)="openDetails(r)" [title]="'payments.requests.details' | translate">
+                      <i class="fa-regular fa-eye"></i>
+                    </button>
+                    <button type="button" class="btn btn-light btn-sm" (click)="copyLink(r)" [title]="'payments.requests.copyLink' | translate">
+                      <i class="fa-regular fa-copy"></i>
+                    </button>
+                    @if (canMarkPaid(r)) {
+                      <button type="button" class="btn btn-success btn-sm" (click)="openMarkPaid(r)">
+                        <i class="fa-solid fa-check me-1"></i>{{ 'payments.requests.markPaid' | translate }}
+                      </button>
+                    }
+                    @if (canCancel(r)) {
+                      <button type="button" class="btn btn-light btn-sm text-danger" (click)="cancel(r)" [title]="'payments.requests.cancel' | translate">
+                        <i class="fa-solid fa-ban"></i>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination class="mt-3 d-block" [pageIndex]="pageIndex()" [pageSize]="pageSize()" [count]="count()"
+                      [disabled]="loading()" (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
+    }
+  </div>
+</div>
+
+<!-- Details -->
+@if (details(); as r) {
+  <app-modal [open]="true" size="md" icon="fa-solid fa-file-invoice-dollar" iconTone="purple"
+             [title]="'payments.requests.details' | translate" (closed)="closeDetails()">
+    <div class="prq-detail-hero">
+      <app-payment-method-logo [type]="r.method.type" size="lg" />
+      <div>
+        <p class="prq-detail-hero__amount" dir="ltr">{{ formatAmount(r.amount) }} <small>EGP</small> <small class="prq-ref">#{{ r.id }}</small></p>
+        <span class="badge prq-badge prq-badge--{{ tone(r.status) }}">{{ 'payments.status.' + r.status | translate }}</span>
+      </div>
+    </div>
+
+    <dl class="prq-dl">
+      <dt>{{ 'payments.requests.table.customer' | translate }}</dt>
+      <dd dir="auto">{{ r.customerName || '—' }} @if (r.customerPhone) { · <span dir="ltr">{{ r.customerPhone }}</span> } @if (r.customerEmail) { · {{ r.customerEmail }} }</dd>
+      @if (r.description) { <dt>{{ 'common.description' | translate }}</dt><dd dir="auto">{{ r.description }}</dd> }
+      <dt>{{ 'payments.requests.table.method' | translate }}</dt>
+      <dd>{{ 'payments.providers.' + r.method.type | translate }} — <span dir="auto">{{ r.method.accountName }}</span> · <span dir="ltr">{{ r.method.phoneNumber || r.method.instapayAddress }}</span></dd>
+      <dt>{{ 'payments.requests.createdBy' | translate }}</dt>
+      <dd>{{ r.createdByName }} · {{ r.createdAt | cairoDate: 'datetime' }}</dd>
+      <dt>{{ 'payments.requests.table.expires' | translate }}</dt>
+      <dd>{{ r.expiresAt | cairoDate: 'datetime' }}</dd>
+      <dt>{{ 'payments.requests.views' | translate }}</dt>
+      <dd>
+        @if (r.viewCount) { {{ r.viewCount }} · {{ 'payments.requests.lastViewed' | translate }} {{ r.lastViewedAt | cairoDate: 'datetime' }} }
+        @else { <span class="text-muted">{{ 'payments.requests.neverOpened' | translate }}</span> }
+      </dd>
+    </dl>
+
+    @if (r.customerConfirmedAt) {
+      <div class="prq-payer">
+        <p class="fw-700 mb-2"><i class="fa-solid fa-receipt me-1 text-info"></i>{{ 'payments.requests.payer' | translate }}</p>
+        <dl class="prq-dl mb-0">
+          @if (r.payerPhone) { <dt>{{ 'payments.requests.payerPhone' | translate }}</dt><dd dir="ltr">{{ r.payerPhone }}</dd> }
+          @if (r.payerReference) { <dt>{{ 'payments.requests.payerReference' | translate }}</dt><dd dir="ltr">{{ r.payerReference }}</dd> }
+          <dt>{{ 'common.date' | translate }}</dt><dd>{{ r.customerConfirmedAt | cairoDate: 'datetime' }}</dd>
+          @if (r.receiptUrl) {
+            <dt>{{ 'payments.requests.receipt' | translate }}</dt>
+            <dd><a [href]="r.receiptUrl | assetUrl" target="_blank" rel="noopener">{{ 'payments.requests.viewReceipt' | translate }}</a></dd>
+          }
+        </dl>
+      </div>
+    }
+
+    @if (r.paidAt) {
+      <dl class="prq-dl mt-3 mb-0">
+        <dt>{{ 'payments.requests.paidBy' | translate }}</dt><dd>{{ r.paidByName }} · {{ r.paidAt | cairoDate: 'datetime' }}</dd>
+        @if (r.staffNote) { <dt>{{ 'payments.requests.staffNote' | translate }}</dt><dd dir="auto">{{ r.staffNote }}</dd> }
+      </dl>
+    }
+
+    <ng-container modal-footer>
+      <div class="btn-row w-100">
+        <a class="btn btn-light btn-sm" [href]="link(r)" target="_blank" rel="noopener">
+          <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>{{ 'payments.requests.openLink' | translate }}
+        </a>
+        @if (r.chatId) {
+          <a class="btn btn-light btn-sm" [routerLink]="['/whatsapp/chats', r.chatId]" (click)="closeDetails()">
+            <i class="fa-brands fa-whatsapp me-1"></i>{{ 'payments.requests.openChat' | translate }}
+          </a>
+        }
+        @if (canMarkPaid(r)) {
+          <button type="button" class="btn btn-success btn-sm ms-auto" (click)="closeDetails(); openMarkPaid(r)">
+            <i class="fa-solid fa-check me-1"></i>{{ 'payments.requests.markPaid' | translate }}
+          </button>
+        }
+      </div>
+    </ng-container>
+  </app-modal>
+}
+
+<!-- Mark paid -->
+@if (paying(); as r) {
+  <app-modal [open]="true" size="sm" icon="fa-solid fa-circle-check" iconTone="success"
+             [title]="'payments.requests.markPaidTitle' | translate" [closeOnBackdrop]="!busy()" (closed)="paying.set(null)">
+    <p class="prq-detail-hero__amount mb-1" dir="ltr">{{ formatAmount(r.amount) }} <small>EGP</small></p>
+    <p class="text-muted small">{{ 'payments.requests.markPaidHint' | translate }}</p>
+    <label class="form-label small fw-600" for="prq-note">{{ 'payments.requests.note' | translate }}</label>
+    <input id="prq-note" class="form-control" dir="auto" maxlength="300" [(ngModel)]="paidNote"
+           [placeholder]="'payments.requests.notePh' | translate" (keydown.enter)="confirmPaid()" />
+    @if (actionError(); as e) {
+      <div class="alert alert-danger py-2 small mt-2 mb-0" role="alert">{{ e }}</div>
+    }
+    <ng-container modal-footer>
+      <button type="button" class="btn btn-light" (click)="paying.set(null)" [disabled]="busy()">{{ 'common.cancel' | translate }}</button>
+      <button type="button" class="btn btn-success" (click)="confirmPaid()" [disabled]="busy()">
+        @if (busy()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+        {{ 'payments.requests.markPaid' | translate }}
+      </button>
+    </ng-container>
+  </app-modal>
+}
