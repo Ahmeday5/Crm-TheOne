@@ -94,3 +94,28 @@
 
   .report-card .card-actions .btn { min-height: 38px; }
 }
+
+.project-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: -0.25rem;
+}
+
+.project-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  padding: 0.2rem 0.6rem;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--info-soft);
+  color: var(--info);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  &--more { background: var(--surface-2); color: var(--text-2); }
+}

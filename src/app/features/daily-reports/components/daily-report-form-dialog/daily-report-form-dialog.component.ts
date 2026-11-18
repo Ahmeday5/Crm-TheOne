@@ -26,7 +26,8 @@ import {
 } from '../../../../core/utils/calendar-date.util';
 import { FormErrorComponent } from '../../../../shared/components/form-error/form-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
-import { DailyReport, DailyReportRequest } from '../../../../shared/models';
+import { MultiSelectComponent, MultiSelectOption } from '../../../../shared/components/multi-select/multi-select.component';
+import { DailyReport, DailyReportProjectRef, DailyReportRequest } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DailyReportsService } from '../../services/daily-reports.service';
 
@@ -37,6 +38,12 @@ import { DailyReportsService } from '../../services/daily-reports.service';
  * to edit mode — when null the dialog hits `POST /Reports`; otherwise
  * `PUT /Reports/{id}`. Emits `created` / `updated` so the host can pick the
  * right toast / reload semantics.
+ *
+ * Projects (optional): Admin picks from every active project, a Developer
+ * from their own. A project already linked to the report stays selectable
+ * even if it is no longer active. The section is Admin / Developer only
+ * (enforced here, whatever the backend allows); for other roles the existing
+ * ids are sent back unchanged, because `projectIds` replaces the links on update.
  */
 @Component({
   selector: 'app-daily-report-form-dialog',
@@ -47,6 +54,7 @@ import { DailyReportsService } from '../../services/daily-reports.service';
     TranslatePipe,
     ModalComponent,
     FormErrorComponent,
+    MultiSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './daily-report-form-dialog.component.html',
@@ -68,6 +76,13 @@ export class DailyReportFormDialogComponent implements OnInit {
   readonly submitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
+  readonly canLinkProjects = this.reports.canLinkProjects;
+  readonly projectOptions = signal<MultiSelectOption<number>[]>([]);
+  readonly loadingProjects = signal(false);
+  readonly projectsFailed = signal(false);
+  /** Links of the report being edited — kept on save for roles that can't change them. */
+  readonly linkedProjects = signal<DailyReportProjectRef[]>([]);
+
   /**
    * Today's local calendar date as `YYYY-MM-DD`. We deliberately avoid
    * `toISOString().slice(0,10)` because that converts to UTC and would shift
@@ -87,6 +102,7 @@ export class DailyReportFormDialogComponent implements OnInit {
       Validators.max(24),
     ]),
     additionalNotes: [''],
+    projectIds: this.fb.nonNullable.control<number[]>([]),
   });
 
   get isEditMode(): boolean {
@@ -95,6 +111,24 @@ export class DailyReportFormDialogComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.report) this.patchFromReport(this.report);
+    if (this.canLinkProjects()) this.loadProjects();
+  }
+
+  loadProjects(): void {
+    this.loadingProjects.set(true);
+    this.projectsFailed.set(false);
+    this.reports.linkableProjects().subscribe({
+      next: (list) => {
+        this.loadingProjects.set(false);
+        this.projectOptions.set(this.mergeOptions(list));
+      },
+      error: () => {
+        this.loadingProjects.set(false);
+        this.projectsFailed.set(true);
+        // Still offer what the report is already linked to.
+        this.projectOptions.set(this.mergeOptions([]));
+      },
+    });
   }
 
   submit(): void {
@@ -113,6 +147,9 @@ export class DailyReportFormDialogComponent implements OnInit {
       challenges: (v.challenges ?? '').trim(),
       workHours: Number(v.workHours) || 0,
       additionalNotes: (v.additionalNotes ?? '').trim(),
+      projectIds: this.canLinkProjects()
+        ? [...new Set(v.projectIds)]
+        : this.linkedProjects().map((p) => p.id),
     };
 
     this.submitting.set(true);
@@ -158,7 +195,17 @@ export class DailyReportFormDialogComponent implements OnInit {
       challenges: r.challenges ?? '',
       workHours: r.workHours ?? 0,
       additionalNotes: r.additionalNotes ?? '',
+      projectIds: (r.projects ?? []).map((p) => p.id),
     });
+    this.linkedProjects.set(r.projects ?? []);
+  }
+
+  /** Active projects + the report's current links (which may be archived by now). */
+  private mergeOptions(active: DailyReportProjectRef[]): MultiSelectOption<number>[] {
+    const byId = new Map<number, string>();
+    for (const p of active) byId.set(p.id, p.title);
+    for (const p of this.linkedProjects()) if (!byId.has(p.id)) byId.set(p.id, p.title);
+    return [...byId].map(([id, name]) => ({ id, name }));
   }
 
   private t(key: string): string {

@@ -9,6 +9,12 @@
  * full body is returned only from the detail endpoint.
  */
 
+/** A project a report is linked to (`projects[]` on the detail / write responses). */
+export interface DailyReportProjectRef {
+  id: number;
+  title: string;
+}
+
 /** Lightweight row returned by the list endpoints. */
 export interface DailyReportListItem {
   id: number;
@@ -17,6 +23,8 @@ export interface DailyReportListItem {
   workHours: number;
   completedTasksPreview: string;
   createdAt: string;
+  /** Titles of the linked projects (empty when none). */
+  projectNames: string[];
 }
 
 /** Full detail returned by `GET /Reports/{id}` (and `POST` / `PUT` responses). */
@@ -33,6 +41,8 @@ export interface DailyReport {
   userName: string;
   createdAt: string;
   updatedAt: string | null;
+  /** Linked projects (empty when none). */
+  projects: DailyReportProjectRef[];
 }
 
 /** Body shared by `POST /Reports` and `PUT /Reports/{id}`. */
@@ -44,6 +54,12 @@ export interface DailyReportRequest {
   challenges: string;
   workHours: number;
   additionalNotes: string;
+  /**
+   * Projects the work was on — optional. On update the list REPLACES the
+   * current links (`[]` = unlink all), so callers that can't edit links must
+   * send the report's existing ids back.
+   */
+  projectIds: number[];
 }
 
 /** Query params for list / my-reports. Server applies pagination + filters. */

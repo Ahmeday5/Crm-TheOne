@@ -45,12 +45,14 @@ const dailyReports: TranslationFile<'dailyReports'> = {
     },
 
     card: {
+      projects: 'المشاريع',
       details: 'التفاصيل',
       edit: 'تعديل',
       delete: 'حذف',
     },
 
     export: {
+      projects: 'المشاريع',
       id: 'المعرّف',
       employee: 'الموظف',
       reportDate: 'تاريخ التقرير',
@@ -60,6 +62,15 @@ const dailyReports: TranslationFile<'dailyReports'> = {
     },
 
     create: {
+      sectionProjects: 'المشاريع',
+      projectsPlaceholder: 'اختار المشاريع اللي اشتغلت عليها النهارده',
+      projectsSearch: 'ابحث عن مشروع…',
+      projectsEmpty: 'مفيش مشاريع نشطة',
+      projectsSelectAll: 'اختيار الكل',
+      projectsClear: 'مسح',
+      projectsSelected: 'مشروع',
+      projectsHint: 'بيساعد الإدارة تعرف الوقت راح على أنهي مشروع.',
+      projectsLoadFailed: 'تعذّر تحميل المشاريع.',
       title: 'إضافة تقرير يومي',
       editTitle: 'تعديل التقرير اليومي',
       submit: 'إرسال التقرير',
@@ -83,6 +94,7 @@ const dailyReports: TranslationFile<'dailyReports'> = {
     },
 
     details: {
+      projects: 'المشاريع اللي اشتغلت عليها',
       title: 'تفاصيل التقرير اليومي',
       notFound: 'لم يتم العثور على التقرير',
       createdAt: 'تاريخ الإنشاء',

@@ -45,12 +45,14 @@ const dailyReports: TranslationFile<'dailyReports'> = {
     },
 
     card: {
+      projects: 'Projects',
       details: 'Details',
       edit: 'Edit',
       delete: 'Delete',
     },
 
     export: {
+      projects: 'Projects',
       id: 'ID',
       employee: 'Employee',
       reportDate: 'Report date',
@@ -60,6 +62,15 @@ const dailyReports: TranslationFile<'dailyReports'> = {
     },
 
     create: {
+      sectionProjects: 'Projects',
+      projectsPlaceholder: 'Pick the projects you worked on today',
+      projectsSearch: 'Search projects…',
+      projectsEmpty: 'No active projects',
+      projectsSelectAll: 'Select all',
+      projectsClear: 'Clear',
+      projectsSelected: 'selected',
+      projectsHint: 'Helps management see where the time went.',
+      projectsLoadFailed: "Couldn't load projects.",
       title: 'Add daily report',
       editTitle: 'Edit daily report',
       submit: 'Submit report',
@@ -83,6 +94,7 @@ const dailyReports: TranslationFile<'dailyReports'> = {
     },
 
     details: {
+      projects: 'Projects worked on',
       title: 'Daily report details',
       notFound: 'Report not found',
       createdAt: 'Created at',

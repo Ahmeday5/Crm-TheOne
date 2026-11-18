@@ -35,6 +35,27 @@
       </span>
     </div>
 
+    @if (r.projects.length) {
+      <div class="report-block">
+        <h6 class="block-title">
+          <i class="fa-solid fa-diagram-project text-info"></i>
+          {{ 'dailyReports.details.projects' | translate }}
+        </h6>
+        <div class="d-flex flex-wrap gap-2">
+          @for (p of r.projects; track p.id) {
+            @if (canOpenProjects()) {
+              <a class="project-chip project-chip--link" [routerLink]="['/projects', p.id]" (click)="cancel.emit()">
+                <i class="fa-solid fa-diagram-project"></i>{{ p.title }}
+                <i class="fa-solid fa-arrow-up-right-from-square project-chip__ext"></i>
+              </a>
+            } @else {
+              <span class="project-chip"><i class="fa-solid fa-diagram-project"></i>{{ p.title }}</span>
+            }
+          }
+        </div>
+      </div>
+    }
+
     <div class="report-block">
       <h6 class="block-title">
         <i class="fa-solid fa-circle-check text-success"></i>

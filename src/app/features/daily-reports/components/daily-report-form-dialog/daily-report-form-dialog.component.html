@@ -43,6 +43,37 @@
       </div>
     </section>
 
+    @if (canLinkProjects()) {
+      <section class="form-section">
+        <h6 class="section-title">
+          <i class="fa-solid fa-diagram-project text-info"></i>
+          {{ 'dailyReports.create.sectionProjects' | translate }}
+          <small class="text-muted fw-normal">({{ 'common.optional' | translate }})</small>
+        </h6>
+
+        <app-multi-select
+          formControlName="projectIds"
+          [options]="projectOptions()"
+          [loading]="loadingProjects()"
+          [placeholder]="'dailyReports.create.projectsPlaceholder' | translate"
+          [searchPlaceholder]="'dailyReports.create.projectsSearch' | translate"
+          [emptyText]="'dailyReports.create.projectsEmpty' | translate"
+          [loadingLabel]="'common.loading' | translate"
+          [selectAllLabel]="'dailyReports.create.projectsSelectAll' | translate"
+          [clearLabel]="'dailyReports.create.projectsClear' | translate"
+          [selectedSuffix]="'dailyReports.create.projectsSelected' | translate" />
+        @if (projectsFailed()) {
+          <p class="small text-warning mt-2 mb-0 d-flex align-items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            {{ 'dailyReports.create.projectsLoadFailed' | translate }}
+            <button type="button" class="btn btn-link btn-sm p-0" (click)="loadProjects()">{{ 'common.retry' | translate }}</button>
+          </p>
+        } @else {
+          <p class="small text-muted mt-2 mb-0">{{ 'dailyReports.create.projectsHint' | translate }}</p>
+        }
+      </section>
+    }
+
     <section class="form-section">
       <h6 class="section-title">
         <i class="fa-solid fa-circle-check text-success"></i>

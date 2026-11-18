@@ -215,6 +215,19 @@
                 </span>
               </div>
 
+              @if (r.projectNames.length) {
+                <div class="project-chips" [attr.aria-label]="'dailyReports.card.projects' | translate">
+                  @for (name of r.projectNames.slice(0, maxCardProjects); track $index) {
+                    <span class="project-chip" [title]="name"><i class="fa-solid fa-diagram-project"></i>{{ name }}</span>
+                  }
+                  @if (r.projectNames.length > maxCardProjects) {
+                    <span class="project-chip project-chip--more" [title]="r.projectNames.slice(maxCardProjects).join('، ')">
+                      +{{ r.projectNames.length - maxCardProjects }}
+                    </span>
+                  }
+                </div>
+              }
+
               <div class="preview-block">
                 <p class="text-muted mb-1 small fw-600">
                   <i class="fa-solid fa-circle-check text-success me-1"></i>

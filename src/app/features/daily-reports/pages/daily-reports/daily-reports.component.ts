@@ -96,6 +96,8 @@ const PRESET_ORDER: readonly RangePreset[] = [
   styleUrl: './daily-reports.component.scss',
 })
 export class DailyReportsComponent implements OnInit, OnDestroy {
+  /** Project chips shown on a card before collapsing into "+n". */
+  protected readonly maxCardProjects = 3;
   private readonly reports = inject(DailyReportsService);
   private readonly toast = inject(ToastService);
   private readonly dialog = inject(DialogService);
@@ -470,6 +472,10 @@ export class DailyReportsComponent implements OnInit, OnDestroy {
         header: this.t('dailyReports.export.workHours'),
         value: (r) => r.workHours,
         align: 'center',
+      },
+      {
+        header: this.t('dailyReports.export.projects'),
+        value: (r) => r.projectNames.join('، ') || '-',
       },
       {
         header: this.t('dailyReports.export.summary'),

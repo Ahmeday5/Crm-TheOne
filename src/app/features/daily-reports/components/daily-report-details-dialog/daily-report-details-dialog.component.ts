@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -26,7 +27,7 @@ import { DailyReportsService } from '../../services/daily-reports.service';
 @Component({
   selector: 'app-daily-report-details-dialog',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, ModalComponent, LoadErrorComponent],
+  imports: [CommonModule, RouterLink, TranslatePipe, ModalComponent, LoadErrorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './daily-report-details-dialog.component.html',
   styleUrl: './daily-report-details-dialog.component.scss',
@@ -38,6 +39,8 @@ export class DailyReportDetailsDialogComponent implements OnChanges {
   @Output() editRequested = new EventEmitter<DailyReport>();
 
   private readonly reports = inject(DailyReportsService);
+  /** Admin / Developers have the project workspace (`/projects/:id`). */
+  protected readonly canOpenProjects = this.reports.canLinkProjects;
   private readonly language = inject(LanguageService);
 
   readonly details = signal<DailyReport | null>(null);

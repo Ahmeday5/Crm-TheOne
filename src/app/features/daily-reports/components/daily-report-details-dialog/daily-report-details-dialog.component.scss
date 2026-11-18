@@ -45,3 +45,22 @@
     word-break: break-word;
   }
 }
+
+.project-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-pill);
+  background: var(--info-soft);
+  color: var(--info);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+  text-decoration: none;
+
+  &--link {
+    transition: background-color 160ms ease, color 160ms ease;
+    &:hover { background: var(--info); color: #fff; }
+  }
+  &__ext { font-size: 0.7em; opacity: 0.7; }
+}
