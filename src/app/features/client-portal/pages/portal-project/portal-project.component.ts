@@ -14,6 +14,8 @@ import { PortalCredentialsComponent } from '../../components/portal-credentials/
 import { PortalProgressChartComponent } from '../../components/portal-progress-chart/portal-progress-chart.component';
 import { PortalReleasesComponent } from '../../components/portal-releases/portal-releases.component';
 import { CLIENT_PORTAL_GATEWAY } from '../../data/client-portal.gateway';
+import { PORTAL_REQUESTS_GATEWAY } from '../../data/portal-requests.gateway';
+import { RequestTargetChipComponent } from '../../components/request-target-chip/request-target-chip.component';
 import {
   ClientCredential,
   ClientProjectDetails,
@@ -60,6 +62,7 @@ interface SectionLink {
     PortalProgressChartComponent,
     PortalCredentialsComponent,
     PortalReleasesComponent,
+    RequestTargetChipComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './portal-project.component.html',
@@ -67,6 +70,7 @@ interface SectionLink {
 })
 export class PortalProjectComponent {
   private readonly api = inject(CLIENT_PORTAL_GATEWAY);
+  private readonly requestsApi = inject(PORTAL_REQUESTS_GATEWAY);
   private readonly router = inject(Router);
   private readonly live = inject(PortalLiveService);
 
@@ -89,6 +93,8 @@ export class PortalProjectComponent {
     return p?.milestones.length ? Math.round((this.doneCount() / p.milestones.length) * 100) : 0;
   });
   protected readonly openCount = computed(() => (this.requests() ?? []).filter((r) => isRequestOpen(r.status)).length);
+  /** Requests where the Admin asked the client something — "مطلوب ردك". */
+  protected readonly awaitingMe = computed(() => (this.requests() ?? []).filter((r) => r.status === 'NeedsClarification'));
   protected readonly androidLatest = computed(() => this.releases().find((r) => r.isLatest && r.platform === 'Android' && r.hasFile) ?? null);
   protected readonly managerWa = computed(() => {
     const p = this.project();
@@ -195,8 +201,8 @@ export class PortalProjectComponent {
   }
 
   private loadRequests(): void {
-    this.api
-      .requests(this.projectId, {})
+    this.requestsApi
+      .list(this.projectId, {})
       .pipe(catchError(() => of(null)))
       .subscribe((page) => this.requests.set(page?.data ?? []));
   }

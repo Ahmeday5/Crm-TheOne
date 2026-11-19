@@ -186,6 +186,10 @@ export const API_ENDPOINTS = {
     clientRequest: (pid: number | string, id: number | string) => `ManagerProjects/${pid}/client-requests/${id}`,
     clientRequestComments: (pid: number | string, id: number | string) =>
       `ManagerProjects/${pid}/client-requests/${id}/comments`,
+    /** What the project is made of (website / dashboard / each app) — the client's request picker. */
+    surfaces: (pid: number | string) => `ManagerProjects/${pid}/surfaces`,
+    surface: (pid: number | string, id: number | string) => `ManagerProjects/${pid}/surfaces/${id}`,
+    surfacesOrder: (pid: number | string) => `ManagerProjects/${pid}/surfaces/order`,
     ...projectDeliverables('ManagerProjects'),
   },
   /** Developer-facing, read-only view scoped to the signed-in developer. */
@@ -219,8 +223,22 @@ export const API_ENDPOINTS = {
       `ClientPortal/Projects/${pid}/releases/${id}/download-link`,
     /** GET paged (own) · POST multipart create. */
     requests: (pid: number | string) => `ClientPortal/Projects/${pid}/requests`,
+    /** What the "new request" picker offers for this project. */
+    requestOptions: (pid: number | string) => `ClientPortal/Projects/${pid}/request-options`,
     request: (id: number | string) => `ClientPortal/requests/${id}`,
     requestComments: (id: number | string) => `ClientPortal/requests/${id}/comments`,
+  },
+  /** Admin triage of client requests across all projects (Admin only). */
+  clientRequests: {
+    list: 'ClientRequests',
+    summary: 'ClientRequests/summary',
+    byId: (id: number | string) => `ClientRequests/${id}`,
+    approve: (id: number | string) => `ClientRequests/${id}/approve`,
+    reject: (id: number | string) => `ClientRequests/${id}/reject`,
+    clarify: (id: number | string) => `ClientRequests/${id}/clarify`,
+    reopenReview: (id: number | string) => `ClientRequests/${id}/reopen-review`,
+    classification: (id: number | string) => `ClientRequests/${id}/classification`,
+    comments: (id: number | string) => `ClientRequests/${id}/comments`,
   },
   /** Admin — the per-customer private portal links. */
   clientPortalLinks: {

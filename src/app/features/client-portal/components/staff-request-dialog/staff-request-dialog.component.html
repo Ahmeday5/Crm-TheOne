@@ -2,6 +2,7 @@
   <app-modal [open]="true" size="lg" [title]="r.title" [icon]="typeIcon(r.type)" (closed)="closed.emit()">
     <div class="sr-meta">
       <span><i class="fa-solid fa-user" aria-hidden="true"></i>{{ r.clientName || '—' }}</span>
+      <app-request-target-chip [source]="r" size="sm" />
       <span><i class="fa-solid fa-tag" aria-hidden="true"></i>{{ 'clientPortal.type.' + r.type | translate }}</span>
       <span><i class="fa-regular fa-clock" aria-hidden="true"></i>{{ r.createdAt | cairoDate }}</span>
     </div>
@@ -10,7 +11,9 @@
       <label class="sr-field">
         <span>{{ 'clientPortal.staff.status' | translate }}</span>
         <select class="form-select form-select-sm" [disabled]="saving()" [ngModel]="r.status" (ngModelChange)="setStatus($event)">
-          @for (s of statuses; track s) { <option [value]="s">{{ 'clientPortal.status.' + s | translate }}</option> }
+          @for (s of statuses; track s) {
+            <option [value]="s" [disabled]="!canMove(r.status, s)">{{ 'clientPortal.status.' + s | translate }}</option>
+          }
         </select>
       </label>
       <label class="sr-field">
@@ -25,7 +28,7 @@
           <span>{{ 'clientPortal.staff.assignee' | translate }}</span>
           <select class="form-select form-select-sm" [disabled]="saving()" [ngModel]="r.assignedToId ?? ''" (ngModelChange)="setAssignee($event)">
             <option value="">{{ 'clientPortal.staff.unassigned' | translate }}</option>
-            @for (a of assignees(); track a.userId) { <option [value]="a.userId">{{ a.fullName }}</option> }
+            @for (a of assigneeOptions(); track a.userId) { <option [value]="a.userId">{{ a.fullName }}</option> }
             @if (r.assignedToId && !isKnownAssignee(r.assignedToId)) {
               <option [value]="r.assignedToId">{{ r.assignedToName }}</option>
             }
@@ -45,7 +48,7 @@
     </div>
     @if (error(); as e) { <div class="alert alert-danger py-2 small">{{ e }}</div> }
 
-    <app-request-thread [request]="r" viewer="staff" [sending]="sending()" [error]="replyError()"
+    <app-request-thread [request]="r" viewer="staff" [allowInternal]="true" [sending]="sending()" [error]="replyError()"
                         [sentCount]="sentCount()" (reply)="onReply($event)" />
   </app-modal>
 } @else {

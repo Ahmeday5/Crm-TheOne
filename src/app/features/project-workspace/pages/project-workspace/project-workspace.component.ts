@@ -13,7 +13,8 @@ import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ProjectsService } from '../../../ProjectsTasks/services/projects.service';
 import { ClientRequestsPanelComponent } from '../../../client-portal/components/client-requests-panel/client-requests-panel.component';
-import { ClientRequestsStaffService } from '../../../client-portal/services/client-requests-staff.service';
+import { STAFF_CLIENT_REQUESTS_GATEWAY } from '../../../client-requests/data/staff-client-requests.gateway';
+import { ProjectSurfacesCardComponent } from '../../../client-requests/components/project-surfaces-card/project-surfaces-card.component';
 import { ClientLinkCardComponent } from '../../components/client-link-card/client-link-card.component';
 import { DeliverablesPanelComponent } from '../../components/deliverables-panel/deliverables-panel.component';
 import { MilestonesPanelComponent } from '../../components/milestones-panel/milestones-panel.component';
@@ -73,6 +74,7 @@ const TABS: ReadonlyArray<TabDef> = [
     ClientRequestsPanelComponent,
     DeliverablesPanelComponent,
     ClientLinkCardComponent,
+    ProjectSurfacesCardComponent,
     ProjectTimelineComponent,
     ProjectReportsPanelComponent,
     MyProjectProgressComponent,
@@ -85,7 +87,7 @@ export class ProjectWorkspaceComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly projectsApi = inject(ProjectsService);
-  private readonly requestsApi = inject(ClientRequestsStaffService);
+  private readonly requestsApi = inject(STAFF_CLIENT_REQUESTS_GATEWAY);
   private readonly progressApi = inject(ProjectProgressService);
   private readonly auth = inject(AuthService);
   private readonly progressSync = inject(ProjectProgressSyncService);
@@ -133,8 +135,9 @@ export class ProjectWorkspaceComponent {
   constructor() {
     this.loadProject();
     this.loadSummary();
+    // The tab badge: what needs the viewer (Admin: a decision; developer: newly approved).
     this.requestsApi
-      .list(this.projectId, { status: 'Open', pageSize: 1 })
+      .list(this.projectId, { status: this.isAdmin() ? 'PendingReview' : 'Open', pageSize: 1 })
       .pipe(catchError(() => of(null)), takeUntilDestroyed())
       .subscribe((page) => this.openRequests.set(page?.count ?? 0));
   }

@@ -27,6 +27,7 @@ import { VAULT_ROUTES } from './features/vault/vault.routes';
 import { PROJECT_WORKSPACE_ROUTES } from './features/project-workspace/project-workspace.routes';
 import { CLIENT_PORTAL_ROUTES } from './features/client-portal/client-portal.routes';
 import { PAYMENTS_PUBLIC_ROUTES, PAYMENTS_STAFF_ROUTES } from './features/payments/payments.routes';
+import { CLIENT_REQUESTS_ROUTES } from './features/client-requests/client-requests.routes';
 
 
 export const routes: Routes = [
@@ -55,6 +56,7 @@ export const routes: Routes = [
       ...DAILY_REPORTS_ROUTES,
       ...WHATSAPP_ROUTES,
       ...PAYMENTS_STAFF_ROUTES,
+      ...CLIENT_REQUESTS_ROUTES,
       ...NOTIFICATIONS_ROUTES,
       ...ANNOUNCEMENTS_ROUTES,
       ...TEAM_CHAT_ROUTES,

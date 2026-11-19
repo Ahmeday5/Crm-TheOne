@@ -20,13 +20,17 @@ export const ROLE_WORKSPACE: Readonly<Record<UserRole, { path: string; labelKey:
   Client: { path: '/portal', labelKey: 'bottomNav.myProjects', icon: 'fa-solid fa-diagram-project' },
 };
 
-/** Customer-facing roles chat on WhatsApp; the others use team chat. */
-export const ROLE_CHAT: Readonly<Record<UserRole, { path: string; labelKey: string; icon: string }>> = {
+/**
+ * Customer-facing roles chat on WhatsApp. Team chat (`/team-chat`) is HIDDEN
+ * until it has a real backend, so Marketing / Developer get no chat shortcut
+ * (`null`) — restore `{ path: '/team-chat', labelKey: 'bottomNav.chat', icon: 'fa-solid fa-comments' }`.
+ */
+export const ROLE_CHAT: Readonly<Record<UserRole, { path: string; labelKey: string; icon: string } | null>> = {
   Admin: { path: '/whatsapp', labelKey: 'bottomNav.whatsapp', icon: 'fa-brands fa-whatsapp' },
   Sales: { path: '/whatsapp', labelKey: 'bottomNav.whatsapp', icon: 'fa-brands fa-whatsapp' },
   Support: { path: '/whatsapp', labelKey: 'bottomNav.whatsapp', icon: 'fa-brands fa-whatsapp' },
-  Marketing: { path: '/team-chat', labelKey: 'bottomNav.chat', icon: 'fa-solid fa-comments' },
-  Developer: { path: '/team-chat', labelKey: 'bottomNav.chat', icon: 'fa-solid fa-comments' },
+  Marketing: null,
+  Developer: null,
   // Clients talk to the team through their project's requests, not chat.
   Client: { path: '/portal', labelKey: 'bottomNav.requests', icon: 'fa-solid fa-message' },
 };

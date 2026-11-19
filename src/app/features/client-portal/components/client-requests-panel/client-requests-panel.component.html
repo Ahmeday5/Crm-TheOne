@@ -9,11 +9,11 @@
   </div>
 
   <div class="crp-chips" role="tablist">
-    <button type="button" role="tab" class="crp-chip" [class.is-active]="filter() === 'all'" (click)="filter.set('all')">
+    <button type="button" role="tab" class="crp-chip" [class.is-active]="activeFilter() === 'all'" (click)="filter.set('all')">
       {{ 'clientPortal.requests.all' | translate }} <b>{{ counts()['all'] }}</b>
     </button>
-    @for (s of statuses; track s) {
-      <button type="button" role="tab" class="crp-chip" [attr.data-status]="s" [class.is-active]="filter() === s" (click)="filter.set(s)">
+    @for (s of statuses(); track s) {
+      <button type="button" role="tab" class="crp-chip" [attr.data-status]="s" [class.is-active]="activeFilter() === s" (click)="filter.set(s)">
         {{ 'clientPortal.status.' + s | translate }} <b>{{ counts()[s] ?? 0 }}</b>
       </button>
     }
@@ -36,11 +36,12 @@
       <ul class="crp-list" role="list">
         @for (r of rows(); track r.id) {
           <li>
-            <button type="button" class="crp-row" (click)="openId.set(r.id)">
+            <button type="button" class="crp-row" [class.is-triage]="isTriage(r.status)" (click)="open(r)">
               <span class="crp-icon" [attr.data-type]="r.type"><i [class]="typeIcon(r.type)" aria-hidden="true"></i></span>
               <span class="crp-main">
                 <span class="crp-title">{{ r.title }}</span>
                 <span class="crp-sub">
+                  <app-request-target-chip [source]="r" size="sm" />
                   {{ r.clientName || '—' }} · {{ (r.updatedAt || r.createdAt) | cairoDate: 'date' }}
                   @if (r.assignedToName) { · <i class="fa-solid fa-user-check" aria-hidden="true"></i> {{ r.assignedToName }} }
                   @if (r.commentsCount) { · <i class="fa-regular fa-comment" aria-hidden="true"></i> {{ r.commentsCount }} }
@@ -48,10 +49,12 @@
                 </span>
               </span>
               <span class="crp-badges">
-                @if (r.priority) {
+                @if (isTriage(r.status)) {
+                  @if (r.status === 'PendingReview' && r.clientRepliedAt) {
+                    <span class="badge bg-success">{{ 'clientRequests.inbox.clientReplied' | translate }}</span>
+                  }
+                } @else if (r.priority) {
                   <span class="badge" [class]="priorityClass(r.priority)">{{ 'clientPortal.priority.' + r.priority | translate }}</span>
-                } @else {
-                  <span class="badge bg-warning-subtle text-warning">{{ 'clientPortal.priority.untriaged' | translate }}</span>
                 }
                 <span class="badge" [class]="statusClass(r.status)">{{ 'clientPortal.status.' + r.status | translate }}</span>
               </span>
@@ -63,7 +66,11 @@
   </div>
 </div>
 
-@if (openId(); as id) {
-  <app-staff-request-dialog [projectId]="projectId()" [requestId]="id" [isAdmin]="isAdmin()" [assignees]="assignees()"
-                            (updated)="onUpdated($event)" (closed)="openId.set(null)" />
+@if (openRow(); as row) {
+  @if (isTriage(row.status) && isAdmin()) {
+    <app-request-review-dialog [requestId]="row.id" (updated)="onUpdated($event)" (closed)="openRow.set(null)" />
+  } @else {
+    <app-staff-request-dialog [projectId]="projectId()" [requestId]="row.id" [isAdmin]="isAdmin()"
+                              (updated)="onUpdated($event)" (closed)="openRow.set(null)" />
+  }
 }

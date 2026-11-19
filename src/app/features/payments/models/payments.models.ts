@@ -152,6 +152,6 @@ export interface PublicPayment {
 export interface PublicPaymentConfirmInput {
   payerPhone: string | null;
   payerReference: string | null;
-  /** Required — frontend check + backend `RECEIPT_REQUIRED`. */
+  /** Required (JPG/PNG/WEBP ≤ 5 MB) — frontend check + backend 400 `INVALID_FILE`. */
   receipt: File | null;
 }

@@ -615,3 +615,5 @@
 @keyframes ph-wiggle { 0%, 88%, 100% { transform: rotate(0); } 92% { transform: rotate(-12deg); } 96% { transform: rotate(10deg); } }
 
 @include motion.calm-everything;
+
+.ph-card__req.is-alert { background: var(--danger-soft); color: var(--danger); font-weight: var(--fw-700); }

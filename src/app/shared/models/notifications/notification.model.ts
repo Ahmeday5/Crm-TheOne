@@ -32,6 +32,16 @@ export type NotificationType =
   | 'ClientRequestCreated'
   | 'ClientRequestUpdated'
   | 'ClientRequestComment'
+  // ── client requests v3 — triage gate (2026-11-19) — enum 28…32, payload carries `projectId` ──
+  /** The client answered the Admin's question (to Admins). */
+  | 'ClientRequestClarificationAnswered'
+  /** Approved → to the client + the assignee / project developers. */
+  | 'ClientRequestApproved'
+  | 'ClientRequestAssigned'
+  /** Declined → to the client only. */
+  | 'ClientRequestRejected'
+  /** The Admin asked the client something (to the client). */
+  | 'ClientRequestClarificationRequested'
   // ── contract v2 (2026-11-17) — payload carries `projectId` ──
   /** A new app version is visible to the client. */
   | 'ProjectReleasePublished'
@@ -43,6 +53,33 @@ export type NotificationType =
   /** The customer pressed "I've paid" on `/pay/:token` (to the creator + Admins). */
   | 'PaymentConfirmedByCustomer'
   | (string & {});
+
+/**
+ * Notification types the backend may serialize by NUMBER instead of name.
+ * Only the ones the UI branches on are listed; anything else passes through.
+ */
+const TYPE_BY_NUMBER: Readonly<Record<string, NotificationType>> = {
+  '19': 'ClientRequestCreated',
+  '20': 'ClientRequestUpdated',
+  '21': 'ClientRequestComment',
+  '27': 'PaymentConfirmedByCustomer',
+  '28': 'ClientRequestClarificationAnswered',
+  '29': 'ClientRequestApproved',
+  '30': 'ClientRequestAssigned',
+  '31': 'ClientRequestRejected',
+  '32': 'ClientRequestClarificationRequested',
+};
+
+/** The type's NAME whether it arrived as `"ClientRequestApproved"`, `29` or `"29"`. */
+export function notificationTypeName(type: NotificationType | number | null | undefined): NotificationType {
+  const key = String(type ?? '');
+  return TYPE_BY_NUMBER[key] ?? (key as NotificationType);
+}
+
+/** True for any client-request notification (name, number or entity). */
+export function isClientRequestNotification(n: { type: NotificationType | number; relatedEntityType: string | null }): boolean {
+  return n.relatedEntityType === CLIENT_REQUEST_ENTITY || notificationTypeName(n.type).startsWith('ClientRequest');
+}
 
 /** `relatedEntityType`s of the project workspace — `relatedEntityId` is that row's id. */
 export const CLIENT_REQUEST_ENTITY = 'ClientRequest';

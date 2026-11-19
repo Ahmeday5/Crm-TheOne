@@ -86,16 +86,22 @@ export class BottomNavComponent implements OnInit {
     const panelOpen = this.panel.open();
     const menuOpen = this.sidebarOpen();
 
+    const chatItem: BottomItem[] = chat
+      ? [
+          {
+            id: 'chat',
+            ...chat,
+            prefix: true,
+            badge: this.badges.get(chat.path),
+            active: !panelOpen && !menuOpen && isOn(chat.path, true),
+          },
+        ]
+      : [];
+
     return [
       { id: 'home', labelKey: 'bottomNav.home', icon: 'fa-solid fa-house', path: home, active: !panelOpen && !menuOpen && isOn(home) },
       { id: 'work', ...work, active: !panelOpen && !menuOpen && isOn(work.path, true) },
-      {
-        id: 'chat',
-        ...chat,
-        prefix: true,
-        badge: this.badges.get(chat.path),
-        active: !panelOpen && !menuOpen && isOn(chat.path, true),
-      },
+      ...chatItem,
       {
         id: 'notifications',
         labelKey: 'bottomNav.notifications',

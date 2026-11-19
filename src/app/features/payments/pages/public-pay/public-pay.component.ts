@@ -165,6 +165,12 @@ export class PublicPayComponent implements OnInit, OnDestroy {
       },
       error: (err: ApiError) => {
         this.confirming.set(false);
+        // Missing / wrong-type / too-big receipt — point at the picker, not a generic error.
+        if (err?.reason === 'INVALID_FILE') {
+          this.receiptMissing.set(true);
+          this.confirmError.set(err.message || this.t('payments.pay.confirm.receiptRequired'));
+          return;
+        }
         this.confirmError.set(err?.message || this.t('payments.pay.state.errorHint'));
         // The request moved on (expired / cancelled / paid) — show its real state.
         if (err?.status === 409) this.load();

@@ -7,6 +7,7 @@ import { isMocked } from '../../../core/constants/contract-mocks.const';
 import { ProjectStatusName } from '../../../shared/models';
 import { ProgressSource } from '../models/client-portal.models';
 import { PortalSessionService } from './portal-session.service';
+import { ClientRequestsMockDb } from '../../client-requests/data/mock/client-requests-mock.db';
 
 /** `ProjectProgressChanged` as the portal receives it (no per-member data). */
 export interface PortalProgressEvent {
@@ -16,6 +17,9 @@ export interface PortalProgressEvent {
   status: ProjectStatusName;
   changedAt: string;
 }
+
+/** `projectId` of an event whose project is unknown (another tab on the mock) — every open page refetches. */
+export const ANY_PROJECT = 0;
 
 /** Any other change worth a refetch of that project's sections. */
 export interface PortalProjectEvent {
@@ -48,7 +52,16 @@ export class PortalLiveService {
   }
 
   changesFor(projectId: number): Observable<PortalProjectEvent> {
-    return this.projectChanged$.pipe(filter((e) => e.projectId === projectId));
+    return this.projectChanged$.pipe(filter((e) => e.projectId === projectId || e.projectId === ANY_PROJECT));
+  }
+
+  constructor() {
+    // Requests on the shared mock: the Admin acting in another tab shows up live here too.
+    if (isMocked('clientRequestsTriage')) {
+      inject(ClientRequestsMockDb).changes$.subscribe((projectId) =>
+        this.projectSubject.next({ projectId: projectId ?? ANY_PROJECT, kind: 'request' }),
+      );
+    }
   }
 
   async start(): Promise<void> {

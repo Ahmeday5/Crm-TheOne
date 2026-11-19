@@ -7,16 +7,11 @@ import {
   ClientProject,
   ClientProjectDetails,
   ClientRelease,
-  ClientRequestComment,
-  ClientRequestDetails,
-  ClientRequestListItem,
   DownloadLink,
-  NewRequestInput,
   PortalBranding,
   PortalMe,
   ProgressPoint,
   ProgressRange,
-  RequestListQuery,
   TimelineEvent,
 } from '../models/client-portal.models';
 import { PortalSessionRequest, PortalSessionResponse } from '../models/portal-session.models';
@@ -44,10 +39,7 @@ export interface ClientPortalGateway {
   releases(projectId: number): Observable<ClientRelease[]>;
   downloadLink(projectId: number, releaseId: number): Observable<DownloadLink>;
 
-  requests(projectId: number, query: RequestListQuery): Observable<PagedResult<ClientRequestListItem>>;
-  createRequest(projectId: number, input: NewRequestInput): Observable<ClientRequestDetails>;
-  request(id: number): Observable<ClientRequestDetails>;
-  comment(id: number, body: string, attachments: File[]): Observable<ClientRequestComment>;
+  // Requests live in their own port: `PORTAL_REQUESTS_GATEWAY`.
 }
 
 export const CLIENT_PORTAL_GATEWAY = new InjectionToken<ClientPortalGateway>('CLIENT_PORTAL_GATEWAY', {

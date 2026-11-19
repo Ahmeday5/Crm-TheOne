@@ -27,3 +27,70 @@
 }
 
 .nr-hint { margin: -0.5rem 0 0; font-size: var(--fs-xs); color: var(--text-3); text-align: center; }
+
+// ── wizard ──
+.nr-steps {
+  display: flex; align-items: center; gap: 0.6rem;
+  margin: 0 0 1.25rem; padding: 0; list-style: none;
+
+  &__item {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    color: var(--text-3); font-size: var(--fs-sm); font-weight: var(--fw-600);
+    transition: color 200ms ease;
+    &.is-current, &.is-done { color: var(--text-1); }
+  }
+  &__dot {
+    display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--surface-2); color: var(--text-3); font-size: var(--fs-xs); font-weight: var(--fw-700);
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+  &__item.is-current &__dot { background: var(--brand-500); color: #fff; box-shadow: 0 0 0 4px var(--brand-soft); }
+  &__item.is-done &__dot { background: var(--success); color: #fff; }
+  &__bar {
+    flex: 1; height: 2px; border-radius: 2px; background: var(--surface-2); position: relative; overflow: hidden;
+    &::after {
+      content: ''; position: absolute; inset: 0; background: var(--success);
+      transform: scaleX(0); transform-origin: right; transition: transform 320ms ease;
+    }
+    &.is-done::after { transform: scaleX(1); }
+  }
+}
+:host-context([dir='ltr']) .nr-steps__bar::after { transform-origin: left; }
+
+.nr-pane { animation: nr-in 220ms ease both; }
+.nr-pane__head {
+  margin-bottom: 1rem;
+  h3 { margin: 0 0 0.25rem; font-size: var(--fs-lg); font-weight: var(--fw-700); }
+  p { margin: 0; color: var(--text-3); font-size: var(--fs-sm); }
+}
+
+.nr-skeleton {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem;
+  span {
+    height: 64px; border-radius: var(--radius-lg); background: var(--surface-2);
+    animation: nr-pulse 1.2s ease-in-out infinite;
+  }
+}
+
+.nr-about {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  padding: 0.6rem 0.75rem; border-radius: var(--radius-md); background: var(--surface-1);
+  border: 1px solid var(--border);
+  &__label { font-size: var(--fs-xs); color: var(--text-3); font-weight: var(--fw-600); }
+}
+
+.nr-note {
+  display: flex; align-items: flex-start; gap: 0.5rem; margin: 0;
+  padding: 0.65rem 0.8rem; border-radius: var(--radius-md);
+  background: var(--brand-soft); color: var(--brand-700); font-size: var(--fs-xs); line-height: 1.6;
+  i { margin-top: 0.2rem; }
+}
+
+.nr-footer { display: flex; justify-content: space-between; gap: 0.5rem; width: 100%; }
+:host-context([dir='ltr']) .nr-dir { transform: scaleX(-1); }
+
+@keyframes nr-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes nr-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@media (prefers-reduced-motion: reduce) {
+  .nr-pane, .nr-skeleton span { animation: none; }
+}

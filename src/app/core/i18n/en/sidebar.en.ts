@@ -70,6 +70,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       supportClients: 'Support customers',
       kb: 'Knowledge base',
       projects: 'Projects & tasks',
+      clientRequests: 'Client requests',
       devAnalytics: 'Developer analytics',
       myProjectReports: 'My reports',
       // Communication — the inbox is multi-channel (WhatsApp + Messenger + Instagram).

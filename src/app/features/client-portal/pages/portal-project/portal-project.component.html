@@ -92,7 +92,8 @@
               [attr.aria-current]="activeSection() === s.id ? 'page' : null"
               (click)="selectSection(s.id)">
         <i [class]="s.icon" aria-hidden="true"></i><span>{{ s.labelKey | translate }}</span>
-        @if (s.id === 'requests' && openCount()) { <span class="pp-nav__count">{{ openCount() }}</span> }
+        @if (s.id === 'requests' && awaitingMe().length) { <span class="pp-nav__count is-alert">{{ awaitingMe().length }}</span> }
+        @else if (s.id === 'requests' && openCount()) { <span class="pp-nav__count">{{ openCount() }}</span> }
       </button>
     }
   </nav>
@@ -269,6 +270,16 @@
               <i class="fa-solid fa-plus" aria-hidden="true"></i>{{ 'portal.project.newRequest' | translate }}
             </button>
           </header>
+          @if (awaitingMe().length) {
+            <a class="pp-req-alert" [routerLink]="['/portal', 'requests', awaitingMe()[0].id]">
+              <span class="pp-req-alert__icon"><i class="fa-solid fa-circle-question" aria-hidden="true"></i></span>
+              <span class="pp-req-alert__text">
+                <b>{{ 'clientRequests.awaiting.youCount' | translate: { count: awaitingMe().length } }}</b>
+                <span>{{ 'clientRequests.clientStatus.NeedsClarification.text' | translate }}</span>
+              </span>
+              <span class="pp-req-alert__cta">{{ 'clientRequests.clientStatus.NeedsClarification.cta' | translate }}</span>
+            </a>
+          }
           @if (requests(); as list) {
             @if (list.length === 0) {
               <div class="pp-empty">
@@ -279,14 +290,20 @@
               <ul class="pp-req" role="list">
                 @for (r of list; track r.id; let i = $index) {
                   <li [style.--d]="i">
-                    <a class="pp-req__row" [routerLink]="['/portal', 'requests', r.id]">
+                    <a class="pp-req__row" [class.is-awaiting]="r.status === 'NeedsClarification'" [routerLink]="['/portal', 'requests', r.id]">
                       <span class="pp-req__icon" [attr.data-type]="r.type"><i [class]="typeIcon(r.type)" aria-hidden="true"></i></span>
                       <span class="pp-req__main">
                         <span class="pp-req__title">{{ r.title }}</span>
-                        <span class="pp-req__sub">{{ (r.updatedAt || r.createdAt) | timeAgo }}
+                        <span class="pp-req__sub">
+                          <app-request-target-chip [source]="r" size="sm" />
+                          {{ (r.updatedAt || r.createdAt) | timeAgo }}
                           @if (r.commentsCount) { · <i class="fa-regular fa-comment" aria-hidden="true"></i> {{ r.commentsCount }} }</span>
                       </span>
-                      <span class="badge" [class]="requestStatusClass(r.status)">{{ 'clientPortal.status.' + r.status | translate }}</span>
+                      @if (r.status === 'NeedsClarification') {
+                        <span class="badge bg-danger">{{ 'clientRequests.awaiting.you' | translate }}</span>
+                      } @else {
+                        <span class="badge" [class]="requestStatusClass(r.status)">{{ 'clientPortal.status.' + r.status | translate }}</span>
+                      }
                       <i class="fa-solid fa-chevron-left pp-req__go" aria-hidden="true"></i>
                     </a>
                   </li>

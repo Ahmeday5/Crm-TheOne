@@ -109,8 +109,11 @@
     @case ('deliverables') { <app-deliverables-panel [projectId]="projectId" [scope]="scope()" /> }
     @case ('client') {
       <div class="row g-3">
-        <div class="col-12 col-xl-8">
+        <div class="col-12 col-xl-7">
           <app-client-link-card [projectId]="projectId" [projectName]="p.title" (changed)="loadProject()" />
+        </div>
+        <div class="col-12 col-xl-5">
+          <app-project-surfaces-card [projectId]="projectId" [canEdit]="isAdmin()" />
         </div>
       </div>
     }

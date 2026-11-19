@@ -1,0 +1,132 @@
+<div class="card psc">
+  <div class="card-header psc-head">
+    <span class="psc-head__icon"><i class="fa-solid fa-cubes" aria-hidden="true"></i></span>
+    <div class="psc-head__text">
+      <h5 class="mb-0">{{ 'clientRequests.surfaces.title' | translate }}</h5>
+      <p>{{ 'clientRequests.surfaces.subtitle' | translate }}</p>
+    </div>
+    <app-mock-ribbon area="clientRequestsTriage" />
+    @if (canEdit() && !draft()) {
+      <button type="button" class="btn btn-sm btn-primary" (click)="startNew()">
+        <i class="fa-solid fa-plus me-1" aria-hidden="true"></i>{{ 'clientRequests.surfaces.add' | translate }}
+      </button>
+    }
+  </div>
+
+  <div class="card-body">
+    @if (draft(); as d) {
+      <form class="psc-form" (ngSubmit)="save()">
+        <h6 class="psc-form__title">{{ (d.id == null ? 'clientRequests.surfaces.newTitle' : 'clientRequests.surfaces.editTitle') | translate }}</h6>
+
+        <div class="psc-field">
+          <span class="psc-label">{{ 'clientRequests.surfaces.kind' | translate }}</span>
+          <div class="psc-seg" role="radiogroup">
+            @for (k of kinds; track k) {
+              <button type="button" role="radio" class="psc-seg__btn" [class.is-active]="d.kind === k" [attr.aria-checked]="d.kind === k"
+                      [disabled]="saving()" (click)="patchDraft({ kind: k })">
+                <i [class]="targetIcon(k)" aria-hidden="true"></i>{{ 'clientRequests.target.' + k | translate }}
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (d.kind === 'MobileApp') {
+          <div class="psc-field">
+            <span class="psc-label">{{ 'clientRequests.surfaces.audience' | translate }}</span>
+            <div class="psc-chips">
+              @for (a of audiences; track a) {
+                <button type="button" class="psc-chip" [class.is-active]="d.appAudience === a" [disabled]="saving()" (click)="patchDraft({ appAudience: a })">
+                  <i [class]="audienceIcon(a)" aria-hidden="true"></i>{{ 'clientRequests.audience.' + a | translate }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="psc-row">
+          <label class="psc-field">
+            <span class="psc-label">{{ 'clientRequests.surfaces.name' | translate }}</span>
+            <input type="text" class="form-control form-control-sm" name="name" [maxlength]="nameMax" [disabled]="saving()" required
+                   [placeholder]="'clientRequests.surfaces.namePlaceholder' | translate"
+                   [ngModel]="d.name" (ngModelChange)="patchDraft({ name: $event })" />
+          </label>
+          @if (d.kind === 'MobileApp') {
+            <label class="psc-field">
+              <span class="psc-label">{{ 'clientRequests.surfaces.platforms' | translate }}</span>
+              <select class="form-select form-select-sm" name="platforms" [disabled]="saving()" [ngModel]="d.platforms" (ngModelChange)="patchDraft({ platforms: $event })">
+                @for (p of platforms; track p) { <option [ngValue]="p">{{ 'clientRequests.platform.' + p | translate }}</option> }
+              </select>
+            </label>
+          } @else {
+            <label class="psc-field">
+              <span class="psc-label">{{ 'clientRequests.surfaces.url' | translate }} <small>({{ 'clientRequests.picker.optional' | translate }})</small></span>
+              <input type="url" class="form-control form-control-sm" name="url" dir="ltr" placeholder="https://" [disabled]="saving()"
+                     [ngModel]="d.url ?? ''" (ngModelChange)="patchDraft({ url: $event })" />
+            </label>
+          }
+        </div>
+
+        <label class="form-check form-switch psc-switch">
+          <input type="checkbox" class="form-check-input" name="active" role="switch" [disabled]="saving()"
+                 [ngModel]="d.isActive" (ngModelChange)="patchDraft({ isActive: $event })" />
+          <span class="form-check-label">{{ 'clientRequests.surfaces.active' | translate }}</span>
+        </label>
+
+        @if (error(); as e) { <div class="alert alert-danger py-2 small mb-0">{{ e.key ? (e.key | translate) : e.text }}</div> }
+
+        <div class="psc-actions">
+          <button type="button" class="btn btn-sm btn-light" [disabled]="saving()" (click)="draft.set(null)">{{ 'common.cancel' | translate }}</button>
+          <button type="submit" class="btn btn-sm btn-primary" [disabled]="!draftValid() || saving()">
+            @if (saving()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+            {{ 'clientRequests.surfaces.save' | translate }}
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (items() === null && !loadFailed()) {
+      <div class="psc-center"><span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span></div>
+    } @else if (loadFailed()) {
+      <div class="psc-center">
+        <span>{{ 'projectWorkspace.loadFailedSection' | translate }}</span>
+        <button type="button" class="btn btn-sm btn-light" (click)="load()">{{ 'common.retry' | translate }}</button>
+      </div>
+    } @else if (!sorted().length) {
+      <p class="psc-empty"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>{{ 'clientRequests.surfaces.empty' | translate }}</p>
+    } @else {
+      <ul class="psc-list" role="list">
+        @for (s of sorted(); track s.id; let first = $first; let last = $last) {
+          <li class="psc-item" [class.is-hidden]="!s.isActive" [attr.data-kind]="s.kind">
+            <span class="psc-item__icon"><i [class]="surfaceIcon(s)" aria-hidden="true"></i></span>
+            <span class="psc-item__text">
+              <span class="psc-item__name">{{ s.name }}</span>
+              <span class="psc-item__sub">
+                @if (s.kind === 'MobileApp' && s.appAudience) { {{ 'clientRequests.audience.' + s.appAudience | translate }} }
+                @else { {{ 'clientRequests.target.' + s.kind | translate }} }
+                @if (s.platforms) { · <i [class]="platformIcon(s.platforms)" aria-hidden="true"></i> {{ platformLabel(s.platforms) | translate }} }
+                @if (!s.isActive) { · <b>{{ 'clientRequests.surfaces.hidden' | translate }}</b> }
+              </span>
+            </span>
+            @if (canEdit()) {
+              <span class="psc-item__tools">
+                <button type="button" class="btn btn-sm btn-icon" [disabled]="first || busyId() === s.id" (click)="move(s, -1)"
+                        [attr.aria-label]="'clientRequests.surfaces.moveUp' | translate"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-sm btn-icon" [disabled]="last || busyId() === s.id" (click)="move(s, 1)"
+                        [attr.aria-label]="'clientRequests.surfaces.moveDown' | translate"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-sm btn-icon" [disabled]="busyId() === s.id" (click)="toggleActive(s)"
+                        [attr.aria-label]="(s.isActive ? 'clientRequests.surfaces.hidden' : 'clientRequests.surfaces.active') | translate">
+                  <i class="fa-solid" [class.fa-eye]="s.isActive" [class.fa-eye-slash]="!s.isActive" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-icon" [disabled]="busyId() === s.id" (click)="startEdit(s)"
+                        [attr.aria-label]="'clientRequests.surfaces.edit' | translate"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-sm btn-icon text-danger" [disabled]="busyId() === s.id" (click)="remove(s)"
+                        [attr.aria-label]="'clientRequests.surfaces.remove' | translate"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+              </span>
+            }
+          </li>
+        }
+      </ul>
+      @if (error(); as e) { @if (!draft()) { <div class="alert alert-danger py-2 small mt-2 mb-0">{{ e.key ? (e.key | translate) : e.text }}</div> } }
+    }
+  </div>
+</div>

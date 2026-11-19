@@ -44,6 +44,8 @@ export interface ClientProject {
   nextMilestone: ClientNextMilestone | null;
   latestRelease: ClientLatestRelease | null;
   openRequestsCount: number;
+  /** Requests waiting for the client's answer (`NeedsClarification`) — "مطلوب ردك". */
+  awaitingClientCount: number;
   lastUpdateAt: string;
 }
 
@@ -77,6 +79,7 @@ export interface ClientProjectCounts {
   credentials: number;
   openRequests: number;
   resolvedRequests: number;
+  awaitingClient: number;
 }
 
 /** `GET ClientPortal/Projects/{id}`. */
@@ -181,14 +184,72 @@ export interface DownloadLink {
 }
 
 // ─────────── requests ───────────
+// Contract: `docs/backend-prompt-client-requests-triage.md` (v3 — target + Admin triage gate).
 
 export type RequestType = 'Issue' | 'ChangeRequest' | 'Question';
-export type RequestStatus = 'Open' | 'InReview' | 'InProgress' | 'Resolved' | 'Closed';
+/**
+ * `PendingReview` ⇄ `NeedsClarification` → `Open` (approved) → team flow,
+ * or `Rejected`. The triage statuses are never visible to developers.
+ */
+export type RequestStatus =
+  | 'PendingReview'
+  | 'NeedsClarification'
+  | 'Open'
+  | 'InReview'
+  | 'InProgress'
+  | 'Resolved'
+  | 'Closed'
+  | 'Rejected';
 export type RequestPriority = 'High' | 'Medium' | 'Low';
 
+/** What the request is about. */
+export type RequestTarget = 'Website' | 'Dashboard' | 'MobileApp' | 'Other';
+/** Which app, when `target = MobileApp` (one project may ship several). */
+export type AppAudience = 'Customer' | 'Driver' | 'Vendor' | 'Staff' | 'Other';
+export type AppPlatform = 'Android' | 'iOS' | 'Both' | 'Unknown';
+export type RequestCommentKind =
+  | 'Message'
+  | 'ClarificationQuestion'
+  | 'ClarificationAnswer'
+  | 'InternalNote'
+  | 'StatusChange';
+export type RejectReasonCode = 'Duplicate' | 'OutOfScope' | 'NeedsNewQuote' | 'NotReproducible' | 'Other';
+/** Server-computed: whose move it is. */
+export type AwaitingParty = 'Admin' | 'Client' | 'Team';
+
 export const REQUEST_TYPES: ReadonlyArray<RequestType> = ['Issue', 'ChangeRequest', 'Question'];
-export const REQUEST_STATUSES: ReadonlyArray<RequestStatus> = ['Open', 'InReview', 'InProgress', 'Resolved', 'Closed'];
+export const REQUEST_STATUSES: ReadonlyArray<RequestStatus> = [
+  'PendingReview',
+  'NeedsClarification',
+  'Open',
+  'InReview',
+  'InProgress',
+  'Resolved',
+  'Closed',
+  'Rejected',
+];
+/** The backend's name for the same enum (`ClientRequestStatus`) — values are identical strings. */
+export type ClientRequestStatus = RequestStatus;
+
+/** Approved — the team's flow, IN ORDER (the only statuses developers ever see). */
+export const TEAM_STATUSES: ReadonlyArray<RequestStatus> = ['Open', 'InReview', 'InProgress', 'Resolved', 'Closed'];
+/** The Admin-only gate before the team. */
+export const TRIAGE_STATUSES: ReadonlyArray<RequestStatus> = ['PendingReview', 'NeedsClarification', 'Rejected'];
 export const REQUEST_PRIORITIES: ReadonlyArray<RequestPriority> = ['High', 'Medium', 'Low'];
+export const REQUEST_TARGETS: ReadonlyArray<RequestTarget> = ['Website', 'Dashboard', 'MobileApp', 'Other'];
+export const APP_AUDIENCES: ReadonlyArray<AppAudience> = ['Customer', 'Driver', 'Vendor', 'Staff', 'Other'];
+export const APP_PLATFORMS: ReadonlyArray<AppPlatform> = ['Android', 'iOS', 'Both', 'Unknown'];
+export const REJECT_REASON_CODES: ReadonlyArray<RejectReasonCode> = [
+  'Duplicate',
+  'OutOfScope',
+  'NeedsNewQuote',
+  'NotReproducible',
+  'Other',
+];
+
+export const APP_NAME_MAX = 100;
+export const REJECT_REASON_MAX = 1000;
+export const SURFACE_NAME_MAX = 100;
 
 export interface RequestAttachment {
   id: number;
@@ -199,7 +260,36 @@ export interface RequestAttachment {
   sizeBytes: number;
 }
 
-export interface ClientRequestListItem {
+/** A part of the project the customer can point at ("تطبيق المندوب", "لوحة التحكم"…). */
+export interface ProjectSurface {
+  id: number;
+  /** Never `Other`. */
+  kind: RequestTarget;
+  appAudience: AppAudience | null;
+  name: string;
+  platforms: AppPlatform | null;
+  url: string | null;
+  orderIndex: number;
+  isActive: boolean;
+}
+
+/** `GET ClientPortal/Projects/{id}/request-options`. Empty `surfaces` = generic picker. */
+export interface RequestOptions {
+  surfaces: ProjectSurface[];
+  /** ≥ 2 active app surfaces — a specific app must be picked. */
+  appRequired: boolean;
+}
+
+/** What the customer pointed at — shared by create, display and the Admin's correction. */
+export interface RequestTargetFields {
+  target: RequestTarget;
+  surfaceId: number | null;
+  appAudience: AppAudience | null;
+  appName: string | null;
+  appPlatform: AppPlatform | null;
+}
+
+export interface ClientRequestListItem extends RequestTargetFields {
   id: number;
   projectId: number;
   projectName: string | null;
@@ -207,7 +297,18 @@ export interface ClientRequestListItem {
   title: string;
   status: RequestStatus;
   priority: RequestPriority | null;
+  /** The portal visitor's name. */
   clientName: string | null;
+  customerId: number | null;
+  customerName: string | null;
+  /** Server snapshot for display (surface / app name) — else the enums are localized. */
+  targetLabel: string | null;
+  awaitingParty: AwaitingParty | null;
+  /** The client wrote while the request was in triage. */
+  clientRepliedAt: string | null;
+  reviewedAt: string | null;
+  rejectReasonCode: RejectReasonCode | null;
+  rejectReason: string | null;
   /** Always `null` in the client portal. */
   assignedToId: string | null;
   assignedToName: string | null;
@@ -221,17 +322,27 @@ export type CommentAuthorRole = 'Client' | 'Admin' | 'Developer';
 
 export interface ClientRequestComment {
   id: number;
+  kind: RequestCommentKind;
+  /** `null` for staff authors of `StatusChange` entries in the portal. */
   authorName: string | null;
   authorRole: CommentAuthorRole;
   isMine: boolean;
   body: string;
   attachments: RequestAttachment[];
+  /** Only for `StatusChange`. */
+  statusFrom: RequestStatus | null;
+  statusTo: RequestStatus | null;
   createdAt: string;
 }
 
 export interface ClientRequestDetails extends ClientRequestListItem {
   description: string;
   resolvedAt: string | null;
+  /** Staff only — always `null` in the portal. */
+  reviewedByName: string | null;
+  approvedAt: string | null;
+  clarificationRequestedAt: string | null;
+  surface: ProjectSurface | null;
   attachments: RequestAttachment[];
   /** Oldest first. */
   comments: ClientRequestComment[];
@@ -244,18 +355,24 @@ export interface RequestListQuery {
   pageSize?: number;
 }
 
-export interface NewRequestInput {
+export interface NewRequestInput extends RequestTargetFields {
   type: RequestType;
   title: string;
   description: string;
   attachments: File[];
 }
 
-/** Staff triage — any field left out is unchanged; `assignedToId: ''` unassigns. */
+/** Staff team-flow edit — any field left out is unchanged; `assignedToId: ''` unassigns. */
 export interface RequestPatch {
   status?: RequestStatus;
   priority?: RequestPriority;
   assignedToId?: string;
+}
+
+/** Someone a request can be assigned to. */
+export interface StaffOption {
+  userId: string;
+  fullName: string;
 }
 
 // ─────────── upload rules (mirror the backend) ───────────
@@ -289,5 +406,30 @@ export function isImageAttachment(a: { contentType: string | null; fileName: str
 }
 
 export function isRequestOpen(status: RequestStatus): boolean {
-  return status !== 'Resolved' && status !== 'Closed';
+  return status !== 'Resolved' && status !== 'Closed' && status !== 'Rejected';
+}
+
+/**
+ * Team statuses only move forward (Open=1 < InReview=2 < InProgress=3 < Resolved=4 < Closed=5);
+ * the server answers an older one with 409 `status_cannot_go_back`. Staying put is allowed.
+ * (Only the server reopens: a client reply to a resolved request → InReview.)
+ */
+export function canMoveStatus(from: RequestStatus, to: RequestStatus): boolean {
+  const a = TEAM_STATUSES.indexOf(from);
+  const b = TEAM_STATUSES.indexOf(to);
+  return a >= 0 && b >= 0 && b >= a;
+}
+
+export function isTriageStatus(status: RequestStatus): boolean {
+  return TRIAGE_STATUSES.includes(status);
+}
+
+/** An Admin decision is possible (approve / reject / ask). */
+export function isAwaitingDecision(status: RequestStatus): boolean {
+  return status === 'PendingReview' || status === 'NeedsClarification';
+}
+
+/** No more replies: closed by the team or declined by the Admin. */
+export function isRequestLocked(status: RequestStatus): boolean {
+  return status === 'Closed' || status === 'Rejected';
 }

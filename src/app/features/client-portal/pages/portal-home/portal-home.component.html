@@ -117,7 +117,9 @@
 
                 <div class="ph-card__foot">
                   <span class="ph-card__updated"><i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ p.lastUpdateAt | timeAgo }}</span>
-                  @if (p.openRequestsCount) {
+                  @if (p.awaitingClientCount) {
+                    <span class="ph-card__req is-alert"><i class="fa-solid fa-circle-question" aria-hidden="true"></i>{{ 'clientRequests.awaiting.youCount' | translate: { count: p.awaitingClientCount } }}</span>
+                  } @else if (p.openRequestsCount) {
                     <span class="ph-card__req"><i class="fa-solid fa-message" aria-hidden="true"></i>{{ p.openRequestsCount }} {{ 'clientPortal.requests.openShort' | translate }}</span>
                   }
                   <span class="ph-card__go">{{ 'portal.home.viewProject' | translate }}<i class="fa-solid fa-arrow-left" aria-hidden="true"></i></span>

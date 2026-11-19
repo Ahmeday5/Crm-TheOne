@@ -256,6 +256,12 @@ export const NAV_SECTIONS: NavSection[] = [
             roles: ['Admin', 'Developer'],
           },
           {
+            labelKey: 'sidebar.items.clientRequests',
+            path: '/client-requests',
+            icon: 'fa-solid fa-inbox',
+            roles: ['Admin'],
+          },
+          {
             labelKey: 'sidebar.items.devAnalytics',
             path: '/developer-analytics',
             icon: 'fa-solid fa-chart-pie',
@@ -334,13 +340,14 @@ export const NAV_SECTIONS: NavSection[] = [
             roles: ['Admin', 'Sales', 'Support'],
             matchSubroutes: true,
           },
-          // Employee-to-employee chat.
-          {
-            labelKey: 'sidebar.items.teamChat',
-            path: '/team-chat',
-            icon: 'fa-solid fa-user-group',
-            matchSubroutes: true,
-          },
+          // Employee-to-employee chat — HIDDEN until it runs on a real backend
+          // (still a mock). Restore this entry + `ROLE_CHAT` in role-home.const.ts.
+          // {
+          //   labelKey: 'sidebar.items.teamChat',
+          //   path: '/team-chat',
+          //   icon: 'fa-solid fa-user-group',
+          //   matchSubroutes: true,
+          // },
           // Payment links sent from the chat (manual confirmation).
           {
             labelKey: 'sidebar.items.paymentRequests',

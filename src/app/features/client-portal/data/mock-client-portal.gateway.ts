@@ -5,7 +5,6 @@ import {
   daysFromNow,
   fail,
   mockReply,
-  nowIso,
   page,
   randomToken,
 } from '../../../core/mocks/mock-http.util';
@@ -16,16 +15,11 @@ import {
   ClientProject,
   ClientProjectDetails,
   ClientRelease,
-  ClientRequestComment,
-  ClientRequestDetails,
-  ClientRequestListItem,
   DownloadLink,
-  NewRequestInput,
   PortalBranding,
   PortalMe,
   ProgressPoint,
   ProgressRange,
-  RequestListQuery,
   TimelineEvent,
 } from '../models/client-portal.models';
 import { PortalSessionRequest, PortalSessionResponse } from '../models/portal-session.models';
@@ -51,7 +45,6 @@ interface DemoProject {
 interface PortalDb {
   visitorName: string | null;
   projects: DemoProject[];
-  requests: ClientRequestDetails[];
   nextId: number;
 }
 
@@ -104,6 +97,7 @@ function seed(): PortalDb {
       nextMilestone: { title: 'تطبيق الموبايل — النسخة التجريبية', dueDate: daysFromNow(6) },
       latestRelease: { platform: 'Android', versionName: '1.3.0', createdAt: daysFromNow(-1) },
       openRequestsCount: 1,
+      awaitingClientCount: 0,
       lastUpdateAt: daysFromNow(-0.2),
       milestones: [
         milestone(1, 'تحليل المتطلبات والتصميم', 'Done', -28, 0),
@@ -117,7 +111,7 @@ function seed(): PortalDb {
         { name: 'Ahmed', roleOnProject: 'Frontend', avatarUrl: null },
         { name: 'ali', roleOnProject: 'Mobile', avatarUrl: null },
       ],
-      counts: { releases: 3, credentials: 2, openRequests: 1, resolvedRequests: 2 },
+      counts: { releases: 3, credentials: 2, openRequests: 1, resolvedRequests: 2, awaitingClient: 0 },
       projectManager: { name: 'م. محمود حسن', avatarUrl: null, whatsApp: '+201000000000' },
     },
     credentials: [
@@ -176,6 +170,7 @@ function seed(): PortalDb {
       nextMilestone: { title: 'اجتماع البداية', dueDate: daysFromNow(5) },
       latestRelease: null,
       openRequestsCount: 0,
+      awaitingClientCount: 0,
       lastUpdateAt: daysFromNow(-3),
       milestones: [
         milestone(11, 'اجتماع البداية', 'Pending', 5, 0),
@@ -183,7 +178,7 @@ function seed(): PortalDb {
         milestone(13, 'التطوير', 'Pending', 50, 2),
       ],
       team: null,
-      counts: { releases: 0, credentials: 0, openRequests: 0, resolvedRequests: 0 },
+      counts: { releases: 0, credentials: 0, openRequests: 0, resolvedRequests: 0, awaitingClient: 0 },
       projectManager: null,
     },
     credentials: [],
@@ -191,18 +186,7 @@ function seed(): PortalDb {
     timeline: [{ id: 21, type: 'MilestoneAdded', title: 'تمت إضافة خطة المشروع', description: null, createdAt: daysFromNow(-3), isClientVisible: null }],
   };
 
-  const request: ClientRequestDetails = {
-    id: 501, projectId: 1001, projectName: 'crm', type: 'ChangeRequest', title: 'إضافة تقرير شهري للمبيعات',
-    status: 'InProgress', priority: 'Medium', clientName: CUSTOMER.name, assignedToId: null, assignedToName: null,
-    commentsCount: 1, attachmentsCount: 0, createdAt: daysFromNow(-3), updatedAt: daysFromNow(-1),
-    description: 'محتاجين تقرير شهري يوضح المبيعات لكل مندوب مع إمكانية التصدير Excel.',
-    resolvedAt: null, attachments: [],
-    comments: [
-      { id: 1, authorName: 'فريق TheOne', authorRole: 'Admin', isMine: false, body: 'تمام، بدأنا نشتغل عليه وهيكون جاهز مع النسخة الجاية.', attachments: [], createdAt: daysFromNow(-1) },
-    ],
-  };
-
-  return { visitorName: null, projects: [crm, dev], requests: [request], nextId: 1000 };
+  return { visitorName: null, projects: [crm, dev], nextId: 1000 };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -305,83 +289,11 @@ export class MockClientPortalGateway implements ClientPortalGateway {
     }, 450);
   }
 
-  requests(projectId: number, query: RequestListQuery): Observable<PagedResult<ClientRequestListItem>> {
-    return mockReply(() => {
-      const list = this.db
-        .get()
-        .requests.filter((r) => r.projectId === projectId)
-        .filter((r) => !query.status || r.status === query.status)
-        .filter((r) => !query.type || r.type === query.type)
-        .map(toListItem);
-      return page(list, query.pageIndex ?? 1, query.pageSize ?? 50);
-    });
-  }
-
-  createRequest(projectId: number, input: NewRequestInput): Observable<ClientRequestDetails> {
-    return mockReply(() => {
-      const project = this.find(projectId);
-      const id = this.bumpId();
-      const created: ClientRequestDetails = {
-        id, projectId, projectName: project.details.name, type: input.type, title: input.title.trim(),
-        status: 'Open', priority: null, clientName: this.db.get().visitorName ?? CUSTOMER.name,
-        assignedToId: null, assignedToName: null, commentsCount: 0, attachmentsCount: input.attachments.length,
-        createdAt: nowIso(), updatedAt: null, description: input.description.trim(), resolvedAt: null,
-        attachments: [], comments: [],
-      };
-      this.db.update((d) => d.requests.unshift(created));
-      return created;
-    }, 600);
-  }
-
-  request(id: number): Observable<ClientRequestDetails> {
-    return mockReply(() => {
-      const r = this.db.get().requests.find((x) => x.id === id);
-      if (!r) fail(404, 'not_found', 'Request not found');
-      return r;
-    });
-  }
-
-  comment(id: number, body: string, attachments: File[]): Observable<ClientRequestComment> {
-    return mockReply(() => {
-      const comment: ClientRequestComment = {
-        id: this.bumpId(),
-        authorName: this.db.get().visitorName ?? CUSTOMER.name,
-        authorRole: 'Client',
-        isMine: true,
-        body: body.trim(),
-        attachments: [],
-        createdAt: nowIso(),
-      };
-      void attachments;
-      this.db.update((d) => {
-        const r = d.requests.find((x) => x.id === id);
-        if (!r) return;
-        r.comments.push(comment);
-        r.commentsCount = r.comments.length;
-        r.updatedAt = comment.createdAt;
-        if (r.status === 'Resolved') r.status = 'InReview';
-      });
-      return comment;
-    });
-  }
-
   private find(projectId: number): DemoProject {
     const p = this.db.get().projects.find((x) => x.details.projectId === projectId);
     if (!p) fail(404, 'not_found', 'Project not found');
     return p;
   }
-
-  private bumpId(): number {
-    let id = 0;
-    this.db.update((d) => (id = ++d.nextId));
-    return id;
-  }
-}
-
-function toListItem(r: ClientRequestDetails): ClientRequestListItem {
-  const { description, resolvedAt, attachments, comments, ...item } = r;
-  void description; void resolvedAt; void attachments; void comments;
-  return item;
 }
 
 function isoDay(offsetDays: number): string {

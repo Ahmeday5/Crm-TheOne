@@ -1,85 +1,111 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
-import { catchError, forkJoin, map, of } from 'rxjs';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, filter } from 'rxjs';
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { ProjectWorkspaceService } from '../../../project-workspace/services/project-workspace.service';
+import { RequestReviewDialogComponent } from '../../../client-requests/components/request-review-dialog/request-review-dialog.component';
+import { STAFF_CLIENT_REQUESTS_GATEWAY } from '../../../client-requests/data/staff-client-requests.gateway';
+import { ClientRequestsInboxStore } from '../../../client-requests/state/client-requests-inbox.store';
 import {
   ClientRequestDetails,
   ClientRequestListItem,
-  REQUEST_STATUSES,
   RequestStatus,
+  TEAM_STATUSES,
+  isTriageStatus,
 } from '../../models/client-portal.models';
-import { ClientRequestsStaffService, StaffOption } from '../../services/client-requests-staff.service';
 import { requestPriorityClass, requestStatusClass, requestTypeIcon } from '../../utils/client-portal-ui.util';
+import { RequestTargetChipComponent } from '../request-target-chip/request-target-chip.component';
 import { StaffRequestDialogComponent } from '../staff-request-dialog/staff-request-dialog.component';
 
 type Filter = RequestStatus | 'all';
 
+/** Admin: the gate first, then the team flow. Developers never get triage statuses (server-side). */
+const ADMIN_STATUSES: ReadonlyArray<RequestStatus> = ['PendingReview', 'NeedsClarification', ...TEAM_STATUSES];
+
 /**
- * "طلبات العميل" tab of the project workspace: status filter chips with
- * counts (Open first — what needs the team), click a row to answer / triage.
+ * "طلبات العميل" tab of the project workspace. Status chips with counts —
+ * opens on what needs the viewer (Admin: waiting for a decision; developer:
+ * newly approved). A triage row opens the Admin review, an approved row the
+ * team dialog — only ever on the user's click. Live: refreshes the list
+ * when anything changes for this project (never opens a dialog by itself).
  */
 @Component({
   selector: 'app-client-requests-panel',
   standalone: true,
-  imports: [TranslatePipe, CairoDatePipe, StaffRequestDialogComponent],
+  imports: [TranslatePipe, CairoDatePipe, StaffRequestDialogComponent, RequestReviewDialogComponent, RequestTargetChipComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './client-requests-panel.component.html',
   styleUrl: './client-requests-panel.component.scss',
 })
 export class ClientRequestsPanelComponent {
-  private readonly api = inject(ClientRequestsStaffService);
-  private readonly workspace = inject(ProjectWorkspaceService);
+  private readonly api = inject(STAFF_CLIENT_REQUESTS_GATEWAY);
+  private readonly inbox = inject(ClientRequestsInboxStore);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly projectId = input.required<number>();
   readonly isAdmin = input(false);
-  /** `Open` count — the workspace shows it on the tab. */
+  /** What needs the viewer — the workspace shows it on the tab. */
   readonly openCount = output<number>();
 
-  protected readonly statuses = REQUEST_STATUSES;
   protected readonly items = signal<ClientRequestListItem[]>([]);
   protected readonly loading = signal(true);
   protected readonly loadFailed = signal(false);
-  protected readonly filter = signal<Filter>('Open');
-  protected readonly openId = signal<number | null>(null);
-  protected readonly assignees = signal<StaffOption[]>([]);
+  protected readonly filter = signal<Filter | null>(null);
+  protected readonly openRow = signal<ClientRequestListItem | null>(null);
+
+  protected readonly statuses = computed(() => (this.isAdmin() ? ADMIN_STATUSES : TEAM_STATUSES));
+  /** The status that needs this viewer. */
+  private readonly focusStatus = computed<RequestStatus>(() => (this.isAdmin() ? 'PendingReview' : 'Open'));
 
   protected readonly counts = computed(() => {
     const c: Partial<Record<string, number>> = { all: this.items().length };
     for (const r of this.items()) c[r.status] = (c[r.status] ?? 0) + 1;
     return c;
   });
-  protected readonly rows = computed(() => {
+  protected readonly activeFilter = computed<Filter>(() => {
     const f = this.filter();
+    if (f) return f;
+    return this.counts()[this.focusStatus()] ? this.focusStatus() : 'all';
+  });
+  protected readonly rows = computed(() => {
+    const f = this.activeFilter();
     return f === 'all' ? this.items() : this.items().filter((r) => r.status === f);
   });
 
   protected readonly statusClass = requestStatusClass;
   protected readonly priorityClass = requestPriorityClass;
   protected readonly typeIcon = requestTypeIcon;
+  protected readonly isTriage = isTriageStatus;
 
   ngOnInit(): void {
     this.load();
-    if (this.isAdmin()) this.loadAssignees();
+    this.inbox.changed$
+      .pipe(
+        filter((pid) => pid === null || pid === this.projectId()),
+        debounceTime(400),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => this.load(true));
   }
 
-  protected load(): void {
-    this.loading.set(true);
+  protected load(quiet = false): void {
+    if (!quiet) this.loading.set(true);
     this.loadFailed.set(false);
     this.api.list(this.projectId()).subscribe({
       next: (page) => {
-        const list = page.data ?? [];
-        this.items.set(list);
+        this.items.set(page.data ?? []);
         this.loading.set(false);
-        // Nothing open → show everything instead of an empty "Open" view.
-        if (!list.some((r) => r.status === 'Open') && this.filter() === 'Open') this.filter.set('all');
-        this.emitOpen();
+        this.emitCount();
       },
       error: () => {
         this.loading.set(false);
-        this.loadFailed.set(true);
+        if (!quiet) this.loadFailed.set(true);
       },
     });
+  }
+
+  protected open(r: ClientRequestListItem): void {
+    this.openRow.set(r);
   }
 
   protected onUpdated(r: ClientRequestDetails): void {
@@ -88,8 +114,18 @@ export class ClientRequestsPanelComponent {
         x.id === r.id
           ? {
               ...x,
+              title: r.title,
+              type: r.type,
               status: r.status,
               priority: r.priority,
+              target: r.target,
+              surfaceId: r.surfaceId,
+              appAudience: r.appAudience,
+              appName: r.appName,
+              appPlatform: r.appPlatform,
+              targetLabel: r.targetLabel,
+              awaitingParty: r.awaitingParty,
+              clientRepliedAt: r.clientRepliedAt,
               assignedToId: r.assignedToId,
               assignedToName: r.assignedToName,
               commentsCount: r.commentsCount,
@@ -98,27 +134,13 @@ export class ClientRequestsPanelComponent {
           : x,
       ),
     );
-    this.emitOpen();
+    // Declined requests leave the project's list.
+    if (r.status === 'Rejected') this.items.update((list) => list.filter((x) => x.id !== r.id));
+    this.emitCount();
   }
 
-  private emitOpen(): void {
-    this.openCount.emit(this.items().filter((r) => r.status === 'Open').length);
-  }
-
-  /** Project developers (+ admins) — who a request can be assigned to. */
-  private loadAssignees(): void {
-    const devs$ = this.workspace.developers(this.projectId()).pipe(
-      map((list) => list.map((d) => ({ userId: d.developerId, fullName: d.developerName ?? '—' }))),
-    );
-    forkJoin([devs$.pipe(catchError(() => of([]))), this.api.admins().pipe(catchError(() => of([])))]).subscribe(
-      ([devs, admins]) => {
-        const seen = new Set<string>();
-        this.assignees.set(
-          [...devs, ...admins.map((a) => ({ userId: a.userId, fullName: a.fullName }))].filter(
-            (o) => !!o.userId && !seen.has(o.userId) && !!seen.add(o.userId),
-          ),
-        );
-      },
-    );
+  private emitCount(): void {
+    const focus = this.focusStatus();
+    this.openCount.emit(this.items().filter((r) => r.status === focus).length);
   }
 }

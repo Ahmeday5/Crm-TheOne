@@ -15,16 +15,11 @@ import {
   ClientProject,
   ClientProjectDetails,
   ClientRelease,
-  ClientRequestComment,
-  ClientRequestDetails,
-  ClientRequestListItem,
   DownloadLink,
-  NewRequestInput,
   PortalBranding,
   PortalMe,
   ProgressPoint,
   ProgressRange,
-  RequestListQuery,
   TimelineEvent,
 } from '../models/client-portal.models';
 import { PortalSessionRequest, PortalSessionResponse } from '../models/portal-session.models';
@@ -98,37 +93,4 @@ export class HttpClientPortalGateway implements ClientPortalGateway {
       context: withInlineHandling(),
     });
   }
-
-  requests(projectId: number, query: RequestListQuery): Observable<PagedResult<ClientRequestListItem>> {
-    return this.api.get<PagedResult<ClientRequestListItem>>(EP.requests(projectId), {
-      params: { pageIndex: 1, pageSize: 50, ...query },
-      context: withSkipLoader(),
-    });
-  }
-
-  createRequest(projectId: number, input: NewRequestInput): Observable<ClientRequestDetails> {
-    const form = new FormData();
-    form.append('type', input.type);
-    form.append('title', input.title.trim());
-    form.append('description', input.description.trim());
-    for (const f of input.attachments) form.append('attachments', f, f.name);
-    return this.api.post<ClientRequestDetails>(EP.requests(projectId), form, { context: withInlineHandling() });
-  }
-
-  request(id: number): Observable<ClientRequestDetails> {
-    return this.api.get<ClientRequestDetails>(EP.request(id), { context: withSkipLoader() });
-  }
-
-  comment(id: number, body: string, attachments: File[]): Observable<ClientRequestComment> {
-    return this.api.post<ClientRequestComment>(EP.requestComments(id), toCommentForm(body, attachments), {
-      context: withInlineHandling(),
-    });
-  }
-}
-
-export function toCommentForm(body: string, attachments: File[]): FormData {
-  const form = new FormData();
-  form.append('body', body.trim());
-  for (const f of attachments) form.append('attachments', f, f.name);
-  return form;
 }

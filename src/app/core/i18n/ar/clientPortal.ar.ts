@@ -76,7 +76,10 @@ const clientPortal: TranslationFile<'clientPortal'> = {
       Question: 'عندك استفسار',
     },
     status: {
-      Open: 'جديد',
+      PendingReview: 'بانتظار المراجعة',
+      NeedsClarification: 'محتاج توضيح',
+      Rejected: 'مرفوض',
+      Open: 'معتمد',
       InReview: 'قيد المراجعة',
       InProgress: 'جاري التنفيذ',
       Resolved: 'تم الحل',

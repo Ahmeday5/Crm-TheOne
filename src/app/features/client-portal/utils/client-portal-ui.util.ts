@@ -11,11 +11,41 @@ import {
 
 export function requestStatusClass(status: RequestStatus): string {
   switch (status) {
-    case 'Open': return 'bg-warning-subtle text-warning';
+    case 'PendingReview': return 'bg-warning-subtle text-warning';
+    case 'NeedsClarification': return 'bg-danger-subtle text-danger';
+    case 'Open': return 'bg-primary-subtle text-primary';
     case 'InReview': return 'bg-info-subtle text-info';
     case 'InProgress': return 'bg-primary-subtle text-primary';
     case 'Resolved': return 'bg-success-subtle text-success';
     case 'Closed': return 'bg-secondary-subtle text-secondary';
+    case 'Rejected': return 'bg-secondary-subtle text-secondary';
+  }
+}
+
+export function requestStatusIcon(status: RequestStatus): string {
+  switch (status) {
+    case 'PendingReview': return 'fa-solid fa-hourglass-half';
+    case 'NeedsClarification': return 'fa-solid fa-circle-question';
+    case 'Open': return 'fa-solid fa-circle-check';
+    case 'InReview': return 'fa-solid fa-magnifying-glass';
+    case 'InProgress': return 'fa-solid fa-screwdriver-wrench';
+    case 'Resolved': return 'fa-solid fa-check-double';
+    case 'Closed': return 'fa-solid fa-lock';
+    case 'Rejected': return 'fa-solid fa-ban';
+  }
+}
+
+/** Tone token for status-coloured surfaces (banners, timeline chips). */
+export function requestStatusTone(status: RequestStatus): 'warning' | 'danger' | 'brand' | 'info' | 'success' | 'muted' {
+  switch (status) {
+    case 'PendingReview': return 'warning';
+    case 'NeedsClarification': return 'danger';
+    case 'Open':
+    case 'InProgress': return 'brand';
+    case 'InReview': return 'info';
+    case 'Resolved': return 'success';
+    case 'Closed':
+    case 'Rejected': return 'muted';
   }
 }
 

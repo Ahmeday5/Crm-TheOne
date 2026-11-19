@@ -76,7 +76,10 @@ const clientPortal: TranslationFile<'clientPortal'> = {
       Question: 'You have a question',
     },
     status: {
-      Open: 'New',
+      PendingReview: 'Pending review',
+      NeedsClarification: 'Needs details',
+      Rejected: 'Declined',
+      Open: 'Approved',
       InReview: 'In review',
       InProgress: 'In progress',
       Resolved: 'Resolved',

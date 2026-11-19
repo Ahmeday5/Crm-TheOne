@@ -73,3 +73,10 @@
 .crp-title { font-weight: var(--fw-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .crp-sub { font-size: var(--fs-xs); color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .crp-badges { display: flex; gap: 0.3rem; flex-shrink: 0; }
+
+// v3 — triage rows (Admin only) stand out; the target chip sits in the meta line.
+.crp-row.is-triage { border-inline-start: 3px solid var(--warning); }
+.crp-sub { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
+.crp-chip[data-status='PendingReview']:not(.is-active) b { color: var(--warning); }
+.crp-chip[data-status='NeedsClarification']:not(.is-active) b { color: var(--danger); }
+.crp-chip[data-status='Open']:not(.is-active) b { color: var(--brand-500); }

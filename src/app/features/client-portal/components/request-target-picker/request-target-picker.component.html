@@ -1,0 +1,93 @@
+@let v = value();
+<div class="tp" [class.is-disabled]="disabled()">
+  @if (hasSurfaces()) {
+    <!-- The project's own parts -->
+    @if (appCount() > 1) { <p class="tp-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>{{ 'clientRequests.picker.whichAppHint' | translate }}</p> }
+    <div class="tp-grid" role="radiogroup" [attr.aria-label]="'clientRequests.picker.title' | translate">
+      @for (s of surfaces(); track s.id; let i = $index) {
+        <button type="button" role="radio" class="tp-card" [style.--i]="i" [attr.data-kind]="s.kind"
+                [class.is-active]="v.surfaceId === s.id" [attr.aria-checked]="v.surfaceId === s.id"
+                [disabled]="disabled()" (click)="pickSurface(s)">
+          <span class="tp-card__icon"><i [class]="surfaceIcon(s)" aria-hidden="true"></i></span>
+          <span class="tp-card__text">
+            <span class="tp-card__title">{{ s.name }}</span>
+            <span class="tp-card__sub">
+              @if (s.kind === 'MobileApp' && s.appAudience) { {{ 'clientRequests.audience.' + s.appAudience | translate }} }
+              @else { {{ 'clientRequests.target.' + s.kind | translate }} }
+            </span>
+          </span>
+          <span class="tp-card__check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+        </button>
+      }
+      <button type="button" role="radio" class="tp-card tp-card--ghost" [style.--i]="surfaces().length"
+              [class.is-active]="isOtherPicked()" [attr.aria-checked]="isOtherPicked()" [disabled]="disabled()" (click)="pickOther()">
+        <span class="tp-card__icon"><i class="fa-solid fa-shapes" aria-hidden="true"></i></span>
+        <span class="tp-card__text">
+          <span class="tp-card__title">{{ 'clientRequests.picker.notListed' | translate }}</span>
+          <span class="tp-card__sub">{{ 'clientRequests.picker.notListedHint' | translate }}</span>
+        </span>
+        <span class="tp-card__check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+      </button>
+    </div>
+  } @else {
+    <!-- Generic: what kind of thing -->
+    <div class="tp-grid tp-grid--targets" role="radiogroup" [attr.aria-label]="'clientRequests.picker.title' | translate">
+      @for (t of targets; track t; let i = $index) {
+        <button type="button" role="radio" class="tp-card tp-card--target" [style.--i]="i" [attr.data-kind]="t"
+                [class.is-active]="v.target === t" [attr.aria-checked]="v.target === t" [disabled]="disabled()" (click)="pickTarget(t)">
+          <span class="tp-card__icon"><i [class]="targetIcon(t)" aria-hidden="true"></i></span>
+          <span class="tp-card__text">
+            <span class="tp-card__title">{{ 'clientRequests.target.' + t | translate }}</span>
+            <span class="tp-card__sub">{{ 'clientRequests.targetHint.' + t | translate }}</span>
+          </span>
+          <span class="tp-card__check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+        </button>
+      }
+    </div>
+
+    @if (askAudience()) {
+      <section class="tp-step" aria-live="polite">
+        <h4 class="tp-step__title">{{ 'clientRequests.picker.whichApp' | translate }}</h4>
+        <div class="tp-grid tp-grid--apps" role="radiogroup" [attr.aria-label]="'clientRequests.picker.whichApp' | translate">
+          @for (a of audiences; track a; let i = $index) {
+            <button type="button" role="radio" class="tp-card tp-card--compact" [style.--i]="i" data-kind="MobileApp"
+                    [class.is-active]="v.appAudience === a" [attr.aria-checked]="v.appAudience === a" [disabled]="disabled()" (click)="pickAudience(a)">
+              <span class="tp-card__icon"><i [class]="audienceIcon(a)" aria-hidden="true"></i></span>
+              <span class="tp-card__text">
+                <span class="tp-card__title">{{ 'clientRequests.audience.' + a | translate }}</span>
+                <span class="tp-card__sub">{{ 'clientRequests.audienceHint.' + a | translate }}</span>
+              </span>
+              <span class="tp-card__check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+            </button>
+          }
+        </div>
+        @if (v.appAudience === 'Other') {
+          <div class="tp-field">
+            <label class="form-label" for="tp-app-name">{{ 'clientRequests.picker.appName' | translate }}</label>
+            <input id="tp-app-name" type="text" class="form-control" [maxlength]="appNameMax" [disabled]="disabled()"
+                   [placeholder]="'clientRequests.picker.appNamePlaceholder' | translate"
+                   [ngModel]="v.appName ?? ''" (ngModelChange)="setAppName($event)" />
+          </div>
+        }
+      </section>
+    }
+  }
+
+  @if (askPlatform()) {
+    <section class="tp-step">
+      <h4 class="tp-step__title">{{ 'clientRequests.picker.platform' | translate }} <small>({{ 'clientRequests.picker.optional' | translate }})</small></h4>
+      <div class="tp-chips" role="group" [attr.aria-label]="'clientRequests.picker.platform' | translate">
+        @for (p of platforms; track p) {
+          <button type="button" class="tp-chip" [class.is-active]="v.appPlatform === p" [attr.aria-pressed]="v.appPlatform === p"
+                  [disabled]="disabled()" (click)="pickPlatform(p)">
+            <i [class]="platformIcon(p)" aria-hidden="true"></i>{{ 'clientRequests.platform.' + p | translate }}
+          </button>
+        }
+      </div>
+    </section>
+  }
+
+  @if (problem(); as p) {
+    <p class="tp-error" role="alert"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ 'clientRequests.problems.' + p | translate }}</p>
+  }
+</div>

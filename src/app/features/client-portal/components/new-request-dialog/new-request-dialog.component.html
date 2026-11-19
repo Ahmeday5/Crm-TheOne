@@ -1,41 +1,93 @@
-<app-modal [open]="true" size="md" icon="fa-solid fa-message" [title]="'clientPortal.newRequest.title' | translate"
+<app-modal [open]="true" size="lg" icon="fa-solid fa-comment-medical" [title]="'clientPortal.newRequest.title' | translate"
            [closeOnBackdrop]="!sending()" (closed)="closed.emit()">
-  <div class="d-flex flex-column gap-3">
-    <div class="nr-seg" role="radiogroup" [attr.aria-label]="'clientPortal.newRequest.kind' | translate">
-      @for (t of types; track t) {
-        <button type="button" role="radio" class="nr-seg__btn" [class.is-active]="type() === t" [attr.data-type]="t"
-                [attr.aria-checked]="type() === t" [disabled]="sending()" (click)="type.set(t)">
-          <i [class]="typeIcon(t)" aria-hidden="true"></i>{{ 'clientPortal.type.' + t | translate }}
-        </button>
+  <!-- Stepper -->
+  <ol class="nr-steps" aria-label="steps">
+    <li class="nr-steps__item" [class.is-current]="step() === 'target'" [class.is-done]="step() === 'details'">
+      <span class="nr-steps__dot">
+        @if (step() === 'details') { <i class="fa-solid fa-check" aria-hidden="true"></i> } @else { 1 }
+      </span>
+      {{ 'clientRequests.wizard.step1' | translate }}
+    </li>
+    <li class="nr-steps__bar" [class.is-done]="step() === 'details'" aria-hidden="true"></li>
+    <li class="nr-steps__item" [class.is-current]="step() === 'details'">
+      <span class="nr-steps__dot">2</span>
+      {{ 'clientRequests.wizard.step2' | translate }}
+    </li>
+  </ol>
+
+  @if (step() === 'target') {
+    <section class="nr-pane" aria-labelledby="nr-target-title">
+      <header class="nr-pane__head">
+        <h3 id="nr-target-title">{{ 'clientRequests.picker.title' | translate }}</h3>
+        <p>{{ 'clientRequests.picker.subtitle' | translate }}</p>
+      </header>
+      @if (optionsLoading()) {
+        <div class="nr-skeleton" aria-hidden="true">
+          @for (i of [1, 2, 3, 4]; track i) { <span></span> }
+        </div>
+      } @else {
+        <app-request-target-picker [(value)]="target" [options]="options()" [showErrors]="triedNext()" />
       }
-    </div>
-    <p class="nr-hint">{{ 'clientPortal.typeHint.' + type() | translate }}</p>
+    </section>
+  } @else {
+    <section class="nr-pane d-flex flex-column gap-3">
+      <div class="nr-about">
+        <span class="nr-about__label">{{ 'clientRequests.wizard.about' | translate }}</span>
+        <app-request-target-chip [source]="targetPreview()" />
+        <button type="button" class="btn btn-link btn-sm p-0 ms-auto" [disabled]="sending()" (click)="back()">
+          <i class="fa-solid fa-pen me-1" aria-hidden="true"></i>{{ 'clientRequests.picker.change' | translate }}
+        </button>
+      </div>
 
-    <div>
-      <label class="form-label" for="nr-title">{{ 'clientPortal.newRequest.titleLabel' | translate }}</label>
-      <input id="nr-title" type="text" class="form-control" [maxlength]="titleMax" [disabled]="sending()"
-             [placeholder]="'clientPortal.newRequest.titlePlaceholder.' + type() | translate"
-             [ngModel]="title()" (ngModelChange)="title.set($event)" />
-    </div>
+      <div class="nr-seg" role="radiogroup" [attr.aria-label]="'clientPortal.newRequest.kind' | translate">
+        @for (t of types; track t) {
+          <button type="button" role="radio" class="nr-seg__btn" [class.is-active]="type() === t" [attr.data-type]="t"
+                  [attr.aria-checked]="type() === t" [disabled]="sending()" (click)="type.set(t)">
+            <i [class]="typeIcon(t)" aria-hidden="true"></i>{{ 'clientPortal.type.' + t | translate }}
+          </button>
+        }
+      </div>
+      <p class="nr-hint">{{ 'clientPortal.typeHint.' + type() | translate }}</p>
 
-    <div>
-      <label class="form-label" for="nr-desc">{{ 'clientPortal.newRequest.details' | translate }}</label>
-      <textarea id="nr-desc" class="form-control" rows="5" [maxlength]="textMax" [disabled]="sending()"
-                [placeholder]="'clientPortal.newRequest.detailsPlaceholder' | translate"
-                [ngModel]="description()" (ngModelChange)="description.set($event)"></textarea>
-    </div>
+      <div>
+        <label class="form-label" for="nr-title">{{ 'clientPortal.newRequest.titleLabel' | translate }}</label>
+        <input id="nr-title" type="text" class="form-control" [maxlength]="titleMax" [disabled]="sending()"
+               [placeholder]="'clientPortal.newRequest.titlePlaceholder.' + type() | translate"
+               [ngModel]="title()" (ngModelChange)="title.set($event)" />
+      </div>
 
-    <app-attachment-picker [disabled]="sending()" [(files)]="files" />
+      <div>
+        <label class="form-label" for="nr-desc">{{ 'clientPortal.newRequest.details' | translate }}</label>
+        <textarea id="nr-desc" class="form-control" rows="5" [maxlength]="textMax" [disabled]="sending()"
+                  [placeholder]="'clientPortal.newRequest.detailsPlaceholder' | translate"
+                  [ngModel]="description()" (ngModelChange)="description.set($event)"></textarea>
+      </div>
 
-    @if (error(); as e) { <div class="alert alert-danger py-2 mb-0 small">{{ e }}</div> }
-  </div>
+      <app-attachment-picker [disabled]="sending()" [(files)]="files" />
 
-  <div modal-footer class="d-flex justify-content-end gap-2">
-    <button type="button" class="btn btn-light" [disabled]="sending()" (click)="closed.emit()">{{ 'common.cancel' | translate }}</button>
-    <button type="button" class="btn btn-primary" [disabled]="!canSend()" (click)="submit()">
-      @if (sending()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
-      @else { <i class="fa-solid fa-paper-plane me-1" aria-hidden="true"></i> }
-      {{ 'clientPortal.newRequest.send' | translate }}
-    </button>
+      <p class="nr-note"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>{{ 'clientRequests.wizard.reviewNote' | translate }}</p>
+    </section>
+  }
+
+  @if (error(); as e) {
+    <div class="alert alert-danger py-2 mt-3 mb-0 small" role="alert">{{ e.key ? (e.key | translate) : e.text }}</div>
+  }
+
+  <div modal-footer class="nr-footer">
+    @if (step() === 'target') {
+      <button type="button" class="btn btn-light" (click)="closed.emit()">{{ 'common.cancel' | translate }}</button>
+      <button type="button" class="btn btn-primary" [disabled]="optionsLoading()" (click)="next()">
+        {{ 'clientRequests.wizard.next' | translate }}<i class="fa-solid fa-arrow-left ms-1 nr-dir" aria-hidden="true"></i>
+      </button>
+    } @else {
+      <button type="button" class="btn btn-light" [disabled]="sending()" (click)="back()">
+        <i class="fa-solid fa-arrow-right me-1 nr-dir" aria-hidden="true"></i>{{ 'clientRequests.wizard.back' | translate }}
+      </button>
+      <button type="button" class="btn btn-primary" [disabled]="!canSend()" (click)="submit()">
+        @if (sending()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+        @else { <i class="fa-solid fa-paper-plane me-1" aria-hidden="true"></i> }
+        {{ 'clientPortal.newRequest.send' | translate }}
+      </button>
+    }
   </div>
 </app-modal>

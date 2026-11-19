@@ -13,6 +13,7 @@ import { provideAnnouncements } from './features/announcements';
 import { provideAttendance } from './features/attendance';
 import { provideWhatsApp } from './features/whatsapp/whatsapp.providers';
 import { providePayments } from './features/payments/payments.providers';
+import { provideClientRequests } from './features/client-requests/client-requests.providers';
 import { vaultTokenInterceptor } from './features/vault/data/vault-token.interceptor';
 import { portalSessionInterceptor } from './features/client-portal/data/portal-session.interceptor';
 
@@ -51,6 +52,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     provideWhatsApp(),
     providePayments(),
+    provideClientRequests(),
     // Banner, hub listeners, header time clock and sidebar badges on every page.
     provideAnnouncements(),
     provideAttendance(),

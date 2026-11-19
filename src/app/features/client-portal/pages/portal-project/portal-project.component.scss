@@ -428,6 +428,8 @@
     background: var(--warning);
     color: #ffffff;
     font-size: 0.7rem;
+
+    &.is-alert { background: var(--danger); animation: pp-pop 600ms motion.$ease-spring both; }
   }
 }
 
@@ -804,7 +806,8 @@
 
   &__main { display: flex; flex: 1; flex-direction: column; min-width: 0; }
   &__title { overflow: hidden; font-weight: var(--fw-700); text-overflow: ellipsis; white-space: nowrap; }
-  &__sub { color: var(--text-3); font-size: var(--fs-xs); }
+  &__sub { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-top: 0.2rem; color: var(--text-3); font-size: var(--fs-xs); }
+  &__row.is-awaiting { border-color: var(--danger); background: var(--danger-soft); }
   &__go { color: var(--text-3); font-size: 0.75rem; transition: transform 220ms ease, color 200ms ease; }
   &__row:hover &__go { color: var(--brand-500); transform: translateX(-4px); }
   :host-context([dir='ltr']) &__go { rotate: 180deg; }
@@ -813,6 +816,34 @@
     &__row { flex-wrap: wrap; }
     &__go { display: none; }
   }
+}
+
+/* "your reply needed" */
+.pp-req-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.9rem;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid var(--danger);
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  color: var(--text-1);
+  text-decoration: none;
+  animation: pp-pop 600ms motion.$ease-spring both;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+
+  &:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+  &__icon {
+    display: grid; place-items: center; width: 38px; height: 38px; flex-shrink: 0;
+    border-radius: 50%; background: var(--danger); color: #fff;
+  }
+  &__text { display: flex; flex: 1; flex-direction: column; min-width: 0; font-size: var(--fs-sm); }
+  &__text span { color: var(--text-2); font-size: var(--fs-xs); }
+  &__cta { color: var(--danger); font-weight: var(--fw-700); font-size: var(--fs-sm); white-space: nowrap; }
+
+  @include bp.down(sm) { flex-wrap: wrap; &__cta { width: 100%; text-align: end; } }
 }
 
 /* empty / states */

@@ -1,0 +1,155 @@
+<app-page-header [title]="'clientRequests.inbox.title' | translate" [subtitle]="'clientRequests.inbox.subtitle' | translate" icon="fa-solid fa-inbox">
+  <div class="btn-row">
+    <app-mock-ribbon area="clientRequestsTriage" />
+    <app-refresh-button [loading]="loading()" (refresh)="refreshAll()" />
+  </div>
+</app-page-header>
+
+<!-- KPIs -->
+@let s = summary();
+<section class="cri-kpis">
+  <button type="button" class="cri-kpi" data-tone="warning" [class.is-active]="tab() === 'PendingReview'" (click)="setTab('PendingReview')">
+    <span class="cri-kpi__icon"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i></span>
+    <span class="cri-kpi__body">
+      <span class="cri-kpi__value">{{ s.pendingReview }}</span>
+      <span class="cri-kpi__label">{{ 'clientRequests.inbox.kpi.pending' | translate }}</span>
+      @if (s.clientReplied) {
+        <span class="cri-kpi__sub is-success"><i class="fa-solid fa-reply" aria-hidden="true"></i>{{ s.clientReplied }} {{ 'clientRequests.inbox.kpi.replied' | translate }}</span>
+      }
+    </span>
+  </button>
+  <button type="button" class="cri-kpi" data-tone="info" [class.is-active]="tab() === 'NeedsClarification'" (click)="setTab('NeedsClarification')">
+    <span class="cri-kpi__icon"><i class="fa-solid fa-user-clock" aria-hidden="true"></i></span>
+    <span class="cri-kpi__body">
+      <span class="cri-kpi__value">{{ s.needsClarification }}</span>
+      <span class="cri-kpi__label">{{ 'clientRequests.inbox.kpi.waitingClient' | translate }}</span>
+    </span>
+  </button>
+  <button type="button" class="cri-kpi" data-tone="brand" [class.is-active]="tab() === 'Open'" (click)="setTab('Open')">
+    <span class="cri-kpi__icon"><i class="fa-solid fa-code" aria-hidden="true"></i></span>
+    <span class="cri-kpi__body">
+      <span class="cri-kpi__value">{{ s.approvedOpen }}</span>
+      <span class="cri-kpi__label">{{ 'clientRequests.inbox.kpi.approved' | translate }}</span>
+    </span>
+  </button>
+  <div class="cri-kpi cri-kpi--static" data-tone="muted">
+    <span class="cri-kpi__icon"><i class="fa-regular fa-clock" aria-hidden="true"></i></span>
+    <span class="cri-kpi__body">
+      <span class="cri-kpi__value cri-kpi__value--sm">{{ s.oldestPendingAt ? (s.oldestPendingAt | timeAgo) : ('clientRequests.inbox.kpi.none' | translate) }}</span>
+      <span class="cri-kpi__label">{{ 'clientRequests.inbox.kpi.oldest' | translate }}</span>
+    </span>
+  </div>
+</section>
+
+<div class="card cri-card">
+  <!-- Tabs -->
+  <div class="cri-tabs" role="tablist">
+    @for (t of tabs; track t.id) {
+      <button type="button" role="tab" class="cri-tab" [attr.data-tab]="t.id" [class.is-active]="tab() === t.id"
+              [attr.aria-selected]="tab() === t.id" (click)="setTab(t.id)">
+        <i [class]="t.icon" aria-hidden="true"></i>
+        <span>{{ 'clientRequests.inbox.tabs.' + t.id | translate }}</span>
+        @if (t.count(); as n) { <b class="cri-tab__count">{{ n }}</b> }
+      </button>
+    }
+  </div>
+
+  <!-- Filters -->
+  <div class="cri-filters">
+    <label class="cri-search">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <input type="search" class="form-control form-control-sm" [placeholder]="'clientRequests.inbox.search' | translate"
+             [value]="search()" (input)="search.set($any($event.target).value)" />
+    </label>
+    <select class="form-select form-select-sm cri-select" [value]="projectId() ?? ''" (change)="setProject($any($event.target).value)"
+            [attr.aria-label]="'clientRequests.inbox.allProjects' | translate">
+      <option value="">{{ 'clientRequests.inbox.allProjects' | translate }}</option>
+      @for (p of projectOptions(); track p.id) { <option [value]="p.id">{{ p.title }}</option> }
+    </select>
+    <select class="form-select form-select-sm cri-select" [value]="target() ?? ''" (change)="setTarget($any($event.target).value)"
+            [attr.aria-label]="'clientRequests.inbox.allTargets' | translate">
+      <option value="">{{ 'clientRequests.inbox.allTargets' | translate }}</option>
+      @for (t of targets; track t) { <option [value]="t">{{ 'clientRequests.target.' + t | translate }}</option> }
+    </select>
+    <button type="button" class="btn btn-sm btn-light cri-sort" (click)="toggleSort()">
+      <i class="fa-solid" [class.fa-arrow-up-short-wide]="effectiveSort() === 'oldest'" [class.fa-arrow-down-wide-short]="effectiveSort() === 'newest'" aria-hidden="true"></i>
+      {{ 'clientRequests.inbox.sort.' + effectiveSort() | translate }}
+    </button>
+    @if (hasFilters()) {
+      <button type="button" class="btn btn-sm btn-link" (click)="clearFilters()">{{ 'clientRequests.inbox.clearFilters' | translate }}</button>
+    }
+  </div>
+
+  <!-- List -->
+  <div class="cri-body">
+    @if (loading() && !rows().length) {
+      <ul class="cri-list" aria-hidden="true">
+        @for (i of [1, 2, 3, 4]; track i) { <li class="cri-skel"></li> }
+      </ul>
+    } @else if (loadFailed()) {
+      <div class="cri-empty">
+        <span class="icon-tile lg tone-warning"><i class="fa-solid fa-triangle-exclamation"></i></span>
+        <h6 class="fw-700 mb-0">{{ 'clientRequests.inbox.loadFailed' | translate }}</h6>
+        <button type="button" class="btn btn-sm btn-light" (click)="refreshAll()">{{ 'common.retry' | translate }}</button>
+      </div>
+    } @else if (!rows().length) {
+      <div class="cri-empty">
+        <span class="icon-tile lg tone-success"><i class="fa-solid fa-mug-hot"></i></span>
+        <h6 class="fw-700 mb-0">{{ (hasFilters() ? 'clientRequests.inbox.empty.filtered' : 'clientRequests.inbox.empty.' + tab()) | translate }}</h6>
+        @if (!hasFilters()) { <p class="mb-0">{{ 'clientRequests.inbox.emptyHint' | translate }}</p> }
+      </div>
+    } @else {
+      <ul class="cri-list" role="list" [class.is-refreshing]="loading()">
+        @for (r of rows(); track r.id; let i = $index) {
+          <li [style.--i]="i">
+            <button type="button" class="cri-row" [class.is-replied]="clientAnswered(r)" [attr.data-status]="r.status" (click)="open(r)">
+              <span class="cri-row__icon" [attr.data-type]="r.type"><i [class]="typeIcon(r.type)" aria-hidden="true"></i></span>
+              <span class="cri-row__main">
+                <span class="cri-row__title">
+                  @if (clientAnswered(r)) { <span class="cri-dot" aria-hidden="true"></span> }
+                  {{ r.title }}
+                </span>
+                <span class="cri-row__meta">
+                  <app-request-target-chip [source]="r" size="sm" />
+                  <span><i class="fa-solid fa-diagram-project" aria-hidden="true"></i>{{ r.projectName || '#' + r.projectId }}</span>
+                  @if (r.customerName) { <span><i class="fa-solid fa-building" aria-hidden="true"></i>{{ r.customerName }}</span> }
+                  @if (r.commentsCount) { <span><i class="fa-regular fa-comment" aria-hidden="true"></i>{{ r.commentsCount }}</span> }
+                  @if (r.attachmentsCount) { <span><i class="fa-solid fa-paperclip" aria-hidden="true"></i>{{ r.attachmentsCount }}</span> }
+                </span>
+              </span>
+              <span class="cri-row__side">
+                @if (clientAnswered(r)) {
+                  <span class="badge bg-success">{{ 'clientRequests.inbox.clientReplied' | translate }}</span>
+                } @else if (tab() === 'all' || tab() === 'Open') {
+                  <span class="badge" [class]="statusClass(r.status)">{{ 'clientPortal.status.' + r.status | translate }}</span>
+                }
+                @if (r.priority && tab() !== 'PendingReview') {
+                  <span class="badge" [class]="priorityClass(r.priority)">{{ 'clientPortal.priority.' + r.priority | translate }}</span>
+                }
+                <span class="cri-row__time">{{ (r.updatedAt || r.createdAt) | timeAgo }}</span>
+                <span class="cri-row__cta">{{ (r.status === 'PendingReview' ? 'clientRequests.inbox.review' : 'clientRequests.inbox.open') | translate }}
+                  <i class="fa-solid fa-chevron-left" aria-hidden="true"></i></span>
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+      @if (hasMore()) {
+        <div class="cri-more">
+          <button type="button" class="btn btn-sm btn-light" [disabled]="loadingMore()" (click)="loadMore()">
+            @if (loadingMore()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+            {{ 'clientRequests.inbox.loadMore' | translate }}
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+@if (reviewId(); as id) {
+  <app-request-review-dialog [requestId]="id" (updated)="onUpdated($event)" (closed)="closeReview()" />
+}
+@if (teamRequest(); as t) {
+  <app-staff-request-dialog [projectId]="t.projectId" [requestId]="t.id" [isAdmin]="true"
+                            (updated)="onUpdated($event)" (closed)="teamRequest.set(null)" />
+}

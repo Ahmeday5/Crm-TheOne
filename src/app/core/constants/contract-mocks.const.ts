@@ -20,6 +20,14 @@ export const CONTRACT_MOCKS = {
   developerMilestones: false,
   /** `PaymentMethods/*`, `PaymentRequests/*`, `PublicPayments/*` — payment links from the chat (`docs/api/payments.md`). */
   payments: false,
+  /**
+   * Client requests v3 — target picker + Admin triage gate
+   * (`docs/backend-prompt-client-requests-triage.md`): `ClientPortal/…/requests*`,
+   * `ClientPortal/Projects/{id}/request-options`, `ClientRequests/*`,
+   * `ManagerProjects/{id}/client-requests*`, `ManagerProjects/{id}/surfaces*`.
+   * Portal + staff share ONE mock store (localStorage, synced across tabs).
+   */
+  clientRequestsTriage: false,
 } as const;
 
 export type ContractArea = keyof typeof CONTRACT_MOCKS;

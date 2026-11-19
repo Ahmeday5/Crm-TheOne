@@ -208,7 +208,7 @@
                   <div class="alert alert-danger py-2 small mt-2 mb-0" role="alert">{{ e }}</div>
                 }
 
-                <button type="submit" class="btn btn-success w-100 mt-3 pp-confirm__submit" [disabled]="confirming()">
+                <button type="submit" class="btn btn-success w-100 mt-3 pp-confirm__submit" [disabled]="confirming() || !receipt()">
                   @if (confirming()) {
                     <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>{{ 'payments.pay.confirm.sending' | translate }}
                   } @else {

@@ -13,6 +13,7 @@ import {
   isContractNotification,
   isPaymentNotification,
   isWhatsAppNotification,
+  notificationTypeName,
 } from './notification.model';
 
 /** The fields of a notification (or its live toast) that decide where it leads. */
@@ -24,6 +25,12 @@ export interface NotificationTarget {
   projectId?: number | null;
 }
 
+/** Client-request notifications that mean "your decision is needed" (Admin → triage inbox). */
+const ADMIN_TRIAGE_TYPES: ReadonlySet<string> = new Set([
+  'ClientRequestCreated',
+  'ClientRequestClarificationAnswered',
+]);
+
 /** Roles that chat with customers on WhatsApp inside the CRM. */
 const WHATSAPP_ROLES: readonly UserRole[] = ['Admin', 'Sales', 'Support'];
 
@@ -31,7 +38,7 @@ const WHATSAPP_ROLES: readonly UserRole[] = ['Admin', 'Sales', 'Support'];
 export function notificationIcon(type: NotificationType): string {
   if (isWhatsAppNotification({ type, relatedEntityType: null })) return 'fa-brands fa-whatsapp';
   if (isPaymentNotification({ type, relatedEntityType: null })) return 'fa-solid fa-money-check-dollar';
-  switch (type) {
+  switch (notificationTypeName(type)) {
     case 'NewSupportTicket': return 'fa-solid fa-headset';
     case 'CustomerReturnedToSales': return 'fa-solid fa-rotate-left';
     case 'NewCustomerAssigned': return 'fa-solid fa-user-plus';
@@ -51,6 +58,11 @@ export function notificationIcon(type: NotificationType): string {
     case 'ClientRequestCreated': return 'fa-solid fa-comment-medical';
     case 'ClientRequestUpdated': return 'fa-solid fa-comment-dots';
     case 'ClientRequestComment': return 'fa-solid fa-comments';
+    case 'ClientRequestClarificationAnswered': return 'fa-solid fa-reply';
+    case 'ClientRequestApproved': return 'fa-solid fa-circle-check';
+    case 'ClientRequestAssigned': return 'fa-solid fa-user-check';
+    case 'ClientRequestRejected': return 'fa-solid fa-ban';
+    case 'ClientRequestClarificationRequested': return 'fa-solid fa-circle-question';
     case 'ProjectReleasePublished': return 'fa-solid fa-rocket';
     case 'MilestoneUpdatedByDeveloper': return 'fa-solid fa-flag-checkered';
     case 'ProjectReachedFullProgress': return 'fa-solid fa-trophy';
@@ -63,7 +75,7 @@ export function notificationIcon(type: NotificationType): string {
 export function notificationTone(type: NotificationType): string {
   if (isWhatsAppNotification({ type, relatedEntityType: null })) return 'success';
   if (isPaymentNotification({ type, relatedEntityType: null })) return 'info';
-  switch (type) {
+  switch (notificationTypeName(type)) {
     case 'NewSupportTicket': return 'warning';
     case 'CustomerReturnedToSales': return 'info';
     case 'NewCustomerAssigned': return 'success';
@@ -83,6 +95,11 @@ export function notificationTone(type: NotificationType): string {
     case 'ClientRequestCreated': return 'warning';
     case 'ClientRequestUpdated': return 'info';
     case 'ClientRequestComment': return 'primary';
+    case 'ClientRequestClarificationAnswered': return 'success';
+    case 'ClientRequestApproved': return 'success';
+    case 'ClientRequestAssigned': return 'primary';
+    case 'ClientRequestRejected': return 'danger';
+    case 'ClientRequestClarificationRequested': return 'warning';
     case 'ProjectReleasePublished': return 'success';
     case 'MilestoneUpdatedByDeveloper': return 'info';
     case 'ProjectReachedFullProgress': return 'warning';
@@ -106,8 +123,11 @@ export function notificationQuery(n: NotificationTarget): Record<string, string>
     const id = n.relatedEntityType === PAYMENT_REQUEST_ENTITY ? n.relatedEntityId : null;
     return id ? { request: String(id) } : { status: 'CustomerConfirmed' };
   }
-  const t = String(n.type);
-  if (t.startsWith('ClientRequest')) return { tab: 'requests' };
+  const t = notificationTypeName(n.type);
+  if (t.startsWith('ClientRequest') || n.relatedEntityType === CLIENT_REQUEST_ENTITY) {
+    // Lands on the requests list; the user opens the request themselves.
+    return { tab: 'requests' };
+  }
   if (t === 'ProjectReleasePublished') return { tab: 'deliverables' };
   if (t === 'MilestoneUpdatedByDeveloper') return { tab: 'milestones' };
   return undefined;
@@ -115,7 +135,7 @@ export function notificationQuery(n: NotificationTarget): Record<string, string>
 
 export function notificationRoute(n: NotificationTarget, role: UserRole | null): string[] | null {
   const entityType = n.relatedEntityType;
-  const notifType = n.type;
+  const notifType = notificationTypeName(n.type);
 
   if (isWhatsAppNotification(n)) {
     if (!role || !WHATSAPP_ROLES.includes(role)) return null;
@@ -130,9 +150,12 @@ export function notificationRoute(n: NotificationTarget, role: UserRole | null):
 
   const staff = role === 'Admin' || role === 'Developer';
 
-  // Client requests: staff open the project's requests tab (needs v2 `projectId`).
+  // Client requests: what waits for the Admin's decision opens the inbox;
+  // everything else opens the project's requests tab (needs `projectId`).
   if (entityType === CLIENT_REQUEST_ENTITY || String(notifType).startsWith('ClientRequest')) {
-    return staff && n.projectId ? ['/projects', String(n.projectId)] : null;
+    if (role === 'Admin' && ADMIN_TRIAGE_TYPES.has(String(notifType))) return ['/client-requests'];
+    if (staff && n.projectId) return ['/projects', String(n.projectId)];
+    return role === 'Admin' ? ['/client-requests'] : null;
   }
 
   // Releases / milestones / 100%: the project's workspace.

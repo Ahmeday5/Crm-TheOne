@@ -353,7 +353,7 @@ export class MockPaymentsGateway implements PaymentsGateway, PublicPaymentsGatew
       this.expireDue();
       const r = this.byToken(token);
       if (r.status !== 'Pending') fail(409, 'INVALID_STATE', 'لا يمكن تأكيد هذا الطلب');
-      if (!input.receipt) fail(400, 'RECEIPT_REQUIRED', 'صورة الإيصال مطلوبة');
+      if (!input.receipt) fail(400, 'INVALID_FILE', 'لازم ترفق صورة الإيصال');
       this.db.update(() =>
         Object.assign(r, {
           status: 'CustomerConfirmed',
