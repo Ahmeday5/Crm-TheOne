@@ -1,0 +1,63 @@
+<div class="drf" [class.drf--sm]="size() === 'sm'" role="group" [attr.aria-labelledby]="labelId">
+  <div class="drf__head">
+    <span class="drf__label" [id]="labelId">
+      <i class="fa-regular fa-calendar" aria-hidden="true"></i>{{ labelKey() | translate }}
+    </span>
+    @if (active()) {
+      <button type="button" class="drf__clear" [disabled]="disabled()" (click)="clear()">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>{{ 'dateFilter.clear' | translate }}
+      </button>
+    }
+  </div>
+
+  <div class="drf__inputs">
+    <label class="drf__field">
+      <span class="drf__cap">{{ 'dateFilter.from' | translate }}</span>
+      <input type="date"
+             class="form-control"
+             [class.form-control-sm]="size() === 'sm'"
+             [class.is-invalid]="invalid()"
+             [max]="to() || today"
+             [disabled]="disabled()"
+             [attr.aria-invalid]="invalid()"
+             [attr.aria-describedby]="invalid() ? errorId : null"
+             [ngModel]="from()"
+             (ngModelChange)="setFrom($event)" />
+    </label>
+    <label class="drf__field">
+      <span class="drf__cap">{{ 'dateFilter.to' | translate }}</span>
+      <input type="date"
+             class="form-control"
+             [class.form-control-sm]="size() === 'sm'"
+             [class.is-invalid]="invalid()"
+             [min]="from()"
+             [max]="today"
+             [disabled]="disabled()"
+             [attr.aria-invalid]="invalid()"
+             [attr.aria-describedby]="invalid() ? errorId : null"
+             [ngModel]="to()"
+             (ngModelChange)="setTo($event)" />
+    </label>
+  </div>
+
+  @if (invalid()) {
+    <div class="drf__error" [id]="errorId" role="alert">
+      <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ 'dateFilter.invalidRange' | translate }}
+    </div>
+  }
+
+  @if (presets().length) {
+    <div class="drf__presets" role="group" [attr.aria-label]="'dateFilter.presetsLabel' | translate">
+      @for (p of presets(); track p) {
+        <button type="button"
+                class="drf__chip"
+                [class.is-active]="activePreset() === p"
+                [attr.aria-pressed]="activePreset() === p"
+                [disabled]="disabled()"
+                (click)="applyPreset(p)">
+          {{ 'dateFilter.presets.' + p | translate }}
+        </button>
+      }
+    </div>
+  }
+</div>

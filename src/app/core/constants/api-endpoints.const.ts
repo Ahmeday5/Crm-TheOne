@@ -60,6 +60,13 @@ export const API_ENDPOINTS = {
     list: 'Customers/getLeadCustomer',
     salesCustomers: 'Customers/getSalesCustomers',
     supportCustomers: 'Customers/getSupportCustomers',
+    /**
+     * GET (Admin: all buyers; Sales / Support: buyers assigned to them;
+     * Marketing: 403) — paged, same filters as the other lists minus status.
+     */
+    buyers: 'Customers/buyers',
+    /** GET — `?SearchPhoneOrName=` (+ `From` / `To`); not paged. */
+    search: 'Customers/search',
     byId: (id: number | string) => `Customers/${id}/getCustomerById`,
     create: 'Customers/CreateCustomer',
     update: (id: number | string) => `Customers/updateCustomer/${id}`,

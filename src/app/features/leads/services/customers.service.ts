@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
@@ -10,18 +10,23 @@ import {
   withSkipLoader,
 } from '../../../core/http/http-context.tokens';
 import { ApiService } from '../../../core/services/api.service';
+import { toDateRangeParams } from '../../../core/utils/date-range.util';
 import {
   AssignCustomerRequest,
   AssignSupportRequest,
   AssignSupportResponse,
   ChangeCustomerStatusRequest,
+  CUSTOMER_LIST_MAX_PAGE_SIZE,
   CreateCustomerRequest,
+  CustomerDateFilter,
   CustomerDetails,
+  CustomerDropdownItem,
   CustomerFollowUpResponse,
   CustomerListItem,
   CustomerListQuery,
   CustomerNoteResponse,
   CustomerStatus,
+  CustomerStatusChange,
   LogContactAttemptRequest,
   PagedResult,
   SalesPerson,
@@ -52,46 +57,92 @@ const CUSTOMER_CACHE_KEYS = [
 @Injectable({ providedIn: 'root' })
 export class CustomersService {
   private readonly api = inject(ApiService);
+  private readonly statusChanges = new Subject<CustomerStatusChange>();
+
+  /**
+   * Every successfully saved status change, whichever screen made it. Emits
+   * after the server confirmed — never optimistically.
+   */
+  readonly statusChanged$: Observable<CustomerStatusChange> = this.statusChanges.asObservable();
 
   // ─────────── reads ───────────
 
+  /** Leads — `GET Customers/getLeadCustomer` (Admin, Marketing). */
   list(
     query: CustomerListQuery = {},
     force = false,
   ): Observable<PagedResult<CustomerListItem>> {
-    const ctx = force
-      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
-      : withCache({ ttlMs: CACHE_TTL.SHORT });
-    return this.api.get<PagedResult<CustomerListItem>>(
-      API_ENDPOINTS.customers.list,
-      { params: query as Record<string, unknown>, context: ctx },
-    );
+    return this.page(API_ENDPOINTS.customers.list, query, force);
   }
 
+  /** Sales customers — `GET Customers/getSalesCustomers` (Admin, Sales). */
   listForSales(
     query: CustomerListQuery = {},
     force = false,
   ): Observable<PagedResult<CustomerListItem>> {
-    const ctx = force
-      ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
-      : withCache({ ttlMs: CACHE_TTL.SHORT });
-    return this.api.get<PagedResult<CustomerListItem>>(
-      API_ENDPOINTS.customers.salesCustomers,
-      { params: query as Record<string, unknown>, context: ctx },
-    );
+    return this.page(API_ENDPOINTS.customers.salesCustomers, query, force);
   }
 
+  /** Support customers — `GET Customers/getSupportCustomers` (Admin, Support). */
   listForSupport(
     query: CustomerListQuery = {},
     force = false,
   ): Observable<PagedResult<CustomerListItem>> {
+    return this.page(API_ENDPOINTS.customers.supportCustomers, query, force);
+  }
+
+  /**
+   * Buyers only — `GET Customers/buyers` (Admin: all; Sales / Support: their
+   * own). Every row is a Buyer, so `CustomerStatusId` is stripped here
+   * rather than trusting every caller to leave it out.
+   */
+  buyers(
+    query: CustomerListQuery = {},
+    force = false,
+  ): Observable<PagedResult<CustomerListItem>> {
+    const { CustomerStatusId: _ignored, ...rest } = query;
+    return this.page(API_ENDPOINTS.customers.buyers, rest, force);
+  }
+
+  /** Quick lookup by phone or name — `GET Customers/search` (not paged). */
+  search(term: string, dates: CustomerDateFilter = {}): Observable<CustomerListItem[]> {
+    return this.api.get<CustomerListItem[]>(API_ENDPOINTS.customers.search, {
+      params: { SearchPhoneOrName: term.trim(), ...toDateRangeParams(dates) },
+      context: withInlineHandling(),
+    });
+  }
+
+  /** Lightweight picker — `GET Customers/dropdownCustomers`, optionally by date added. */
+  dropdown(dates: CustomerDateFilter = {}): Observable<CustomerDropdownItem[]> {
+    return this.api.get<CustomerDropdownItem[]>(API_ENDPOINTS.customers.dropdown, {
+      params: toDateRangeParams(dates),
+      context: withCache({ ttlMs: CACHE_TTL.LONG }),
+    });
+  }
+
+  /**
+   * Shared GET for the paged lists. `PageSize` is clamped to the server cap
+   * so a caller asking for "everything" gets full pages instead of a 400.
+   */
+  private page(
+    endpoint: string,
+    query: CustomerListQuery,
+    force: boolean,
+  ): Observable<PagedResult<CustomerListItem>> {
     const ctx = force
       ? withCacheBypass(withCache({ ttlMs: CACHE_TTL.SHORT }))
       : withCache({ ttlMs: CACHE_TTL.SHORT });
-    return this.api.get<PagedResult<CustomerListItem>>(
-      API_ENDPOINTS.customers.supportCustomers,
-      { params: query as Record<string, unknown>, context: ctx },
-    );
+    const params: CustomerListQuery = {
+      ...query,
+      PageSize:
+        query.PageSize === undefined
+          ? undefined
+          : Math.min(Math.max(1, query.PageSize), CUSTOMER_LIST_MAX_PAGE_SIZE),
+    };
+    return this.api.get<PagedResult<CustomerListItem>>(endpoint, {
+      params: params as Record<string, unknown>,
+      context: ctx,
+    });
   }
 
   getById(id: number): Observable<CustomerDetails> {
@@ -214,11 +265,17 @@ export class CustomersService {
     customerId: number,
     payload: ChangeCustomerStatusRequest,
   ): Observable<CustomerFollowUpResponse> {
-    return this.api.put<CustomerFollowUpResponse>(
-      API_ENDPOINTS.customers.changeStatus(customerId),
-      payload,
-      { context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)) },
-    );
+    return this.api
+      .put<CustomerFollowUpResponse>(
+        API_ENDPOINTS.customers.changeStatus(customerId),
+        payload,
+        { context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)) },
+      )
+      .pipe(
+        tap((customer) =>
+          this.statusChanges.next({ customerId, status: payload.status, customer }),
+        ),
+      );
   }
 
   updateFollowUp(

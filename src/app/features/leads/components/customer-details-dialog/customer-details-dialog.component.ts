@@ -18,6 +18,7 @@ import { CustomerLocationComponent } from '../../../../shared/components/custome
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { CustomerDetails } from '../../../../shared/models';
+import { formatCairoDate } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { WaThreadComponent } from '../../../whatsapp/components/wa-thread/wa-thread.component';
 import { ThreadSource } from '../../../whatsapp/state/whatsapp-thread.store';
@@ -83,16 +84,9 @@ export class CustomerDetailsDialogComponent implements OnInit {
     });
   }
 
+  /** Server timestamps are UTC without a `Z`; read as UTC, shown in Cairo time. */
   formatDate(dateStr: string | null): string {
-    if (!dateStr) return this.t('customers.details.notAvailable');
-    try {
-      return new Date(dateStr).toLocaleDateString(
-        this.language.lang() === 'ar' ? 'ar-EG' : 'en-US',
-        { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' },
-      );
-    } catch {
-      return dateStr;
-    }
+    return formatCairoDate(dateStr, this.language.lang(), 'datetime', this.t('customers.details.notAvailable'));
   }
 
   resolveStatus(statusName: string | null | undefined): string {

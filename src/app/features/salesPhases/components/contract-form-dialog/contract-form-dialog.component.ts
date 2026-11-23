@@ -13,6 +13,7 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
+import { localCalendarToday } from '../../../../core/utils/calendar-date.util';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -54,6 +55,11 @@ import { ContractsService } from '../../services/contracts.service';
 export class ContractFormDialogComponent implements OnInit {
   /** When set, the dialog loads + updates that contract (edit mode). */
   @Input() contractId: number | null = null;
+  /**
+   * Create mode only: pre-selects this customer and starts the contract
+   * today — used when a customer has just been marked as Buyer.
+   */
+  @Input() presetCustomerId: number | null = null;
 
   @Output() created = new EventEmitter<void>();
   @Output() updated = new EventEmitter<void>();
@@ -99,8 +105,22 @@ export class ContractFormDialogComponent implements OnInit {
       : 'sales.contractsMgmt.form.title',
   );
 
+  /** True when the dialog was opened right after a customer became a buyer. */
+  get isNewBuyerFlow(): boolean {
+    return !this.isEditMode && this.presetCustomerId !== null;
+  }
+
   ngOnInit(): void {
-    if (this.contractId !== null) this.loadContract(this.contractId);
+    if (this.contractId !== null) {
+      this.loadContract(this.contractId);
+      return;
+    }
+    if (this.presetCustomerId !== null) {
+      this.form.patchValue({
+        customerId: this.presetCustomerId,
+        startDate: localCalendarToday(),
+      });
+    }
   }
 
   private loadContract(id: number): void {

@@ -20,6 +20,17 @@ const customers: TranslationFile<'customers'> = {
       emptyAdmin: 'لا يوجد عملاء معيّنين بعد لفريق المبيعات.',
     },
 
+    buyers: {
+      title: 'العملاء المشتريين',
+      subtitleAdmin: 'كل العملاء الذين أتمّوا الشراء.',
+      subtitleOwn: 'العملاء المشتريين المعيّنين إليك.',
+      welcomeTitle: 'العملاء المشتريين',
+      welcomeSubtitleAdmin: 'مرحباً بك! إليك كل العملاء الذين تحوّلوا إلى مشتريين.',
+      welcomeSubtitleOwn: 'مرحباً بك! هذه قائمة عملائك المشتريين.',
+      empty: 'لا يوجد عملاء مشتريين',
+      emptyFiltered: 'لا توجد نتائج لهذه الفلاتر',
+    },
+
     support: {
       title: 'قائمة العملاء المعينون',
       subtitle: 'العملاء المحوّلون إلى فريق الدعم الفني',
@@ -99,6 +110,7 @@ const customers: TranslationFile<'customers'> = {
       fuTomorrow: 'غداً',
       fuDays: 'أيام',
       fuYesterday: 'أمس',
+      addContract: 'إضافة عقد',
     },
 
     transfer: {
@@ -234,6 +246,7 @@ const customers: TranslationFile<'customers'> = {
       notBuyingReason: 'سبب عدم الشراء',
       notBuyingReasonPh: 'مثال: السعر مرتفع، اختار منافس آخر، الميزانية غير كافية…',
       notBuyingReasonHelp: 'هذا الحقل مطلوب عند تغيير الحالة إلى "غير مشتري" فقط.',
+      buyerContractHint: 'بعد التأكيد سيُفتح نموذج إضافة عقد لهذا العميل مباشرةً.',
     },
 
     noteModal: {
@@ -324,6 +337,7 @@ const customers: TranslationFile<'customers'> = {
       assignFailed: 'تعذر تعيين العميل — يرجى المحاولة مجددًا.',
       genericError: 'حدث خطأ غير متوقع — يرجى المحاولة لاحقًا.',
       validationFailed: 'يوجد أخطاء في النموذج — يرجى مراجعة الحقول المظللة.',
+      duplicatePhone: 'رقم الهاتف مسجل بالفعل لعميل آخر.',
     },
 
     deleteDialog: {

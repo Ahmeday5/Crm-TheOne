@@ -4,7 +4,9 @@ import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import { withCache } from '../../../core/http/http-context.tokens';
 import { ApiService } from '../../../core/services/api.service';
+import { toDateRangeParams } from '../../../core/utils/date-range.util';
 import {
+  CustomerDateFilter,
   SalesDashboardStats,
   SalesStatusCount,
 } from '../../../shared/models';
@@ -27,11 +29,17 @@ export class SalesService {
     );
   }
 
-  /** Per-status counts for the pipeline chart on the sales dashboard. */
-  customerStatusCount(): Observable<SalesStatusCount[]> {
+  /**
+   * Per-status counts for the pipeline chart on the sales dashboard,
+   * optionally limited to customers added within `dates`.
+   */
+  customerStatusCount(dates: CustomerDateFilter = {}): Observable<SalesStatusCount[]> {
     return this.api.get<SalesStatusCount[]>(
       API_ENDPOINTS.sales.customerStatusCount,
-      { context: withCache({ ttlMs: CACHE_TTL.SHORT }) },
+      {
+        params: toDateRangeParams(dates),
+        context: withCache({ ttlMs: CACHE_TTL.SHORT }),
+      },
     );
   }
 

@@ -81,6 +81,9 @@
             }
           </select>
         </div>
+        <div class="col-12 col-lg-6">
+          <app-customer-date-range-filter [value]="dateFilter()" (valueChange)="onDateFilterChange($event)" />
+        </div>
       </div>
     </div>
   </div>
@@ -93,6 +96,7 @@
         {{ 'customers.support.title' | translate }}
         <span class="text-muted small">({{ count() }})</span>
       </h5>
+      <app-date-range-chip [range]="dateFilter()" (removed)="onDateFilterChange({})" />
       <app-table-tools
         class="ms-auto"
         [reportTitle]="'customers.support.title' | translate"
@@ -120,7 +124,7 @@
         <app-empty-state
           [compact]="true"
           icon="fa-solid fa-inbox"
-          [message]="searchSignal() || selectedStatusId() || selectedSourceId()
+          [message]="hasActiveFilters()
             ? ('customers.table.emptyFiltered' | translate)
             : (emptyMessageKey() | translate)"
           [loading]="loading()"
@@ -137,7 +141,7 @@
                 <th>{{ 'customers.table.assignment' | translate }}</th>
                 <th>{{ 'customers.table.notes' | translate }}</th>
                 <th>{{ 'customers.consultation.column' | translate }}</th>
-                <th>{{ 'customers.table.createdAt' | translate }}</th>
+                <th>{{ 'dateFilter.createdAt' | translate }}</th>
                 <th class="crm-actions-col text-center">{{ 'customers.table.actions' | translate }}</th>
               </tr>
             </thead>
@@ -254,7 +258,7 @@
                     }
                   </td>
 
-                  <td class="small text-muted text-nowrap">{{ formatDate(row.createdAt) }}</td>
+                  <td class="small text-muted text-nowrap"><app-created-at [value]="row.createdAt" /></td>
 
                   <td class="crm-actions-col">
                     <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">

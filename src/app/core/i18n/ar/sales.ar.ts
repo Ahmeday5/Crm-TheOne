@@ -171,6 +171,7 @@ const sales: TranslationFile<'sales'> = {
         titlePlaceholder: 'مثال: عقد بيع برنامج ذا وان',
         customer: 'العميل',
         customerLocked: 'لا يمكن تغيير العميل عند التعديل',
+        newBuyerHint: 'تم تحويل العميل إلى مشتري — أكمل بيانات العقد الآن لتسجيل الصفقة.',
         status: 'الحالة',
         price: 'قيمة العقد',
         startDate: 'تاريخ البداية',

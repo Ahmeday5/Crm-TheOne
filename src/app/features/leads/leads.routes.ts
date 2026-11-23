@@ -30,6 +30,19 @@ export const LEADS_ROUTES: Routes = [
           ),
       },
       {
+        // Buyers only — `GET /Customers/buyers`. Same page as the sales list
+        // (table, filters, row actions), minus the status filter. Admin sees
+        // every buyer; Sales / Support only the buyers assigned to them.
+        path: 'buyers',
+        title: 'العملاء المشتريين',
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Sales', 'Support'], customerList: 'buyers' },
+        loadComponent: () =>
+          import('./pages/sales-leads/sales-leads.component').then(
+            (m) => m.SalesLeadsComponent,
+          ),
+      },
+      {
         // Kanban view of the same customers — `GET /Sales/Pipeline`.
         path: 'sales-pipeline',
         title: 'مسار المبيعات',

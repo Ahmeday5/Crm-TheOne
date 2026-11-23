@@ -58,6 +58,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       smartAnalytics: 'التحليلات الذكية',
       // Sales
       salesCustomers: 'عملاء المبيعات',
+      buyers: 'العملاء المشتريين',
       salesPipeline: 'مسار المبيعات (Kanban)',
       customerMap: 'خريطة العملاء',
       priceOffers: 'عروض الأسعار',

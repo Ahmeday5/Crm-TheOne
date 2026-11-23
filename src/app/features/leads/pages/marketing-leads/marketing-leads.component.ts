@@ -14,7 +14,6 @@ import {
   Subject,
   debounceTime,
   distinctUntilChanged,
-  firstValueFrom,
   takeUntil,
 } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
@@ -22,6 +21,15 @@ import { ApiError } from '../../../../core/models/api-response.model';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ExportColumn } from '../../../../core/services/table-export.service';
+import {
+  isDateRangeActive,
+  toDateRangeParams,
+} from '../../../../core/utils/date-range.util';
+import { CreatedAtComponent } from '../../../../shared/components/created-at/created-at.component';
+import { CustomerDateRangeFilterComponent } from '../../../../shared/components/customer-date-range-filter/customer-date-range-filter.component';
+import { DateRangeChipComponent } from '../../../../shared/components/customer-date-range-filter/date-range-chip.component';
+import { TableSkeletonComponent } from '../../../../shared/components/table-skeleton/table-skeleton.component';
+import { formatCairoDate } from '../../../../shared/pipes/cairo-date.pipe';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -31,6 +39,7 @@ import { StatCardComponent } from '../../../../shared/components/stat-card/stat-
 import { TipDirective } from '../../../../shared/directives/tip.directive';
 import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import {
+  CustomerDateFilter,
   CustomerListItem,
   CustomerListQuery,
   CustomerNoteResponse,
@@ -100,6 +109,10 @@ interface SourceItem {
     CustomerActionsMenuComponent,
     ClampTextDirective,
     ResponsiveTableDirective,
+    CustomerDateRangeFilterComponent,
+    DateRangeChipComponent,
+    CreatedAtComponent,
+    TableSkeletonComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './marketing-leads.component.html',
@@ -122,6 +135,8 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
   readonly searchSignal = signal('');
   readonly selectedStatusId = signal<number | null>(null);
   readonly selectedSourceId = signal<number | null>(null);
+  /** "Date added" range (`From` / `To`). */
+  readonly dateFilter = signal<CustomerDateFilter>({});
 
   /** Sales-rep filter — `UNASSIGNED_SALES` = not assigned yet. Applied client-side, see the util. */
   readonly selectedSalesPersonId = signal<string | null>(null);
@@ -131,6 +146,15 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
   private repRows: CustomerListItem[] | null = null;
   /** Drops answers of superseded loads (fast filter switching). */
   private loadSeq = 0;
+
+  readonly hasActiveFilters = computed(
+    () =>
+      !!this.searchSignal() ||
+      this.selectedStatusId() !== null ||
+      this.selectedSourceId() !== null ||
+      this.selectedSalesPersonId() !== null ||
+      isDateRangeActive(this.dateFilter()),
+  );
 
   // ─────────── data ───────────
   readonly rows = signal<CustomerListItem[]>([]);
@@ -223,7 +247,7 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** The list query for the current server-side filters (table, export). */
+  /** The list query for the current server-side filters (table, export). Empty filters stay `undefined`. */
   private listQuery(pageIndex: number, pageSize: number): CustomerListQuery {
     return {
       PageIndex: pageIndex,
@@ -231,6 +255,7 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
       Search: this.searchSignal().trim() || undefined,
       CustomerStatusId: this.selectedStatusId() ?? undefined,
       SourceId: this.selectedSourceId() ?? undefined,
+      ...toDateRangeParams(this.dateFilter()),
     };
   }
 
@@ -296,6 +321,13 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
 
   onSourceChange(id: string): void {
     this.selectedSourceId.set(id ? Number(id) : null);
+    this.pageIndex.set(1);
+    this.reload();
+  }
+
+  /** Date-added range changed (picker, preset or chip): back to page 1. */
+  onDateFilterChange(range: CustomerDateFilter): void {
+    this.dateFilter.set(range);
     this.pageIndex.set(1);
     this.reload();
   }
@@ -488,16 +520,9 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
     return resolveCustomerStatus(name, this.language.lang(), name);
   }
 
+  /** Server timestamps are UTC without a `Z`; read as UTC, shown in Cairo time. */
   formatDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return '—';
-    try {
-      return new Date(dateStr).toLocaleDateString(
-        this.language.lang() === 'ar' ? 'ar-EG' : 'en-US',
-        { year: 'numeric', month: 'short', day: 'numeric' },
-      );
-    } catch {
-      return dateStr;
-    }
+    return formatCairoDate(dateStr, this.language.lang(), 'date');
   }
 
   trackById = (_: number, r: CustomerListItem) => r.id;
@@ -537,17 +562,16 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
         value: (r) => r.noteSupport || this.t('customers.details.notAvailable'),
       },
       {
-        header: this.t('customers.table.createdAt'),
+        header: this.t('dateFilter.createdAt'),
         value: (r) => this.formatDate(r.createdAt),
       },
     ];
   }
 
-  /** Pulls every page using the active filters (for "all pages" export/print). */
+  /** Pulls every page using the active filters (the server caps a page at 50). */
   readonly fetchAllRows = async (): Promise<CustomerListItem[]> => {
     if (this.repRows) return [...this.repRows];
-    const page = await firstValueFrom(this.customers.list(this.listQuery(1, this.count() || this.pageSize())));
-    return page.data ?? [];
+    return fetchAllPages((pageIndex, pageSize) => this.customers.list(this.listQuery(pageIndex, pageSize)));
   };
 
   private t(key: string): string {

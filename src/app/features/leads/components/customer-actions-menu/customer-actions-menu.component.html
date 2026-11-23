@@ -68,6 +68,14 @@
         <i class="fa-solid fa-ellipsis-vertical"></i>
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
+        @if (actions().addContract) {
+          <li>
+            <button type="button" class="dropdown-item" (click)="addContract.emit()">
+              <i class="fa-solid fa-file-signature"></i>
+              <span>{{ 'customers.table.addContract' | translate }}</span>
+            </button>
+          </li>
+        }
         @if (actions().edit) {
           <li>
             <button type="button" class="dropdown-item" (click)="edit.emit()">

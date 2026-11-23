@@ -41,6 +41,7 @@ import portal from './portal.ar';
 import deliverables from './deliverables.ar';
 import vaultLock from './vaultLock.ar';
 import payments from './payments.ar';
+import dateFilter from './dateFilter.ar';
 
 const ar: Translations = {
   ...common,
@@ -85,6 +86,7 @@ const ar: Translations = {
   ...deliverables,
   ...vaultLock,
   ...payments,
+  ...dateFilter,
 };
 
 export default ar;

@@ -5,10 +5,12 @@ import { LanguageService } from '../../core/services/language.service';
 // Re-exported for existing importers; new code imports it from core.
 export { APP_TIME_ZONE };
 
-export type CairoDateFormat = 'date' | 'datetime' | 'time';
+/** `numeric` = `dd/MM/yyyy` (table cells); `date` = `23 Nov 2026`. */
+export type CairoDateFormat = 'date' | 'numeric' | 'datetime' | 'time';
 
 const FORMATS: Record<CairoDateFormat, Intl.DateTimeFormatOptions> = {
   date: { year: 'numeric', month: 'short', day: 'numeric' },
+  numeric: { day: '2-digit', month: '2-digit', year: 'numeric' },
   datetime: {
     year: 'numeric',
     month: 'short',
@@ -32,11 +34,39 @@ export function parseUtc(value: string | Date | null | undefined): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+const formatters = new Map<string, Intl.DateTimeFormat>();
+
+function formatterFor(lang: 'ar' | 'en', format: CairoDateFormat): Intl.DateTimeFormat {
+  const locale = lang === 'ar' ? 'ar-EG' : 'en-GB';
+  const key = `${locale}|${format}`;
+  let fmt = formatters.get(key);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat(locale, { ...FORMATS[format], timeZone: APP_TIME_ZONE });
+    formatters.set(key, fmt);
+  }
+  return fmt;
+}
+
+/**
+ * Code-side twin of the pipe (exports, computed labels): a backend UTC
+ * timestamp, with or without `Z`, rendered in Cairo time.
+ */
+export function formatCairoDate(
+  value: string | Date | null | undefined,
+  lang: 'ar' | 'en',
+  format: CairoDateFormat = 'datetime',
+  fallback = '—',
+): string {
+  const date = parseUtc(value);
+  return date ? formatterFor(lang, format).format(date) : fallback;
+}
+
 /**
  * Formats a UTC timestamp in Cairo time using the active UI language.
  *
  *   {{ entry.contributedAt | cairoDate }}           → "٢١ أكتوبر ٢٠٢٦، ١:١٥ م"
  *   {{ goal.endDate | cairoDate:'date' }}           → "٢١ أكتوبر ٢٠٢٦"
+ *   {{ row.createdAt | cairoDate:'numeric' }}       → "23/11/2026"
  *
  * Impure so it follows a language switch; formatters are memoised per
  * locale + format, so re-evaluation is cheap.
@@ -44,26 +74,12 @@ export function parseUtc(value: string | Date | null | undefined): Date | null {
 @Pipe({ name: 'cairoDate', standalone: true, pure: false })
 export class CairoDatePipe implements PipeTransform {
   private readonly language = inject(LanguageService);
-  private static readonly formatters = new Map<string, Intl.DateTimeFormat>();
 
   transform(
     value: string | Date | null | undefined,
     format: CairoDateFormat = 'datetime',
     fallback = '—',
   ): string {
-    const date = parseUtc(value);
-    if (!date) return fallback;
-    return this.formatter(format).format(date);
-  }
-
-  private formatter(format: CairoDateFormat): Intl.DateTimeFormat {
-    const locale = this.language.lang() === 'ar' ? 'ar-EG' : 'en-GB';
-    const key = `${locale}|${format}`;
-    let fmt = CairoDatePipe.formatters.get(key);
-    if (!fmt) {
-      fmt = new Intl.DateTimeFormat(locale, { ...FORMATS[format], timeZone: APP_TIME_ZONE });
-      CairoDatePipe.formatters.set(key, fmt);
-    }
-    return fmt;
+    return formatCairoDate(value, this.language.lang(), format, fallback);
   }
 }

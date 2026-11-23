@@ -14,6 +14,7 @@ import { provideAttendance } from './features/attendance';
 import { provideWhatsApp } from './features/whatsapp/whatsapp.providers';
 import { providePayments } from './features/payments/payments.providers';
 import { provideClientRequests } from './features/client-requests/client-requests.providers';
+import { provideSalesFlows } from './features/salesPhases/salesPhases.providers';
 import { vaultTokenInterceptor } from './features/vault/data/vault-token.interceptor';
 import { portalSessionInterceptor } from './features/client-portal/data/portal-session.interceptor';
 
@@ -53,6 +54,8 @@ export const appConfig: ApplicationConfig = {
     provideWhatsApp(),
     providePayments(),
     provideClientRequests(),
+    // Customer marked as Buyer anywhere → create-contract dialog opens for them.
+    provideSalesFlows(),
     // Banner, hub listeners, header time clock and sidebar badges on every page.
     provideAnnouncements(),
     provideAttendance(),

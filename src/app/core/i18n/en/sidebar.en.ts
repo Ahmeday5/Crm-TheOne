@@ -58,6 +58,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       smartAnalytics: 'Smart analytics',
       // Sales
       salesCustomers: 'Sales customers',
+      buyers: 'Buyers',
       salesPipeline: 'Sales board (Kanban)',
       customerMap: 'Customer map',
       priceOffers: 'Price offers',

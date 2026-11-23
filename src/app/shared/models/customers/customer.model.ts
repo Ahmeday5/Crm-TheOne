@@ -1,5 +1,12 @@
+import { DateRangeValue } from '../../../core/utils/date-range.util';
 import { Appointment, SupportHandoffAppointment } from '../appointments/appointment.model';
 import { CustomerLocation } from '../locations/location.model';
+
+/**
+ * "Date added" filter accepted by every customer read endpoint
+ * (`From` / `To` as `yyyy-MM-dd`, `To` inclusive). See `date-range.util`.
+ */
+export type CustomerDateFilter = DateRangeValue;
 
 /**
  * Row shape returned by `GET /Customers/getLeadCustomer`.
@@ -29,6 +36,7 @@ export interface CustomerListItem extends CustomerLocation {
   salesPersonName: string | null;
   supportPersonId?: string | null;
   supportPersonName?: string | null;
+  /** When the customer was added — UTC, serialized without a trailing `Z`. */
   createdAt: string;
   lastFollowUpDate: string | null;
   nextFollowUpDate: string | null;
@@ -256,6 +264,8 @@ export interface CustomerFollowUpResponse {
   id: number;
   fullName: string;
   address: string | null;
+  /** When the customer was added — UTC, serialized without a trailing `Z`. */
+  createdAt: string;
   lastFollowUpDate: string | null;
   nextFollowUpDate: string | null;
   isMarketingToSales: boolean;
@@ -264,6 +274,24 @@ export interface CustomerFollowUpResponse {
   noteMarketing: string | null;
   noteSales: string | null;
   noteSupport: string | null;
+}
+
+/**
+ * Backend name of the projection above (`CustomerResponse`) — returned by
+ * `POST CreateCustomer`, `PUT {id}/status`, `PUT {id}/followUp` and
+ * `POST {id}/contact`.
+ */
+export type CustomerResponse = CustomerFollowUpResponse;
+
+/**
+ * Published by `CustomersService.statusChanged$` after a status change is
+ * saved — from any screen (status dialog, Kanban drag, …). Lets cross-cutting
+ * flows (e.g. "new buyer → add a contract") react in one place.
+ */
+export interface CustomerStatusChange {
+  customerId: number;
+  status: CustomerStatusEnum;
+  customer: CustomerResponse;
 }
 
 /** Dropdown item returned by `GET /Customers/statuses`. */
@@ -320,15 +348,38 @@ export interface SupportPerson {
   imageUrl?: string | null;
 }
 
-/** Query params accepted by `GET /Customers/getLeadCustomer`. */
+/**
+ * Query params shared by the paged customer lists:
+ * `getLeadCustomer`, `getSalesCustomers`, `getSupportCustomers` and `buyers`.
+ *
+ * Every filter combines with the others. Empty values are dropped by
+ * `ApiService`, so leave a filter `undefined` rather than `''` / `null`.
+ */
 export interface CustomerListQuery {
   PageIndex?: number;
+  /** Capped at {@link CUSTOMER_LIST_MAX_PAGE_SIZE} by the server. */
   PageSize?: number;
   Search?: string;
   SourceId?: number;
+  /** Ignored by `buyers` (every row there is a Buyer) — don't send it. */
   CustomerStatusId?: number;
-  /** `getSalesCustomers` only — effective country; `0` = unknown country. */
+  /** Effective country; `0` = unknown country. */
   CountryId?: number;
-  /** `getSalesCustomers` only — `0` = Egyptian customers without a governorate. */
+  /** `0` = Egyptian customers without a governorate. */
   GovernorateId?: number;
+  /** Added on or after this day (`yyyy-MM-dd`). */
+  From?: string;
+  /** Added up to the end of this day (`yyyy-MM-dd`, inclusive). */
+  To?: string;
 }
+
+/** The server caps `pageSize` of every customer list at 50. */
+export const CUSTOMER_LIST_MAX_PAGE_SIZE = 50;
+
+/** Numeric `CustomerStatusId` values (`GET /Customers/statuses`). */
+export const CUSTOMER_STATUS_IDS: Readonly<Record<CustomerStatusEnum, number>> = {
+  New: 1,
+  Negotiating: 3,
+  Buyer: 4,
+  NotBuyer: 5,
+};

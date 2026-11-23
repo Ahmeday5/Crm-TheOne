@@ -49,6 +49,7 @@
                  [placeholder]="'customers.form.phonePh' | translate" />
           <app-form-error
             [control]="form.controls.phone"
+            [custom]="phoneMessages"
             [forceShow]="submitAttempted()"
             [label]="'customers.form.phone' | translate" />
         </div>

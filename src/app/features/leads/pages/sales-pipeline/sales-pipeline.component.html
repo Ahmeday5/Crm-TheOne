@@ -98,6 +98,9 @@
             </select>
           </div>
         }
+        <div class="col-12 col-xl-6">
+          <app-customer-date-range-filter size="sm" [value]="dateFilter()" (valueChange)="onDateFilterChange($event)" />
+        </div>
       </div>
     </div>
   </div>
@@ -135,6 +138,8 @@
         }
       </select>
     </label>
+
+    <app-date-range-chip [range]="dateFilter()" (removed)="onDateFilterChange({})" />
 
     @if (hasFilters()) {
       <button type="button" class="btn btn-sm btn-link text-decoration-none px-1" (click)="clearFilters()">
@@ -215,6 +220,11 @@
                   @if (savingIds().has(card.id)) {
                     <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
                   }
+                </div>
+
+                <div class="sp-line">
+                  <i class="fa-regular fa-calendar-plus"></i>
+                  {{ 'dateFilter.createdAt' | translate }}: <app-created-at [value]="card.createdAt" />
                 </div>
 
                 <div class="sp-line" [class.is-danger]="card.isStale">
@@ -315,7 +325,8 @@
   <app-change-status-dialog
     [customerId]="dlg.card.id"
     [customerName]="dlg.card.fullName"
-    [currentStatus]="dlg.preset"
+    [currentStatus]="dlg.card.status"
+    [presetStatus]="dlg.preset"
     (changed)="onStatusChanged()"
     (cancel)="closeChangeStatus()">
   </app-change-status-dialog>

@@ -36,8 +36,10 @@ import { customerStatusEnumName, customerStatusKey, resolveCustomerStatus } from
 export class ChangeStatusDialogComponent implements OnInit {
   @Input({ required: true }) customerId!: number;
   @Input() customerName = '';
-  /** Current status name (e.g. "تفاوض"). Used only to highlight the row. */
+  /** Current status name (e.g. "تفاوض") — shown as context, can't be re-submitted. */
   @Input() currentStatus: string | null = null;
+  /** Status to pre-select (e.g. the Kanban column a card was dropped on). Defaults to the current one. */
+  @Input() presetStatus: string | null = null;
 
   @Output() changed = new EventEmitter<CustomerFollowUpResponse>();
   @Output() cancel = new EventEmitter<void>();
@@ -63,13 +65,28 @@ export class ChangeStatusDialogComponent implements OnInit {
     return !!match && customerStatusKey(match.name) === 'notBuyer';
   });
 
+  /** True when the selected status maps to `Buyer` — a contract form follows the save. */
+  readonly selectsBuyer = computed(() => customerStatusKey(this.selectedStatusName()) === 'buyer');
+
+  /** Re-saving the current status is a no-op server-side — don't offer it. */
+  readonly isUnchanged = computed(() => {
+    const current = customerStatusKey(this.currentStatus);
+    return !!current && current === customerStatusKey(this.selectedStatusName());
+  });
+
   readonly canSubmit = computed(() => {
     if (this.submitting()) return false;
     const id = this.selectedId();
     if (id === null) return false;
+    if (this.isUnchanged()) return false;
     if (this.requiresReason() && !this.notBuyingReason().trim()) return false;
     return true;
   });
+
+  private selectedStatusName(): string | null {
+    const id = this.selectedId();
+    return id === null ? null : this.statuses().find((s) => s.id === id)?.name ?? null;
+  }
 
   ngOnInit(): void {
     this.loading.set(true);
@@ -79,9 +96,9 @@ export class ChangeStatusDialogComponent implements OnInit {
         // Pre-select the current status — `currentStatus` may arrive as an
         // English enum code (list response) while `items[*].name` is Arabic,
         // so we compare via the canonical key.
-        const currentKey = customerStatusKey(this.currentStatus);
-        if (currentKey) {
-          const match = items.find((s) => customerStatusKey(s.name) === currentKey);
+        const presetKey = customerStatusKey(this.presetStatus ?? this.currentStatus);
+        if (presetKey) {
+          const match = items.find((s) => customerStatusKey(s.name) === presetKey);
           if (match) this.selectedId.set(match.id);
         }
         this.loading.set(false);

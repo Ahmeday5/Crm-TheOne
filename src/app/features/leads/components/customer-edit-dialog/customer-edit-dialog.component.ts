@@ -35,6 +35,11 @@ import {
 } from '../../../../shared/utils/custom-validators.util';
 import { CustomersService } from '../../services/customers.service';
 import {
+  DUPLICATE_PHONE_MESSAGES,
+  flagDuplicatePhone,
+  isDuplicatePhoneError,
+} from '../../utils/duplicate-phone.util';
+import {
   LocationFormValue,
   locationFormValueOf,
   updateLocationPayload,
@@ -72,6 +77,7 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
 
   readonly loading = signal(true);
   readonly submitting = signal(false);
+  readonly phoneMessages = DUPLICATE_PHONE_MESSAGES;
   readonly errorMessage = signal<string | null>(null);
   readonly loadError = signal<string | null>(null);
   readonly submitAttempted = signal(false);
@@ -215,6 +221,13 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
       },
       error: (err: ApiError) => {
         this.submitting.set(false);
+        // Phone already used by another customer: keep the form open with the
+        // server message under the phone field instead of a toast.
+        if (isDuplicatePhoneError(err)) {
+          flagDuplicatePhone(this.form.controls.phone, err.message.trim());
+          document.getElementById('edit-phone')?.focus();
+          return;
+        }
         const message =
           err?.message?.trim() || this.t('customers.messages.updateFailed');
         this.errorMessage.set(message);

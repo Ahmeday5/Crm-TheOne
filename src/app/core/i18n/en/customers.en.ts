@@ -20,6 +20,17 @@ const customers: TranslationFile<'customers'> = {
       emptyAdmin: 'No customers have been assigned to the sales team yet.',
     },
 
+    buyers: {
+      title: 'Buyers',
+      subtitleAdmin: 'Every customer who has bought.',
+      subtitleOwn: 'Buyers assigned to you.',
+      welcomeTitle: 'Buyers',
+      welcomeSubtitleAdmin: 'Welcome! Here are all customers who became buyers.',
+      welcomeSubtitleOwn: 'Welcome! Here are your buyers.',
+      empty: 'No buyers yet',
+      emptyFiltered: 'No results for these filters',
+    },
+
     support: {
       title: 'Assigned customers list',
       subtitle: 'Customers transferred to the technical support team',
@@ -99,6 +110,7 @@ const customers: TranslationFile<'customers'> = {
       fuTomorrow: 'Tomorrow',
       fuDays: 'd',
       fuYesterday: 'Yesterday',
+      addContract: 'Add contract',
     },
 
     transfer: {
@@ -234,6 +246,7 @@ const customers: TranslationFile<'customers'> = {
       notBuyingReason: 'Reason for not buying',
       notBuyingReasonPh: 'e.g. price too high, picked a competitor, insufficient budget…',
       notBuyingReasonHelp: 'Only required when the new status is "Not buyer".',
+      buyerContractHint: 'After you confirm, the new-contract form opens for this customer.',
     },
 
     noteModal: {
@@ -324,6 +337,7 @@ const customers: TranslationFile<'customers'> = {
       assignFailed: 'Could not assign customer — please try again.',
       genericError: 'An unexpected error occurred — please try again later.',
       validationFailed: 'The form contains errors — please review the highlighted fields.',
+      duplicatePhone: 'This phone number already belongs to another customer.',
     },
 
     deleteDialog: {

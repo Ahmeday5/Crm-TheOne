@@ -11,16 +11,25 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
+  Observable,
   Subject,
   debounceTime,
   distinctUntilChanged,
-  firstValueFrom,
   takeUntil,
 } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ExportColumn } from '../../../../core/services/table-export.service';
+import {
+  dateRangeFromParams,
+  isDateRangeActive,
+  toDateRangeParams,
+} from '../../../../core/utils/date-range.util';
+import { CreatedAtComponent } from '../../../../shared/components/created-at/created-at.component';
+import { CustomerDateRangeFilterComponent } from '../../../../shared/components/customer-date-range-filter/customer-date-range-filter.component';
+import { DateRangeChipComponent } from '../../../../shared/components/customer-date-range-filter/date-range-chip.component';
+import { TableSkeletonComponent } from '../../../../shared/components/table-skeleton/table-skeleton.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
@@ -31,17 +40,20 @@ import {
   CustomerFollowUpResponse,
   AssignSupportResponse,
   Country,
+  CustomerDateFilter,
   CustomerListItem,
   CustomerListQuery,
   CustomerNoteResponse,
   CustomerStatus,
   EGYPT_COUNTRY_ID,
   Governorate,
+  PagedResult,
   SalesPerson,
 } from '../../../../shared/models';
 import { LocationLookupsService } from '../../../../core/services/location-lookups.service';
 import { CustomerLocationComponent } from '../../../../shared/components/customer-location/customer-location.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { formatCairoDate } from '../../../../shared/pipes/cairo-date.pipe';
 import { ChannelSourcesService } from '../../../marketing-campaigns/services/channel-sources.service';
 import { AssignSupportDialogComponent } from '../../components/assign-support-dialog/assign-support-dialog.component';
 import { ChangeStatusDialogComponent } from '../../components/change-status-dialog/change-status-dialog.component';
@@ -59,6 +71,7 @@ import { CustomerNoteDialogComponent } from '../../components/customer-note-dial
 import { CustomerNotesCellComponent } from '../../components/customer-notes-cell/customer-notes-cell.component';
 import { FollowUpDialogComponent } from '../../components/follow-up-dialog/follow-up-dialog.component';
 import { CustomersService } from '../../services/customers.service';
+import { NewBuyerContractService } from '../../../salesPhases/services/new-buyer-contract.service';
 import {
   customerStatusBadgeClass,
   resolveCustomerStatus,
@@ -74,6 +87,60 @@ import {
 } from '../../utils/sales-person-filter.util';
 
 const DEFAULT_PAGE_SIZE = 10;
+
+/**
+ * Which customer list this page renders (route `data.customerList`):
+ *   - `sales`  — `GET Customers/getSalesCustomers` (Admin, Sales)
+ *   - `buyers` — `GET Customers/buyers` (Admin, Sales, Support); every row is
+ *                a Buyer, so there is no status filter.
+ */
+export type CustomerListKind = 'sales' | 'buyers';
+
+type Audience = 'admin' | 'own';
+
+interface ListCopy {
+  icon: string;
+  titleKey: string;
+  welcomeTitleKey: string;
+  subtitleKey: Record<Audience, string>;
+  welcomeSubtitleKey: Record<Audience, string>;
+  emptyKey: Record<Audience, string>;
+  emptyFilteredKey: string;
+}
+
+const LIST_COPY: Record<CustomerListKind, ListCopy> = {
+  sales: {
+    icon: 'fa-solid fa-user-tie',
+    titleKey: 'customers.sales.title',
+    welcomeTitleKey: 'customers.sales.welcomeTitle',
+    subtitleKey: { admin: 'customers.sales.subtitleAdmin', own: 'customers.sales.subtitleSales' },
+    welcomeSubtitleKey: {
+      admin: 'customers.sales.welcomeSubtitleAdmin',
+      own: 'customers.sales.welcomeSubtitleSales',
+    },
+    emptyKey: { admin: 'customers.sales.emptyAdmin', own: 'customers.sales.empty' },
+    emptyFilteredKey: 'customers.table.emptyFiltered',
+  },
+  buyers: {
+    icon: 'fa-solid fa-handshake',
+    titleKey: 'customers.buyers.title',
+    welcomeTitleKey: 'customers.buyers.welcomeTitle',
+    subtitleKey: { admin: 'customers.buyers.subtitleAdmin', own: 'customers.buyers.subtitleOwn' },
+    welcomeSubtitleKey: {
+      admin: 'customers.buyers.welcomeSubtitleAdmin',
+      own: 'customers.buyers.welcomeSubtitleOwn',
+    },
+    emptyKey: { admin: 'customers.buyers.empty', own: 'customers.buyers.empty' },
+    emptyFilteredKey: 'customers.buyers.emptyFiltered',
+  },
+};
+
+interface KpiTile {
+  labelKey: string;
+  value: number;
+  icon: string;
+  tone: 'primary' | 'info' | 'warning' | 'success';
+}
 
 interface SourceItem {
   id: number;
@@ -113,13 +180,24 @@ interface JourneyStep {
     ClampTextDirective,
     ResponsiveTableDirective,
     CustomerLocationComponent,
+    CustomerDateRangeFilterComponent,
+    DateRangeChipComponent,
+    CreatedAtComponent,
+    TableSkeletonComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-leads.component.html',
   styleUrl: './sales-leads.component.scss',
 })
+/**
+ * Sales customers table and, on `/leads/buyers`, the Buyers table: one
+ * component so both lists share the same columns, filters, row actions and
+ * dialogs. The differences (endpoint, copy, status filter, KPIs, actions)
+ * hang off {@link CustomerListKind}.
+ */
 export class SalesLeadsComponent implements OnInit, OnDestroy {
   private readonly customers = inject(CustomersService);
+  private readonly newBuyerContract = inject(NewBuyerContractService);
   private readonly channelSources = inject(ChannelSourcesService);
   private readonly language = inject(LanguageService);
   private readonly auth = inject(AuthService);
@@ -132,8 +210,17 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   private readonly searchInput$ = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
 
+  readonly kind: CustomerListKind =
+    this.route.snapshot.data['customerList'] === 'buyers' ? 'buyers' : 'sales';
+  readonly isBuyers = this.kind === 'buyers';
+  readonly copy = LIST_COPY[this.kind];
+  /** Buyers are all one status, so the status filter would be a no-op there. */
+  readonly showStatusFilter = !this.isBuyers;
+
   readonly searchSignal = signal('');
   readonly selectedStatusId = signal<number | null>(null);
+  /** "Date added" range (`From` / `To`). */
+  readonly dateFilter = signal<CustomerDateFilter>({});
   readonly selectedSourceId = signal<number | null>(null);
   /** Effective country; `0` = unknown country. */
   readonly selectedCountryId = signal<number | null>(null);
@@ -164,7 +251,8 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
       this.selectedSourceId() !== null ||
       this.selectedCountryId() !== null ||
       this.selectedGovernorateId() !== null ||
-      this.selectedSalesPersonId() !== null,
+      this.selectedSalesPersonId() !== null ||
+      isDateRangeActive(this.dateFilter()),
   );
 
   // ─────────── data ───────────
@@ -192,48 +280,72 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
   /** True when the current user is an Admin — drives subtitle/empty copy. */
   readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
+  /** Admin + Sales work the deal (status, follow-ups, contracts); Support reads + notes. */
+  readonly isSalesSide = computed(() => {
+    const role = this.auth.currentRole();
+    return role === 'Admin' || role === 'Sales';
+  });
 
-  readonly subtitleKey = computed(() =>
-    this.isAdmin() ? 'customers.sales.subtitleAdmin' : 'customers.sales.subtitleSales',
-  );
-
-  readonly emptyMessageKey = computed(() =>
-    this.isAdmin() ? 'customers.sales.emptyAdmin' : 'customers.sales.empty',
-  );
-
-  readonly welcomeSubtitleKey = computed(() =>
-    this.isAdmin()
-      ? 'customers.sales.welcomeSubtitleAdmin'
-      : 'customers.sales.welcomeSubtitleSales',
-  );
+  private readonly audience = computed<Audience>(() => (this.isAdmin() ? 'admin' : 'own'));
+  readonly subtitleKey = computed(() => this.copy.subtitleKey[this.audience()]);
+  readonly emptyMessageKey = computed(() => this.copy.emptyKey[this.audience()]);
+  readonly welcomeSubtitleKey = computed(() => this.copy.welcomeSubtitleKey[this.audience()]);
 
   /**
-   * Action surface for the row toolbar. Sales-specific:
-   *   - inline: view + note (high-frequency)
-   *   - dropdown: assign-support, change-status, follow-up
+   * Row toolbar, by role:
+   *   - Admin / Sales: view + note inline; assign-support, status, follow-up,
+   *     contact log, activities (+ "add contract" on buyers) in the menu.
+   *   - Support (buyers only): view, note, WhatsApp, activities; the deal
+   *     itself is owned by sales.
    * Marketing-only actions (edit/delete/assign-sales) are explicitly off.
    */
-  readonly actionsConfig: CustomerActionsConfig = {
-    view: true,
-    note: true,
-    whatsapp: true,
-    assignSupport: true,
-    changeStatus: true,
-    followUp: true,
-    logContact: this.auth.currentRole() === 'Sales' || this.auth.currentRole() === 'Admin',
-    activities: true,
-  };
+  readonly actionsConfig: CustomerActionsConfig = this.isSalesSide()
+    ? {
+        view: true,
+        note: true,
+        whatsapp: true,
+        assignSupport: true,
+        changeStatus: true,
+        followUp: true,
+        logContact: true,
+        activities: true,
+        addContract: this.isBuyers,
+      }
+    : { view: true, note: true, whatsapp: true, activities: true };
 
-  /** Page-scope KPIs derived from the loaded rows. */
-  readonly kpis = computed(() => {
+  /** KPI tiles: the total is the server count, the rest describe the loaded page. */
+  readonly kpiTiles = computed<KpiTile[]>(() => {
     const list = this.rows();
     const lower = (s: string | null | undefined) => (s ?? '').trim().toLowerCase();
-    return {
-      total: this.count(),
-      pendingFollowUp: list.filter((r) => !!r.nextFollowUpDate).length,
-      transferredToSupport: list.filter((r) => !!r.isSalesToSupport).length,
-      newLeads: list.filter((r) => lower(r.status) === 'new').length,
-    };
+    const second: KpiTile = this.isBuyers
+      ? {
+          labelKey: 'customers.kpi.consulted',
+          value: list.filter((r) => !!r.isConsulted).length,
+          icon: 'fa-solid fa-user-check',
+          tone: 'info',
+        }
+      : {
+          labelKey: 'customers.kpi.newLeads',
+          value: list.filter((r) => lower(r.status) === 'new').length,
+          icon: 'fa-solid fa-user-plus',
+          tone: 'info',
+        };
+    return [
+      { labelKey: 'customers.kpi.total', value: this.count(), icon: 'fa-solid fa-users', tone: 'primary' },
+      second,
+      {
+        labelKey: 'customers.kpi.pendingFollowUp',
+        value: list.filter((r) => !!r.nextFollowUpDate).length,
+        icon: 'fa-solid fa-calendar-check',
+        tone: 'warning',
+      },
+      {
+        labelKey: 'customers.kpi.transferredToSupport',
+        value: list.filter((r) => !!r.isSalesToSupport).length,
+        icon: 'fa-solid fa-headset',
+        tone: 'success',
+      },
+    ];
   });
 
   ngOnInit(): void {
@@ -250,7 +362,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     this.reload();
   }
 
-  /** Deep links (e.g. from the customer map): `?countryId=20&governorateId=1`. */
+  /** Deep links (e.g. from the customer map): `?countryId=20&governorateId=1&from=…&to=…`. */
   private applyLinkFilters(): void {
     const params = this.route.snapshot.queryParamMap;
     const id = (key: string) => {
@@ -260,6 +372,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     };
     this.selectedCountryId.set(id('countryId'));
     this.selectedGovernorateId.set(this.governorateFilterApplies() ? id('governorateId') : null);
+    this.dateFilter.set(dateRangeFromParams(params.get('from'), params.get('to')));
   }
 
   ngOnDestroy(): void {
@@ -270,9 +383,11 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   // ─────────── data loading ───────────
 
   private loadFilters(): void {
-    this.customers.statuses().subscribe({
-      next: (items) => this.statuses.set(items),
-    });
+    if (this.showStatusFilter) {
+      this.customers.statuses().subscribe({
+        next: (items) => this.statuses.set(items),
+      });
+    }
     this.channelSources.list().subscribe({
       next: (items: SourceItem[]) => this.sources.set(items),
     });
@@ -286,17 +401,25 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** The list query for the current filters (table, export). */
+  /** The list query for the current filters (table, export). Empty filters stay `undefined`. */
   private listQuery(pageIndex: number, pageSize: number): CustomerListQuery {
     return {
       PageIndex: pageIndex,
       PageSize: pageSize,
       Search: this.searchSignal().trim() || undefined,
-      CustomerStatusId: this.selectedStatusId() ?? undefined,
+      CustomerStatusId: this.showStatusFilter ? this.selectedStatusId() ?? undefined : undefined,
       SourceId: this.selectedSourceId() ?? undefined,
       CountryId: this.selectedCountryId() ?? undefined,
       GovernorateId: this.governorateFilterApplies() ? this.selectedGovernorateId() ?? undefined : undefined,
+      ...toDateRangeParams(this.dateFilter()),
     };
+  }
+
+  /** The endpoint behind this list. */
+  private fetchPage(query: CustomerListQuery, force = false): Observable<PagedResult<CustomerListItem>> {
+    return this.isBuyers
+      ? this.customers.buyers(query, force)
+      : this.customers.listForSales(query, force);
   }
 
   reload(force = false): void {
@@ -307,7 +430,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
     const rep = this.selectedSalesPersonId();
     if (rep) {
-      fetchAllPages((pageIndex, pageSize) => this.customers.listForSales(this.listQuery(pageIndex, pageSize), force))
+      fetchAllPages((pageIndex, pageSize) => this.fetchPage(this.listQuery(pageIndex, pageSize), force))
         .then((all) => {
           if (seq !== this.loadSeq) return;
           this.repRows = all.filter((r) => matchesSalesPerson(r, rep, this.salesTeam()));
@@ -322,8 +445,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.customers
-      .listForSales(this.listQuery(this.pageIndex(), this.pageSize()), force)
+    this.fetchPage(this.listQuery(this.pageIndex(), this.pageSize()), force)
       .subscribe({
         next: (page) => {
           if (seq !== this.loadSeq) return;
@@ -383,6 +505,13 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
   onSalesPersonChange(id: string): void {
     this.selectedSalesPersonId.set(id || null);
+    this.pageIndex.set(1);
+    this.reload();
+  }
+
+  /** Date-added range changed (picker, preset or chip): back to page 1. */
+  onDateFilterChange(range: CustomerDateFilter): void {
+    this.dateFilter.set(range);
     this.pageIndex.set(1);
     this.reload();
   }
@@ -505,6 +634,11 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     this.closeLogContact();
   }
 
+  /** Buyers: start this customer's contract (create dialog on the contracts page). */
+  openAddContract(row: CustomerListItem): void {
+    this.newBuyerContract.openNewContract(row.id);
+  }
+
   openActivities(row: CustomerListItem): void {
     this.activitiesDialog.set(row);
   }
@@ -605,16 +739,9 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     return resolveCustomerStatus(name, this.language.lang(), name);
   }
 
+  /** Server timestamps are UTC without a `Z`; read as UTC, shown in Cairo time. */
   formatDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return '—';
-    try {
-      return new Date(dateStr).toLocaleDateString(
-        this.language.lang() === 'ar' ? 'ar-EG' : 'en-US',
-        { year: 'numeric', month: 'short', day: 'numeric' },
-      );
-    } catch {
-      return dateStr;
-    }
+    return formatCairoDate(dateStr, this.language.lang(), 'date');
   }
 
   trackById = (_: number, r: CustomerListItem) => r.id;
@@ -709,18 +836,16 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
         value: (r) => this.formatDate(r.nextFollowUpDate),
       },
       {
-        header: this.t('customers.table.createdAt'),
+        header: this.t('dateFilter.createdAt'),
         value: (r) => this.formatDate(r.createdAt),
       },
     ];
   }
 
+  /** Export: every matching row, page by page (the server caps a page at 50). */
   readonly fetchAllRows = async (): Promise<CustomerListItem[]> => {
     if (this.repRows) return [...this.repRows];
-    const page = await firstValueFrom(
-      this.customers.listForSales(this.listQuery(1, this.count() || this.pageSize())),
-    );
-    return page.data ?? [];
+    return fetchAllPages((pageIndex, pageSize) => this.fetchPage(this.listQuery(pageIndex, pageSize)));
   };
 
   private t(key: string): string {

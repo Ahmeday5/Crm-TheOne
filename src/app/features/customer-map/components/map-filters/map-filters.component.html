@@ -43,26 +43,11 @@
     }
 
     <div class="mf__field mf__field--dates">
-      <span class="mf__label">{{ 'customerMap.filters.createdBetween' | translate }}</span>
-      <div class="mf__dates">
-        <input type="date" class="form-control form-control-sm" [attr.aria-label]="'customerMap.filters.from' | translate"
-               [max]="to() || today" [ngModel]="from()" (ngModelChange)="setDate('from', $event)" />
-        <i class="fa-solid fa-arrow-left-long mf__dates-sep" aria-hidden="true"></i>
-        <input type="date" class="form-control form-control-sm" [attr.aria-label]="'customerMap.filters.to' | translate"
-               [min]="from()" [max]="today" [ngModel]="to()" (ngModelChange)="setDate('to', $event)" />
-      </div>
+      <app-customer-date-range-filter size="sm" [presets]="datePresets" [value]="dates()" (valueChange)="setDates($event)" />
     </div>
   </div>
 
   <div class="mf__bar">
-    <div class="mf__presets" role="group" [attr.aria-label]="'customerMap.filters.createdBetween' | translate">
-      @for (p of presets; track p) {
-        <button type="button" class="mf__chip" [class.is-active]="preset() === p" [attr.aria-pressed]="preset() === p"
-                (click)="applyPreset(p)">
-          {{ 'customerMap.filters.presets.' + p | translate }}
-        </button>
-      }
-    </div>
     @if (activeCount() > 0) {
       <button type="button" class="btn btn-sm btn-light mf__reset" (click)="reset()">
         <i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i>

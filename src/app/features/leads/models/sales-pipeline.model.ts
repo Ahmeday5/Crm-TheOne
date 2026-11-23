@@ -12,6 +12,8 @@ export type SalesPipelineSort = 'Newest' | 'Oldest' | 'StageAge' | 'NextFollowUp
  *   - `PerColumn` is how many cards each column returns.
  *   - `Status` + `Skip` load the next page of one column ("load more").
  *   - `StaleDays` is how many days in one stage make a card "stale".
+ *   - `From` / `To` (`yyyy-MM-dd`, inclusive) keep customers added in that
+ *     range — they scope the columns, `stats` and `overdueFollowUps` alike.
  */
 export interface SalesPipelineQuery {
   Search?: string;
@@ -24,6 +26,8 @@ export interface SalesPipelineQuery {
   Status?: number;
   Skip?: number;
   StaleDays?: number;
+  From?: string;
+  To?: string;
 }
 
 export interface SalesPipelineStats {

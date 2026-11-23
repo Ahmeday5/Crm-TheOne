@@ -1,5 +1,10 @@
 import { Observable, firstValueFrom } from 'rxjs';
-import { CustomerListItem, PagedResult, SalesPerson } from '../../../shared/models';
+import {
+  CUSTOMER_LIST_MAX_PAGE_SIZE,
+  CustomerListItem,
+  PagedResult,
+  SalesPerson,
+} from '../../../shared/models';
 
 /**
  * Sales-rep filter for the customer lists — done on the FRONTEND until the
@@ -20,7 +25,8 @@ export const UNASSIGNED_SALES = '__unassigned__';
 
 /** Upper bound on pages fetched (safety net against a misbehaving `count`). */
 const MAX_PAGES = 200;
-const CHUNK = 500;
+/** The server caps customer pages at 50 rows — ask for exactly that. */
+const CHUNK = CUSTOMER_LIST_MAX_PAGE_SIZE;
 
 function norm(v: string | null | undefined): string {
   return (v ?? '').trim().replace(/\s+/g, ' ').toLowerCase();

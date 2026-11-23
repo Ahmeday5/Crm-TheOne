@@ -23,6 +23,13 @@
   } @else {
   <form [formGroup]="form" id="contract-form" novalidate (ngSubmit)="submit()">
 
+    @if (isNewBuyerFlow) {
+      <div class="alert alert-success d-flex align-items-start gap-2 py-2 mb-3" role="status">
+        <i class="fa-solid fa-circle-check mt-1" aria-hidden="true"></i>
+        <span class="min-w-0">{{ 'sales.contractsMgmt.form.newBuyerHint' | translate }}</span>
+      </div>
+    }
+
     <div class="row g-3">
       <div class="col-12">
         <label class="form-label fw-600">

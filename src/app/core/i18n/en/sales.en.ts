@@ -169,6 +169,7 @@ const sales: TranslationFile<'sales'> = {
         titlePlaceholder: 'e.g. The One software sale contract',
         customer: 'Customer',
         customerLocked: 'The customer can’t be changed on edit',
+        newBuyerHint: 'The customer is now a buyer — fill in the contract to record the deal.',
         status: 'Status',
         price: 'Contract value',
         startDate: 'Start date',

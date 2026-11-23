@@ -246,7 +246,7 @@
 </div>
 
 @if (formOpen()) {
-<app-contract-form-dialog [contractId]="editId()" (created)="onSaved()" (updated)="onSaved()"
+<app-contract-form-dialog [contractId]="editId()" [presetCustomerId]="presetCustomerId()" (created)="onSaved()" (updated)="onSaved()"
   (cancel)="closeForm()">
 </app-contract-form-dialog>
 }

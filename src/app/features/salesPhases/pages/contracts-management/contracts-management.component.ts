@@ -50,6 +50,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ContractFormDialogComponent } from '../../components/contract-form-dialog/contract-form-dialog.component';
 import { RenewContractDialogComponent } from '../../components/renew-contract-dialog/renew-contract-dialog.component';
 import { ContractsService } from '../../services/contracts.service';
+import { NEW_CONTRACT_FOR_PARAM } from '../../services/new-buyer-contract.service';
 import { renewalUrgency, suggestsRenewal } from '../../utils/contract-renewal.util';
 import {
   ContractLifecycle,
@@ -160,6 +161,8 @@ export class ContractsManagementComponent implements OnInit {
   /** Form dialog state. `formOpen` toggles the modal; `editId` ≠ null ⇒ edit. */
   readonly formOpen = signal(false);
   readonly editId = signal<number | null>(null);
+  /** Create mode: customer pre-selected by the "new buyer" hand-off. */
+  readonly presetCustomerId = signal<number | null>(null);
 
   /** Row being renewed (renew dialog open). */
   readonly renewTarget = signal<ContractListItem | null>(null);
@@ -221,6 +224,7 @@ export class ContractsManagementComponent implements OnInit {
     // Deep link, e.g. `/contracts-management?tab=expiring` from a dashboard card.
     const tab = this.route.snapshot.queryParamMap.get('tab') as ContractTab | null;
     if (tab && CONTRACT_TABS.some((t) => t.key === tab)) this.activeTab.set(tab);
+    this.openNewBuyerContractFromLink();
     this.reload();
     if (this.isAdmin()) {
       this.service.salesTeam().subscribe({
@@ -319,9 +323,28 @@ export class ContractsManagementComponent implements OnInit {
 
   // ─────────── create / edit ───────────
 
-  openCreate(): void {
+  openCreate(presetCustomerId: number | null = null): void {
     this.editId.set(null);
+    this.presetCustomerId.set(presetCustomerId);
     this.formOpen.set(true);
+  }
+
+  /**
+   * `?newContractFor=<customerId>` (sent when a customer was just marked as
+   * Buyer): open the create dialog for that customer, then drop the param so
+   * a refresh or "back" doesn't reopen it.
+   */
+  private openNewBuyerContractFromLink(): void {
+    const raw = this.route.snapshot.queryParamMap.get(NEW_CONTRACT_FOR_PARAM);
+    if (raw === null) return;
+    const customerId = Number(raw);
+    if (Number.isInteger(customerId) && customerId > 0) this.openCreate(customerId);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { [NEW_CONTRACT_FOR_PARAM]: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   openEdit(row: ContractListItem): void {
@@ -333,6 +356,7 @@ export class ContractsManagementComponent implements OnInit {
   closeForm(): void {
     this.formOpen.set(false);
     this.editId.set(null);
+    this.presetCustomerId.set(null);
   }
 
   onSaved(): void {

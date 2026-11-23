@@ -12,17 +12,21 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { LanguageService } from '../../../../core/services/language.service';
-import { AppService, CampaignDropdownItem, CustomerStatus, SalesPerson } from '../../../../shared/models';
+import { DateRangePreset, isDateRangeActive, normalizeDateRange } from '../../../../core/utils/date-range.util';
+import { CustomerDateRangeFilterComponent } from '../../../../shared/components/customer-date-range-filter/customer-date-range-filter.component';
+import {
+  AppService,
+  CampaignDropdownItem,
+  CustomerDateFilter,
+  CustomerStatus,
+  SalesPerson,
+} from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { CustomersService } from '../../../leads/services/customers.service';
 import { resolveCustomerStatus } from '../../../leads/utils/customer-status.util';
 import { ChannelSourcesService } from '../../../marketing-campaigns/services/channel-sources.service';
 import { ServicesService } from '../../../services/services/services.service';
-import { toIsoDay } from '../../../geo-insights';
 import { CustomerMapQuery } from '../../models/customer-map.models';
-
-/** `custom` = dates typed by hand (no chip highlighted). */
-type DatePreset = '30d' | '90d' | 'year' | 'all' | 'custom';
 
 interface Option {
   id: number | string;
@@ -38,7 +42,7 @@ interface Option {
 @Component({
   selector: 'app-map-filters',
   standalone: true,
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, CustomerDateRangeFilterComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './map-filters.component.html',
   styleUrl: './map-filters.component.scss',
@@ -65,18 +69,15 @@ export class MapFiltersComponent implements OnInit {
   protected readonly campaignId = signal<number | null>(null);
   protected readonly serviceId = signal<number | null>(null);
   protected readonly salesPersonId = signal<string | null>(null);
-  protected readonly from = signal<string>('');
-  protected readonly to = signal<string>('');
-  protected readonly preset = signal<DatePreset>('all');
-
-  protected readonly presets: readonly Exclude<DatePreset, 'custom'>[] = ['30d', '90d', 'year', 'all'];
-  protected readonly today = toIsoDay(new Date()) ?? '';
+  /** Creation-date range — the shared customer date filter. */
+  protected readonly dates = signal<CustomerDateFilter>({});
+  protected readonly datePresets: readonly DateRangePreset[] = ['last30Days', 'last90Days', 'thisYear'];
 
   protected readonly activeCount = computed(
     () =>
       [this.statusId(), this.sourceId(), this.campaignId(), this.serviceId(), this.salesPersonId()].filter(
         (v) => v !== null,
-      ).length + (this.from() || this.to() ? 1 : 0),
+      ).length + (isDateRangeActive(this.dates()) ? 1 : 0),
   );
 
   ngOnInit(): void {
@@ -120,25 +121,8 @@ export class MapFiltersComponent implements OnInit {
     this.emit();
   }
 
-  protected setDate(which: 'from' | 'to', value: string): void {
-    this[which].set(value ?? '');
-    this.preset.set(this.from() || this.to() ? 'custom' : 'all');
-    this.emit();
-  }
-
-  protected applyPreset(preset: DatePreset): void {
-    this.preset.set(preset);
-    const now = new Date();
-    const start =
-      preset === '30d'
-        ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29)
-        : preset === '90d'
-          ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 89)
-          : preset === 'year'
-            ? new Date(now.getFullYear(), 0, 1)
-            : null;
-    this.from.set(start ? toIsoDay(start) ?? '' : '');
-    this.to.set(start ? this.today : '');
+  protected setDates(range: CustomerDateFilter): void {
+    this.dates.set(range);
     this.emit();
   }
 
@@ -148,9 +132,7 @@ export class MapFiltersComponent implements OnInit {
     this.campaignId.set(null);
     this.serviceId.set(null);
     this.salesPersonId.set(null);
-    this.from.set('');
-    this.to.set('');
-    this.preset.set('all');
+    this.dates.set({});
     this.emit();
   }
 
@@ -161,8 +143,8 @@ export class MapFiltersComponent implements OnInit {
       campaignId: this.campaignId(),
       serviceId: this.serviceId(),
       salesPersonId: this.showSalesPerson() ? this.salesPersonId() : null,
-      from: this.from() || null,
-      to: this.to() || null,
+      from: normalizeDateRange(this.dates()).from ?? null,
+      to: normalizeDateRange(this.dates()).to ?? null,
     });
   }
 }

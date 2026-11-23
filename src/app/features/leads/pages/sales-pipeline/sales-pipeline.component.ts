@@ -16,12 +16,16 @@ import { ApiError } from '../../../../core/models/api-response.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { isDateRangeActive, toDateRangeParams } from '../../../../core/utils/date-range.util';
+import { CreatedAtComponent } from '../../../../shared/components/created-at/created-at.component';
+import { CustomerDateRangeFilterComponent } from '../../../../shared/components/customer-date-range-filter/customer-date-range-filter.component';
+import { DateRangeChipComponent } from '../../../../shared/components/customer-date-range-filter/date-range-chip.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { TipDirective } from '../../../../shared/directives/tip.directive';
-import { SalesPerson } from '../../../../shared/models';
+import { CustomerDateFilter, SalesPerson } from '../../../../shared/models';
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ChannelSourcesService } from '../../../marketing-campaigns/services/channel-sources.service';
@@ -73,6 +77,9 @@ interface Option<T> {
     ClampTextDirective,
     ChangeStatusDialogComponent,
     CustomerDetailsDialogComponent,
+    CustomerDateRangeFilterComponent,
+    DateRangeChipComponent,
+    CreatedAtComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-pipeline.component.html',
@@ -104,6 +111,8 @@ export class SalesPipelineComponent implements OnInit, OnDestroy {
   readonly overdueOnly = signal(false);
   readonly sort = signal<SalesPipelineSort>('Newest');
   readonly staleDays = signal<number | null>(null);
+  /** "Date added" range — also scopes `stats` and `overdueFollowUps`. */
+  readonly dateFilter = signal<CustomerDateFilter>({});
 
   // ─────────── dropdown data ───────────
   readonly sources = signal<Option<number>[]>([]);
@@ -150,7 +159,8 @@ export class SalesPipelineComponent implements OnInit, OnDestroy {
       this.sourceId() !== null ||
       this.serviceId() !== null ||
       this.salesPersonId() !== null ||
-      this.overdueOnly(),
+      this.overdueOnly() ||
+      isDateRangeActive(this.dateFilter()),
   );
 
   ngOnInit(): void {
@@ -204,6 +214,7 @@ export class SalesPipelineComponent implements OnInit, OnDestroy {
       Sort: this.sort(),
       StaleDays: this.staleDays() ?? undefined,
       PerColumn: PER_COLUMN,
+      ...toDateRangeParams(this.dateFilter()),
     };
   }
 
@@ -306,6 +317,15 @@ export class SalesPipelineComponent implements OnInit, OnDestroy {
     this.reload();
   }
 
+  /**
+   * Date-added range changed: reload the whole board, so every column's
+   * "load more" offset (`Skip` = loaded cards) restarts from zero.
+   */
+  onDateFilterChange(range: CustomerDateFilter): void {
+    this.dateFilter.set(range);
+    this.reload();
+  }
+
   toggleOverdue(): void {
     this.overdueOnly.update((v) => !v);
     this.reload();
@@ -318,6 +338,7 @@ export class SalesPipelineComponent implements OnInit, OnDestroy {
     this.serviceId.set(null);
     this.salesPersonId.set(null);
     this.overdueOnly.set(false);
+    this.dateFilter.set({});
     this.reload();
   }
 

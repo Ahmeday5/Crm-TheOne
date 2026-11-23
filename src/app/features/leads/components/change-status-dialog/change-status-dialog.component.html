@@ -77,6 +77,13 @@
     }
   }
 
+  @if (selectsBuyer() && !isUnchanged()) {
+    <div class="alert alert-info d-flex align-items-start gap-2 py-2 mb-0 mt-3" role="status">
+      <i class="fa-solid fa-file-contract mt-1" aria-hidden="true"></i>
+      <span class="min-w-0">{{ 'customers.statusModal.buyerContractHint' | translate }}</span>
+    </div>
+  }
+
   @if (errorMessage()) {
     <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0 mt-3" role="alert">
       <i class="fa-solid fa-circle-exclamation"></i>

@@ -1,0 +1,116 @@
+@use 'breakpoints' as bp;
+
+:host { display: block; min-width: 0; }
+
+.drf { display: flex; flex-direction: column; gap: 0.45rem; min-width: 0; }
+
+.drf__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.4rem;
+}
+
+.drf__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+  color: var(--text-3);
+  letter-spacing: 0.01em;
+
+  i { color: var(--brand-500); }
+}
+
+.drf__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 0;
+  background: none;
+  padding: 0.1rem 0.25rem;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+  color: var(--text-muted);
+  border-radius: var(--radius-pill);
+  animation: drf-pop 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  &:hover:not(:disabled) { color: var(--danger); }
+  &:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 2px; }
+}
+
+.drf__inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.drf__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+
+  .form-control { min-width: 0; padding-inline-start: 2.6rem; }
+}
+
+// Inline "From" / "To" caption sitting inside the input's start edge (RTL-aware).
+.drf__cap {
+  position: absolute;
+  inset-inline-start: 0.7rem;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+  color: var(--text-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.drf__error {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--fs-xs);
+  color: var(--danger);
+}
+
+.drf__presets { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+.drf__chip {
+  border: 1px solid var(--border);
+  background: var(--surface-0);
+  color: var(--text-2);
+  border-radius: var(--radius-pill);
+  padding: 0.2rem 0.75rem;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+  line-height: 1.5;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
+
+  &:hover:not(:disabled) { border-color: var(--brand-500); color: var(--brand-500); }
+  &:active:not(:disabled) { transform: scale(0.96); }
+  &.is-active { background: var(--brand-500); border-color: var(--brand-500); color: #fff; }
+  &:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 2px; }
+  &:disabled { opacity: 0.55; }
+}
+
+.drf--sm {
+  gap: 0.35rem;
+
+  .drf__field .form-control { padding-inline-start: 2.3rem; }
+  .drf__chip { padding: 0.15rem 0.6rem; }
+}
+
+@include bp.down(sm) {
+  // Two date inputs side by side get cramped on phones — stack them.
+  .drf__inputs { grid-template-columns: 1fr; }
+}
+
+@keyframes drf-pop { from { opacity: 0; transform: scale(0.92); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .drf__clear { animation: none; }
+  .drf__chip { transition: none; }
+}

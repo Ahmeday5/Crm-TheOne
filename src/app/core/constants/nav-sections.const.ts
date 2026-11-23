@@ -163,6 +163,13 @@ export const NAV_SECTIONS: NavSection[] = [
             icon: 'fa-solid fa-user-tie',
             roles: ['Admin', 'Sales'],
           },
+          // Buyers only — Sales / Support see the buyers assigned to them.
+          {
+            labelKey: 'sidebar.items.buyers',
+            path: '/leads/buyers',
+            icon: 'fa-solid fa-handshake',
+            roles: ['Admin', 'Sales', 'Support'],
+          },
           {
             labelKey: 'sidebar.items.salesPipeline',
             path: '/leads/sales-pipeline',

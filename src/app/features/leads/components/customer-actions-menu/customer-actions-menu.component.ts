@@ -44,6 +44,8 @@ export interface CustomerActionsConfig {
   logContact?: boolean;
   /** Open the full activity log timeline for this customer. */
   activities?: boolean;
+  /** Start a new contract for this customer (buyers; Admin + Sales only). */
+  addContract?: boolean;
   /** Delete (marketing-only). */
   delete?: boolean;
 }
@@ -89,6 +91,7 @@ export class CustomerActionsMenuComponent {
   readonly followUp = output<void>();
   readonly logContact = output<void>();
   readonly activities = output<void>();
+  readonly addContract = output<void>();
   readonly delete = output<void>();
 
   readonly telHref = computed(() => toTelHref(this.phone()));
@@ -105,6 +108,7 @@ export class CustomerActionsMenuComponent {
       a.followUp ||
       a.logContact ||
       a.activities ||
+      a.addContract ||
       a.delete
     );
   });

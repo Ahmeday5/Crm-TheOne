@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, from, map } from 'rxjs';
 import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import {
@@ -10,6 +10,8 @@ import {
   withSkipLoader,
 } from '../../../core/http/http-context.tokens';
 import { ApiService } from '../../../core/services/api.service';
+import { CustomersService } from '../../leads/services/customers.service';
+import { fetchAllPages } from '../../leads/utils/sales-person-filter.util';
 import {
   AppService,
   CreateSupportTicketRequest,
@@ -37,6 +39,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class SupportTicketsService {
   private readonly api = inject(ApiService);
+  private readonly customers = inject(CustomersService);
 
   // ─────────── reads ───────────
 
@@ -104,11 +107,27 @@ export class SupportTicketsService {
 
   // ─────────── pickers ───────────
 
-  /** Customer picker (id + company + their services) — shared dropdown source. */
+  /**
+   * Customer picker for tickets: **buyers only** (`GET Customers/buyers`,
+   * every page — the server caps a page at 50). Admin gets every buyer;
+   * Support gets the buyers assigned to them. Rows are mapped to the
+   * dropdown shape the picker already uses.
+   */
   customersDropdown(): Observable<CustomerDropdownItem[]> {
-    return this.api.get<CustomerDropdownItem[]>(
-      API_ENDPOINTS.customers.dropdown,
-      { context: withCache({ ttlMs: CACHE_TTL.LONG }) },
+    return from(
+      fetchAllPages((pageIndex, pageSize) =>
+        this.customers.buyers({ PageIndex: pageIndex, PageSize: pageSize }),
+      ),
+    ).pipe(
+      map((rows) =>
+        rows.map((c) => ({
+          id: c.id,
+          fullName: c.fullName,
+          campanyName: c.campanyName ?? null,
+          createdAt: c.createdAt,
+          services: c.services ?? [],
+        })),
+      ),
     );
   }
 

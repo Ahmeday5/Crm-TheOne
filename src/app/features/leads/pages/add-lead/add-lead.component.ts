@@ -37,6 +37,11 @@ import {
 } from '../../../../shared/utils/custom-validators.util';
 import { CustomerLocationFieldsComponent } from '../../components/customer-location-fields/customer-location-fields.component';
 import { CustomersService } from '../../services/customers.service';
+import {
+  DUPLICATE_PHONE_MESSAGES,
+  flagDuplicatePhone,
+  isDuplicatePhoneError,
+} from '../../utils/duplicate-phone.util';
 import { createLocationPayload } from '../../utils/customer-location.util';
 import { ServicesService } from '../../../services/services/services.service';
 
@@ -68,6 +73,7 @@ export class AddLeadComponent {
   private readonly auth = inject(AuthService);
 
   readonly submitting = signal(false);
+  readonly phoneMessages = DUPLICATE_PHONE_MESSAGES;
   readonly errorMessage = signal<string | null>(null);
   readonly submitAttempted = signal(false);
 
@@ -228,6 +234,13 @@ export class AddLeadComponent {
       },
       error: (err: ApiError) => {
         this.submitting.set(false);
+        // Phone already used by another customer: keep the form open with the
+        // server message under the phone field instead of a toast.
+        if (isDuplicatePhoneError(err)) {
+          flagDuplicatePhone(this.form.controls.phone, err.message.trim());
+          document.getElementById('add-phone')?.focus();
+          return;
+        }
         const message =
           err?.message?.trim() || this.t('customers.messages.genericError');
         this.errorMessage.set(message);

@@ -22,8 +22,13 @@ export interface CustomerDropdownItem {
   id: number;
   fullName: string;
   campanyName: string | null;
+  /** When the customer was added — UTC, serialized without a trailing `Z`. */
+  createdAt?: string;
   services: CustomerDropdownService[];
 }
+
+/** `CustomerDropdown` in the backend contract. */
+export type CustomerDropdown = CustomerDropdownItem;
 
 /** One line item in the create/update request body. */
 export interface PriceQuotationItemRequest {

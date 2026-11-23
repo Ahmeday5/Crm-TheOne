@@ -13,13 +13,18 @@ import {
   Subject,
   debounceTime,
   distinctUntilChanged,
-  firstValueFrom,
   takeUntil,
 } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { AuthService } from '../../../../core/services/auth.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ExportColumn } from '../../../../core/services/table-export.service';
+import { isDateRangeActive, toDateRangeParams } from '../../../../core/utils/date-range.util';
+import { CreatedAtComponent } from '../../../../shared/components/created-at/created-at.component';
+import { CustomerDateRangeFilterComponent } from '../../../../shared/components/customer-date-range-filter/customer-date-range-filter.component';
+import { DateRangeChipComponent } from '../../../../shared/components/customer-date-range-filter/date-range-chip.component';
+import { formatCairoDate } from '../../../../shared/pipes/cairo-date.pipe';
+import { fetchAllPages } from '../../../leads/utils/sales-person-filter.util';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -28,7 +33,9 @@ import { StatCardComponent } from '../../../../shared/components/stat-card/stat-
 import { TableToolsComponent } from '../../../../shared/components/table-tools/table-tools.component';
 import { TipDirective } from '../../../../shared/directives/tip.directive';
 import {
+  CustomerDateFilter,
   CustomerListItem,
+  CustomerListQuery,
   CustomerNoteResponse,
   CustomerStatus,
   SupportCustomerStats,
@@ -94,6 +101,9 @@ interface SourceItem {
     ConsultationDialogComponent,
     ClampTextDirective,
     ResponsiveTableDirective,
+    CustomerDateRangeFilterComponent,
+    DateRangeChipComponent,
+    CreatedAtComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './designated-clients.component.html',
@@ -113,6 +123,16 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
   readonly searchSignal = signal('');
   readonly selectedStatusId = signal<number | null>(null);
   readonly selectedSourceId = signal<number | null>(null);
+  /** "Date added" range (`From` / `To`). */
+  readonly dateFilter = signal<CustomerDateFilter>({});
+
+  readonly hasActiveFilters = computed(
+    () =>
+      !!this.searchSignal() ||
+      this.selectedStatusId() !== null ||
+      this.selectedSourceId() !== null ||
+      isDateRangeActive(this.dateFilter()),
+  );
 
   // ─────────── data ───────────
   readonly rows = signal<CustomerListItem[]>([]);
@@ -222,16 +242,7 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
     this.loadError.set(null);
     if (force) this.loadStats(true);
     this.customers
-      .listForSupport(
-        {
-          PageIndex: this.pageIndex(),
-          PageSize: this.pageSize(),
-          Search: this.searchSignal().trim() || undefined,
-          CustomerStatusId: this.selectedStatusId() ?? undefined,
-          SourceId: this.selectedSourceId() ?? undefined,
-        },
-        force,
-      )
+      .listForSupport(this.listQuery(this.pageIndex(), this.pageSize()), force)
       .subscribe({
         next: (page) => {
           this.rows.set(page.data ?? []);
@@ -245,7 +256,26 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** The list query for the current filters (table, export). Empty filters stay `undefined`. */
+  private listQuery(pageIndex: number, pageSize: number): CustomerListQuery {
+    return {
+      PageIndex: pageIndex,
+      PageSize: pageSize,
+      Search: this.searchSignal().trim() || undefined,
+      CustomerStatusId: this.selectedStatusId() ?? undefined,
+      SourceId: this.selectedSourceId() ?? undefined,
+      ...toDateRangeParams(this.dateFilter()),
+    };
+  }
+
   // ─────────── search / filters / pagination ───────────
+
+  /** Date-added range changed (picker, preset or chip): back to page 1. */
+  onDateFilterChange(range: CustomerDateFilter): void {
+    this.dateFilter.set(range);
+    this.pageIndex.set(1);
+    this.reload();
+  }
 
   onSearchInput(value: string): void {
     this.searchTerm = value;
@@ -362,15 +392,7 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
   }
 
   formatDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return '—';
-    try {
-      return new Date(dateStr).toLocaleDateString(
-        this.language.lang() === 'ar' ? 'ar-EG' : 'en-US',
-        { year: 'numeric', month: 'short', day: 'numeric' },
-      );
-    } catch {
-      return dateStr;
-    }
+    return formatCairoDate(dateStr, this.language.lang(), 'date');
   }
 
   consultationLabel(row: CustomerListItem): string {
@@ -417,24 +439,15 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
         value: (r) => r.noteSupport || this.t('customers.details.notAvailable'),
       },
       {
-        header: this.t('customers.table.createdAt'),
+        header: this.t('dateFilter.createdAt'),
         value: (r) => this.formatDate(r.createdAt),
       },
     ];
   }
 
-  readonly fetchAllRows = async (): Promise<CustomerListItem[]> => {
-    const page = await firstValueFrom(
-      this.customers.listForSupport({
-        PageIndex: 1,
-        PageSize: this.count() || this.pageSize(),
-        Search: this.searchSignal().trim() || undefined,
-        CustomerStatusId: this.selectedStatusId() ?? undefined,
-        SourceId: this.selectedSourceId() ?? undefined,
-      }),
-    );
-    return page.data ?? [];
-  };
+  /** Export: every matching row, page by page (the server caps a page at 50). */
+  readonly fetchAllRows = (): Promise<CustomerListItem[]> =>
+    fetchAllPages((pageIndex, pageSize) => this.customers.listForSupport(this.listQuery(pageIndex, pageSize)));
 
   private t(key: string): string {
     return resolveKey(TRANSLATIONS[this.language.lang()], key);
