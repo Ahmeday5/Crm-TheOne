@@ -2,13 +2,14 @@ import { ApplicationConfig, isDevMode, provideZoneChangeDetection } from '@angul
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { RouteReuseStrategy, provideRouter, withInMemoryScrolling } from '@angular/router';
 
 import { routes } from './app.routes';
 import { cacheInterceptor } from './core/interceptors/cache.interceptor';
 import { loaderInterceptor } from './core/interceptors/loader.interceptor';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { ParamAwareRouteReuseStrategy } from './core/routing/param-aware-reuse.strategy';
 import { provideAnnouncements } from './features/announcements';
 import { provideAttendance } from './features/attendance';
 import { provideWhatsApp } from './features/whatsapp/whatsapp.providers';
@@ -40,6 +41,8 @@ export const appConfig: ApplicationConfig = {
         anchorScrolling: 'enabled',
       }),
     ),
+    // `/projects/34 → /projects/33` (notifications, links) re-creates param-keyed pages.
+    { provide: RouteReuseStrategy, useClass: ParamAwareRouteReuseStrategy },
     provideHttpClient(
       withInterceptors([
         cacheInterceptor,

@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { recreateOnParamChange } from '../../core/routing/param-aware-reuse.strategy';
 import { PAYMENT_ROLES } from './payments.constants';
 
 /**
@@ -9,6 +10,7 @@ export const PAYMENTS_PUBLIC_ROUTES: Routes = [
   {
     path: 'pay/:token',
     title: 'TheOne — Payment',
+    data: recreateOnParamChange(),
     loadComponent: () => import('./pages/public-pay/public-pay.component').then((m) => m.PublicPayComponent),
   },
 ];

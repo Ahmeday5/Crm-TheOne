@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { recreateOnParamChange } from '../../core/routing/param-aware-reuse.strategy';
 
 export const SALES_PHASES_ROUTES: Routes = [
   {
@@ -36,6 +37,7 @@ export const SALES_PHASES_ROUTES: Routes = [
   {
     path: 'price-offer-contract/:id',
     title: 'عقد عرض السعر',
+    data: recreateOnParamChange(),
     loadComponent: () =>
       import(
         './pages/price-offers/price-offer-contract/price-offer-contract.component'
@@ -53,7 +55,7 @@ export const SALES_PHASES_ROUTES: Routes = [
   {
     path: 'sale-contract/:id',
     title: 'عقد بيع',
-    data: { roles: ['Admin', 'Sales'] },
+    data: recreateOnParamChange({ roles: ['Admin', 'Sales'] }),
     loadComponent: () =>
       import(
         './pages/contracts-management/sale-contract/sale-contract.component'

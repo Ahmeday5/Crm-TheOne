@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { recreateOnParamChange } from '../../core/routing/param-aware-reuse.strategy';
 
 /**
  * `/projects/:id` — the project workspace (Admin: everything; Developer on the
@@ -8,7 +9,7 @@ export const PROJECT_WORKSPACE_ROUTES: Routes = [
   {
     path: 'projects/:id',
     title: 'مساحة المشروع',
-    data: { roles: ['Admin', 'Developer'] },
+    data: recreateOnParamChange({ roles: ['Admin', 'Developer'] }),
     loadComponent: () =>
       import('./pages/project-workspace/project-workspace.component').then((m) => m.ProjectWorkspaceComponent),
   },

@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { recreateOnParamChange } from '../../core/routing/param-aware-reuse.strategy';
 
 export const PROJECTS_TASKS_ROUTES: Routes = [
   {
@@ -41,7 +42,7 @@ export const PROJECTS_TASKS_ROUTES: Routes = [
   {
     path: 'ProjectManage/reports/:reportId/edit',
     title: 'تعديل التقرير',
-    data: { roles: ['Developer'] },
+    data: recreateOnParamChange({ roles: ['Developer'] }),
     loadComponent: () =>
       import('../project-progress/pages/report-form/report-form.component').then(
         (m) => m.ReportFormComponent,
@@ -50,6 +51,7 @@ export const PROJECTS_TASKS_ROUTES: Routes = [
   {
     path: 'ProjectManage/reports/:reportId',
     title: 'تفاصيل التقرير',
+    data: recreateOnParamChange(),
     loadComponent: () =>
       import('../project-progress/pages/report-detail/report-detail.component').then(
         (m) => m.ReportDetailComponent,

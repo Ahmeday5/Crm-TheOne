@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { recreateOnParamChange } from '../../core/routing/param-aware-reuse.strategy';
 import { portalSessionGuard } from './data/portal-session.guard';
 
 /**
@@ -13,6 +14,7 @@ export const CLIENT_PORTAL_ROUTES: Routes = [
   {
     path: 'p/:token',
     title: 'TheOne',
+    data: recreateOnParamChange(),
     loadComponent: () => import('./pages/portal-entry/portal-entry.component').then((m) => m.PortalEntryComponent),
   },
   {
@@ -34,12 +36,14 @@ export const CLIENT_PORTAL_ROUTES: Routes = [
       {
         path: 'projects/:id',
         title: 'تفاصيل المشروع',
+        data: recreateOnParamChange(),
         loadComponent: () =>
           import('./pages/portal-project/portal-project.component').then((m) => m.PortalProjectComponent),
       },
       {
         path: 'requests/:id',
         title: 'طلبي',
+        data: recreateOnParamChange(),
         loadComponent: () =>
           import('./pages/portal-request/portal-request.component').then((m) => m.PortalRequestComponent),
       },
