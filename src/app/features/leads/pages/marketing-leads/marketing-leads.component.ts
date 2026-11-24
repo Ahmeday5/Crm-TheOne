@@ -370,16 +370,11 @@ export class MarketingLeadsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!row.salesPersonName) {
-      this.assignDialog.set({
-        customerId: row.id,
-        customerName: row.fullName,
-        currentSalesPersonId: null,
-        currentSalesPersonName: null,
-      });
-      return;
-    }
-
+    // The lead list carries no `salesPersonId`, and its `salesPersonName` can
+    // be empty while the customer IS assigned (e.g. buyers) — so always ask
+    // the details endpoint who the current rep is. Otherwise the dialog opens
+    // in "new assignment" mode and the backend rejects the real rep with
+    // "Customer is already assigned to this sales person".
     this.busyId.set(row.id);
     this.customers.getById(row.id).subscribe({
       next: (detail) => {
