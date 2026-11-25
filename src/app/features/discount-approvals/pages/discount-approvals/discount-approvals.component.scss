@@ -154,3 +154,19 @@
 @media (prefers-reduced-motion: reduce) {
   .dap-card, .dap-code { animation: none; }
 }
+
+.dap-continue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--success-soft);
+  color: var(--text-1);
+  font-weight: 600;
+
+  > span > i { color: var(--success); }
+}

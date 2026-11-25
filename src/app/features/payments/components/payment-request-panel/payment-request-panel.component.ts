@@ -14,6 +14,8 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { DiscountDraftsService } from '../../../discount-approvals/data/discount-drafts.service';
+import { DiscountApproval } from '../../../discount-approvals/models/discount-approvals.models';
 import { RouterLink } from '@angular/router';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
@@ -38,6 +40,8 @@ export interface PaymentRequestContext {
   customerName: string | null;
   /** Any format; digits are kept. */
   customerPhone: string | null;
+  /** Reopen with the values of an earlier discount request (and its approved code). */
+  resumeApprovalId?: number | null;
 }
 
 const PHONE_RE = /^\+?\d{8,15}$/;
@@ -97,6 +101,9 @@ export class PaymentRequestPanelComponent {
   private readonly auth = inject(AuthService);
   private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly drafts = inject(DiscountDraftsService);
+  /** The approval request this form is tied to (made here, or resumed). */
+  private approvalId: number | null = null;
   private contactLookup: Subscription | null = null;
 
   readonly open = input.required<boolean>();
@@ -227,6 +234,7 @@ export class PaymentRequestPanelComponent {
       .subscribe({
         next: (request) => {
           this.submitting.set(false);
+          this.drafts.remove(this.approvalId);
           this.created.emit(request);
         },
         error: (err: ApiError) => {
@@ -251,8 +259,45 @@ export class PaymentRequestPanelComponent {
     this.error.set(null);
     this.submitting.set(false);
     this.approvalBox()?.reset();
+    this.approvalId = null;
     this.loadMethods();
     this.prefillFromCustomer(ctx?.customerId ?? null);
+    this.restore(ctx?.resumeApprovalId ?? null);
+  }
+
+  /** Puts back the values the discount request was made with. */
+  private restore(approvalId: number | null): void {
+    const draft = approvalId != null ? this.drafts.get(approvalId, 'PaymentRequest') : null;
+    if (!draft) return;
+    const d = draft.payload;
+    this.approvalId = draft.approvalId;
+    this.form.patchValue({
+      ...(d.methodId != null ? { methodId: d.methodId } : {}),
+      amount: d.amount,
+      discount: d.discount,
+      description: d.description,
+      validityDays: d.validityDays,
+      customerName: d.customerName,
+      customerPhone: d.customerPhone,
+      customerEmail: d.customerEmail,
+    });
+  }
+
+  /** The box created a request — keep this form so the rep can close it and come back. */
+  protected onApprovalRequested(approval: DiscountApproval): void {
+    this.approvalId = approval.id;
+    const v = this.form.getRawValue();
+    this.drafts.save(approval.id, 'PaymentRequest', {
+      chatId: this.context()?.chatId ?? null,
+      methodId: v.methodId,
+      amount: v.amount,
+      discount: v.discount,
+      description: v.description,
+      validityDays: v.validityDays,
+      customerName: v.customerName,
+      customerPhone: v.customerPhone,
+      customerEmail: v.customerEmail,
+    });
   }
 
   /**

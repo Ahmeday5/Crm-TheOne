@@ -97,6 +97,9 @@ export class WaThreadComponent {
   readonly emptyHintKey = input('whatsapp.thread.emptyHint');
   /** Show "by {employee}" under our messages (useful when several people share a channel). */
   readonly showSender = input(true);
+  /** Open «طلب دفعة» pre-filled from an earlier discount request (`?resumeApproval=`). */
+  readonly resumePaymentApprovalId = input<number | null>(null);
+  protected readonly resumingApproval = signal<number | null>(null);
 
   /** Each message the server stored from this thread. */
   readonly sent = output<WaMessage>();
@@ -123,6 +126,7 @@ export class WaThreadComponent {
       customerId: chat.customerId,
       customerName: chat.customerName || chat.contactName || this.contactName(),
       customerPhone: chat.phone,
+      resumeApprovalId: this.resumingApproval(),
     };
   });
   /** Admins list the templates of the chat's own number. */
@@ -138,6 +142,20 @@ export class WaThreadComponent {
   private preserveOffset = 0;
 
   constructor() {
+    // A resumed discount request opens the payment panel once the chat is loaded.
+    effect(
+      () => {
+        const id = this.resumePaymentApprovalId();
+        const ready = !!this.store.chat();
+        if (id == null || !ready) return;
+        untracked(() => {
+          this.resumingApproval.set(id);
+          this.paymentOpen.set(true);
+        });
+      },
+      { allowSignalWrites: true },
+    );
+
     effect(
       () => {
         const source = this.source();

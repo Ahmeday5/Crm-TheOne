@@ -7,8 +7,9 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { DiscountDraft, DiscountDraftsService } from '../../../discount-approvals/data/discount-drafts.service';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
@@ -84,6 +85,10 @@ export class PriceOffersComponent implements OnInit {
   /** Form dialog state. `formOpen` toggles the modal; `editId` ≠ null ⇒ edit. */
   readonly formOpen = signal(false);
   readonly editId = signal<number | null>(null);
+  /** Reopening a form from its discount request (`?resumeApproval=<id>`). */
+  readonly resumeDraft = signal<DiscountDraft<'PriceQuotation'> | null>(null);
+  private readonly drafts = inject(DiscountDraftsService);
+  private readonly route = inject(ActivatedRoute);
 
   /** KPI summary derived from the current page. */
   readonly kpis = computed(() => {
@@ -96,6 +101,7 @@ export class PriceOffersComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.resumeFromQuery();
     this.loadCustomers();
     this.reload();
   }
@@ -154,6 +160,23 @@ export class PriceOffersComponent implements OnInit {
 
   // ─────────── row actions ───────────
 
+  private resumeFromQuery(): void {
+    const id = Number(this.route.snapshot.queryParamMap.get('resumeApproval'));
+    if (!Number.isInteger(id) || id <= 0) return;
+    // One-shot: drop the param so a reload / back doesn't reopen the form.
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { resumeApproval: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    const draft = this.drafts.get(id, 'PriceQuotation');
+    if (!draft) return;
+    this.resumeDraft.set(draft);
+    this.editId.set(draft.payload.quotationId);
+    this.formOpen.set(true);
+  }
+
   openCreate(): void {
     this.editId.set(null);
     this.formOpen.set(true);
@@ -167,6 +190,7 @@ export class PriceOffersComponent implements OnInit {
   closeForm(): void {
     this.formOpen.set(false);
     this.editId.set(null);
+    this.resumeDraft.set(null);
   }
 
   onSaved(): void {

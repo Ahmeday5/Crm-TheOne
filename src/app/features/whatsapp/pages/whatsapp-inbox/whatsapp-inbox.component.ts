@@ -114,6 +114,9 @@ export class WhatsAppInboxComponent implements OnInit {
     { initialValue: null },
   );
 
+  /** `?resumeApproval=<id>` — reopen «طلب دفعة» from an approved discount request (one-shot). */
+  protected readonly resumeApprovalId = signal<number | null>(null);
+
   /** Admin channel filter from `?channel=` — `null` = all channels. */
   protected readonly channelId = toSignal(
     this.route.queryParamMap.pipe(map((q) => q.get('channel') || null)),
@@ -160,6 +163,17 @@ export class WhatsAppInboxComponent implements OnInit {
   });
 
   constructor() {
+    const resume = Number(this.route.snapshot.queryParamMap.get('resumeApproval'));
+    if (Number.isInteger(resume) && resume > 0) {
+      this.resumeApprovalId.set(resume);
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { resumeApproval: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
+
     effect(
       () => {
         const id = this.activeChatId();

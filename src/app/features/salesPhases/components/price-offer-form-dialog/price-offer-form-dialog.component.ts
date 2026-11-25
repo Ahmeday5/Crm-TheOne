@@ -21,6 +21,8 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { DiscountDraft, DiscountDraftsService } from '../../../discount-approvals/data/discount-drafts.service';
+import { DiscountApproval } from '../../../discount-approvals/models/discount-approvals.models';
 import { Observable } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
@@ -81,6 +83,8 @@ interface ItemSeed {
 export class PriceOfferFormDialogComponent implements OnInit {
   /** When set, the dialog loads + updates that quotation (edit mode). */
   @Input() quotationId: number | null = null;
+  /** Reopen a form whose discount request was sent earlier (values + approved code). */
+  @Input() resume: DiscountDraft<'PriceQuotation'> | null = null;
 
   @Output() created = new EventEmitter<void>();
   @Output() updated = new EventEmitter<void>();
@@ -92,6 +96,9 @@ export class PriceOfferFormDialogComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly drafts = inject(DiscountDraftsService);
+  /** The approval request this form is tied to (made here, or resumed). */
+  private approvalId: number | null = null;
 
   /**
    * Populated via `(itemsLoaded)` from the customer select so
@@ -210,7 +217,11 @@ export class PriceOfferFormDialogComponent implements OnInit {
 
     this.loadCatalogue();
 
-    if (this.quotationId !== null) this.loadQuote(this.quotationId);
+    if (this.resume) {
+      this.restore(this.resume);
+    } else if (this.quotationId !== null) {
+      this.loadQuote(this.quotationId);
+    }
   }
 
   // ─────────── data ───────────
@@ -252,6 +263,42 @@ export class PriceOfferFormDialogComponent implements OnInit {
         this.loadingQuote.set(false);
         this.loadError.set(this.t('sales.priceOffers.form.loadFailed'));
       },
+    });
+  }
+
+  /** Puts back the form exactly as it was when the approval was requested. */
+  private restore(draft: DiscountDraft<'PriceQuotation'>): void {
+    const d = draft.payload;
+    this.approvalId = draft.approvalId;
+    this.rebuildSuppressed = true;
+    this.form.patchValue({ customerId: d.customerId, discount: d.discount, notes: d.notes });
+    this.rebuildSuppressed = false;
+    this.items.clear();
+    for (const item of d.items) this.items.push(this.buildItem(item));
+    // Editing: the saved discount still decides whether a code is needed.
+    if (this.quotationId !== null) {
+      this.service.getById(this.quotationId).subscribe({
+        next: (q) => this.baselineDiscount.set(Number(q.discount) || 0),
+        error: () => undefined,
+      });
+    }
+  }
+
+  /** The box created a request — keep this form so the rep can close it and come back. */
+  onApprovalRequested(approval: DiscountApproval): void {
+    this.approvalId = approval.id;
+    const v = this.form.getRawValue();
+    this.drafts.save(approval.id, 'PriceQuotation', {
+      quotationId: this.quotationId,
+      customerId: v.customerId,
+      discount: Number(v.discount) || 0,
+      notes: v.notes,
+      items: this.items.controls.map((g) => ({
+        serviceId: Number(g.get('serviceId')?.value),
+        serviceName: String(g.get('serviceName')?.value ?? ''),
+        unitPrice: Number(g.get('unitPrice')?.value) || 0,
+        quantity: Number(g.get('quantity')?.value) || 1,
+      })),
     });
   }
 
@@ -370,8 +417,9 @@ export class PriceOfferFormDialogComponent implements OnInit {
     const emitter = id !== null ? this.updated : this.created;
 
     request$.subscribe({
-      next: (saved) => {
+      next: () => {
         this.submitting.set(false);
+        this.drafts.remove(this.approvalId);
         this.toast.success(this.t(successKey));
         emitter.emit();
       },

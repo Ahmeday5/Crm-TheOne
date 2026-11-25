@@ -68,6 +68,7 @@ import {
   CustomerDetailsTab,
 } from '../../components/customer-details-dialog/customer-details-dialog.component';
 import { CustomerNoteDialogComponent } from '../../components/customer-note-dialog/customer-note-dialog.component';
+import { CustomerEditDialogComponent } from '../../components/customer-edit-dialog/customer-edit-dialog.component';
 import { CustomerNotesCellComponent } from '../../components/customer-notes-cell/customer-notes-cell.component';
 import { FollowUpDialogComponent } from '../../components/follow-up-dialog/follow-up-dialog.component';
 import { CustomersService } from '../../services/customers.service';
@@ -170,6 +171,7 @@ interface JourneyStep {
     LogContactDialogComponent,
     CustomerActivitiesDialogComponent,
     CustomerNoteDialogComponent,
+    CustomerEditDialogComponent,
     CustomerNotesCellComponent,
     CustomerActionsMenuComponent,
     ClampTextDirective,
@@ -291,12 +293,14 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
    *     contact log, activities (+ "add contract" on buyers) in the menu.
    *   - Support (buyers only): view, note, WhatsApp, activities; the deal
    *     itself is owned by sales.
-   * Marketing-only actions (edit/delete/assign-sales) are explicitly off.
+   * Edit is open to Admin + Sales (the backend allows reps to edit their customers);
+   * delete / assign-sales stay marketing-side.
    */
   readonly actionsConfig: CustomerActionsConfig = this.isSalesSide()
     ? {
         view: true,
         note: true,
+        edit: true,
         whatsapp: true,
         assignSupport: true,
         changeStatus: true,
@@ -613,6 +617,20 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
   openNote(row: CustomerListItem): void {
     this.noteDialog.set(row);
+  }
+
+  // ─────────── edit ───────────
+
+  /** Customer id being edited (Admin / Sales). */
+  readonly editDialog = signal<number | null>(null);
+
+  openEdit(row: CustomerListItem): void {
+    this.editDialog.set(row.id);
+  }
+
+  onEdited(): void {
+    this.editDialog.set(null);
+    this.reload(true);
   }
 
   closeNote(): void {

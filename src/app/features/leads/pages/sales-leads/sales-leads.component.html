@@ -344,7 +344,7 @@
               <!-- Actions (sticky) -->
               <td class="crm-actions-col">
                 <app-customer-actions-menu [phone]="row.phone" [actions]="actionsConfig"
-                  [activitiesCount]="(row.activities ?? []).length" (view)="openDetails(row)" (note)="openNote(row)"
+                  [activitiesCount]="(row.activities ?? []).length" (view)="openDetails(row)" (note)="openNote(row)" (edit)="openEdit(row)"
                   (whatsapp)="openWhatsApp(row)" (assignSupport)="openAssignSupport(row)"
                   (changeStatus)="openChangeStatus(row)" (followUp)="openFollowUp(row)"
                   (logContact)="openLogContact(row)" (activities)="openActivities(row)"
@@ -402,6 +402,10 @@
 <app-customer-activities-dialog [customerName]="row.fullName" [activities]="row.activities ?? []"
   (close)="closeActivities()">
 </app-customer-activities-dialog>
+}
+
+@if (editDialog(); as id) {
+<app-customer-edit-dialog [customerId]="id" (saved)="onEdited()" (cancel)="editDialog.set(null)" />
 }
 
 @if (noteDialog(); as row) {

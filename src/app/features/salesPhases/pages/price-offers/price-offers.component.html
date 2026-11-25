@@ -197,6 +197,7 @@
 @if (formOpen()) {
   <app-price-offer-form-dialog
     [quotationId]="editId()"
+    [resume]="resumeDraft()"
     (created)="onSaved()"
     (updated)="onSaved()"
     (cancel)="closeForm()">

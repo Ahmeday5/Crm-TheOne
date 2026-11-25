@@ -19,6 +19,7 @@ import { notificationTypeName } from '../../../../shared/models/notifications/no
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DiscountApprovalsService } from '../../data/discount-approvals.gateway';
+import { DiscountDraftsService } from '../../data/discount-drafts.service';
 import {
   DEFAULT_DISCOUNT_THRESHOLD_PERCENT,
   DISCOUNT_APPROVAL_STATUSES,
@@ -70,6 +71,7 @@ export class DiscountApprovalsComponent {
   private readonly notifications = inject(NotificationsStore);
   private readonly destroyRef = inject(DestroyRef);
   private readonly auth = inject(AuthService);
+  private readonly drafts = inject(DiscountDraftsService);
 
   /** Admins decide; everyone else sees their own requests (and their codes). */
   protected readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
@@ -90,7 +92,7 @@ export class DiscountApprovalsComponent {
   // ── list ──
   protected readonly status = signal<DiscountApprovalStatus | null>(null);
   protected readonly pageIndex = signal(1);
-  protected readonly pageSize = signal(20);
+  protected readonly pageSize = signal(10);
   protected readonly rows = signal<DiscountApproval[]>([]);
   protected readonly count = signal(0);
   protected readonly loading = signal(false);
@@ -135,6 +137,32 @@ export class DiscountApprovalsComponent {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(() => this.refreshAll(false));
+  }
+
+  // ─────────── continue where the rep left off ───────────
+
+  /** The rep's own approved request, with the form still saved in this browser. */
+  protected canContinue(a: DiscountApproval): boolean {
+    return (
+      a.status === 'Approved' &&
+      !!a.code &&
+      a.requestedById === this.auth.currentUser()?.userId &&
+      this.drafts.has(a.id)
+    );
+  }
+
+  protected continueRequest(a: DiscountApproval): void {
+    if (a.type === 'PriceQuotation') {
+      void this.router.navigate(['/price-offers'], { queryParams: { resumeApproval: a.id } });
+      return;
+    }
+    const chatId = this.drafts.get(a.id, 'PaymentRequest')?.payload.chatId;
+    if (chatId) void this.router.navigate(['/whatsapp', 'chats', chatId], { queryParams: { resumeApproval: a.id } });
+  }
+
+  /** Bring the opened request into view (it sits above the table). */
+  protected scrollToCard(): void {
+    setTimeout(() => document.querySelector('.dap-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
   }
 
   // ─────────── sales rules (Admin) ───────────

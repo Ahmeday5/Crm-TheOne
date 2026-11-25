@@ -43,24 +43,32 @@
             <p class="dab__step-title"><span class="dab__num">1</span>{{ 'discounts.box.step1' | translate }}</p>
             @if (!canRequest()) {
               <p class="dab__text small mb-0">{{ 'discounts.box.pickCustomer' | translate }}</p>
-            } @else {
-              <div class="btn-row dab__actions">
-                <button type="button" class="btn btn-success btn-sm" [disabled]="!!busy()" (click)="sendWhatsApp()">
-                  @if (busy() === 'whatsapp') { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
-                  @else { <i class="fa-brands fa-whatsapp me-1" aria-hidden="true"></i> }
-                  {{ 'discounts.box.sendWhatsapp' | translate }}
-                </button>
-                <button type="button" class="btn btn-light btn-sm" [disabled]="!!busy()" (click)="copyRequest()">
-                  @if (busy() === 'copy') { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
-                  @else { <i class="fa-regular fa-copy me-1" aria-hidden="true"></i> }
-                  {{ 'discounts.box.copyRequest' | translate }}
-                </button>
+            } @else if (pending()) {
+              @let a = pending()!;
+              <div class="dab__pending" role="status">
+                <p class="dab__pending-title">
+                  <span class="dab__pulse" aria-hidden="true"></span>{{ 'discounts.box.sent' | translate: { id: a.id } }}
+                </p>
+                <p class="dab__pending-hint">{{ 'discounts.box.closeHint' | translate }}</p>
+                <div class="btn-row dab__actions">
+                  <button type="button" class="btn btn-light btn-sm" [disabled]="!!busy()" (click)="shareWhatsApp()">
+                    <i class="fa-brands fa-whatsapp me-1" aria-hidden="true"></i>{{ 'discounts.box.remindWhatsapp' | translate }}
+                  </button>
+                  <button type="button" class="btn btn-light btn-sm" [disabled]="!!busy()" (click)="copyLink()">
+                    <i class="fa-solid fa-link me-1" aria-hidden="true"></i>{{ 'discounts.box.copyLink' | translate }}
+                  </button>
+                  <button type="button" class="btn btn-light btn-sm" [disabled]="!!busy()" (click)="copyDetails()">
+                    <i class="fa-regular fa-copy me-1" aria-hidden="true"></i>{{ 'discounts.box.copyDetails' | translate }}
+                  </button>
+                </div>
               </div>
-              @if (active(); as a) {
-                @if (a.status === 'Pending') {
-                  <p class="dab__sent"><i class="fa-regular fa-clock me-1" aria-hidden="true"></i>{{ 'discounts.box.sent' | translate: { id: a.id } }}</p>
-                }
-              }
+            } @else {
+              <p class="dab__text small">{{ 'discounts.box.requestHint' | translate }}</p>
+              <button type="button" class="btn btn-warning btn-sm fw-700" [disabled]="!!busy()" (click)="requestApproval()">
+                @if (busy() === 'request') { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+                @else { <i class="fa-solid fa-paper-plane me-1" aria-hidden="true"></i> }
+                {{ 'discounts.box.request' | translate }}
+              </button>
             }
           </div>
 

@@ -72,6 +72,15 @@
           </div>
         }
 
+        @if (canContinue(a)) {
+          <div class="dap-continue">
+            <span><i class="fa-solid fa-circle-check me-1" aria-hidden="true"></i>{{ 'discounts.page.continueHint' | translate }}</span>
+            <button type="button" class="btn btn-success" (click)="continueRequest(a)">
+              <i class="fa-solid fa-arrow-left me-1" aria-hidden="true"></i>
+              {{ (a.type === 'PriceQuotation' ? 'discounts.page.continueQuotation' : 'discounts.page.continuePayment') | translate }}
+            </button>
+          </div>
+        }
         @if (a.status === 'Approved' && a.code) {
           <div class="dap-code">
             <p class="dap-code__label">{{ 'discounts.page.code' | translate }}</p>
@@ -170,9 +179,10 @@
                 <td><span class="badge dap-badge dap-badge--{{ tone(r.status) }}">{{ 'discounts.status.' + r.status | translate }}</span></td>
                 <td class="text-nowrap small">{{ r.requestedAt | cairoDate: 'datetime' }}</td>
                 <td class="text-end">
-                  <a class="btn btn-sm" [class.btn-primary]="r.status === 'Pending'" [class.btn-light]="r.status !== 'Pending'"
-                     [routerLink]="['/discount-approvals', r.id]">
-                    {{ 'discounts.page.open' | translate }}
+                  <a class="btn btn-sm" [class.btn-primary]="r.status === 'Pending' && isAdmin()"
+                     [class.btn-light]="r.status !== 'Pending' || !isAdmin()"
+                     [routerLink]="['/discount-approvals', r.id]" (click)="scrollToCard()">
+                    {{ (r.status === 'Pending' && isAdmin() ? 'discounts.page.decide' : 'discounts.page.open') | translate }}
                   </a>
                 </td>
               </tr>

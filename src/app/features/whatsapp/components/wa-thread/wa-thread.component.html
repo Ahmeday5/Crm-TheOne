@@ -102,7 +102,7 @@
     [open]="paymentOpen()"
     [context]="paymentContext()"
     (created)="onPaymentCreated($event)"
-    (closed)="paymentOpen.set(false)" />
+    (closed)="paymentOpen.set(false); resumingApproval.set(null)" />
 }
 
 @if (templateOpen()) {

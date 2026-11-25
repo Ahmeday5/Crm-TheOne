@@ -65,6 +65,7 @@
         [source]="src"
         [contactName]="activeChat()?.customerName || activeChat()?.contactName || null"
         [showSender]="true"
+        [resumePaymentApprovalId]="resumeApprovalId()"
         (read)="onRead($event)"
         (sent)="onSent()">
         <div class="wa-headwrap" waThreadHeader>

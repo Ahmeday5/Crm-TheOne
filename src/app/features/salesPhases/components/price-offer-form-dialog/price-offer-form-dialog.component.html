@@ -179,6 +179,8 @@
           [discount]="discountValue()"
           [referenceId]="quotationId"
           [baselineDiscount]="baselineDiscount()"
+          [resumeApprovalId]="resume?.approvalId ?? null"
+          (requested)="onApprovalRequested($event)"
           (stateChange)="gate.set($event)" />
       </section>
 

@@ -115,7 +115,9 @@
         [customerName]="customerNamePreview()"
         [amount]="amountPreview()"
         [discount]="discountPreview()"
-        [customerRequired]="false"
+        [customerRequired]="true"
+        [resumeApprovalId]="context()?.resumeApprovalId ?? null"
+        (requested)="onApprovalRequested($event)"
         (stateChange)="gate.set($event)" />
 
       <div class="row g-2 mt-1">

@@ -12,8 +12,8 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { pollWhileVisible } from '../../../core/utils/poll-while-visible.util';
 import { Router } from '@angular/router';
-import { timer } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { NotificationsPanelService } from '../../../core/services/notifications-panel.service';
@@ -29,7 +29,8 @@ import {
 } from '../../models/notifications/notification-ui.util';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
-const COUNT_POLL_MS = 45_000;
+/** Badge refresh while the tab is visible (FCM push makes it instant when configured). */
+const COUNT_POLL_MS = 15_000;
 
 @Component({
   selector: 'app-notifications-bell',
@@ -66,7 +67,8 @@ export class NotificationsBellComponent implements OnInit {
     this.store.loadFirst();
     // Real-time push (no-op until Firebase is configured) + a polling fallback.
     void this.push.init();
-    timer(COUNT_POLL_MS, COUNT_POLL_MS)
+    // Only while visible, and right away when the user comes back to the tab.
+    pollWhileVisible(COUNT_POLL_MS)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.store.loadUnreadCount());
   }

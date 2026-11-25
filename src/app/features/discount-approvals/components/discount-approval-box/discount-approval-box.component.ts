@@ -11,7 +11,7 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { Observable, filter, map, merge, of, tap } from 'rxjs';
+import { Observable, filter, map, of, tap } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -30,6 +30,7 @@ import {
 } from '../../models/discount-approvals.models';
 import { buildApprovalRequestText } from '../../utils/discount-messages.util';
 import {
+  approvalPageUrl,
   bindingKey,
   discountPercent,
   formatPercent,
@@ -50,18 +51,17 @@ export interface DiscountGateState {
 }
 
 /**
- * "الخصم ده محتاج موافقة المدير" — the yellow box under a discount
- * (price quotation + payment link). Renders nothing for Admins or while the
- * discount is within the limit.
+ * "الخصم ده محتاج موافقة المدير" — the box under a discount (price quotation
+ * + payment link). Renders nothing for Admins or within the limit.
  *
- *   step 1  create `POST DiscountApprovals` and send it to the manager
- *           (WhatsApp share or copy);
- *   step 2  type the 6-digit code → green "approved" state.
+ *   step 1  «اطلب موافقة المدير» → `POST DiscountApprovals`; every Admin is
+ *           notified by the server. Sharing (WhatsApp / link / details) is
+ *           optional. The host saves its form as a draft (`requested`), so the
+ *           rep can close it and resume from the decision notification.
+ *   step 2  the code fills itself on `DiscountApprovalDecided` (or is typed).
  *
  * The code is bound to type + customer + amount + discount: changing any of
- * them after the request makes it stale (a new request is needed). The code
- * fills itself when the decision arrives (`DiscountApprovalDecided`, or a
- * mock-store change from another tab).
+ * them after the request needs a new request.
  */
 @Component({
   selector: 'app-discount-approval-box',
@@ -92,7 +92,12 @@ export class DiscountApprovalBoxComponent {
   /** A customer is mandatory for this type before a request can be sent. */
   readonly customerRequired = input(true);
 
+  /** Resume a request made earlier (from «موافقات الخصم» / its notification). */
+  readonly resumeApprovalId = input<number | null>(null);
+
   readonly stateChange = output<DiscountGateState>();
+  /** A request was created — the host keeps its form as a draft for this id. */
+  readonly requested = output<DiscountApproval>();
 
   protected readonly threshold = toSignal(this.approvals.threshold$, { initialValue: DEFAULT_DISCOUNT_THRESHOLD_PERCENT });
   private readonly isAdmin = computed(() => this.auth.currentRole() === 'Admin');
@@ -124,7 +129,12 @@ export class DiscountApprovalBoxComponent {
   protected readonly active = computed(() => (this.approvalKey() === this.key() ? this.approval() : null));
   protected readonly stale = computed(() => !!this.approval() && this.approvalKey() !== this.key());
 
-  protected readonly busy = signal<'whatsapp' | 'copy' | null>(null);
+  protected readonly busy = signal<'request' | 'whatsapp' | 'copy' | null>(null);
+  /** The request still waiting for the manager (for the current values). */
+  protected readonly pending = computed(() => {
+    const a = this.active();
+    return a?.status === 'Pending' ? a : null;
+  });
   protected readonly error = signal<string | null>(null);
 
   protected readonly code = signal('');
@@ -146,6 +156,12 @@ export class DiscountApprovalBoxComponent {
     effect(() => {
       const state: DiscountGateState = { required: this.required(), ready: this.ready(), code: this.required() ? this.approvedCode() : null };
       untracked(() => this.stateChange.emit(state));
+    });
+
+    // Coming back to a request made earlier.
+    effect(() => {
+      const id = this.resumeApprovalId();
+      if (id != null) untracked(() => this.resume(id));
     });
 
     // New values → the typed code no longer applies.
@@ -182,6 +198,23 @@ export class DiscountApprovalBoxComponent {
       });
   }
 
+  /** Loads a request made earlier and, once approved, fills its code. */
+  private resume(id: number): void {
+    this.approvals.gateway.get(id).subscribe({
+      next: (a) => {
+        const key = keyOf(a);
+        this.approval.set(a);
+        this.approvalKey.set(key);
+        if (a.status === 'Approved' && a.code) {
+          this.code.set(a.code);
+          this.verified.set({ code: a.code, key });
+          this.autoFilled.set(true);
+        }
+      },
+      error: () => undefined,
+    });
+  }
+
   /**
    * The save failed: when the server refused the code (§9.3 messages), show
    * it under the code input and close the gate again. Returns true when the
@@ -208,50 +241,44 @@ export class DiscountApprovalBoxComponent {
 
   // ─────────── step 1 ───────────
 
-  protected sendWhatsApp(): void {
+  /** Creates the request — the server notifies every Admin. */
+  protected requestApproval(): void {
     if (this.busy()) return;
-    const existing = this.reusable();
-    if (existing) {
-      window.open(whatsAppShareUrl(this.requestText(existing)), '_blank', 'noopener');
-      return;
-    }
-    // Open the tab inside the click (popup blockers), point it at WhatsApp once the request exists.
-    const tab = window.open('', '_blank');
-    this.busy.set('whatsapp');
+    this.busy.set('request');
     this.ensureRequest().subscribe({
-      next: (a) => {
+      next: () => {
         this.busy.set(null);
-        const url = whatsAppShareUrl(this.requestText(a));
-        if (tab) {
-          tab.opener = null;
-          tab.location.href = url;
-        } else {
-          window.open(url, '_blank', 'noopener');
-        }
+        this.toast.success(this.t('discounts.box.requestedToast'));
       },
       error: (err: ApiError) => {
         this.busy.set(null);
-        tab?.close();
         this.error.set(err?.message || this.t('common.loadFailed'));
       },
     });
   }
 
-  protected copyRequest(): void {
-    if (this.busy()) return;
+  /** Optional nudge: open WhatsApp with the full request text. */
+  protected shareWhatsApp(): void {
+    const a = this.reusable();
+    if (a) window.open(whatsAppShareUrl(this.requestText(a)), '_blank', 'noopener');
+  }
+
+  protected copyLink(): void {
+    const a = this.reusable();
+    if (a) void this.copy(approvalPageUrl(a.id), 'discounts.box.linkCopied');
+  }
+
+  protected copyDetails(): void {
+    const a = this.reusable();
+    if (a) void this.copy(this.requestText(a), 'discounts.box.copied');
+  }
+
+  private async copy(text: string, okKey: string): Promise<void> {
     this.busy.set('copy');
-    this.ensureRequest().subscribe({
-      next: async (a) => {
-        const ok = await copyToClipboard(this.requestText(a));
-        this.busy.set(null);
-        if (ok) this.toast.success(this.t('discounts.box.copied'));
-        else this.toast.error(this.t('discounts.box.copyFailed'));
-      },
-      error: (err: ApiError) => {
-        this.busy.set(null);
-        this.error.set(err?.message || this.t('common.loadFailed'));
-      },
-    });
+    const ok = await copyToClipboard(text);
+    this.busy.set(null);
+    if (ok) this.toast.success(this.t(okKey));
+    else this.toast.error(this.t('discounts.box.copyFailed'));
   }
 
   protected requestAgain(): void {
@@ -302,6 +329,7 @@ export class DiscountApprovalBoxComponent {
         tap((a) => {
           this.approval.set(a);
           this.approvalKey.set(key);
+          this.requested.emit(a);
         }),
       );
   }
@@ -332,4 +360,9 @@ export class DiscountApprovalBoxComponent {
   private t(key: string): string {
     return resolveKey(TRANSLATIONS[this.language.lang()], key);
   }
+}
+
+/** The binding a request was made for — matches `bindingKey` of the live values. */
+function keyOf(a: DiscountApproval): string {
+  return bindingKey({ type: a.type, customerId: a.customerId, amount: round2(a.amount), discount: round2(a.discount) });
 }
