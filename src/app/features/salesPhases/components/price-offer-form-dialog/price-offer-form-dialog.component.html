@@ -145,6 +145,9 @@
             <label class="form-label">{{ 'sales.priceOffers.form.discount' | translate }}</label>
             <input type="number" min="0" step="any" class="form-control"
                    formControlName="discount" placeholder="0">
+            @if (discountPercentText(); as pct) {
+              <small class="text-muted d-block mt-1">{{ 'discounts.hint' | translate: { percent: pct } }}</small>
+            }
           </div>
           <div class="col-md-8">
             <label class="form-label">{{ 'sales.priceOffers.form.notes' | translate }}</label>
@@ -167,6 +170,16 @@
             </div>
           </div>
         </div>
+
+        <app-discount-approval-box
+          type="PriceQuotation"
+          [customerId]="customerIdValue()"
+          [customerName]="customerNameValue()"
+          [amount]="subTotal()"
+          [discount]="discountValue()"
+          [referenceId]="quotationId"
+          [baselineDiscount]="baselineDiscount()"
+          (stateChange)="gate.set($event)" />
       </section>
 
       @if (errorMessage()) {
@@ -183,7 +196,8 @@
       {{ 'common.cancel' | translate }}
     </button>
     <button type="submit" form="price-offer-form" class="btn btn-primary"
-            [disabled]="submitting() || loadingQuote() || !!loadError()">
+            [disabled]="submitting() || loadingQuote() || !!loadError() || !gate().ready"
+            [attr.title]="gate().ready ? null : ('discounts.box.saveBlocked' | translate)">
       @if (submitting()) {
         <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
       } @else {

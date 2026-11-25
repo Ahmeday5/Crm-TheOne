@@ -62,6 +62,7 @@ const sidebar: TranslationFile<'sidebar'> = {
       salesPipeline: 'مسار المبيعات (Kanban)',
       customerMap: 'خريطة العملاء',
       priceOffers: 'عروض الأسعار',
+      discountApprovals: 'موافقات الخصم',
       salesPlaybook: 'دليل المبيعات',
       salesLine: 'عروض الأسعار',
       // Contracts & schedule

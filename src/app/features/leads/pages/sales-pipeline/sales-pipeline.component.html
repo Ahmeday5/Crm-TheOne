@@ -27,6 +27,7 @@
       <app-stat-card
         [label]="'pipeline.stats.total' | translate"
         [value]="stats()?.totalCustomers ?? '—'"
+        [sub]="'pipeline.stats.totalHint' | translate"
         icon="fa-solid fa-users"
         tone="primary">
       </app-stat-card>
@@ -92,6 +93,7 @@
           <div class="col-12 col-md-6 col-xl-3">
             <select class="form-select" [ngModel]="salesPersonId() ?? ''" (ngModelChange)="onSalesPersonChange($event)">
               <option value="">{{ 'pipeline.filters.allSales' | translate }}</option>
+              <option [value]="unassignedSales">{{ 'pipeline.filters.unassigned' | translate }}</option>
               @for (p of salesTeam(); track p.id) {
                 <option [value]="p.id">{{ p.name }}</option>
               }
@@ -254,9 +256,10 @@
                   </div>
                 }
 
-                @if (card.notBuyingReason) {
-                  <div class="sp-reason" appClampText="2" [clampTitle]="card.fullName" [clampText]="card.notBuyingReason">
-                    <i class="fa-solid fa-circle-exclamation"></i>{{ card.notBuyingReason }}
+                @let reason = reasonText(card);
+                @if (reason) {
+                  <div class="sp-reason" appClampText="2" [clampTitle]="card.fullName" [clampText]="reason">
+                    <i class="fa-solid fa-circle-exclamation"></i>{{ reason }}
                   </div>
                 }
 

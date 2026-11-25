@@ -11,7 +11,7 @@ import {
 } from '../../../core/http/http-context.tokens';
 import { ApiService } from '../../../core/services/api.service';
 import { CustomersService } from '../../leads/services/customers.service';
-import { fetchAllPages } from '../../leads/utils/sales-person-filter.util';
+import { fetchAllPages } from '../../leads/utils/fetch-all-pages.util';
 import {
   AppService,
   CreateSupportTicketRequest,

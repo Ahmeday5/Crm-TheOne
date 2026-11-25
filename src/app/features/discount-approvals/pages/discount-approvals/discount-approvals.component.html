@@ -1,0 +1,241 @@
+<app-page-header [title]="(isAdmin() ? 'discounts.page.title' : 'discounts.page.titleMine') | translate"
+                 [subtitle]="(isAdmin() ? 'discounts.page.subtitle' : 'discounts.page.subtitleMine') | translate"
+                 icon="fa-solid fa-percent">
+  <div class="btn-row">
+    @if (isAdmin()) {
+      <button type="button" class="btn btn-light" (click)="openRules()">
+        <i class="fa-solid fa-sliders me-1" aria-hidden="true"></i>{{ 'discounts.rules.open' | translate }}
+      </button>
+    }
+    <app-refresh-button [loading]="loading()" (refresh)="refreshAll()" />
+  </div>
+</app-page-header>
+
+<div class="alert alert-info d-flex gap-2 align-items-start dap-info" role="note">
+  <i class="fa-solid fa-circle-info mt-1" aria-hidden="true"></i>
+  <span>{{ (isAdmin() ? 'discounts.page.info' : 'discounts.page.infoMine') | translate: { threshold: threshold() } }}</span>
+</div>
+
+<!-- Selected request (`/discount-approvals/:id`) -->
+@if (selectedId() !== null) {
+  <section class="card dap-card mb-3" aria-live="polite">
+    <div class="card-body">
+      @if (selectedLoading()) {
+        <div class="py-4 text-center text-muted">
+          <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>{{ 'common.loading' | translate }}
+        </div>
+      } @else if (selectedError()) {
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <span class="text-danger"><i class="fa-solid fa-circle-exclamation me-1" aria-hidden="true"></i>{{ selectedError() }}</span>
+          <button type="button" class="btn btn-light btn-sm" (click)="closeSelected()">{{ 'common.close' | translate }}</button>
+        </div>
+      } @else if (selected()) {
+        @let a = selected()!;
+        <header class="dap-card__head">
+          <div class="min-w-0">
+            <h2 class="dap-card__title">{{ 'discounts.page.request' | translate: { id: a.id } }}</h2>
+            <span class="badge dap-badge dap-badge--{{ tone(a.status) }}">{{ 'discounts.status.' + a.status | translate }}</span>
+          </div>
+          <button type="button" class="btn btn-light btn-sm" (click)="closeSelected()" [attr.aria-label]="'common.close' | translate">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </header>
+
+        <dl class="dap-facts">
+          <div><dt>{{ 'discounts.page.type' | translate }}</dt><dd>{{ 'discounts.types.' + a.type | translate }}</dd></div>
+          <div><dt>{{ 'discounts.page.customer' | translate }}</dt><dd dir="auto">{{ a.customerName }}</dd></div>
+          <div>
+            <dt>{{ 'discounts.page.requester' | translate }}</dt>
+            <dd dir="auto">{{ a.requestedByName }} <small class="text-muted d-block">{{ a.requestedAt | cairoDate: 'datetime' }}</small></dd>
+          </div>
+          <div><dt>{{ 'discounts.page.amountBefore' | translate }}</dt><dd dir="ltr" class="dap-num">{{ formatMoney(a.amount) }} <small>EGP</small></dd></div>
+          <div>
+            <dt>{{ 'discounts.page.discount' | translate }}</dt>
+            <dd class="dap-num">
+              <span dir="ltr">{{ formatMoney(a.discount) }} <small>EGP</small></span>
+              <span class="dap-pct" dir="ltr">{{ formatPercent(a.percent) }}%</span>
+            </dd>
+          </div>
+          <div><dt>{{ 'discounts.page.amountAfter' | translate }}</dt><dd dir="ltr" class="dap-num dap-num--net">{{ formatMoney(a.netAmount) }} <small>EGP</small></dd></div>
+        </dl>
+
+        @if (a.status === 'Pending' && isAdmin()) {
+          <div class="btn-row dap-actions">
+            <button type="button" class="btn btn-success" [disabled]="!!deciding()" (click)="approve(a)">
+              @if (deciding() === 'approve') { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+              @else { <i class="fa-solid fa-check me-1" aria-hidden="true"></i> }
+              {{ 'discounts.page.approve' | translate }}
+            </button>
+            <button type="button" class="btn btn-danger-soft" [disabled]="!!deciding()" (click)="openReject()">
+              <i class="fa-solid fa-ban me-1" aria-hidden="true"></i>{{ 'discounts.page.reject' | translate }}
+            </button>
+          </div>
+        }
+
+        @if (a.status === 'Approved' && a.code) {
+          <div class="dap-code">
+            <p class="dap-code__label">{{ 'discounts.page.code' | translate }}</p>
+            <p class="dap-code__value" dir="ltr">{{ a.code }}</p>
+            <p class="dap-code__valid">
+              <i class="fa-regular fa-clock me-1" aria-hidden="true"></i>{{ 'discounts.page.validTodayTomorrow' | translate }}
+              @if (a.validUntil) { <span class="text-muted">— {{ 'discounts.page.validUntil' | translate: { date: (a.validUntil | cairoDate: 'datetime') } }}</span> }
+            </p>
+            <div class="btn-row justify-content-center">
+              <button type="button" class="btn btn-success" (click)="sendCode(a)">
+                <i class="fa-brands fa-whatsapp me-1" aria-hidden="true"></i>{{ 'discounts.page.sendCodeWhatsapp' | translate }}
+              </button>
+              <button type="button" class="btn btn-light" (click)="copyCode(a)">
+                <i class="fa-regular fa-copy me-1" aria-hidden="true"></i>{{ 'discounts.page.copyCode' | translate }}
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (a.status === 'Rejected' && a.rejectReason) {
+          <p class="dap-reason" dir="auto"><i class="fa-solid fa-ban me-1" aria-hidden="true"></i>{{ 'discounts.box.rejectedReason' | translate: { reason: a.rejectReason } }}</p>
+        }
+        @if (a.decidedByName && a.status !== 'Pending') {
+          <p class="small text-muted mb-0 mt-2">
+            {{ 'discounts.page.decidedBy' | translate: { name: a.decidedByName } }}
+            @if (a.decidedAt) { · {{ a.decidedAt | cairoDate: 'datetime' }} }
+            @if (a.status === 'Used' && a.referenceId) { · {{ 'discounts.page.usedIn' | translate: { id: a.referenceId } }} }
+          </p>
+        }
+        @if (actionError(); as e) {
+          <div class="alert alert-danger py-2 small mt-3 mb-0" role="alert">{{ e }}</div>
+        }
+      }
+    </div>
+  </section>
+}
+
+<!-- All requests -->
+<div class="card">
+  <div class="card-body">
+    <div class="dap-toolbar">
+      <h2 class="dap-toolbar__title">{{ 'discounts.page.list' | translate }}</h2>
+      <div class="dap-chips" role="tablist">
+        <button type="button" role="tab" class="dap-chip" [class.is-active]="status() === null" [attr.aria-selected]="status() === null" (click)="setStatus(null)">
+          {{ 'common.all' | translate }}
+        </button>
+        @for (s of statuses; track s) {
+          <button type="button" role="tab" class="dap-chip" [class.is-active]="status() === s" [attr.aria-selected]="status() === s" (click)="setStatus(s)">
+            {{ 'discounts.status.' + s | translate }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (error()) {
+      <div class="text-center py-5">
+        <p class="text-muted mb-2">{{ 'common.loadFailed' | translate }}</p>
+        <button type="button" class="btn btn-light btn-sm" (click)="load()"><i class="fa-solid fa-rotate me-1"></i>{{ 'common.retry' | translate }}</button>
+      </div>
+    } @else if (isEmpty()) {
+      <div class="text-center py-5">
+        <span class="icon-tile xl tone-warning mb-3"><i class="fa-solid fa-percent"></i></span>
+        <h6 class="fw-700 mb-1">{{ 'discounts.page.empty' | translate }}</h6>
+        <p class="text-muted small mb-0">{{ 'discounts.page.emptyHint' | translate }}</p>
+      </div>
+    } @else {
+      <div class="table-responsive" [class.dap-dim]="loading()">
+        <table class="table table-hover align-middle mb-0" appResponsiveTable [rtPrimaryCol]="1">
+          <thead>
+            <tr>
+              <th>{{ 'discounts.page.table.id' | translate }}</th>
+              <th>{{ 'discounts.page.table.customer' | translate }}</th>
+              <th>{{ 'discounts.page.table.type' | translate }}</th>
+              <th>{{ 'discounts.page.table.requester' | translate }}</th>
+              <th>{{ 'discounts.page.table.amount' | translate }}</th>
+              <th>{{ 'discounts.page.table.discount' | translate }}</th>
+              <th>{{ 'discounts.page.table.net' | translate }}</th>
+              <th>{{ 'discounts.page.table.status' | translate }}</th>
+              <th>{{ 'discounts.page.table.date' | translate }}</th>
+              <th class="rt-actions text-end" [attr.data-label]="'discounts.page.table.actions' | translate">{{ 'discounts.page.table.actions' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of rows(); track r.id) {
+              <tr [class.dap-row--active]="r.id === selectedId()" [class.dap-row--pending]="r.status === 'Pending'">
+                <td class="text-muted" dir="ltr">#{{ r.id }}</td>
+                <td class="fw-600" dir="auto">{{ r.customerName }}</td>
+                <td class="small">{{ 'discounts.types.' + r.type | translate }}</td>
+                <td class="small" dir="auto">{{ r.requestedByName }}</td>
+                <td class="text-nowrap" dir="ltr">{{ formatMoney(r.amount) }}</td>
+                <td class="text-nowrap">
+                  <span dir="ltr">{{ formatMoney(r.discount) }}</span>
+                  <span class="dap-pct dap-pct--sm" dir="ltr">{{ formatPercent(r.percent) }}%</span>
+                </td>
+                <td class="fw-700 text-nowrap" dir="ltr">{{ formatMoney(r.netAmount) }}</td>
+                <td><span class="badge dap-badge dap-badge--{{ tone(r.status) }}">{{ 'discounts.status.' + r.status | translate }}</span></td>
+                <td class="text-nowrap small">{{ r.requestedAt | cairoDate: 'datetime' }}</td>
+                <td class="text-end">
+                  <a class="btn btn-sm" [class.btn-primary]="r.status === 'Pending'" [class.btn-light]="r.status !== 'Pending'"
+                     [routerLink]="['/discount-approvals', r.id]">
+                    {{ 'discounts.page.open' | translate }}
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination class="mt-3 d-block" [pageIndex]="pageIndex()" [pageSize]="pageSize()" [count]="count()"
+                      [disabled]="loading()" (pageChange)="onPage($event)" (pageSizeChange)="onPageSize($event)" />
+    }
+  </div>
+</div>
+
+<!-- Reject reason -->
+@if (rejectOpen() && selected(); as a) {
+  <app-modal [open]="true" [title]="'discounts.page.rejectTitle' | translate" icon="fa-solid fa-ban" iconTone="danger" size="sm"
+             [closeOnBackdrop]="!deciding()" [closeOnEsc]="!deciding()" (closed)="rejectOpen.set(false)">
+    <label class="form-label fw-600" for="dap-reason">{{ 'discounts.page.rejectReason' | translate }}</label>
+    <textarea id="dap-reason" class="form-control" rows="3" maxlength="500" dir="auto"
+              [placeholder]="'discounts.page.rejectReasonPh' | translate" [(ngModel)]="rejectReason"></textarea>
+    <ng-container modal-footer>
+      <button type="button" class="btn btn-light" [disabled]="!!deciding()" (click)="rejectOpen.set(false)">{{ 'common.cancel' | translate }}</button>
+      <button type="button" class="btn btn-danger" [disabled]="!!deciding() || !rejectReason.trim()" (click)="confirmReject(a)">
+        @if (deciding() === 'reject') { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+        {{ 'discounts.page.confirmReject' | translate }}
+      </button>
+    </ng-container>
+  </app-modal>
+}
+
+@if (rulesOpen()) {
+  <app-modal [open]="true" size="sm" icon="fa-solid fa-sliders" [title]="'discounts.rules.title' | translate"
+             [closeOnBackdrop]="!rulesSaving()" (closed)="rulesOpen.set(false)">
+    <div class="mb-3">
+      <label class="form-label fw-600" for="rules-threshold">{{ 'discounts.rules.threshold' | translate }}</label>
+      <div class="input-group">
+        <input id="rules-threshold" type="number" class="form-control" min="0" max="100" step="0.5"
+               [(ngModel)]="rulesThreshold" [disabled]="rulesSaving()" />
+        <span class="input-group-text">%</span>
+      </div>
+      <div class="form-text">{{ 'discounts.rules.thresholdHint' | translate }}</div>
+    </div>
+    <div class="mb-1">
+      <label class="form-label fw-600" for="rules-minutes">{{ 'discounts.rules.awaiting' | translate }}</label>
+      <div class="input-group">
+        <input id="rules-minutes" type="number" class="form-control" min="1" max="10080" step="1"
+               [(ngModel)]="rulesMinutes" [disabled]="rulesSaving()" />
+        <span class="input-group-text">{{ 'discounts.rules.minutes' | translate }}</span>
+      </div>
+      <div class="form-text">{{ 'discounts.rules.awaitingHint' | translate }}</div>
+    </div>
+    @if (rulesError()) {
+      <div class="alert alert-danger py-2 mt-3 mb-0">{{ rulesError() }}</div>
+    }
+    <ng-container modal-footer>
+      <button type="button" class="btn btn-light" [disabled]="rulesSaving()" (click)="rulesOpen.set(false)">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button type="button" class="btn btn-primary" [disabled]="rulesSaving()" (click)="saveRules()">
+        @if (rulesSaving()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+        {{ 'discounts.rules.save' | translate }}
+      </button>
+    </ng-container>
+  </app-modal>
+}

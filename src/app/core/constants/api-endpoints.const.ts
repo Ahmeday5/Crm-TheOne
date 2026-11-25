@@ -438,6 +438,25 @@ export const API_ENDPOINTS = {
     markChatRead: (chatId: number | string) => `WhatsApp/chats/${chatId}/read`,
     /** DELETE (Admin / channel owner) — soft delete; a new customer message brings it back. */
     chat: (chatId: number | string) => `WhatsApp/chats/${chatId}`,
+    /** POST `{ customerId }` (Admin / channel owner) — links the chat to a CRM customer, returns the chat. */
+    linkCustomer: (chatId: number | string) => `WhatsApp/chats/${chatId}/link-customer`,
+    // ── inbox v4 (docs/backend-prompt-inbox-v4.md) ──
+    /** PUT `{ labels: string[] }` — replaces the chat's labels (§2). */
+    chatLabels: (chatId: number | string) => `WhatsApp/chats/${chatId}/labels`,
+    /** GET / POST `{ text }` — internal team notes (§3). */
+    chatNotes: (chatId: number | string) => `WhatsApp/chats/${chatId}/notes`,
+    /** DELETE — author or Admin (§3). */
+    chatNote: (chatId: number | string, noteId: number | string) => `WhatsApp/chats/${chatId}/notes/${noteId}`,
+    /** POST `{ dueAt, note? }` (§4). */
+    chatReminders: (chatId: number | string) => `WhatsApp/chats/${chatId}/reminders`,
+    /** GET the caller's reminders — `status=pending|due|done` (§4). */
+    reminders: 'WhatsApp/reminders',
+    reminder: (id: number | string) => `WhatsApp/reminders/${id}`,
+    reminderDone: (id: number | string) => `WhatsApp/reminders/${id}/done`,
+    /** GET `{ awaitingReply, overdueReminders, thresholdMinutes }` (§5). */
+    chatCounters: 'WhatsApp/chats/counters',
+    /** POST `{ toUserId, message? }` — Sales rep only; chat must be linked (§6). */
+    chatTransfer: (chatId: number | string) => `WhatsApp/chats/${chatId}/transfer`,
     /** GET oldest → newest — `take`. */
     customerMessages: (customerId: number | string) =>
       `WhatsApp/customers/${customerId}/messages`,
@@ -455,6 +474,15 @@ export const API_ENDPOINTS = {
    * (active only), `?includeInactive=true` + writes = Admin. `publicPayment*`
    * are anonymous (the `/pay/:token` page).
    */
+  /** Manager approval for discounts above the limit (docs/backend-prompt-inbox-v4.md §9). */
+  discountApprovals: {
+    list: 'DiscountApprovals',
+    byId: (id: number | string) => `DiscountApprovals/${id}`,
+    approve: (id: number | string) => `DiscountApprovals/${id}/approve`,
+    reject: (id: number | string) => `DiscountApprovals/${id}/reject`,
+    /** GET `{ discountApprovalThresholdPercent, awaitingReplyThresholdMinutes }`. */
+    salesRules: 'Settings/sales-rules',
+  },
   payments: {
     methods: 'PaymentMethods',
     method: (id: number | string) => `PaymentMethods/${id}`,

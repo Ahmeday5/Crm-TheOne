@@ -58,15 +58,31 @@
          status is NotBuyer; hidden + cleared otherwise. -->
     @if (requiresReason()) {
       <div class="mb-1">
-        <label class="form-label fw-600">
+        <label class="form-label fw-600" id="nb-reason-label">
           <i class="fa-solid fa-circle-question text-danger me-1"></i>
           {{ 'customers.statusModal.notBuyingReason' | translate }}
           <span class="text-danger">*</span>
         </label>
+        <div class="d-flex flex-wrap gap-2 mb-2" role="radiogroup" aria-labelledby="nb-reason-label">
+          @for (code of reasonCodes; track code) {
+            <button type="button"
+                    class="btn btn-sm rounded-pill"
+                    role="radio"
+                    [class.btn-danger]="reasonCode() === code"
+                    [class.btn-outline-secondary]="reasonCode() !== code"
+                    [attr.aria-checked]="reasonCode() === code"
+                    [disabled]="submitting()"
+                    (click)="pickReason(code)">
+              {{ reasonKey(code) | translate }}
+            </button>
+          }
+        </div>
         <textarea class="form-control"
-                  rows="3"
+                  rows="2"
                   [maxlength]="500"
-                  [placeholder]="'customers.statusModal.notBuyingReasonPh' | translate"
+                  [class.is-invalid]="detailsRequired() && !notBuyingReason().trim()"
+                  [placeholder]="(detailsRequired() ? 'customers.statusModal.reasonDetailsRequiredPh' : 'customers.statusModal.reasonDetailsPh') | translate"
+                  [attr.aria-label]="'customers.statusModal.reasonDetailsPh' | translate"
                   [ngModel]="notBuyingReason()"
                   (ngModelChange)="onReasonChange($event)"
                   [disabled]="submitting()"></textarea>

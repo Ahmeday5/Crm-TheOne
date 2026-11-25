@@ -34,7 +34,26 @@
     @for (f of filters; track f) {
       <button type="button" role="tab" class="wa-tabs__tab" [class.is-active]="store.filter() === f"
               [attr.aria-selected]="store.filter() === f" (click)="setFilter(f)">
-        {{ 'whatsapp.chats.filter.' + f | translate }}
+        @if (f === 'awaiting') {
+          <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
+        } @else if (f === 'followups') {
+          <i class="fa-solid fa-bell" aria-hidden="true"></i>
+        }
+        {{ (f === 'awaiting' || f === 'followups' ? 'inboxTools.list.' + f : 'whatsapp.chats.filter.' + f) | translate }}
+        @if (countFor(f) > 0) {
+          <span class="wa-tabs__count">{{ countFor(f) }}</span>
+        }
+      </button>
+    }
+  </div>
+
+  <div class="wa-labels" role="group" [attr.aria-label]="'inboxTools.list.labelsAria' | translate">
+    @for (l of allLabels; track l.code) {
+      <button type="button" class="wa-labels__chip" [attr.data-tone]="l.tone"
+              [class.is-active]="store.label() === l.code"
+              [attr.aria-pressed]="store.label() === l.code"
+              (click)="toggleLabel(l.code)">
+        <i [class]="l.icon" aria-hidden="true"></i>{{ l.key | translate }}
       </button>
     }
   </div>
@@ -66,6 +85,15 @@
       @if (store.filter() === 'unread' && !term()) {
         <span class="icon-tile lg tone-success"><i class="fa-solid fa-check-double"></i></span>
         <p class="text-muted mb-0">{{ 'whatsapp.chats.emptyUnread' | translate }}</p>
+      } @else if (store.filter() === 'awaiting' && !term()) {
+        <span class="icon-tile lg tone-success"><i class="fa-solid fa-check-double"></i></span>
+        <p class="text-muted mb-0">{{ 'inboxTools.list.emptyAwaiting' | translate }}</p>
+      } @else if (store.filter() === 'followups' && !term()) {
+        <span class="icon-tile lg tone-primary"><i class="fa-solid fa-bell"></i></span>
+        <p class="text-muted mb-0">{{ 'inboxTools.list.emptyFollowups' | translate }}</p>
+      } @else if (store.label() && !term()) {
+        <span class="icon-tile lg tone-primary"><i class="fa-solid fa-tag"></i></span>
+        <p class="text-muted mb-0">{{ 'inboxTools.list.emptyLabel' | translate }}</p>
       } @else if (term()) {
         <span class="icon-tile lg tone-primary"><i class="fa-solid fa-magnifying-glass"></i></span>
         <p class="text-muted mb-0">{{ 'whatsapp.chats.emptySearch' | translate }}</p>
@@ -80,8 +108,13 @@
       @for (chat of store.chats(); track chat.id) {
         @let active = chat.id === store.activeChatId();
         @let unread = chat.unreadCount > 0;
+        @let wait = waiting(chat);
+        @let chatLabels = labelsOf(chat);
+        @let due = reminderDue(chat);
         <li>
           <button type="button" class="wa-chat" [class.is-active]="active" [class.is-unread]="unread"
+                  [class.is-waiting]="!!wait && !due"
+                  [class.is-reminder-due]="due"
                   [attr.aria-current]="active ? 'true' : null"
                   (click)="selected.emit(chat)">
             @if (hasName(chat)) {
@@ -121,10 +154,54 @@
                 }
               </span>
 
+              @if (due) {
+                <span class="wa-chat__due" role="status">
+                  <i class="fa-solid fa-bell" aria-hidden="true"></i>{{ 'inboxTools.list.reminderDueNow' | translate }}
+                </span>
+              }
+
+              @if (wait || chatLabels.length || chat.nextReminderAt || (chat.notesCount ?? 0) > 0) {
+                <span class="wa-chat__marks">
+                  @if (wait) {
+                    <span class="wa-mark wa-mark--wait">
+                      <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
+                      @if (wait.d > 0) {
+                        {{ 'inboxTools.list.waitingD' | translate: { d: wait.d } }}
+                      } @else if (wait.h > 0) {
+                        {{ 'inboxTools.list.waitingH' | translate: { h: wait.h } }}
+                      } @else {
+                        {{ 'inboxTools.list.waitingM' | translate: { m: wait.m } }}
+                      }
+                    </span>
+                  }
+                  @for (l of chatLabels; track l.code) {
+                    <span class="wa-mark wa-mark--label" [attr.data-tone]="l.tone">
+                      <i [class]="l.icon" aria-hidden="true"></i>{{ l.key | translate }}
+                    </span>
+                  }
+                  @if (chat.nextReminderAt && !due) {
+                    <span class="wa-mark wa-mark--reminder"
+                          [title]="'inboxTools.list.reminderAt' | translate: { when: (chat.nextReminderAt | cairoDate: 'datetime') }">
+                      <i class="fa-regular fa-bell" aria-hidden="true"></i>{{ chat.nextReminderAt | cairoDate: 'datetime' }}
+                    </span>
+                  }
+                  @if ((chat.notesCount ?? 0) > 0) {
+                    <span class="wa-mark wa-mark--icon" [title]="'inboxTools.list.notesCount' | translate: { n: chat.notesCount }">
+                      <i class="fa-solid fa-note-sticky" aria-hidden="true"></i>{{ chat.notesCount }}
+                    </span>
+                  }
+                </span>
+              }
+
               <span class="wa-chat__owner">
                 <app-wa-channel-badge [type]="chat.channelType" [name]="channelName(chat)" />
                 @if (showOwner() && chat.ownerName) {
                   <span class="wa-chat__owner-name">· {{ chat.ownerName }}</span>
+                }
+                @if (chat.assignedUserName) {
+                  <span class="wa-chat__assigned" [title]="'inboxTools.transfer.assignedTo' | translate: { name: chat.assignedUserName }">
+                    <i class="fa-solid fa-share-from-square" aria-hidden="true"></i>{{ chat.assignedUserName }}
+                  </span>
                 }
               </span>
             </span>

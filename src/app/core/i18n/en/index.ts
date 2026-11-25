@@ -42,6 +42,8 @@ import deliverables from './deliverables.en';
 import vaultLock from './vaultLock.en';
 import payments from './payments.en';
 import dateFilter from './dateFilter.en';
+import inboxTools from './inboxTools.en';
+import discounts from './discounts.en';
 
 const en: Translations = {
   ...common,
@@ -87,6 +89,8 @@ const en: Translations = {
   ...vaultLock,
   ...payments,
   ...dateFilter,
+  ...inboxTools,
+  ...discounts,
 };
 
 export default en;

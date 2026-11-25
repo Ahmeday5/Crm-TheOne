@@ -1,0 +1,73 @@
+.rd-label {
+  display: block;
+  margin: 0.85rem 0 0.35rem;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+  color: var(--text-1);
+}
+.rd-mine .rd-label { margin-top: 0; }
+
+.rd-others {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin: 0 0 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--info-soft);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+
+  i { color: var(--info); margin-top: 0.2rem; }
+}
+
+.rd-mine__state { margin: 0; padding: 0.35rem 0; font-size: var(--fs-sm); }
+.rd-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; }
+.rd-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-inline-start: 3px solid var(--brand);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+
+  &.is-due { border-inline-start-color: var(--danger); }
+}
+.rd-item__icon { color: var(--brand); }
+.rd-item.is-due .rd-item__icon { color: var(--danger); }
+.rd-item__body { flex: 1; min-width: 10rem; }
+.rd-item__when { font-weight: var(--fw-700); font-variant-numeric: tabular-nums; }
+.rd-item__status {
+  margin-inline-start: 0.45rem;
+  padding: 0 0.45rem;
+  border-radius: var(--radius-pill);
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-600);
+}
+.rd-item.is-due .rd-item__status { background: var(--danger-soft); color: var(--danger); }
+.rd-item__note { margin: 0.2rem 0 0; font-size: var(--fs-sm); color: var(--text-2); overflow-wrap: anywhere; }
+.rd-item__actions { display: flex; gap: 0.35rem; margin-inline-start: auto; }
+
+.rd-form { margin-top: 0.35rem; border-top: 1px solid var(--border); padding-top: 0.15rem; }
+.rd-presets { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.rd-preset {
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-0);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover { color: var(--text-1); border-color: var(--border-strong); }
+  &.is-active { background: var(--brand); border-color: var(--brand); color: #fff; }
+}
+
+.rd-error { margin: 0.6rem 0 0; color: var(--danger); font-size: var(--fs-sm); }

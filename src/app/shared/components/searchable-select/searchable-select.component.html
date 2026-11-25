@@ -59,7 +59,7 @@
 
   <!-- ─── Dropdown panel ─── -->
   @if (isOpen()) {
-    <div class="ss-panel" role="listbox">
+    <div #panel class="ss-panel" role="listbox" [class.is-above]="panelAbove()">
 
       <!-- Search input -->
       <div class="ss-search-wrapper">

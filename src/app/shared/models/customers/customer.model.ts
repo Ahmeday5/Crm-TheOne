@@ -64,6 +64,8 @@ export interface CustomerListItem extends CustomerLocation {
    * by older endpoint versions that don't yet emit it.
    */
   notBuyerReason?: string | null;
+  /** Fixed reason code (PriceTooHigh … Other) — `null` unless the status is NotBuyer. */
+  notBuyingReasonCode?: string | null;
   /** Full activity log returned inline by the list endpoints. May be empty []. */
   activities?: CustomerActivity[];
 }
@@ -218,6 +220,10 @@ export interface AssignCustomerRequest {
 export interface AssignSupportRequest {
   supportPersonId: string;
   appointment: SupportHandoffAppointment;
+  /** Hand-off started from a chat — the server adds a system note to it. */
+  chatId?: number;
+  /** Optional note (with `chatId`), ≤ 500 chars. */
+  message?: string;
 }
 
 /** `data` of a successful hand-off: the updated customer + the booked appointment. */
@@ -241,8 +247,13 @@ export type CustomerStatusEnum = 'New' | 'Negotiating' | 'Buyer' | 'NotBuyer';
  */
 export interface ChangeCustomerStatusRequest {
   status: CustomerStatusEnum;
-  /** Required only when transitioning to `NotBuyer`. */
+  /** Details — required with `NotBuyer` only when the code is `Other`. */
   notBuyingReason?: string;
+  /**
+   * Fixed reason (docs/backend-prompt-inbox-v4.md §8) — required with
+   * `NotBuyer`: PriceTooHigh | ChoseCompetitor | BudgetTooLow | NotNeededNow | NoResponse | Other.
+   */
+  notBuyingReasonCode?: string;
 }
 
 /** Body for `POST /Customers/{id}/followUp`. */
@@ -371,6 +382,13 @@ export interface CustomerListQuery {
   From?: string;
   /** Added up to the end of this day (`yyyy-MM-dd`, inclusive). */
   To?: string;
+  /** Only customers currently assigned to this sales rep. */
+  SalesPersonId?: string;
+  /**
+   * `true` = only customers with no sales rep (`salesPersonId === null`).
+   * Never send together with `SalesPersonId` — the server returns 400.
+   */
+  Unassigned?: boolean;
 }
 
 /** The server caps `pageSize` of every customer list at 50. */

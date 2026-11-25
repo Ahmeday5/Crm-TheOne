@@ -1,0 +1,66 @@
+<section class="np" [attr.aria-label]="'inboxTools.notes.title' | translate">
+  <header class="np__head">
+    <i class="fa-solid fa-lock np__lock" aria-hidden="true"></i>
+    <h3 class="np__title">{{ 'inboxTools.notes.title' | translate }}</h3>
+    <button type="button" class="np__close" (click)="closed.emit()"
+            [title]="'inboxTools.notes.close' | translate" [attr.aria-label]="'inboxTools.notes.close' | translate">
+      <i class="fa-solid fa-chevron-up" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  <div class="np__add">
+    <textarea class="form-control form-control-sm np__input" rows="2" dir="auto"
+              [value]="draft()" [attr.maxlength]="maxLength"
+              [placeholder]="'inboxTools.notes.placeholder' | translate"
+              [attr.aria-label]="'inboxTools.notes.placeholder' | translate"
+              (input)="draft.set($any($event.target).value)"
+              (keydown)="onKeydown($event)"></textarea>
+    <button type="button" class="btn btn-sm btn-primary np__send" [disabled]="!canAdd()" (click)="add()">
+      @if (saving()) { <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> }
+      @else { <i class="fa-solid fa-plus" aria-hidden="true"></i> }
+      {{ 'inboxTools.notes.add' | translate }}
+    </button>
+  </div>
+
+  <div class="np__list">
+    @if (loading()) {
+      <div class="np__state"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span></div>
+    } @else if (error()) {
+      <div class="np__state">
+        <span class="text-muted">{{ 'inboxTools.notes.loadFailed' | translate }}</span>
+        <button type="button" class="btn btn-sm btn-light" (click)="reload()">
+          <i class="fa-solid fa-rotate me-1" aria-hidden="true"></i>{{ 'inboxTools.notes.retry' | translate }}
+        </button>
+      </div>
+    } @else if (notes().length === 0) {
+      <p class="np__state text-muted">{{ 'inboxTools.notes.empty' | translate }}</p>
+    } @else {
+      <ul class="np__items" role="list">
+        @for (note of notes(); track note.id) {
+          <li class="np-note" [class.is-system]="note.isSystem">
+            @if (note.isSystem) {
+              <span class="np-note__sys" aria-hidden="true"><i class="fa-solid fa-robot"></i></span>
+            } @else {
+              <app-user-avatar [name]="note.createdByName" [userId]="note.createdById" size="sm" />
+            }
+            <div class="np-note__body">
+              <div class="np-note__meta">
+                <span class="np-note__author" dir="auto">{{ note.createdByName }}</span>
+                @if (note.isSystem) { <span class="np-note__tag">{{ 'inboxTools.notes.system' | translate }}</span> }
+                <time class="np-note__time" [attr.datetime]="note.createdAt">{{ note.createdAt | cairoDate: 'datetime' }}</time>
+                @if (canDelete(note)) {
+                  <button type="button" class="np-note__del" [disabled]="deletingId() === note.id" (click)="remove(note)"
+                          [title]="'inboxTools.notes.delete' | translate" [attr.aria-label]="'inboxTools.notes.delete' | translate">
+                    @if (deletingId() === note.id) { <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> }
+                    @else { <i class="fa-solid fa-trash-can" aria-hidden="true"></i> }
+                  </button>
+                }
+              </div>
+              <p class="np-note__text" dir="auto">{{ note.text }}</p>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

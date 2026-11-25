@@ -58,15 +58,17 @@
       (newChat)="newChatOpen.set(true)" />
   </aside>
 
-  <div class="wa-inbox__thread">
+  <div class="wa-inbox__thread" [class.has-panel]="panelOpen() && !!activeChat()">
     @if (source(); as src) {
+      <div class="wa-inbox__thread-main">
       <app-wa-thread
         [source]="src"
         [contactName]="activeChat()?.customerName || activeChat()?.contactName || null"
         [showSender]="true"
         (read)="onRead($event)"
         (sent)="onSent()">
-        <header class="wa-head" waThreadHeader>
+        <div class="wa-headwrap" waThreadHeader>
+        <header class="wa-head">
           <button type="button" class="wa-head__back" (click)="backToList()"
                   [title]="'whatsapp.thread.back' | translate"
                   [attr.aria-label]="'whatsapp.thread.back' | translate">
@@ -90,15 +92,38 @@
                           [title]="'whatsapp.thread.openCustomer' | translate">
                     <i class="fa-solid fa-address-card" aria-hidden="true"></i>{{ 'whatsapp.thread.customerProfile' | translate }}
                   </button>
+                } @else if (canAddCustomer() && canManage(chat)) {
+                  <button type="button" class="wa-head__link" (click)="openAddCustomer(chat, 'add')"
+                          [title]="'whatsapp.addCustomer.addHint' | translate">
+                    <i class="fa-solid fa-user-plus" aria-hidden="true"></i>{{ 'whatsapp.addCustomer.add' | translate }}
+                  </button>
+                  <button type="button" class="wa-head__link" (click)="openAddCustomer(chat, 'link')"
+                          [title]="'whatsapp.addCustomer.linkHint' | translate">
+                    <i class="fa-solid fa-link" aria-hidden="true"></i>{{ 'whatsapp.addCustomer.linkShort' | translate }}
+                  </button>
                 } @else {
                   <span class="badge warning">{{ 'whatsapp.chats.notCustomer' | translate }}</span>
                 }
               </span>
             </div>
+            <button type="button" class="btn btn-sm btn-icon btn-light wa-head__panel"
+                    [class.is-active]="panelOpen()"
+                    [attr.aria-pressed]="panelOpen()"
+                    (click)="togglePanel()"
+                    [title]="'inboxTools.panel.toggle' | translate"
+                    [attr.aria-label]="'inboxTools.panel.toggle' | translate">
+              <i class="fa-solid fa-id-card" aria-hidden="true"></i>
+            </button>
             <span class="wa-head__owner">
               <app-wa-channel-badge [type]="chat.channelType" [name]="chat.instanceName" />
               @if (isAdmin() && chat.ownerName) {
                 <span class="wa-head__owner-name">{{ chat.ownerName }}</span>
+              }
+              @if (chat.assignedUserName) {
+                <span class="wa-assigned" [title]="'inboxTools.transfer.assignedTo' | translate: { name: chat.assignedUserName }">
+                  <i class="fa-solid fa-share-from-square" aria-hidden="true"></i>
+                  {{ 'inboxTools.transfer.assignedTo' | translate: { name: chat.assignedUserName } }}
+                </span>
               }
             </span>
             @if (canDelete(chat)) {
@@ -116,7 +141,41 @@
             </div>
           }
         </header>
+
+        @if (activeChat(); as chat) {
+          @if (reminderDue(chat)) {
+            <app-wa-reminder-due [chat]="chat" (changed)="onReminderDueChanged(chat, $event)" />
+          }
+          @if (canManage(chat)) {
+            <app-wa-chat-tools [chat]="chat" [canTransfer]="canAddCustomer()" (changed)="onChatChanged($event)" />
+          }
+          @if (!chat.customerId && canAddCustomer() && canManage(chat) && !bannerDismissed(chat.id)) {
+            <div class="wa-newbanner" role="status">
+              <i class="fa-solid fa-id-card-clip" aria-hidden="true"></i>
+              <span class="wa-newbanner__text">{{ 'inboxTools.banner.text' | translate }}</span>
+              <button type="button" class="btn btn-sm btn-success" (click)="openAddCustomer(chat, 'add')">
+                <i class="fa-solid fa-user-plus me-1" aria-hidden="true"></i>{{ 'whatsapp.addCustomer.add' | translate }}
+              </button>
+              <button type="button" class="wa-newbanner__close" (click)="dismissBanner(chat.id)"
+                      [attr.aria-label]="'inboxTools.banner.dismiss' | translate" [title]="'inboxTools.banner.dismiss' | translate">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            </div>
+          }
+        }
+        </div>
       </app-wa-thread>
+      </div>
+
+      @if (panelOpen() && activeChat(); as chat) {
+        <app-wa-customer-panel
+          class="wa-inbox__panel"
+          [chat]="chat"
+          [canEdit]="canManage(chat)"
+          (closed)="togglePanel()"
+          (addCustomer)="openAddCustomer(chat, 'add')"
+          (openProfile)="customerDialogId.set($event)" />
+      }
     } @else {
       <div class="wa-inbox__placeholder">
         <span class="wa-inbox__placeholder-icon" aria-hidden="true"><i class="fa-solid fa-comments"></i></span>
@@ -132,6 +191,14 @@
     [defaultInstanceId]="channelId()"
     (started)="onChatStarted($event)"
     (closed)="newChatOpen.set(false)" />
+}
+
+@if (addCustomerDialog(); as dlg) {
+  <app-wa-add-customer-dialog
+    [chat]="dlg.chat"
+    [mode]="dlg.mode"
+    (linked)="onCustomerLinked($event)"
+    (closed)="addCustomerDialog.set(null)" />
 }
 
 @if (customerDialogId(); as id) {

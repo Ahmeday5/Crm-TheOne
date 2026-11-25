@@ -4,6 +4,8 @@ import {
   Component,
   computed,
   inject,
+  input,
+  output,
   signal,
 } from '@angular/core';
 import {
@@ -26,6 +28,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import {
   AppService,
+  CustomerResponse,
   PagedResult,
   SalesPerson,
 } from '../../../../shared/models';
@@ -44,6 +47,12 @@ import {
 } from '../../utils/duplicate-phone.util';
 import { createLocationPayload } from '../../utils/customer-location.util';
 import { ServicesService } from '../../../services/services/services.service';
+
+/** Values to pre-fill, e.g. from a WhatsApp / Messenger / Instagram chat. */
+export interface AddLeadPrefill {
+  fullName?: string | null;
+  phone?: string | null;
+}
 
 @Component({
   selector: 'app-add-lead',
@@ -64,6 +73,16 @@ import { ServicesService } from '../../../services/services/services.service';
   styleUrl: './add-lead.component.scss',
 })
 export class AddLeadComponent {
+  /**
+   * Embedded mode: the form lives inside a dialog (e.g. "add customer" from a
+   * chat). Hides the page chrome, and emits `created` / `cancelled` instead of
+   * navigating to the customers list.
+   */
+  readonly embedded = input(false);
+  readonly prefill = input<AddLeadPrefill | null>(null);
+  readonly created = output<CustomerResponse>();
+  readonly cancelled = output<void>();
+
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly customers = inject(CustomersService);
@@ -79,6 +98,8 @@ export class AddLeadComponent {
 
   /** Notes field is hidden for Sales reps — only Marketing and Admin can add notes at creation. */
   readonly showNotesField = computed(() => this.auth.currentRole() !== 'Sales');
+  /** A sales rep adding a customer keeps it — "save & assign" skips the picker. */
+  readonly isSalesRep = computed(() => this.auth.currentRole() === 'Sales');
 
   readonly campaignsFetchFn = (): Observable<Record<string, unknown>[]> =>
     this.customers.campaignsDropdown() as unknown as Observable<Record<string, unknown>[]>;
@@ -97,7 +118,8 @@ export class AddLeadComponent {
       [Validators.required, noWhitespaceValidator(), Validators.minLength(2), Validators.maxLength(80)],
     ],
     phone: ['', [Validators.required, phoneValidator()]],
-    email: ['', [Validators.required, Validators.email, Validators.maxLength(120)]],
+    /** Optional — chat customers often have no email. */
+    email: ['', [Validators.email, Validators.maxLength(120)]],
     companyName: ['', [Validators.maxLength(120)]],
     address: ['', [Validators.maxLength(200)]],
     notes: ['', [Validators.maxLength(500)]],
@@ -113,6 +135,13 @@ export class AddLeadComponent {
   readonly selectedServiceIds = computed(() => new Set(this.servicesControl.value));
 
   ngOnInit(): void {
+    const pre = this.prefill();
+    if (pre) {
+      this.form.patchValue({
+        fullName: pre.fullName?.trim() ?? '',
+        phone: pre.phone?.trim() ?? '',
+      });
+    }
     this.loadDropdowns();
   }
 
@@ -148,9 +177,13 @@ export class AddLeadComponent {
     return this.language.isRtl() ? svc.nameAr : svc.nameEn;
   }
 
-  // ─────────── save only ───────────
+  // ─────────── save & assign (the only way to save) ───────────
 
-  saveOnly(): void {
+  /**
+   * Every new customer is assigned to a sales rep on creation — there is no
+   * plain "save". Sales reps get themselves; Admin / Marketing pick a rep.
+   */
+  openSalesModal(): void {
     if (this.submitting()) return;
     this.submitAttempted.set(true);
     if (this.form.invalid) {
@@ -159,16 +192,10 @@ export class AddLeadComponent {
       return;
     }
 
-    this.submitCustomer(false, null);
-  }
-
-  // ─────────── save & assign ───────────
-
-  openSalesModal(): void {
-    this.submitAttempted.set(true);
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      this.toast.warning(this.t('customers.messages.validationFailed'));
+    // Sales rep: assign straight to themselves, no rep picker.
+    const myId = this.auth.currentUser()?.userId;
+    if (this.isSalesRep() && myId) {
+      this.submitCustomer(myId);
       return;
     }
 
@@ -193,12 +220,12 @@ export class AddLeadComponent {
   confirmSalesAssign(): void {
     if (!this.selectedSalesPersonId) return;
     this.showSalesModal.set(false);
-    this.submitCustomer(true, this.selectedSalesPersonId);
+    this.submitCustomer(this.selectedSalesPersonId);
   }
 
   // ─────────── submit ───────────
 
-  private submitCustomer(assignToSales: boolean, salesPersonId: string | null): void {
+  private submitCustomer(salesPersonId: string): void {
     const v = this.form.getRawValue();
     const company = v.companyName.trim();
     const payload = {
@@ -214,8 +241,8 @@ export class AddLeadComponent {
       notes: v.notes.trim(),
       campaignId: v.campaignId,
       serviceIds: v.serviceIds,
-      assignToSalesTeam: assignToSales,
-      salesPersonId: assignToSales ? salesPersonId : '',
+      assignToSalesTeam: true,
+      salesPersonId,
       ...createLocationPayload({ countryId: v.countryId, governorateId: v.governorateId }),
     };
 
@@ -223,14 +250,11 @@ export class AddLeadComponent {
     this.errorMessage.set(null);
 
     this.customers.create(payload).subscribe({
-      next: () => {
+      next: (res) => {
         this.submitting.set(false);
-        this.toast.success(
-          assignToSales
-            ? this.t('customers.messages.assigned')
-            : this.t('customers.messages.created'),
-        );
-        this.goBack();
+        this.toast.success(this.t('customers.messages.assigned'));
+        if (this.embedded()) this.created.emit(res);
+        else this.goBack();
       },
       error: (err: ApiError) => {
         this.submitting.set(false);
@@ -254,6 +278,11 @@ export class AddLeadComponent {
    * access to the marketing list, so a hard-coded redirect would bounce
    * them off `roleGuard` and back to login.
    */
+  cancel(): void {
+    if (this.embedded()) this.cancelled.emit();
+    else this.goBack();
+  }
+
   goBack(): void {
     const target =
       this.auth.currentRole() === 'Sales'

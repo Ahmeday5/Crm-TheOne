@@ -1,0 +1,90 @@
+@use 'breakpoints' as bp;
+
+:host { display: block; }
+
+.rd {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 0.85rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--warning-soft);
+  border-bottom: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
+  border-inline-start: 4px solid var(--warning);
+  animation: rd-in 0.22s ease-out;
+}
+
+.rd__icon {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  background: var(--warning);
+  color: #fff;
+  font-size: 0.9rem;
+  animation: rd-ring 2.4s ease-in-out infinite;
+}
+
+.rd__body {
+  flex: 1 1 14rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.rd__title {
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-700, 700);
+}
+
+.rd__meta {
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.rd__note {
+  margin-inline-start: 0.35rem;
+  color: var(--text-1);
+  font-weight: var(--fw-600);
+}
+
+.rd__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.rd__snooze {
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+
+  &:hover:not(:disabled) { color: var(--text-1); background: var(--surface-1); }
+}
+
+/* A gentle ring every couple of seconds — noticeable, not noisy. */
+@keyframes rd-ring {
+  0%, 70%, 100% { transform: rotate(0); }
+  74% { transform: rotate(14deg); }
+  78% { transform: rotate(-12deg); }
+  82% { transform: rotate(8deg); }
+  86% { transform: rotate(-5deg); }
+}
+
+@keyframes rd-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+@include bp.down(sm) {
+  .rd__actions { width: 100%; }
+  .rd__actions .btn { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rd, .rd__icon { animation: none; }
+}

@@ -20,6 +20,8 @@ export interface SalesPipelineQuery {
   SourceId?: number;
   ServiceId?: number;
   SalesPersonId?: string;
+  /** `true` = only customers with no sales rep. Never combined with `SalesPersonId` (400). */
+  Unassigned?: boolean;
   OverdueOnly?: boolean;
   Sort?: SalesPipelineSort;
   PerColumn?: number;
@@ -56,6 +58,8 @@ export interface SalesPipelineCard {
   salesPersonId: string | null;
   salesPersonName: string | null;
   notBuyingReason: string | null;
+  /** Fixed reason code (PriceTooHigh … Other) — `null` unless NotBuyer. */
+  notBuyingReasonCode?: string | null;
 }
 
 export interface SalesPipelineColumn {

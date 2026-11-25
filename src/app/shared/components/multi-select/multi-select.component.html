@@ -35,7 +35,7 @@
 
   <!-- Dropdown panel -->
   @if (open()) {
-    <div class="ms-panel" role="listbox">
+    <div #panel class="ms-panel" role="listbox" [class.is-above]="panelAbove()">
       <div class="ms-search">
         <i class="fa-solid fa-magnifying-glass ms-search-icon" aria-hidden="true"></i>
         <input type="text"

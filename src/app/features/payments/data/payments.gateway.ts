@@ -289,12 +289,16 @@ export class MockPaymentsGateway implements PaymentsGateway, PublicPaymentsGatew
       const m = this.db.get().methods.find((x) => x.id === input.methodId && x.isActive);
       if (!m) fail(400, 'METHOD_INACTIVE', 'طريقة الدفع غير متاحة');
       if (!(input.amount > 0) || input.amount > 1_000_000) fail(400, 'INVALID_AMOUNT', 'المبلغ غير صحيح');
+      const discount = Math.round(Math.max(0, input.discount ?? 0) * 100) / 100;
+      if (discount >= input.amount) fail(400, 'INVALID_DISCOUNT', 'الخصم لازم يكون أقل من المبلغ');
       if (!input.customerPhone?.trim() && !input.customerEmail?.trim()) fail(400, 'CONTACT_REQUIRED', 'الهاتف أو البريد مطلوب');
       const user = this.auth.currentUser();
       const r: PaymentRequest = {
         id: this.bump(),
         token: randomToken(24),
-        amount: Math.round(input.amount * 100) / 100,
+        amount: Math.round((input.amount - discount) * 100) / 100,
+        originalAmount: Math.round(input.amount * 100) / 100,
+        discount,
         currency: 'EGP',
         description: input.description,
         status: 'Pending',
@@ -397,6 +401,8 @@ export class MockPaymentsGateway implements PaymentsGateway, PublicPaymentsGatew
 function toPublic(r: PaymentRequest): PublicPayment {
   return {
     amount: r.amount,
+    originalAmount: r.originalAmount ?? r.amount,
+    discount: r.discount ?? 0,
     currency: r.currency,
     description: r.description,
     status: r.status,

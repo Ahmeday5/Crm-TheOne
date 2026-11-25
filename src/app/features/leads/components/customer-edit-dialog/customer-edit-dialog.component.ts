@@ -93,7 +93,8 @@ export class CustomerEditDialogComponent implements OnInit, OnChanges {
       [Validators.required, noWhitespaceValidator(), Validators.minLength(2), Validators.maxLength(80)],
     ],
     phone: ['', [Validators.required, phoneValidator()]],
-    email: ['', [Validators.required, Validators.email, Validators.maxLength(120)]],
+    /** Optional — chat customers often have no email. */
+    email: ['', [Validators.email, Validators.maxLength(120)]],
     companyName: ['', [Validators.maxLength(120)]],
     address: ['', [Validators.maxLength(200)]],
     notes: ['', [Validators.maxLength(500)]],

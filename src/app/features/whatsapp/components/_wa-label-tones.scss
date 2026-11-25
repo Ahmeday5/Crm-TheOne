@@ -1,0 +1,14 @@
+/*
+ * Inbox v4 label tones — solid status / brand tokens, never gradients.
+ * `data-tone` comes from `CHAT_LABELS` (utils/inbox-tools.util.ts).
+ *
+ *   @use '../wa-label-tones' as tones;
+ *   @include tones.label-tones('.my-chip');
+ */
+@mixin label-tones($selector) {
+  #{$selector}[data-tone='info'] { background: var(--info-soft); color: var(--info); }
+  #{$selector}[data-tone='brand'] { background: var(--brand-soft); color: var(--brand); }
+  #{$selector}[data-tone='warning'] { background: var(--warning-soft); color: var(--warning); }
+  #{$selector}[data-tone='success'] { background: var(--success-soft); color: var(--success); }
+  #{$selector}[data-tone='neutral'] { background: var(--surface-2); color: var(--text-2); }
+}

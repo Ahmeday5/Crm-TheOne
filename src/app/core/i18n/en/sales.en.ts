@@ -170,6 +170,8 @@ const sales: TranslationFile<'sales'> = {
         customer: 'Customer',
         customerLocked: 'The customer can’t be changed on edit',
         newBuyerHint: 'The customer is now a buyer — fill in the contract to record the deal.',
+        activeContractWarning: 'This customer already has an active contract — renew it instead of creating a new one',
+        openActiveContract: 'Open the current contract to renew it',
         status: 'Status',
         price: 'Contract value',
         startDate: 'Start date',

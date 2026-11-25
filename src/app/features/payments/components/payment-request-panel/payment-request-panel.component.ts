@@ -9,6 +9,7 @@ import {
   output,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
@@ -24,6 +25,11 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { PaymentsService } from '../../data/payments.gateway';
 import { PaymentMethod, PaymentRequest, isWallet } from '../../models/payments.models';
 import { PaymentMethodLogoComponent } from '../payment-method-logo/payment-method-logo.component';
+import {
+  DiscountApprovalBoxComponent,
+  DiscountGateState,
+} from '../../../discount-approvals/components/discount-approval-box/discount-approval-box.component';
+import { discountPercent, formatPercent } from '../../../discount-approvals/utils/discount.util';
 
 /** Who the request is for — filled from the open chat. */
 export interface PaymentRequestContext {
@@ -50,6 +56,13 @@ function phoneOrEmail(group: AbstractControl): ValidationErrors | null {
   return phone || email ? null : { contactRequired: true };
 }
 
+/** Section 9.4: the discount is optional, >= 0 and below the amount. */
+function discountBelowAmount(group: AbstractControl): ValidationErrors | null {
+  const amount = Number(group.get('amount')?.value) || 0;
+  const discount = Number(group.get('discount')?.value) || 0;
+  return discount > 0 && amount > 0 && discount >= amount ? { discountTooBig: true } : null;
+}
+
 function optionalPhone(control: AbstractControl): ValidationErrors | null {
   const v = String(control.value ?? '').replace(/[\s-]/g, '');
   return !v || PHONE_RE.test(v) ? null : { phone: true };
@@ -65,7 +78,15 @@ function optionalPhone(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-payment-request-panel',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, TranslatePipe, SlidePanelComponent, MockRibbonComponent, PaymentMethodLogoComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    TranslatePipe,
+    SlidePanelComponent,
+    MockRibbonComponent,
+    PaymentMethodLogoComponent,
+    DiscountApprovalBoxComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './payment-request-panel.component.html',
   styleUrl: './payment-request-panel.component.scss',
@@ -96,13 +117,14 @@ export class PaymentRequestPanelComponent {
     {
       methodId: this.fb.control<number | null>(null, Validators.required),
       amount: this.fb.control<number | null>(null, [Validators.required, Validators.min(1), Validators.max(1_000_000)]),
+      discount: this.fb.control<number | null>(null, Validators.min(0)),
       description: this.fb.nonNullable.control('', Validators.maxLength(200)),
       validityDays: this.fb.nonNullable.control(14, [Validators.required, Validators.min(1), Validators.max(90)]),
       customerName: this.fb.nonNullable.control('', Validators.maxLength(120)),
       customerPhone: this.fb.nonNullable.control('', optionalPhone),
       customerEmail: this.fb.nonNullable.control('', Validators.email),
     },
-    { validators: phoneOrEmail },
+    { validators: [phoneOrEmail, discountBelowAmount] },
   );
 
   private readonly value = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
@@ -110,6 +132,23 @@ export class PaymentRequestPanelComponent {
     const n = Number(this.value().amount);
     return Number.isFinite(n) && n > 0 ? n : 0;
   });
+  /** Discount as typed (0 when empty / invalid). */
+  protected readonly discountPreview = computed(() => {
+    const n = Number(this.value().discount);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  });
+  /** What the customer pays: the big number on the summary. */
+  protected readonly netPreview = computed(() => Math.max(0, this.amountPreview() - this.discountPreview()));
+  protected readonly discountPercentText = computed(() => {
+    const pct = discountPercent(this.amountPreview(), this.discountPreview());
+    return pct > 0 ? formatPercent(pct) : null;
+  });
+  protected readonly customerNamePreview = computed(() => String(this.value().customerName ?? '').trim() || null);
+
+  /** Manager-approval gate (docs/backend-prompt-inbox-v4.md section 9): submit stays disabled until `ready`. */
+  protected readonly gate = signal<DiscountGateState>({ required: false, ready: true, code: null });
+  private readonly approvalBox = viewChild(DiscountApprovalBoxComponent);
+
   protected readonly selected = computed(() => this.methods().find((m) => m.id === this.value().methodId) ?? null);
 
   constructor() {
@@ -146,6 +185,10 @@ export class PaymentRequestPanelComponent {
     return c.invalid && (c.touched || c.dirty);
   }
 
+  protected discountTooBig(): boolean {
+    return this.form.hasError('discountTooBig');
+  }
+
   protected contactMissing(): boolean {
     const touched = this.form.controls.customerPhone.touched || this.form.controls.customerEmail.touched;
     return touched && this.form.hasError('contactRequired');
@@ -157,14 +200,22 @@ export class PaymentRequestPanelComponent {
       this.form.markAllAsTouched();
       return;
     }
+    const gate = this.gate();
+    if (!gate.ready) {
+      this.error.set(this.t('discounts.box.saveBlocked'));
+      return;
+    }
     const v = this.form.getRawValue();
     const ctx = this.context();
+    const discount = Math.round(Math.max(0, Number(v.discount) || 0) * 100) / 100;
     this.submitting.set(true);
     this.error.set(null);
     this.payments.gateway
       .createRequest({
         methodId: v.methodId!,
         amount: Math.round(Number(v.amount) * 100) / 100,
+        ...(discount > 0 ? { discount } : {}),
+        ...(gate.required && gate.code ? { approvalCode: gate.code } : {}),
         description: v.description.trim() || null,
         validityDays: v.validityDays,
         customerName: v.customerName.trim() || null,
@@ -180,6 +231,7 @@ export class PaymentRequestPanelComponent {
         },
         error: (err: ApiError) => {
           this.submitting.set(false);
+          this.approvalBox()?.handleSaveError(err);
           this.error.set(err?.message || this.t('common.loadFailed'));
         },
       });
@@ -189,6 +241,7 @@ export class PaymentRequestPanelComponent {
     this.form.reset({
       methodId: this.form.controls.methodId.value,
       amount: null,
+      discount: null,
       description: '',
       validityDays: 14,
       customerName: ctx?.customerName ?? '',
@@ -197,6 +250,7 @@ export class PaymentRequestPanelComponent {
     });
     this.error.set(null);
     this.submitting.set(false);
+    this.approvalBox()?.reset();
     this.loadMethods();
     this.prefillFromCustomer(ctx?.customerId ?? null);
   }

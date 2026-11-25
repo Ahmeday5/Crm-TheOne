@@ -1,0 +1,156 @@
+@use 'breakpoints' as bp;
+
+.dap-info { font-size: var(--fs-sm); }
+
+// ── Selected request ──
+.dap-card {
+  border-inline-start: 4px solid var(--brand-600);
+  animation: dap-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  &__title { margin: 0 0 0.35rem; font-size: var(--fs-lg); font-weight: var(--fw-800); }
+}
+
+.dap-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0 0 1rem;
+
+  > div {
+    min-width: 0;
+    padding: 0.65rem 0.8rem;
+    border-radius: var(--radius-md);
+    background: var(--surface-1);
+  }
+  dt { margin-bottom: 0.2rem; color: var(--text-3); font-size: var(--fs-xs); font-weight: var(--fw-600); }
+  dd { margin: 0; font-weight: var(--fw-700); overflow-wrap: anywhere; }
+}
+
+.dap-num {
+  font-variant-numeric: tabular-nums;
+  small { color: var(--text-3); font-weight: var(--fw-600); }
+  &--net { color: var(--success); }
+}
+
+.dap-pct {
+  display: inline-block;
+  margin-inline-start: 0.35rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-700);
+
+  &--sm { padding: 0 0.4rem; }
+}
+
+.dap-actions .btn { min-width: 8rem; }
+
+// Big code to hand back to the rep — solid success, no gradient.
+.dap-code {
+  margin-top: 0.5rem;
+  padding: 1.25rem 1rem;
+  border: 1px solid var(--success);
+  border-radius: var(--radius-lg);
+  background: var(--success-soft);
+  text-align: center;
+  animation: dap-pop 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  p { margin: 0; }
+  &__label { color: var(--text-2); font-size: var(--fs-sm); font-weight: var(--fw-600); }
+  &__value {
+    margin: 0.2rem 0 !important;
+    color: var(--success);
+    font-size: var(--fs-4xl);
+    font-weight: var(--fw-800);
+    letter-spacing: 0.25em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  &__valid { margin-bottom: 0.85rem !important; font-size: var(--fs-sm); font-weight: var(--fw-600); }
+}
+
+.dap-reason {
+  margin: 0.5rem 0 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-sm);
+}
+
+// ── List ──
+.dap-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  &__title { margin: 0; font-size: var(--fs-md); font-weight: var(--fw-700); }
+}
+
+.dap-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.dap-chip {
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-1);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-600);
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+
+  &:hover { border-color: var(--brand-300); }
+  &.is-active { border-color: var(--brand-600); background: var(--brand-600); color: #fff; }
+}
+
+.dap-badge {
+  padding: 0.35em 0.7em;
+  border-radius: var(--radius-pill);
+  font-weight: var(--fw-700);
+
+  &--warning { background: var(--warning-soft); color: var(--warning); }
+  &--info { background: var(--info-soft); color: var(--info); }
+  &--success { background: var(--success-soft); color: var(--success); }
+  &--danger { background: var(--danger-soft); color: var(--danger); }
+  &--secondary { background: var(--surface-2); color: var(--text-3); }
+}
+
+.dap-row--active > td { background: var(--brand-soft); }
+.dap-dim { opacity: 0.6; transition: opacity 160ms ease; }
+
+@include bp.down(md) {
+  .dap-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@include bp.down(sm) {
+  .dap-facts { grid-template-columns: minmax(0, 1fr); }
+  .dap-code__value { font-size: var(--fs-3xl); letter-spacing: 0.15em; }
+  .dap-chips { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 0.25rem; }
+  .dap-chip { flex: 0 0 auto; }
+}
+
+@keyframes dap-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes dap-pop {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dap-card, .dap-code { animation: none; }
+}

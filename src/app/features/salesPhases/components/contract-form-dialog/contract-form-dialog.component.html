@@ -64,6 +64,18 @@
         } @else {
           <app-form-error [control]="form.controls.customerId"
             [label]="'sales.contractsMgmt.form.customer' | translate" />
+          @if (existingActive(); as active) {
+            <div class="alert alert-warning d-flex align-items-start gap-2 py-2 px-2 mt-2 mb-0 small" role="status">
+              <i class="fa-solid fa-triangle-exclamation mt-1" aria-hidden="true"></i>
+              <div class="min-w-0">
+                <span class="d-block">{{ 'sales.contractsMgmt.form.activeContractWarning' | translate }}</span>
+                <a class="fw-600" [routerLink]="['/contracts', active.id]" (click)="cancel.emit()">
+                  <i class="fa-solid fa-arrows-rotate me-1" aria-hidden="true"></i>{{ 'sales.contractsMgmt.form.openActiveContract' | translate }}
+                  <span dir="ltr">(CNT-{{ active.id }})</span>
+                </a>
+              </div>
+            </div>
+          }
         }
       </div>
 

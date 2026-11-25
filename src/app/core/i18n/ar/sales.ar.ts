@@ -172,6 +172,8 @@ const sales: TranslationFile<'sales'> = {
         customer: 'العميل',
         customerLocked: 'لا يمكن تغيير العميل عند التعديل',
         newBuyerHint: 'تم تحويل العميل إلى مشتري — أكمل بيانات العقد الآن لتسجيل الصفقة.',
+        activeContractWarning: 'العميل ده عنده عقد نشط — جدّد العقد الحالي بدل ما تعمل عقد جديد',
+        openActiveContract: 'افتح العقد الحالي وجدّده',
         status: 'الحالة',
         price: 'قيمة العقد',
         startDate: 'تاريخ البداية',

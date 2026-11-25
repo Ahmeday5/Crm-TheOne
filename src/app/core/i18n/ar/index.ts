@@ -42,6 +42,8 @@ import deliverables from './deliverables.ar';
 import vaultLock from './vaultLock.ar';
 import payments from './payments.ar';
 import dateFilter from './dateFilter.ar';
+import inboxTools from './inboxTools.ar';
+import discounts from './discounts.ar';
 
 const ar: Translations = {
   ...common,
@@ -87,6 +89,8 @@ const ar: Translations = {
   ...vaultLock,
   ...payments,
   ...dateFilter,
+  ...inboxTools,
+  ...discounts,
 };
 
 export default ar;

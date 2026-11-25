@@ -1,0 +1,95 @@
+<app-modal
+  [open]="true"
+  size="lg"
+  [icon]="step() === 'link' ? 'fa-solid fa-link' : 'fa-solid fa-user-plus'"
+  iconTone="success"
+  [title]="title() | translate"
+  [closeOnBackdrop]="false"
+  [closeOnEsc]="!linking()"
+  [showFooter]="step() === 'existing' || step() === 'link'"
+  (closed)="closed.emit()">
+
+  @switch (step()) {
+    @case ('checking') {
+      <div class="text-center py-4">
+        <span class="spinner-border text-primary" role="status"></span>
+        <p class="text-muted mt-2 mb-0">{{ 'whatsapp.addCustomer.checking' | translate }}</p>
+      </div>
+    }
+
+    @case ('existing') {
+      <div class="alert alert-warning d-flex gap-2 py-2">
+        <i class="fa-solid fa-triangle-exclamation mt-1" aria-hidden="true"></i>
+        <span>{{ 'whatsapp.addCustomer.existingHint' | translate }}</span>
+      </div>
+      <div class="list-group">
+        @for (c of matches(); track c.id) {
+          <div class="list-group-item d-flex align-items-center justify-content-between gap-3 flex-wrap">
+            <div>
+              <span class="fw-600 d-block">{{ existingLabel(c) }}</span>
+              <small class="text-muted" dir="ltr">{{ c.phone }}</small>
+            </div>
+            <button type="button" class="btn btn-success btn-sm" [disabled]="linking()" (click)="linkTo(c)">
+              @if (linking()) {
+                <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+              } @else {
+                <i class="fa-solid fa-link me-1"></i>
+              }
+              {{ 'whatsapp.addCustomer.linkThis' | translate }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    @case ('form') {
+      @if (noPhone()) {
+        <div class="alert alert-info d-flex gap-2 py-2 mb-3">
+          <i class="fa-solid fa-circle-info mt-1" aria-hidden="true"></i>
+          <span>{{ 'whatsapp.addCustomer.noPhoneHint' | translate }}</span>
+        </div>
+      }
+      <app-add-lead
+        [embedded]="true"
+        [prefill]="prefill()"
+        (created)="onCreated($event)"
+        (cancelled)="closed.emit()" />
+    }
+
+    @case ('link') {
+      <label class="form-label" for="wa-link-customer">{{ 'whatsapp.addCustomer.pickCustomer' | translate }}</label>
+      <app-searchable-select
+        id="wa-link-customer"
+        [formControl]="customerControl"
+        [fetchFn]="fetchCustomers"
+        labelKey="fullName"
+        valueKey="id"
+        subLabelKey="campanyName"
+        [placeholder]="'whatsapp.newChat.pickCustomer' | translate"
+        [searchPlaceholder]="'whatsapp.newChat.searchCustomer' | translate"
+        [emptyText]="'whatsapp.newChat.noCustomers' | translate"
+        [loadingText]="'whatsapp.newChat.loading' | translate" />
+    }
+  }
+
+  <ng-container modal-footer>
+    @if (step() === 'existing') {
+      <button type="button" class="btn btn-light" [disabled]="linking()" (click)="continueToForm()">
+        {{ 'whatsapp.addCustomer.addAnyway' | translate }}
+      </button>
+    }
+    @if (step() === 'link') {
+      <button type="button" class="btn btn-light" [disabled]="linking()" (click)="closed.emit()">
+        {{ 'whatsapp.addCustomer.cancel' | translate }}
+      </button>
+      <button type="button" class="btn btn-success" [disabled]="!customerControl.value || linking()" (click)="linkSelected()">
+        @if (linking()) {
+          <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+        } @else {
+          <i class="fa-solid fa-link me-1"></i>
+        }
+        {{ 'whatsapp.addCustomer.link' | translate }}
+      </button>
+    }
+  </ng-container>
+</app-modal>

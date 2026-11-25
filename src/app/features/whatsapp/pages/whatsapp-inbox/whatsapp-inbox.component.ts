@@ -28,6 +28,14 @@ import { CustomerDetailsDialogComponent } from '../../../leads/components/custom
 import { WaChannelBadgeComponent } from '../../components/wa-channel-badge/wa-channel-badge.component';
 import { WaChannelListComponent } from '../../components/wa-channel-list/wa-channel-list.component';
 import { WaChatListComponent } from '../../components/wa-chat-list/wa-chat-list.component';
+import { WaChatToolsComponent } from '../../components/wa-chat-tools/wa-chat-tools.component';
+import { WaCustomerPanelComponent } from '../../components/wa-customer-panel/wa-customer-panel.component';
+import { ReminderDueChange, WaReminderDueComponent } from '../../components/wa-reminder-due/wa-reminder-due.component';
+import { isReminderDue } from '../../utils/inbox-tools.util';
+import {
+  WaAddCustomerDialogComponent,
+  WaAddCustomerMode,
+} from '../../components/wa-add-customer-dialog/wa-add-customer-dialog.component';
 import { WaNewChatDialogComponent } from '../../components/wa-new-chat-dialog/wa-new-chat-dialog.component';
 import { WaNumberCardComponent } from '../../components/wa-number-card/wa-number-card.component';
 import { WaThreadComponent } from '../../components/wa-thread/wa-thread.component';
@@ -66,6 +74,10 @@ import { channelLabel, chatDisplayName, formatWhatsAppPhone, isChannelActive } f
     WaNumberCardComponent,
     WaNewChatDialogComponent,
     CustomerDetailsDialogComponent,
+    WaAddCustomerDialogComponent,
+    WaChatToolsComponent,
+    WaCustomerPanelComponent,
+    WaReminderDueComponent,
   ],
   providers: [WhatsAppInboxStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -139,6 +151,13 @@ export class WhatsAppInboxComponent implements OnInit {
   protected readonly newChatOpen = signal(false);
   /** The linked customer's details, opened from the conversation header. */
   protected readonly customerDialogId = signal<number | null>(null);
+  /** "Add as customer" / "link to a customer" for a chat with no CRM customer. */
+  protected readonly addCustomerDialog = signal<{ chat: WaChat; mode: WaAddCustomerMode } | null>(null);
+  /** Creating customers is Admin / Sales only (Support reads the inbox but can't add customers). */
+  protected readonly canAddCustomer = computed(() => {
+    const role = this.auth.currentRole();
+    return role === 'Admin' || role === 'Sales';
+  });
 
   constructor() {
     effect(
@@ -210,6 +229,62 @@ export class WhatsAppInboxComponent implements OnInit {
     this.inbox.markReadLocally(chatId);
   }
 
+  // ─────────────── inbox v4: customer panel + new-number banner ───────────────
+
+  /** Side customer card — remembered across visits. */
+  protected readonly panelOpen = signal(readFlag(PANEL_KEY));
+  /** Chats whose "new number" banner was closed (this browser only). */
+  private readonly dismissedBanners = signal<ReadonlySet<number>>(readIds(BANNER_KEY));
+
+  protected togglePanel(): void {
+    const next = !this.panelOpen();
+    this.panelOpen.set(next);
+    writeStorage(PANEL_KEY, next ? '1' : '0');
+  }
+
+  protected bannerDismissed(chatId: number): boolean {
+    return this.dismissedBanners().has(chatId);
+  }
+
+  protected dismissBanner(chatId: number): void {
+    const next = new Set(this.dismissedBanners());
+    next.add(chatId);
+    this.dismissedBanners.set(next);
+    writeStorage(BANNER_KEY, JSON.stringify([...next].slice(-500)));
+  }
+
+  /** The open chat's reminder time has come (live, from the inbox clock). */
+  protected reminderDue(chat: WaChat): boolean {
+    return isReminderDue(chat, this.inbox.now());
+  }
+
+  /** The due banner closed / snoozed a reminder. */
+  protected onReminderDueChanged(chat: WaChat, next: ReminderDueChange): void {
+    this.inbox.patchChat({ ...chat, ...next });
+  }
+
+  /** Labels / notes / reminder / transfer changed the chat — patch it in the list. */
+  protected onChatChanged(chat: WaChat): void {
+    this.inbox.patchChat(chat);
+  }
+
+  protected openAddCustomer(chat: WaChat, mode: WaAddCustomerMode): void {
+    this.addCustomerDialog.set({ chat, mode });
+  }
+
+  protected onCustomerLinked(chat: WaChat): void {
+    this.inbox.patchChat(chat);
+  }
+
+  /**
+   * Chat permission (§0): Admin, the channel owner, or the colleague the chat
+   * was transferred to. Unlocks labels, notes, reminders, add/link customer.
+   */
+  protected canManage(chat: WaChat): boolean {
+    const me = this.auth.currentUser()?.userId;
+    return this.canDelete(chat) || (!!me && chat.assignedUserId === me);
+  }
+
   /** Admin, or the employee who owns the chat's channel (the server re-checks). */
   protected canDelete(chat: WaChat): boolean {
     return this.isAdmin() || (!!chat.ownerUserId && chat.ownerUserId === this.auth.currentUser()?.userId);
@@ -266,5 +341,37 @@ export class WhatsAppInboxComponent implements OnInit {
 
   private t(key: string): string {
     return resolveKey(TRANSLATIONS[this.language.lang()], key);
+  }
+}
+
+const PANEL_KEY = 'wa.inbox.customerPanel';
+const BANNER_KEY = 'wa.inbox.dismissedNewNumberBanners';
+
+function readStorage(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* private mode / blocked storage — the setting just isn't remembered */
+  }
+}
+
+function readFlag(key: string): boolean {
+  return readStorage(key) === '1';
+}
+
+function readIds(key: string): ReadonlySet<number> {
+  try {
+    const ids = JSON.parse(readStorage(key) ?? '[]');
+    return new Set(Array.isArray(ids) ? ids.filter((n): n is number => typeof n === 'number') : []);
+  } catch {
+    return new Set();
   }
 }

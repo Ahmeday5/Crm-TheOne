@@ -16,12 +16,14 @@ const pipeline: TranslationFile<'pipeline'> = {
       buyers: 'تم الشراء',
       closeRate: 'نسبة الإغلاق',
       closeRateHint: 'مشتري ÷ (مشتري + غير مشتري)',
+      totalHint: 'شامل المشتريين وغير المشتريين',
     },
     filters: {
       search: 'ابحث بالاسم أو رقم الهاتف...',
       allSources: 'جميع المصادر',
       allServices: 'كل الخدمات',
       allSales: 'كل المناديب',
+      unassigned: 'بدون موظف',
     },
     toolbar: {
       overdueOnly: 'المتابعات المستحقة فقط',
@@ -46,7 +48,7 @@ const pipeline: TranslationFile<'pipeline'> = {
       stale: 'متأخر',
       followUp: 'المتابعة القادمة',
       followUpOverdue: 'متابعة متأخرة',
-      unassigned: 'غير معيّن',
+      unassigned: 'بدون موظف مبيعات',
       changeStatus: 'تغيير الحالة',
       whatsapp: 'واتساب',
       call: 'اتصال',

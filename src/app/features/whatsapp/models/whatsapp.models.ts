@@ -101,6 +101,24 @@ export interface WaChat {
    * only on the `whatsappChatUpdated` event that announces a deletion.
    */
   isDeleted?: boolean;
+
+  // ── inbox v4 (`docs/backend-prompt-inbox-v4.md` §10) — optional until every backend build sends them ──
+  /** Team labels (§2). */
+  labels?: WaChatLabel[];
+  /** Internal notes on this chat (§3). */
+  notesCount?: number;
+  /** Earliest pending / due reminder of ANY user on this chat (§4). */
+  nextReminderAt?: string | null;
+  /** A reminder on this chat is already due. */
+  reminderDue?: boolean;
+  /** Direction of the latest message (§5). */
+  lastMessageDirection?: WaDirection | null;
+  /** Oldest incoming message after our last reply; `null` when we spoke last (§5). */
+  awaitingReplySince?: string | null;
+  /** Transfer (§7): the Sales colleague now handling the chat — they reply through the same channel. */
+  assignedUserId?: string | null;
+  assignedUserName?: string | null;
+  assignedAt?: string | null;
 }
 
 /** Delivery state. Incoming messages are always `Received`. */
@@ -154,6 +172,12 @@ export interface WaChatsQuery {
   /** Admin only — one channel's chats. */
   instanceId?: string;
   unreadOnly?: boolean;
+  /** §2 — one label code. */
+  label?: WaChatLabel;
+  /** §5 — only chats waiting for our reply longer than the threshold, oldest first. */
+  awaitingReply?: boolean;
+  /** §5 — only chats with a pending / due reminder, earliest first. */
+  hasReminder?: boolean;
 }
 
 /** Query for `GET /chats/{id}/messages` — results are oldest first. */
@@ -288,6 +312,79 @@ export interface WaInstanceStatusEvent {
   instance: WaInstance;
   previousStatus: string | null;
   becameConnected: boolean;
+}
+
+// ─────────────── inbox v4: chat tools (§2–§6) ───────────────
+
+/** The fixed label set (§2) — stored as these strings. */
+export type WaChatLabel = 'Interested' | 'QuoteSent' | 'AwaitingPayment' | 'FollowUp' | 'Closed';
+
+/** Body of `PUT /chats/{id}/labels` — replaces the whole set; `[]` clears it. */
+export interface WaSetLabelsRequest {
+  labels: WaChatLabel[];
+}
+
+/** An internal note — team only, never sent to the customer (§3). */
+export interface WaChatNote {
+  id: number;
+  chatId: number;
+  text: string;
+  createdById: string;
+  createdByName: string;
+  createdAt: string;
+  /** Auto notes (e.g. a transfer) — reps can't delete them. */
+  isSystem: boolean;
+}
+
+export type WaReminderStatus = 'Pending' | 'Due' | 'Done';
+
+/** «ذكّرني» (§4). */
+export interface WaChatReminder {
+  id: number;
+  chatId: number;
+  customerId: number | null;
+  contactName: string | null;
+  dueAt: string;
+  note: string | null;
+  status: WaReminderStatus;
+  createdById: string;
+  createdByName: string;
+  createdAt: string;
+}
+
+/** Body of `POST /chats/{id}/reminders` — `dueAt` in the future (UTC), `note` ≤ 300 chars. */
+export interface WaNewReminderRequest {
+  dueAt: string;
+  note?: string | null;
+}
+
+/** Query for `GET /reminders` — the caller's own reminders. */
+export interface WaRemindersQuery {
+  status?: 'pending' | 'due' | 'done';
+  pageIndex: number;
+  pageSize: number;
+  /** Admin only. */
+  userId?: string;
+}
+
+/** `GET /chats/counters` — the two red badges (§5). */
+export interface WaChatCounters {
+  awaitingReply: number;
+  overdueReminders: number;
+  /** `AwaitingReplyThresholdMinutes` — the UI uses the server's number. */
+  thresholdMinutes: number;
+}
+
+/** Body of `POST /chats/{id}/transfer` — Sales users only (§6). */
+export interface WaTransferRequest {
+  toUserId: string;
+  message?: string;
+}
+
+/** `whatsappChatNoteAdded` hub event (§3). */
+export interface WaChatNoteAddedEvent {
+  chatId: number;
+  note: WaChatNote;
 }
 
 // ─────────────── UI-side ───────────────

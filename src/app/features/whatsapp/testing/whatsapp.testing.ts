@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
-import { Subject } from 'rxjs';
-import { WaChat, WaInstance, WaInstanceStatusEvent, WaMessage, WaMessageEvent, WaMessageStatusEvent } from '../models/whatsapp.models';
+import { NEVER, Subject, of } from 'rxjs';
+import type { InboxToolsGateway } from '../data/inbox-tools.gateway';
+import { WaChat, WaChatNoteAddedEvent, WaInstance, WaInstanceStatusEvent, WaMessage, WaMessageEvent, WaMessageStatusEvent } from '../models/whatsapp.models';
 import { WaRealtimeState } from '../services/whatsapp-realtime.service';
 
 /** Test-only builders and fakes for the WhatsApp feature (imported by specs only). */
@@ -26,6 +27,12 @@ export function makeChat(patch: Partial<WaChat> = {}): WaChat {
     // Relative to the real clock: the window is comfortably open whenever the tests run.
     replyWindowEndsAt: new Date(Date.now() + 10 * 3_600_000).toISOString(),
     canSendTemplate: true,
+    labels: [],
+    notesCount: 0,
+    nextReminderAt: null,
+    reminderDue: false,
+    lastMessageDirection: null,
+    awaitingReplySince: null,
     ...patch,
   };
 }
@@ -89,4 +96,13 @@ export class FakeRealtime {
   readonly chatUpdated$ = this.chat.asObservable();
   readonly instanceStatus$ = this.instance.asObservable();
   readonly reconnected$ = this.reconnected.asObservable();
+  readonly noteAdded = new Subject<WaChatNoteAddedEvent>();
+  readonly noteAdded$ = this.noteAdded.asObservable();
+}
+
+/** Inbox v4 tools with no data: counters are zero, so the store's list behaviour is unchanged. */
+export function fakeInboxTools(): Partial<InboxToolsGateway> {
+  return {
+    counters: () => of({ awaitingReply: 0, overdueReminders: 0, thresholdMinutes: 60 }),
+  };
 }

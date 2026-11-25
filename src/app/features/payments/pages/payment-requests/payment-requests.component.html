@@ -60,7 +60,12 @@
                   </span>
                   @if (r.description) { <small class="text-muted d-block text-truncate prq-desc" dir="auto">{{ r.description }}</small> }
                 </td>
-                <td class="fw-700 text-nowrap" dir="ltr">{{ formatAmount(r.amount) }} <small class="text-muted">EGP</small></td>
+                <td class="fw-700 text-nowrap" dir="ltr">
+                  {{ formatAmount(r.amount) }} <small class="text-muted">EGP</small>
+                  @if (r.originalAmount > r.amount) {
+                    <s class="d-block small text-muted fw-normal">{{ formatAmount(r.originalAmount) }} EGP</s>
+                  }
+                </td>
                 <td>
                   <span class="d-inline-flex align-items-center gap-2">
                     <app-payment-method-logo [type]="r.method.type" />

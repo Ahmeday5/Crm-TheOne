@@ -41,6 +41,12 @@
             {{ amountText() }} <small>EGP</small>
             <app-copy-button [value]="amountText()" [label]="'payments.pay.copyAmount' | translate" />
           </p>
+          @if (originalText(); as was) {
+            <p class="pp-hero__was" dir="ltr">
+              <span class="visually-hidden">{{ 'discounts.summary.before' | translate }}</span>
+              <s>{{ was }} EGP</s>
+            </p>
+          }
           @if (p.description) {
             <p class="pp-hero__for"><span>{{ 'payments.pay.for' | translate }}:</span> <span dir="auto">{{ p.description }}</span></p>
           }

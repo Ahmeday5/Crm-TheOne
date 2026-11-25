@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { NotBuyingReasonCount } from '../../leads/utils/not-buying-reason.util';
 import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { CACHE_TTL } from '../../../core/constants/cache-policy.const';
 import { withCache } from '../../../core/http/http-context.tokens';
@@ -43,14 +44,9 @@ export class SalesService {
     );
   }
 
-  /**
-   * Distinct free-text reasons sales reps have entered when marking a
-   * customer as `NotBuyer`. The response is a plain string array, no
-   * envelope — the API service unwraps the standard envelope, and a raw
-   * payload would pass through `unwrap()` untouched.
-   */
-  notBuyingReasons(): Observable<string[]> {
-    return this.api.get<string[]>(API_ENDPOINTS.sales.notBuyingReasons, {
+  /** Customers per fixed not-buying reason — all six codes, in order (zeros included). */
+  notBuyingReasons(): Observable<NotBuyingReasonCount[]> {
+    return this.api.get<NotBuyingReasonCount[]>(API_ENDPOINTS.sales.notBuyingReasons, {
       context: withCache({ ttlMs: CACHE_TTL.SHORT }),
     });
   }

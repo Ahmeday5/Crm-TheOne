@@ -23,7 +23,7 @@ export interface CustomerDropdownItem {
   fullName: string;
   campanyName: string | null;
   /** When the customer was added — UTC, serialized without a trailing `Z`. */
-  createdAt?: string;
+  createdAt: string;
   services: CustomerDropdownService[];
 }
 
@@ -43,6 +43,12 @@ export interface PriceQuotationRequest {
   discount: number;
   notes: string;
   items: PriceQuotationItemRequest[];
+  /**
+   * Manager approval code (docs/backend-prompt-inbox-v4.md §9.3) — required
+   * by the server when a non-Admin's discount is above the threshold. Omitted
+   * otherwise.
+   */
+  approvalCode?: string | null;
 }
 
 /** A persisted line item (create / update / detail responses). */

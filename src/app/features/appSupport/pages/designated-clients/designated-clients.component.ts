@@ -24,7 +24,8 @@ import { CreatedAtComponent } from '../../../../shared/components/created-at/cre
 import { CustomerDateRangeFilterComponent } from '../../../../shared/components/customer-date-range-filter/customer-date-range-filter.component';
 import { DateRangeChipComponent } from '../../../../shared/components/customer-date-range-filter/date-range-chip.component';
 import { formatCairoDate } from '../../../../shared/pipes/cairo-date.pipe';
-import { fetchAllPages } from '../../../leads/utils/sales-person-filter.util';
+import { fetchAllPages } from '../../../leads/utils/fetch-all-pages.util';
+import { UNASSIGNED_SALES, salesPersonQuery } from '../../../leads/utils/sales-person-query.util';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -38,6 +39,7 @@ import {
   CustomerListQuery,
   CustomerNoteResponse,
   CustomerStatus,
+  SalesPerson,
   SupportCustomerStats,
 } from '../../../../shared/models';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -123,6 +125,10 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
   readonly searchSignal = signal('');
   readonly selectedStatusId = signal<number | null>(null);
   readonly selectedSourceId = signal<number | null>(null);
+  /** Sales-rep filter (Admin only): `SalesPersonId`, or `Unassigned=true` for `UNASSIGNED_SALES`. */
+  readonly selectedSalesPersonId = signal<string | null>(null);
+  readonly salesTeam = signal<SalesPerson[]>([]);
+  readonly unassignedSales = UNASSIGNED_SALES;
   /** "Date added" range (`From` / `To`). */
   readonly dateFilter = signal<CustomerDateFilter>({});
 
@@ -131,6 +137,7 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
       !!this.searchSignal() ||
       this.selectedStatusId() !== null ||
       this.selectedSourceId() !== null ||
+      this.selectedSalesPersonId() !== null ||
       isDateRangeActive(this.dateFilter()),
   );
 
@@ -235,6 +242,12 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
     this.channelSources.list().subscribe({
       next: (items: SourceItem[]) => this.sources.set(items),
     });
+    if (this.isAdmin()) {
+      this.customers.salesTeam().subscribe({
+        next: (team) => this.salesTeam.set([...(team ?? [])].sort((a, b) => (a.fullName ?? '').localeCompare(b.fullName ?? '', 'ar'))),
+        error: () => undefined,
+      });
+    }
   }
 
   reload(force = false): void {
@@ -265,6 +278,7 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
       CustomerStatusId: this.selectedStatusId() ?? undefined,
       SourceId: this.selectedSourceId() ?? undefined,
       ...toDateRangeParams(this.dateFilter()),
+      ...salesPersonQuery(this.isAdmin() ? this.selectedSalesPersonId() : null),
     };
   }
 
@@ -284,6 +298,12 @@ export class DesignatedClientsComponent implements OnInit, OnDestroy {
 
   onStatusChange(id: string): void {
     this.selectedStatusId.set(id ? Number(id) : null);
+    this.pageIndex.set(1);
+    this.reload();
+  }
+
+  onSalesPersonChange(id: string): void {
+    this.selectedSalesPersonId.set(id || null);
     this.pageIndex.set(1);
     this.reload();
   }

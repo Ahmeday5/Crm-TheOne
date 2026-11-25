@@ -189,6 +189,14 @@ export const NAV_SECTIONS: NavSection[] = [
             icon: 'fa-solid fa-file-invoice-dollar',
             roles: ['Admin', 'Sales'],
           },
+          // Admin decides discounts above the limit; reps follow their own requests + codes.
+          {
+            labelKey: 'sidebar.items.discountApprovals',
+            path: '/discount-approvals',
+            icon: 'fa-solid fa-percent',
+            roles: ['Admin', 'Sales', 'Support'],
+            matchSubroutes: true,
+          },
           {
             labelKey: 'sidebar.items.contractsManage',
             path: '/contracts-management',

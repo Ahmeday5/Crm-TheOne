@@ -5,7 +5,7 @@ import { environment } from '../../../../environments/environment';
 import { API_ENDPOINTS } from '../../../core/constants/api-endpoints.const';
 import { AuthService } from '../../../core/services/auth.service';
 import { isJwtExpired } from '../../../core/utils/jwt.util';
-import { WaChat, WaInstanceStatusEvent, WaMessageEvent, WaMessageStatusEvent } from '../models/whatsapp.models';
+import { WaChat, WaChatNoteAddedEvent, WaInstanceStatusEvent, WaMessageEvent, WaMessageStatusEvent } from '../models/whatsapp.models';
 import { canUseWhatsApp, normalizeChannel, normalizeChat } from '../utils/whatsapp.util';
 
 export type WaRealtimeState = 'stopped' | 'connecting' | 'connected' | 'reconnecting';
@@ -16,6 +16,8 @@ const HUB_EVENTS = {
   messageStatus: 'whatsappMessageStatus',
   chatUpdated: 'whatsappChatUpdated',
   instanceStatus: 'whatsappInstanceStatus',
+  /** Inbox v4 §3 — `{ chatId, note }`. */
+  noteAdded: 'whatsappChatNoteAdded',
 } as const;
 
 /** Reconnect forever with capped exponential backoff + jitter (0 s, 2 s, 4 s … 30 s). */
@@ -68,6 +70,7 @@ export class WhatsAppRealtimeService {
   private readonly chatSubject = new Subject<WaChat>();
   private readonly instanceSubject = new Subject<WaInstanceStatusEvent>();
   private readonly reconnectedSubject = new Subject<void>();
+  private readonly noteAddedSubject = new Subject<WaChatNoteAddedEvent>();
 
   /** A new incoming or outgoing message (also from the phone or another admin). */
   readonly message$: Observable<WaMessageEvent> = this.messageSubject.asObservable();
@@ -77,6 +80,8 @@ export class WhatsAppRealtimeService {
   readonly instanceStatus$: Observable<WaInstanceStatusEvent> = this.instanceSubject.asObservable();
   /** Connected again after a drop / restart — refetch what is on screen. */
   readonly reconnected$: Observable<void> = this.reconnectedSubject.asObservable();
+  /** An internal note was added to a chat (inbox v4 §3) — an open notes panel appends it. */
+  readonly noteAdded$: Observable<WaChatNoteAddedEvent> = this.noteAddedSubject.asObservable();
 
   constructor() {
     const eligibleUser = computed(() => {
@@ -138,6 +143,7 @@ export class WhatsAppRealtimeService {
       this.emit(gen, () => this.statusSubject.next(e)),
     );
     connection.on(HUB_EVENTS.chatUpdated, (e: WaChat) => this.emit(gen, () => this.chatSubject.next(normalizeChat(e))));
+    connection.on(HUB_EVENTS.noteAdded, (e: WaChatNoteAddedEvent) => this.emit(gen, () => this.noteAddedSubject.next(e)));
     connection.on(HUB_EVENTS.instanceStatus, (e: WaInstanceStatusEvent) =>
       this.emit(gen, () => this.instanceSubject.next({ ...e, instance: normalizeChannel(e.instance) })),
     );

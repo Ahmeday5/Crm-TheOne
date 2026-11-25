@@ -107,10 +107,28 @@
           }
         </div>
         <div class="card-body">
+          <div class="mb-3">
+            <app-customer-date-range-filter
+              size="sm"
+              [value]="pipelineDates()"
+              [disabled]="loadingPipeline()"
+              (valueChange)="onPipelineDatesChange($event)" />
+          </div>
           @if (loadingPipeline()) {
             <div class="text-center py-5">
               <span class="spinner-border text-primary" role="status"></span>
             </div>
+          } @else if (pipelineError()) {
+            <app-load-error
+              [message]="'dashboard.sales.pipelineLoadFailed' | translate"
+              (retry)="reloadPipeline()">
+            </app-load-error>
+          } @else if (!hasPipeline()) {
+            <app-empty-state
+              [compact]="true"
+              icon="fa-solid fa-chart-column"
+              [message]="(pipelineFiltered() ? 'dashboard.sales.pipelineEmptyFiltered' : 'dashboard.sales.pipelineEmpty') | translate">
+            </app-empty-state>
           } @else {
             <apx-chart
               [series]="pipelineChart().series"

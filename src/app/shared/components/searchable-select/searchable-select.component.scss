@@ -164,7 +164,8 @@
 // ─── Dropdown panel ────────────────────────────────────────────
 .ss-panel {
   position: absolute;
-  z-index: 1050;
+  // Floats above modals (1075+) — the panel is moved to <body> while open.
+  z-index: 2000;
   inset-inline-start: 0;
   inset-inline-end: 0;
   top: calc(100% + 5px);
@@ -257,7 +258,7 @@
 
 // ─── Options list ─────────────────────────────────────────────
 .ss-list {
-  max-height: 280px;
+  max-height: var(--fp-list-max, 280px);
   overflow-y: auto;
   padding: 0.3rem 0;
 
@@ -426,4 +427,20 @@
   .ss-search-clear { width: 28px; height: 28px; }
   .ss-list { max-height: min(280px, 40dvh); }
   .ss-option { min-height: 42px; }
+}
+
+// Opening upwards: animate from below.
+.ss-panel.is-above {
+  animation-name: ss-slide-in-up;
+}
+
+@keyframes ss-slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

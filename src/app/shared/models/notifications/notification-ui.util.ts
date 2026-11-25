@@ -31,6 +31,13 @@ const ADMIN_TRIAGE_TYPES: ReadonlySet<string> = new Set([
   'ClientRequestClarificationAnswered',
 ]);
 
+/** `relatedEntityType` of a discount-approval notification (inbox v4 section 9) - id = the approval. */
+const DISCOUNT_APPROVAL_ENTITY = 'DiscountApproval';
+
+function isDiscountApprovalNotification(n: { type: NotificationType; relatedEntityType: string | null }): boolean {
+  return n.relatedEntityType === DISCOUNT_APPROVAL_ENTITY || String(notificationTypeName(n.type)).startsWith('DiscountApproval');
+}
+
 /** Roles that chat with customers on WhatsApp inside the CRM. */
 const WHATSAPP_ROLES: readonly UserRole[] = ['Admin', 'Sales', 'Support'];
 
@@ -66,6 +73,8 @@ export function notificationIcon(type: NotificationType): string {
     case 'ProjectReleasePublished': return 'fa-solid fa-rocket';
     case 'MilestoneUpdatedByDeveloper': return 'fa-solid fa-flag-checkered';
     case 'ProjectReachedFullProgress': return 'fa-solid fa-trophy';
+    case 'DiscountApprovalRequested': return 'fa-solid fa-percent';
+    case 'DiscountApprovalDecided': return 'fa-solid fa-stamp';
     // Unknown / future types still render — with the generic bell.
     default: return 'fa-solid fa-bell';
   }
@@ -103,6 +112,8 @@ export function notificationTone(type: NotificationType): string {
     case 'ProjectReleasePublished': return 'success';
     case 'MilestoneUpdatedByDeveloper': return 'info';
     case 'ProjectReachedFullProgress': return 'warning';
+    case 'DiscountApprovalRequested': return 'warning';
+    case 'DiscountApprovalDecided': return 'success';
     default: return 'primary';
   }
 }
@@ -146,6 +157,15 @@ export function notificationRoute(n: NotificationTarget, role: UserRole | null):
 
   if (isPaymentNotification(n)) {
     return role && WHATSAPP_ROLES.includes(role) ? ['/payments'] : null;
+  }
+
+  // Discount approvals: the Admin opens the request card (approve / reject /
+  // resend the code); the requester opens their request and sees the code.
+  // An open quotation / payment-link form also fills the code by itself.
+  if (isDiscountApprovalNotification(n)) {
+    if (role !== 'Admin' && role !== 'Sales' && role !== 'Marketing' && role !== 'Support') return null;
+    const id = n.relatedEntityType === DISCOUNT_APPROVAL_ENTITY || !n.relatedEntityType ? n.relatedEntityId : null;
+    return id ? ['/discount-approvals', String(id)] : ['/discount-approvals'];
   }
 
   const staff = role === 'Admin' || role === 'Developer';

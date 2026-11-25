@@ -71,6 +71,10 @@ const DEFAULT_DURATION_MIN = 60;
 export class AssignSupportDialogComponent implements OnInit {
   @Input({ required: true }) customerId!: number;
   @Input() customerName = '';
+  /** Started from a chat: the server adds a «اتحوّل للدعم» note to it (needs chat permission). */
+  @Input() chatId: number | null = null;
+  /** Optional note for the support person (sent with `chatId`). */
+  @Input() message: string | null = null;
 
   @Output() assigned = new EventEmitter<AssignSupportResponse>();
   @Output() cancel = new EventEmitter<void>();
@@ -180,7 +184,12 @@ export class AssignSupportDialogComponent implements OnInit {
     this.errorMessage.set(null);
 
     this.customers
-      .assignSupport(this.customerId, { supportPersonId, appointment: this.buildAppointment() })
+      .assignSupport(this.customerId, {
+        supportPersonId,
+        appointment: this.buildAppointment(),
+        ...(this.chatId ? { chatId: this.chatId } : {}),
+        ...(this.chatId && this.message ? { message: this.message } : {}),
+      })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {

@@ -1,0 +1,85 @@
+@if (required()) {
+  @if (approvedCode(); as c) {
+    <div class="dab dab--ok" role="status">
+      <span class="dab__icon" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+      <div class="dab__body">
+        <p class="dab__title">{{ 'discounts.box.approved' | translate }}</p>
+        <p class="dab__text">
+          <span dir="ltr" class="dab__code-chip">{{ 'discounts.box.approvedCode' | translate: { code: c } }}</span>
+          <span class="ms-1">{{ 'discounts.box.approvedLive' | translate }}</span>
+        </p>
+        @if (autoFilled()) {
+          <p class="dab__text small mb-0"><i class="fa-regular fa-bell me-1" aria-hidden="true"></i>{{ 'discounts.box.autoFilled' | translate }}</p>
+        }
+      </div>
+      <button type="button" class="btn btn-link btn-sm dab__change" (click)="changeCode()">{{ 'discounts.box.changeCode' | translate }}</button>
+    </div>
+  } @else {
+    <div class="dab dab--warn" role="alert">
+      <span class="dab__icon" aria-hidden="true"><i class="fa-solid fa-triangle-exclamation"></i></span>
+      <div class="dab__body">
+        <p class="dab__title">{{ 'discounts.box.title' | translate }}</p>
+        <p class="dab__text">{{ 'discounts.box.detail' | translate: { percent: percentText(), threshold: threshold() } }}</p>
+
+        @if (stale()) {
+          <p class="dab__note"><i class="fa-solid fa-rotate me-1" aria-hidden="true"></i>{{ 'discounts.box.stale' | translate }}</p>
+        }
+
+        @if (active(); as a) {
+          @if (a.status === 'Rejected') {
+            <div class="dab__rejected">
+              <p class="mb-1 fw-700"><i class="fa-solid fa-ban me-1" aria-hidden="true"></i>{{ 'discounts.box.rejected' | translate }}</p>
+              @if (a.rejectReason) { <p class="mb-2 small" dir="auto">{{ 'discounts.box.rejectedReason' | translate: { reason: a.rejectReason } }}</p> }
+              <button type="button" class="btn btn-light btn-sm" (click)="requestAgain()">
+                <i class="fa-solid fa-rotate-right me-1" aria-hidden="true"></i>{{ 'discounts.box.requestAgain' | translate }}
+              </button>
+            </div>
+          }
+        }
+
+        @if (active()?.status !== 'Rejected') {
+          <!-- Step 1 -->
+          <div class="dab__step">
+            <p class="dab__step-title"><span class="dab__num">1</span>{{ 'discounts.box.step1' | translate }}</p>
+            @if (!canRequest()) {
+              <p class="dab__text small mb-0">{{ 'discounts.box.pickCustomer' | translate }}</p>
+            } @else {
+              <div class="btn-row dab__actions">
+                <button type="button" class="btn btn-success btn-sm" [disabled]="!!busy()" (click)="sendWhatsApp()">
+                  @if (busy() === 'whatsapp') { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+                  @else { <i class="fa-brands fa-whatsapp me-1" aria-hidden="true"></i> }
+                  {{ 'discounts.box.sendWhatsapp' | translate }}
+                </button>
+                <button type="button" class="btn btn-light btn-sm" [disabled]="!!busy()" (click)="copyRequest()">
+                  @if (busy() === 'copy') { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+                  @else { <i class="fa-regular fa-copy me-1" aria-hidden="true"></i> }
+                  {{ 'discounts.box.copyRequest' | translate }}
+                </button>
+              </div>
+              @if (active(); as a) {
+                @if (a.status === 'Pending') {
+                  <p class="dab__sent"><i class="fa-regular fa-clock me-1" aria-hidden="true"></i>{{ 'discounts.box.sent' | translate: { id: a.id } }}</p>
+                }
+              }
+            }
+          </div>
+
+          <!-- Step 2 -->
+          <div class="dab__step">
+            <label class="dab__step-title" for="dab-code"><span class="dab__num">2</span>{{ 'discounts.box.step2' | translate }}</label>
+            <div class="dab__code-row">
+              <input id="dab-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" dir="ltr"
+                     class="form-control dab__code" [class.is-invalid]="!!codeError()"
+                     [placeholder]="'discounts.box.codePh' | translate"
+                     [value]="code()" (input)="onCode($any($event.target).value)" />
+
+            </div>
+            @if (codeError(); as e) { <p class="dab__err">{{ e }}</p> }
+          </div>
+        }
+
+        @if (error(); as e) { <p class="dab__err">{{ e }}</p> }
+      </div>
+    </div>
+  }
+}

@@ -1,0 +1,167 @@
+<aside class="cp" [attr.aria-label]="'inboxTools.panel.title' | translate">
+  <header class="cp__head">
+    <i class="fa-solid fa-address-card cp__head-icon" aria-hidden="true"></i>
+    <h3 class="cp__title">{{ 'inboxTools.panel.title' | translate }}</h3>
+    <button type="button" class="cp__close" (click)="closed.emit()"
+            [title]="'inboxTools.panel.close' | translate" [attr.aria-label]="'inboxTools.panel.close' | translate">
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  <div class="cp__body">
+    @if (!chat().customerId) {
+      <div class="cp__empty">
+        <span class="icon-tile lg tone-success" aria-hidden="true"><i class="fa-solid fa-user-plus"></i></span>
+        <h4 class="cp__empty-title">{{ 'inboxTools.panel.noCustomer' | translate }}</h4>
+        <p class="text-muted small mb-2">{{ 'inboxTools.panel.noCustomerHint' | translate }}</p>
+        @if (canEdit()) {
+          <button type="button" class="btn btn-success btn-sm" (click)="addCustomer.emit()">
+            <i class="fa-solid fa-user-plus me-1" aria-hidden="true"></i>{{ 'whatsapp.addCustomer.add' | translate }}
+          </button>
+        }
+      </div>
+    } @else if (loading()) {
+      <div class="cp__state" aria-busy="true"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span></div>
+    } @else if (error()) {
+      <div class="cp__state">
+        <p class="text-muted mb-2">{{ 'inboxTools.panel.loadFailed' | translate }}</p>
+        <button type="button" class="btn btn-sm btn-light" (click)="reload()">
+          <i class="fa-solid fa-rotate me-1" aria-hidden="true"></i>{{ 'inboxTools.panel.retry' | translate }}
+        </button>
+      </div>
+    } @else if (customer()) {
+      @let c = customer()!;
+      <!-- who -->
+      <section class="cp-sec cp-who">
+        <h4 class="cp-who__name" dir="auto">{{ c.fullName || '—' }}</h4>
+        @if (c.campanyName) { <span class="cp-who__company" dir="auto">{{ c.campanyName }}</span> }
+        <span class="badge {{ statusClass() }} cp-who__status">{{ statusText() }}</span>
+      </section>
+
+      <dl class="cp-sec cp-dl">
+        <div class="cp-dl__row">
+          <dt>{{ 'inboxTools.panel.phone' | translate }}</dt>
+          <dd dir="ltr">{{ phone(c.phone) || '—' }}</dd>
+        </div>
+        <div class="cp-dl__row">
+          <dt>{{ 'inboxTools.panel.email' | translate }}</dt>
+          <dd dir="ltr" class="cp-dl__wrap">{{ c.email || '—' }}</dd>
+        </div>
+        <div class="cp-dl__row">
+          <dt>{{ 'inboxTools.panel.salesRep' | translate }}</dt>
+          <dd dir="auto">{{ c.salesPersonName || '—' }}</dd>
+        </div>
+        <div class="cp-dl__row">
+          <dt>{{ 'inboxTools.panel.supportPerson' | translate }}</dt>
+          <dd dir="auto">{{ c.supportPersonName || '—' }}</dd>
+        </div>
+        <div class="cp-dl__row">
+          <dt>{{ 'inboxTools.panel.source' | translate }}</dt>
+          <dd dir="auto">{{ c.source || c.campaignName || '—' }}</dd>
+        </div>
+        <div class="cp-dl__row">
+          <dt>{{ 'inboxTools.panel.createdAt' | translate }}</dt>
+          <dd><app-created-at [value]="c.createdAt" /></dd>
+        </div>
+      </dl>
+
+      @if (c.services.length) {
+        <section class="cp-sec">
+          <h5 class="cp-sec__title">{{ 'inboxTools.panel.services' | translate }}</h5>
+          <div class="cp-tags">
+            @for (s of c.services; track s.id) { <span class="cp-tag" dir="auto">{{ s.name }}</span> }
+          </div>
+        </section>
+      }
+
+      @if (hasTeamNotes()) {
+        <section class="cp-sec">
+          <h5 class="cp-sec__title">{{ 'inboxTools.panel.teamNotes' | translate }}</h5>
+          @if (c.noteMarketing?.trim()) {
+            <p class="cp-note"><b>{{ 'inboxTools.panel.noteMarketing' | translate }}:</b> <span dir="auto">{{ c.noteMarketing }}</span></p>
+          }
+          @if (c.noteSales?.trim()) {
+            <p class="cp-note"><b>{{ 'inboxTools.panel.noteSales' | translate }}:</b> <span dir="auto">{{ c.noteSales }}</span></p>
+          }
+          @if (c.noteSupport?.trim()) {
+            <p class="cp-note"><b>{{ 'inboxTools.panel.noteSupport' | translate }}:</b> <span dir="auto">{{ c.noteSupport }}</span></p>
+          }
+        </section>
+      }
+
+      <section class="cp-sec">
+        <h5 class="cp-sec__title">{{ 'inboxTools.panel.tickets' | translate }}</h5>
+        @if (ticketsLoading()) {
+          <span class="spinner-border spinner-border-sm text-muted" aria-hidden="true"></span>
+        } @else if (ticketsError()) {
+          <p class="cp-muted">{{ 'inboxTools.panel.ticketsUnavailable' | translate }}</p>
+        } @else if (recentTickets().length === 0) {
+          <p class="cp-muted">{{ 'inboxTools.panel.noTickets' | translate }}</p>
+        } @else {
+          <ul class="cp-tickets" role="list">
+            @for (t of recentTickets(); track t.id) {
+              <li class="cp-ticket">
+                <span class="cp-ticket__title" dir="auto">#{{ t.ticketNumber }} · {{ t.title }}</span>
+                <span class="cp-ticket__meta">
+                  <span class="cp-tag">{{ t.statusName }}</span>
+                  <time [attr.datetime]="t.createdAt">{{ t.createdAt | cairoDate: 'date' }}</time>
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+
+    <!-- this chat (linked or not) -->
+    <section class="cp-sec cp-chat">
+      <h5 class="cp-sec__title">{{ 'inboxTools.panel.thisChat' | translate }}</h5>
+      <div class="cp-chat__row">
+        <span class="cp-chat__key"><i class="fa-solid fa-tags" aria-hidden="true"></i>{{ 'inboxTools.panel.labels' | translate }}</span>
+        @if (labels().length) {
+          <span class="cp-chips">
+            @for (l of labels(); track l.code) {
+              <span class="cp-chip" [attr.data-tone]="l.tone"><i [class]="l.icon" aria-hidden="true"></i>{{ l.key | translate }}</span>
+            }
+          </span>
+        } @else {
+          <span class="cp-muted">{{ 'inboxTools.panel.noLabels' | translate }}</span>
+        }
+      </div>
+      <div class="cp-chat__row">
+        <span class="cp-chat__key"><i class="fa-solid fa-bell" aria-hidden="true"></i>{{ 'inboxTools.panel.reminder' | translate }}</span>
+        @if (chat().nextReminderAt; as at) {
+          <time class="cp-chat__val" [class.is-due]="chat().reminderDue" [attr.datetime]="at">{{ at | cairoDate: 'datetime' }}</time>
+        } @else {
+          <span class="cp-muted">{{ 'inboxTools.panel.noReminder' | translate }}</span>
+        }
+      </div>
+      <div class="cp-chat__row">
+        <span class="cp-chat__key"><i class="fa-solid fa-note-sticky" aria-hidden="true"></i>{{ 'inboxTools.panel.notesCount' | translate }}</span>
+        <span class="cp-chat__val">{{ chat().notesCount ?? 0 }}</span>
+      </div>
+    </section>
+  </div>
+
+  @if (customer(); as c) {
+    <footer class="cp__foot btn-row">
+      @if (canEdit()) {
+        <button type="button" class="btn btn-sm btn-light" (click)="statusOpen.set(true)">
+          <i class="fa-solid fa-arrows-spin me-1" aria-hidden="true"></i>{{ 'inboxTools.panel.changeStatus' | translate }}
+        </button>
+      }
+      <button type="button" class="btn btn-sm btn-primary" (click)="openProfile.emit(c.id)">
+        <i class="fa-solid fa-id-card me-1" aria-hidden="true"></i>{{ 'inboxTools.panel.fullProfile' | translate }}
+      </button>
+    </footer>
+  }
+</aside>
+
+@if (statusOpen() && customer(); as c) {
+  <app-change-status-dialog
+    [customerId]="c.id"
+    [customerName]="c.fullName || ''"
+    [currentStatus]="c.statusName"
+    (changed)="onStatusChanged()"
+    (cancel)="statusOpen.set(false)" />
+}

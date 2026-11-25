@@ -3,7 +3,7 @@ import { buildPaymentMessage } from './payment-message.util';
 
 function request(patch: Partial<PaymentRequest> = {}): PaymentRequest {
   return {
-    id: 41, token: 'tok', amount: 1000, currency: 'EGP', description: 'test', status: 'Pending',
+    id: 41, token: 'tok', amount: 1000, originalAmount: 1000, discount: 0, currency: 'EGP', description: 'test', status: 'Pending',
     expiresAt: '2026-11-19T10:00:00Z',
     method: { methodId: 1, type: 'InstaPay', accountName: 'The One System', phoneNumber: null, instapayAddress: 'x@instapay', instapayLink: null, instructions: null },
     customerName: 'Ahmed Ali', customerPhone: null, customerEmail: null, chatId: 1, customerId: null,
@@ -30,6 +30,14 @@ describe('buildPaymentMessage', () => {
     expect(text).not.toContain('This is');
     expect(text).not.toContain('For:');
     expect(text).toContain('Payment request #41');
+  });
+
+  it('strikes the original amount through when there is a discount', () => {
+    const discounted = request({ amount: 900, originalAmount: 1200, discount: 300 });
+    expect(buildPaymentMessage(discounted, { lang: 'ar', rich: true })).toContain('~1,200 ج.م~ *900 ج.م*');
+    const plain = buildPaymentMessage(discounted, { lang: 'en', rich: false });
+    expect(plain).toContain('900 EGP (instead of 1,200 EGP)');
+    expect(plain).not.toContain('~');
   });
 
   it('puts the link alone on its line', () => {

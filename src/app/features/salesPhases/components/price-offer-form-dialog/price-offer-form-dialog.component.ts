@@ -10,6 +10,7 @@ import {
   computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -37,6 +38,11 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ServicesService } from '../../../services/services/services.service';
 import { PriceQuotationsService } from '../../services/price-quotations.service';
+import {
+  DiscountApprovalBoxComponent,
+  DiscountGateState,
+} from '../../../discount-approvals/components/discount-approval-box/discount-approval-box.component';
+import { discountPercent, formatPercent } from '../../../discount-approvals/utils/discount.util';
 
 interface ItemSeed {
   serviceId: number;
@@ -66,6 +72,7 @@ interface ItemSeed {
     ModalComponent,
     SearchableSelectComponent,
     ResponsiveTableDirective,
+    DiscountApprovalBoxComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './price-offer-form-dialog.component.html',
@@ -157,6 +164,38 @@ export class PriceOfferFormDialogComponent implements OnInit {
     return Math.max(0, this.subTotal() - discount);
   });
 
+  // ─────────── discount approval (docs/backend-prompt-inbox-v4.md §9) ───────────
+
+  private readonly approvalBox = viewChild(DiscountApprovalBoxComponent);
+
+  /** Edit mode: the saved discount — keeping or lowering it needs no approval. */
+  readonly baselineDiscount = signal<number | null>(null);
+
+  /** Approval gate reported by the box — save stays disabled until `ready`. */
+  readonly gate = signal<DiscountGateState>({ required: false, ready: true, code: null });
+
+  readonly discountValue = computed(() => {
+    this.snapshot();
+    return Math.max(0, Number(this.form.controls.discount.value) || 0);
+  });
+
+  readonly customerIdValue = computed(() => {
+    this.snapshot();
+    const id = this.form.controls.customerId.value;
+    return id == null ? null : Number(id);
+  });
+
+  readonly customerNameValue = computed(() => {
+    const id = this.customerIdValue();
+    return id == null ? null : (this.customers().find((c) => c.id === id)?.fullName ?? null);
+  });
+
+  /** "يعني X% من المبلغ" under the discount input. */
+  readonly discountPercentText = computed(() => {
+    const pct = discountPercent(this.subTotal(), this.discountValue());
+    return pct > 0 ? formatPercent(pct) : null;
+  });
+
   ngOnInit(): void {
     this.form.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -195,6 +234,7 @@ export class PriceOfferFormDialogComponent implements OnInit {
           notes: quote.notes ?? '',
         });
         this.rebuildSuppressed = false;
+        this.baselineDiscount.set(Number(quote.discount) || 0);
         this.items.clear();
         for (const item of quote.items ?? []) {
           this.items.push(
@@ -296,6 +336,12 @@ export class PriceOfferFormDialogComponent implements OnInit {
       return;
     }
 
+    const gate = this.gate();
+    if (!gate.ready) {
+      this.errorMessage.set(this.t('discounts.box.saveBlocked'));
+      return;
+    }
+
     const raw = this.form.getRawValue();
     const payload: PriceQuotationRequest = {
       customerId: Number(raw.customerId),
@@ -306,6 +352,7 @@ export class PriceOfferFormDialogComponent implements OnInit {
         unitPrice: Number(g.get('unitPrice')?.value) || 0,
         quantity: Number(g.get('quantity')?.value) || 0,
       })),
+      ...(gate.required && gate.code ? { approvalCode: gate.code } : {}),
     };
 
     this.submitting.set(true);
@@ -323,13 +370,14 @@ export class PriceOfferFormDialogComponent implements OnInit {
     const emitter = id !== null ? this.updated : this.created;
 
     request$.subscribe({
-      next: () => {
+      next: (saved) => {
         this.submitting.set(false);
         this.toast.success(this.t(successKey));
         emitter.emit();
       },
       error: (err: ApiError) => {
         this.submitting.set(false);
+        this.approvalBox()?.handleSaveError(err);
         this.errorMessage.set(err?.message ?? this.t('common.loadFailed'));
       },
     });

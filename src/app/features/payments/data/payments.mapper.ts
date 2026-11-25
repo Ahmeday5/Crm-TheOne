@@ -103,11 +103,23 @@ function toSnapshot(dto: Dto): PaymentMethodSnapshot {
   };
 }
 
+/**
+ * §9.4: `amount` is the net; `originalAmount` + `discount` are new. Older
+ * builds send neither (no discount); a build sending only `discount`
+ * still yields the original.
+ */
+function amounts(dto: Dto): { amount: number; originalAmount: number; discount: number } {
+  const amount = num(dto['amount']);
+  const discount = Math.max(0, num(dto['discount']));
+  const original = dto['originalAmount'] == null ? amount + discount : num(dto['originalAmount'], amount);
+  return { amount, originalAmount: Math.max(original, amount), discount };
+}
+
 export function toPaymentRequest(dto: Dto): PaymentRequest {
   return {
     id: num(dto['id']),
     token: str(dto['token']) ?? '',
-    amount: num(dto['amount']),
+    ...amounts(dto),
     currency: 'EGP',
     description: str(dto['description']),
     status: parseRequestStatus(dto['status']),
@@ -136,7 +148,7 @@ export function toPaymentRequest(dto: Dto): PaymentRequest {
 
 export function toPublicPayment(dto: Dto): PublicPayment {
   return {
-    amount: num(dto['amount']),
+    ...amounts(dto),
     currency: 'EGP',
     description: str(dto['description']),
     status: parseRequestStatus(dto['status']),

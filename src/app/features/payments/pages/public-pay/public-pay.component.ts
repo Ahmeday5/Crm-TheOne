@@ -83,6 +83,11 @@ export class PublicPayComponent implements OnInit, OnDestroy {
     return m ? providerOf(m.type) : null;
   });
   protected readonly amountText = computed(() => formatAmount(this.payment()?.amount ?? 0));
+  /** Section 9.4: the price before the discount, struck through, when there is one. */
+  protected readonly originalText = computed(() => {
+    const p = this.payment();
+    return p && p.originalAmount > p.amount ? formatAmount(p.originalAmount) : null;
+  });
   protected readonly recipientPhone = computed(() => localMobile(this.method()?.phoneNumber));
   /** The wallets the payer may use instead of the one the request was sent on. */
   protected readonly otherWallets = computed(() => WALLET_TYPES.filter((t) => t !== this.method()?.type));

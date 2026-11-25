@@ -51,6 +51,20 @@ Rules:
 
 Please also add `Unassigned` to `GET /Sales/Pipeline` with the same meaning, so the Kanban board has the "بدون موظف" option too.
 
+## Feature: a Sales rep who adds a customer keeps it
+
+Frontend change (already shipped): when a **Sales**-role user clicks "Save & assign" on the add-customer form, there is no rep picker any more. `POST /Customers/CreateCustomer` is sent with:
+
+```json
+"assignToSalesTeam": true,
+"salesPersonId": "<the caller's own userId>"
+```
+
+Backend must:
+- Accept this from a Sales-role caller and assign the new customer to them, the same way an Admin/Marketing assignment does: status becomes `AssignedToSalesTeam`, the rep shows in every list and in `/Sales/Pipeline`, and the usual assignment notification/activity is written.
+- **Enforce it server-side:** for a Sales-role caller, ignore any `salesPersonId` in the body and always use the id from the JWT. A rep must not be able to assign a new customer to a colleague. Admin and Marketing keep choosing any rep.
+- After creating, the customer must show up straight away in `getSalesCustomers` for that rep. The frontend sends them to that list after saving.
+
 ## Clarify scope (answer in the PR description)
 
 For a given rep with no other filters, what should hold?
@@ -63,5 +77,6 @@ For a given rep with no other filters, what should hold?
 2. `getSalesCustomers?SalesPersonId=<Hadeer>` → `count` equals what the pipeline shows for Hadeer (or differs only by the documented excluded statuses).
 3. `?Unassigned=true` returns only rows with `salesPersonId == null` on all four list endpoints and on the pipeline.
 4. Swagger documents the new params.
+5. A Sales rep creates a customer with "Save & assign". The customer is assigned to that rep and appears in their `getSalesCustomers` and pipeline. Sending another rep's id as a Sales user still assigns it to the caller.
 
 Once deployed, the frontend will send `SalesPersonId` / `Unassigned` directly and delete its download-everything workaround (`src/app/features/leads/utils/sales-person-filter.util.ts`).

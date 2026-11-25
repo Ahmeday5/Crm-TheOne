@@ -78,13 +78,8 @@ import {
 } from '../../utils/customer-status.util';
 import { ClampTextDirective } from '../../../../shared/directives/clamp-text.directive';
 import { ResponsiveTableDirective } from '../../../../shared/directives/responsive-table.directive';
-import {
-  UNASSIGNED_SALES,
-  fetchAllPages,
-  lastPage,
-  matchesSalesPerson,
-  pageSlice,
-} from '../../utils/sales-person-filter.util';
+import { fetchAllPages } from '../../utils/fetch-all-pages.util';
+import { UNASSIGNED_SALES, salesPersonQuery } from '../../utils/sales-person-query.util';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -229,12 +224,11 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
   readonly countries = signal<Country[]>([]);
   readonly governorates = signal<Governorate[]>([]);
 
-  /** Sales-rep filter (Admin only) — `UNASSIGNED_SALES` = no rep. Applied client-side, see the util. */
+  /** Sales-rep filter, sent to the server: `SalesPersonId`, or `Unassigned=true` for `UNASSIGNED_SALES`. */
   readonly selectedSalesPersonId = signal<string | null>(null);
   readonly salesTeam = signal<SalesPerson[]>([]);
   readonly unassignedSales = UNASSIGNED_SALES;
   /** Every row matching the server filters + the rep, while a rep is selected. */
-  private repRows: CustomerListItem[] | null = null;
   /** Drops answers of superseded loads (fast filter switching). */
   private loadSeq = 0;
 
@@ -412,6 +406,7 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
       CountryId: this.selectedCountryId() ?? undefined,
       GovernorateId: this.governorateFilterApplies() ? this.selectedGovernorateId() ?? undefined : undefined,
       ...toDateRangeParams(this.dateFilter()),
+      ...salesPersonQuery(this.selectedSalesPersonId()),
     };
   }
 
@@ -426,25 +421,6 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
     const seq = ++this.loadSeq;
     this.loading.set(true);
     this.loadError.set(null);
-    this.repRows = null;
-
-    const rep = this.selectedSalesPersonId();
-    if (rep) {
-      fetchAllPages((pageIndex, pageSize) => this.fetchPage(this.listQuery(pageIndex, pageSize), force))
-        .then((all) => {
-          if (seq !== this.loadSeq) return;
-          this.repRows = all.filter((r) => matchesSalesPerson(r, rep, this.salesTeam()));
-          this.showRepPage();
-          this.loading.set(false);
-        })
-        .catch(() => {
-          if (seq !== this.loadSeq) return;
-          this.loading.set(false);
-          this.loadError.set(this.t('customers.messages.loadFailed'));
-        });
-      return;
-    }
-
     this.fetchPage(this.listQuery(this.pageIndex(), this.pageSize()), force)
       .subscribe({
         next: (page) => {
@@ -461,19 +437,9 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
       });
   }
 
-  /** Pages the rep-filtered set locally (no refetch). */
-  private showRepPage(): void {
-    const all = this.repRows ?? [];
-    const last = lastPage(all.length, this.pageSize());
-    if (this.pageIndex() > last) this.pageIndex.set(last);
-    this.count.set(all.length);
-    this.rows.set(pageSlice(all, this.pageIndex(), this.pageSize()));
-  }
-
   /** Applies a row patch to the visible page AND the rep-filtered set. */
   private patchRows(mapper: (list: CustomerListItem[]) => CustomerListItem[]): void {
     this.rows.update(mapper);
-    if (this.repRows) this.repRows = mapper(this.repRows);
   }
 
   // ─────────── search / filters / pagination ───────────
@@ -524,15 +490,13 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
   onPageChange(page: number): void {
     this.pageIndex.set(page);
-    if (this.repRows) this.showRepPage();
-    else this.reload();
+    this.reload();
   }
 
   onPageSizeChange(size: number): void {
     this.pageSize.set(size);
     this.pageIndex.set(1);
-    if (this.repRows) this.showRepPage();
-    else this.reload();
+    this.reload();
   }
 
   // ─────────── navigation ───────────
@@ -844,7 +808,6 @@ export class SalesLeadsComponent implements OnInit, OnDestroy {
 
   /** Export: every matching row, page by page (the server caps a page at 50). */
   readonly fetchAllRows = async (): Promise<CustomerListItem[]> => {
-    if (this.repRows) return [...this.repRows];
     return fetchAllPages((pageIndex, pageSize) => this.fetchPage(this.listQuery(pageIndex, pageSize)));
   };
 

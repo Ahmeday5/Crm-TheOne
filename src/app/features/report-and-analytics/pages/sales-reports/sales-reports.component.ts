@@ -7,6 +7,12 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import {
+  NotBuyingReasonCount,
+  formatNotBuyingReason,
+  isNotBuyingReasonCode,
+  notBuyingReasonKey,
+} from '../../../leads/utils/not-buying-reason.util';
 import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { forkJoin } from 'rxjs';
@@ -52,7 +58,6 @@ export class SalesReportsComponent implements OnInit {
   private readonly campaignsApi = inject(CampaignsService);
 
   /** Caps the reasons chart slice count — past this we'd just be noise. */
-  private readonly REASONS_CHART_LIMIT = 10;
   /** Theme-friendly palette cycled across the reasons donut slices. */
   private readonly REASONS_PALETTE = [
     '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6',
@@ -83,7 +88,7 @@ export class SalesReportsComponent implements OnInit {
   // ─────────── server-driven state ───────────
   readonly stats = signal<SalesAnalysisStats | null>(null);
   readonly campaigns = signal<CampaignPerformanceRow[]>([]);
-  readonly notBuyingReasons = signal<string[]>([]);
+  readonly notBuyingReasons = signal<NotBuyingReasonCount[]>([]);
   /** Raw customer list straight from `Customers/getLeadCustomer`. */
   readonly customers = signal<CustomerListItem[]>([]);
 
@@ -164,33 +169,21 @@ export class SalesReportsComponent implements OnInit {
   });
 
   // ─────────── reasons chart (from /Sales/NotBuyingReasons) ───────────
-  /**
-   * Group the raw reason strings by their normalized (trimmed) value,
-   * sort by frequency descending, and cap at `REASONS_CHART_LIMIT`. If the
-   * backend hands us 100 distinct one-off reasons, only the top 10 land
-   * on the chart — the rest are summarised in a single "Other" slice so
-   * the total stays accurate.
-   */
-  readonly reasonSlices = computed<ReasonSlice[]>(() => {
-    const buckets = new Map<string, number>();
-    for (const raw of this.notBuyingReasons()) {
-      const name = (raw ?? '').trim();
-      if (!name) continue;
-      buckets.set(name, (buckets.get(name) ?? 0) + 1);
-    }
-    const sorted = Array.from(buckets, ([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
+  /** One slice per fixed reason that has customers, biggest first. */
+  readonly reasonSlices = computed<ReasonSlice[]>(() =>
+    this.notBuyingReasons()
+      .filter((r) => r.count > 0)
+      .map((r) => ({
+        name: isNotBuyingReasonCode(r.code) ? this.t(notBuyingReasonKey(r.code)) : r.label,
+        value: r.count,
+      }))
+      .sort((a, b) => b.value - a.value),
+  );
 
-    if (sorted.length <= this.REASONS_CHART_LIMIT) return sorted;
-
-    const head = sorted.slice(0, this.REASONS_CHART_LIMIT);
-    const tail = sorted.slice(this.REASONS_CHART_LIMIT);
-    const otherTotal = tail.reduce((sum, s) => sum + s.value, 0);
-    return [
-      ...head,
-      { name: this.t('reportAnalysis.sales.charts.otherReasons'), value: otherTotal },
-    ];
-  });
+  /** "<reason> — <details>" for a non-buyer card. */
+  protected reasonText(c: { notBuyingReasonCode?: string | null; notBuyerReason?: string | null }): string {
+    return formatNotBuyingReason(c.notBuyingReasonCode, c.notBuyerReason, this.lang.lang());
+  }
 
   readonly reasonsChart = computed(() => {
     const slices = this.reasonSlices();

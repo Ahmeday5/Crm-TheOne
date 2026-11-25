@@ -81,6 +81,20 @@
             }
           </select>
         </div>
+        @if (isAdmin()) {
+          <div class="col-12 col-md-4">
+            <select class="form-select"
+                    [attr.aria-label]="'customers.filters.salesPerson' | translate"
+                    [ngModel]="selectedSalesPersonId() ?? ''"
+                    (ngModelChange)="onSalesPersonChange($event)">
+              <option value="">{{ 'customers.filters.allSalesPersons' | translate }}</option>
+              <option [value]="unassignedSales">{{ 'customers.filters.unassignedSales' | translate }}</option>
+              @for (sp of salesTeam(); track sp.userId) {
+                <option [value]="sp.userId">{{ sp.fullName || sp.email }}</option>
+              }
+            </select>
+          </div>
+        }
         <div class="col-12 col-lg-6">
           <app-customer-date-range-filter [value]="dateFilter()" (valueChange)="onDateFilterChange($event)" />
         </div>
@@ -202,7 +216,7 @@
                         @if (row.salesPersonName) {
                           <span class="crm-person-name" [title]="row.salesPersonName">{{ row.salesPersonName }}</span>
                         } @else {
-                          <span class="crm-person-empty">{{ 'customers.table.notAssigned' | translate }}</span>
+                          <span class="crm-person-empty">{{ 'customers.table.noSalesRep' | translate }}</span>
                         }
                       </div>
                       <div class="crm-role-line">

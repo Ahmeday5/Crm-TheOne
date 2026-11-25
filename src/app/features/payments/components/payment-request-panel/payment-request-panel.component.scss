@@ -155,6 +155,30 @@
 }
 
 .prp-err { margin: 0.3rem 0 0; color: var(--danger); font-size: var(--fs-xs); }
+.prp-hint { margin: 0.3rem 0 0; color: var(--text-3); font-size: var(--fs-xs); }
+
+// Discount (section 9.4): a lighter twin of the amount field.
+.prp-amount--sm .prp-amount__input { font-size: var(--fs-md); font-weight: var(--fw-600); }
+
+// Original price struck through under the net (solid, no gradient).
+.prp-summary__was {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.2rem 0 0;
+  font-size: var(--fs-sm);
+  opacity: 0.85;
+  s { text-decoration-thickness: 2px; }
+}
+.prp-summary__pct {
+  padding: 0.05rem 0.45rem;
+  border-radius: var(--radius-pill);
+  background: #fff;
+  color: var(--brand-700);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-700);
+}
+
 
 .prp-empty {
   padding: 1.25rem 1rem;

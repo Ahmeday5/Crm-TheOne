@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   EventEmitter,
   Input,
   OnInit,
@@ -10,10 +11,13 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { RouterLink } from '@angular/router';
+import { Observable, catchError, distinctUntilChanged, map, of, startWith, switchMap } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
-import { localCalendarToday } from '../../../../core/utils/calendar-date.util';
+import { extractCalendarDate, localCalendarToday } from '../../../../core/utils/calendar-date.util';
+import { cairoToday } from '../../../../core/utils/cairo-time.util';
 import { ApiError } from '../../../../core/models/api-response.model';
 import { LanguageService } from '../../../../core/services/language.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -22,6 +26,7 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
 import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import {
   CONTRACT_STATUSES,
+  ContractListItem,
   ContractStatus,
   CreateContractRequest,
   UpdateContractRequest,
@@ -43,6 +48,7 @@ import { ContractsService } from '../../services/contracts.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterLink,
     TranslatePipe,
     ModalComponent,
     FormErrorComponent,
@@ -69,6 +75,7 @@ export class ContractFormDialogComponent implements OnInit {
   private readonly service = inject(ContractsService);
   private readonly toast = inject(ToastService);
   private readonly language = inject(LanguageService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly statuses = CONTRACT_STATUSES;
   readonly loadingContract = signal(false);
@@ -78,6 +85,13 @@ export class ContractFormDialogComponent implements OnInit {
   readonly submitting = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
+  /**
+   * Create mode: an active contract the picked customer already has — a hint
+   * to renew it instead. Never blocks submit; the server 400 is authoritative.
+   */
+  readonly existingActive = signal<ContractListItem | null>(null);
+  /** Edit mode: status as loaded, so a rejected switch to Active can be undone. */
+  private loadedStatus: ContractStatus | null = null;
 
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(2)]],
@@ -121,6 +135,50 @@ export class ContractFormDialogComponent implements OnInit {
         startDate: localCalendarToday(),
       });
     }
+    this.watchActiveContract();
+  }
+
+  /**
+   * Create mode only: after a customer is picked, look up an active contract
+   * of theirs (`GetContracts?search=<name>&status=Active`, filtered to the
+   * same `customerId` and a non-past end date). Failures just hide the hint.
+   */
+  private watchActiveContract(): void {
+    const ctrl = this.form.controls.customerId;
+    ctrl.valueChanges
+      .pipe(
+        startWith(ctrl.value),
+        map((id) => (id === null || id === undefined ? null : Number(id))),
+        distinctUntilChanged(),
+        switchMap((id) => {
+          this.existingActive.set(null);
+          if (!id) return of(null);
+          return this.service.customersDropdown().pipe(
+            map((rows) => (Array.isArray(rows) ? rows : []).find((r) => Number(r.id) === id)),
+            switchMap((customer) => {
+              const search = customer?.fullName?.trim();
+              if (!search) return of(null);
+              return this.service
+                .list({ pageIndex: 1, pageSize: 10, search, status: 'Active' }, true, true)
+                .pipe(map((page) => this.findActive(page.data, id)));
+            }),
+            catchError(() => of(null)),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((row) => this.existingActive.set(row ?? null));
+  }
+
+  private findActive(rows: ContractListItem[], customerId: number): ContractListItem | null {
+    const today = cairoToday();
+    return (
+      rows.find((r) => {
+        if (Number(r.customerId) !== customerId || r.status !== 'Active') return false;
+        const end = extractCalendarDate(r.endDate);
+        return !end || end >= today;
+      }) ?? null
+    );
   }
 
   private loadContract(id: number): void {
@@ -137,6 +195,7 @@ export class ContractFormDialogComponent implements OnInit {
           startDate: this.toDateInput(c.startDate),
           endDate: this.toDateInput(c.endDate),
         });
+        this.loadedStatus = c.status;
         // Customer can't change on edit — lock it.
         this.form.controls.customerId.disable();
         this.loadingContract.set(false);
@@ -176,11 +235,22 @@ export class ContractFormDialogComponent implements OnInit {
         next: () => {
           this.submitting.set(false);
           this.toast.success(this.t('sales.contractsMgmt.messages.updated'));
+          this.loadedStatus = payload.status;
           this.updated.emit();
         },
         error: (err: ApiError) => {
           this.submitting.set(false);
-          this.errorMessage.set(err?.message ?? this.t('common.loadFailed'));
+          // Rejected switch to Active (customer already has an active
+          // contract) — put the status back to what it was.
+          if (
+            err?.status === 400 &&
+            payload.status === 'Active' &&
+            this.loadedStatus !== null &&
+            this.loadedStatus !== 'Active'
+          ) {
+            this.form.controls.status.setValue(this.loadedStatus);
+          }
+          this.showError(err);
         },
       });
       return;
@@ -202,10 +272,18 @@ export class ContractFormDialogComponent implements OnInit {
         this.created.emit();
       },
       error: (err: ApiError) => {
+        // Form stays filled and the dialog open — just surface the reason.
         this.submitting.set(false);
-        this.errorMessage.set(err?.message ?? this.t('common.loadFailed'));
+        this.showError(err);
       },
     });
+  }
+
+  /** Server message as-is (inline + toast — the alert sits below a long form). */
+  private showError(err: ApiError): void {
+    const message = err?.message?.trim() || this.t('common.loadFailed');
+    this.errorMessage.set(message);
+    this.toast.error(message);
   }
 
   isInvalid(name: keyof typeof this.form.controls): boolean {

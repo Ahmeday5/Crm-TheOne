@@ -28,6 +28,7 @@ import { PROJECT_WORKSPACE_ROUTES } from './features/project-workspace/project-w
 import { CLIENT_PORTAL_ROUTES } from './features/client-portal/client-portal.routes';
 import { PAYMENTS_PUBLIC_ROUTES, PAYMENTS_STAFF_ROUTES } from './features/payments/payments.routes';
 import { CLIENT_REQUESTS_ROUTES } from './features/client-requests/client-requests.routes';
+import { DISCOUNT_APPROVALS_ROUTES } from './features/discount-approvals/discount-approvals.routes';
 
 
 export const routes: Routes = [
@@ -56,6 +57,7 @@ export const routes: Routes = [
       ...DAILY_REPORTS_ROUTES,
       ...WHATSAPP_ROUTES,
       ...PAYMENTS_STAFF_ROUTES,
+      ...DISCOUNT_APPROVALS_ROUTES,
       ...CLIENT_REQUESTS_ROUTES,
       ...NOTIFICATIONS_ROUTES,
       ...ANNOUNCEMENTS_ROUTES,

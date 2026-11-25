@@ -6,6 +6,7 @@ import {
   Subject,
   catchError,
   debounceTime,
+  interval,
   distinctUntilChanged,
   map,
   merge,
@@ -15,7 +16,8 @@ import {
 } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../core/i18n';
 import { LanguageService } from '../../../core/services/language.service';
-import { Pagination, WaChat, WaChatsQuery } from '../models/whatsapp.models';
+import { INBOX_TOOLS_GATEWAY } from '../data/inbox-tools.gateway';
+import { Pagination, WaChat, WaChatCounters, WaChatLabel, WaChatsQuery } from '../models/whatsapp.models';
 import { WhatsAppApiService } from '../services/whatsapp-api.service';
 import { WhatsAppRealtimeService } from '../services/whatsapp-realtime.service';
 import { pollWhileVisible } from '../../../core/utils/poll-while-visible.util';
@@ -26,18 +28,34 @@ import {
   compareChatsByActivity,
   whatsappErrorText,
 } from '../utils/whatsapp.util';
+import {
+  DEFAULT_AWAITING_THRESHOLD_MIN,
+  INBOX_TOOLS_CLOCK_MS,
+  compareByIso,
+  isAwaitingReply,
+  isReminderDue,
+} from '../utils/inbox-tools.util';
 import { WhatsAppSessionStore } from './whatsapp-session.store';
 
 /** The API caps `pageSize` here — a background refresh re-reads at most this many rows. */
 const MAX_PAGE_SIZE = 100;
 
-export type ChatsFilter = 'all' | 'unread';
+/**
+ * - `awaiting` — «مستني رد»: waiting for our reply longer than the threshold, oldest first;
+ * - `followups` — «متابعات»: chats with a pending / due reminder, earliest first.
+ */
+export type ChatsFilter = 'all' | 'unread' | 'awaiting' | 'followups';
+
+/** Re-read the red badges this often while the tab is visible (real API only). */
+const COUNTERS_POLL_MS = 60_000;
 
 interface ListQuery {
   /** Admin channel filter — `null` = all channels (employees are scoped server-side). */
   channelId: string | null;
   search: string;
   filter: ChatsFilter;
+  /** One label chip (combines with the filter) — `null` = any. */
+  label: WaChatLabel | null;
 }
 
 /**
@@ -59,8 +77,10 @@ export class WhatsAppInboxStore {
   private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
+  /** Inbox v4 tools — labels, notes, reminders, counters, transfer. */
+  private readonly tools = inject(INBOX_TOOLS_GATEWAY);
 
-  private readonly query = signal<ListQuery>({ channelId: null, search: '', filter: 'all' });
+  private readonly query = signal<ListQuery>({ channelId: null, search: '', filter: 'all', label: null });
   private readonly items = signal<WaChat[]>([]);
   private readonly total = signal(0);
   /** Every chat seen this visit — the open chat keeps its header when filtered out. */
@@ -72,7 +92,21 @@ export class WhatsAppInboxStore {
   readonly channelId = computed(() => this.query().channelId);
   readonly search = computed(() => this.query().search);
   readonly filter = computed(() => this.query().filter);
+  readonly label = computed(() => this.query().label);
   readonly activeChatId = signal<number | null>(null);
+
+  /** A coarse clock for "waiting since …" (re-evaluated every minute). */
+  readonly now = signal(Date.now());
+  private readonly serverCounters = signal<WaChatCounters | null>(null);
+  private readonly countersRefresh$ = new Subject<void>();
+
+  /** Minutes without a reply before a chat counts as «مستني رد» — the server's number when known. */
+  readonly thresholdMinutes = computed(() => this.serverCounters()?.thresholdMinutes ?? DEFAULT_AWAITING_THRESHOLD_MIN);
+
+  /** The two red badges — `GET chats/counters` (scope = the chats the caller can see). */
+  readonly counters = computed<WaChatCounters>(
+    () => this.serverCounters() ?? { awaitingReply: 0, overdueReminders: 0, thresholdMinutes: DEFAULT_AWAITING_THRESHOLD_MIN },
+  );
 
   readonly loading = signal(true);
   readonly loadingMore = signal(false);
@@ -86,7 +120,8 @@ export class WhatsAppInboxStore {
    */
   readonly chats = computed<WaChat[]>(() => {
     const active = this.activeChatId();
-    return this.items().map((c) => (c.id === active && c.unreadCount ? { ...c, unreadCount: 0 } : c));
+    const list = this.items().map((c) => (c.id === active && c.unreadCount ? { ...c, unreadCount: 0 } : c));
+    return this.applyToolFilters(list);
   });
   readonly hasMore = computed(() => this.items().length < this.total());
   /** The open chat as the server reports it (real unread count — the thread decides on marking read). */
@@ -159,6 +194,39 @@ export class WhatsAppInboxStore {
     )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.refresh());
+
+    this.startTools();
+  }
+
+  /** Inbox v4: the clock behind "waiting since…" / "reminder due", and the red badges. */
+  private startTools(): void {
+
+    interval(INBOX_TOOLS_CLOCK_MS)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.now.set(Date.now()));
+
+    merge(
+      this.countersRefresh$,
+      toObservable(this.channelId, { injector: this.injector }).pipe(map(() => undefined)),
+      merge(this.realtime.message$, this.realtime.chatUpdated$, this.realtime.reconnected$).pipe(debounceTime(1500)),
+      pollWhileVisible(COUNTERS_POLL_MS),
+    )
+      .pipe(
+        switchMap(() =>
+          this.tools
+            .counters(this.session.isAdmin() ? this.channelId() : null)
+            .pipe(catchError(() => of(null))),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((c) => {
+        if (c) this.serverCounters.set(c);
+      });
+  }
+
+  /** Re-read the red badges now (after a label, a reminder…). */
+  refreshCounters(): void {
+    this.countersRefresh$.next();
   }
 
   // ─────────────── query ───────────────
@@ -169,6 +237,11 @@ export class WhatsAppInboxStore {
 
   setFilter(filter: ChatsFilter): void {
     this.patchQuery({ filter });
+  }
+
+  /** Toggle a label chip — `null` clears it. */
+  setLabel(label: WaChatLabel | null): void {
+    this.patchQuery({ label });
   }
 
   /** Admin: `null` = all channels. */
@@ -249,6 +322,11 @@ export class WhatsAppInboxStore {
     this.total.update((n) => n + 1);
   }
 
+  /** A chat changed locally (e.g. linked to a customer) — patch it in place. */
+  patchChat(chat: WaChat): void {
+    this.upsert(chat, false);
+  }
+
   /** The thread just marked this chat read. */
   markReadLocally(chatId: number): void {
     this.items.update((list) => list.map((c) => (c.id === chatId ? { ...c, unreadCount: 0 } : c)));
@@ -273,7 +351,8 @@ export class WhatsAppInboxStore {
 
     if (index < 0) {
       const belongs = (!channelId || chat.instanceId === channelId) && !search;
-      const matchesFilter = filter === 'all' || chat.unreadCount > 0;
+      const matchesFilter =
+        filter === 'unread' ? chat.unreadCount > 0 : this.applyToolFilters([chat]).length > 0;
       if (!bumped || !belongs || !matchesFilter) return;
       this.items.set([chat, ...list]);
       this.total.update((n) => n + 1);
@@ -299,7 +378,12 @@ export class WhatsAppInboxStore {
   private patchQuery(patch: Partial<ListQuery>): void {
     const current = this.query();
     const next = { ...current, ...patch };
-    if (next.channelId === current.channelId && next.search === current.search && next.filter === current.filter) {
+    if (
+      next.channelId === current.channelId &&
+      next.search === current.search &&
+      next.filter === current.filter &&
+      next.label === current.label
+    ) {
       return;
     }
     this.query.set(next);
@@ -336,13 +420,16 @@ export class WhatsAppInboxStore {
    * list stays on screen.
    */
   private read(pageIndex: number, pageSize: number): Observable<Pagination<WaChat> | null> {
-    const { channelId, search, filter } = this.query();
+    const { channelId, search, filter, label } = this.query();
     const query: WaChatsQuery = {
       pageIndex,
       pageSize,
       search: search || undefined,
       instanceId: this.session.isAdmin() ? channelId ?? undefined : undefined,
       unreadOnly: filter === 'unread' || undefined,
+      label: label || undefined,
+      awaitingReply: filter === 'awaiting' || undefined,
+      hasReminder: filter === 'followups' || undefined,
     };
     return this.api.chats(query).pipe(
       catchError((err) => {
@@ -353,6 +440,26 @@ export class WhatsAppInboxStore {
       }),
       takeUntilDestroyed(this.destroyRef),
     );
+  }
+
+  /**
+   * The page is filtered and ordered by the server; re-applying the same
+   * rules keeps live upserts and the clock honest (a replied chat leaves
+   * «مستني رد» at once, a new label joins its filter without a reload).
+   */
+  private applyToolFilters(list: WaChat[]): WaChat[] {
+    const { filter, label } = this.query();
+    let out = label ? list.filter((c) => !!c.labels?.includes(label)) : list;
+    if (filter === 'awaiting') {
+      const now = this.now();
+      const threshold = this.thresholdMinutes();
+      out = out
+        .filter((c) => isAwaitingReply(c, threshold, now))
+        .sort((a, b) => compareByIso(a.awaitingReplySince, b.awaitingReplySince));
+    } else if (filter === 'followups') {
+      out = out.filter((c) => !!c.nextReminderAt).sort((a, b) => compareByIso(a.nextReminderAt, b.nextReminderAt));
+    }
+    return out;
   }
 
   private t(key: string): string {

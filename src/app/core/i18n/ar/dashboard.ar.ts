@@ -154,6 +154,8 @@ const dashboard: TranslationFile<'dashboard'> = {
       pipelineSeries: 'عدد العملاء',
       pipelineYAxis: 'عدد العملاء',
       pipelineEmpty: 'لا توجد بيانات لعرضها في المسار بعد.',
+      pipelineEmptyFiltered: 'لا توجد نتائج لهذه الفلاتر',
+      pipelineLoadFailed: 'تعذر تحميل مسار المبيعات — حاول مرة أخرى.',
       customer: 'عميل',
       daysAgo: 'منذ {n} يوم',
       loadFailed: 'تعذر تحميل بيانات لوحة المبيعات — يرجى المحاولة مجددًا.',

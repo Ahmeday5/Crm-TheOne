@@ -365,13 +365,13 @@
                   </div>
 
                   <!-- Loss reason — only for non-buyers. -->
-                  @if (!isBuyer(c) && c.notBuyerReason) {
+                  @if (!isBuyer(c) && reasonText(c)) {
                     <div class="loss-reason mt-3">
                       <i class="fa-solid fa-circle-exclamation mt-1"></i>
                       <div class="min-w-0">
                         <p class="fw-700 mb-1">{{ 'reportAnalysis.sales.customersList.nonPurchaseReason' | translate }}:</p>
                         <p class="mb-0" appClampText
-                           [clampTitle]="'reportAnalysis.sales.customersList.nonPurchaseReason' | translate">{{ c.notBuyerReason }}</p>
+                           [clampTitle]="'reportAnalysis.sales.customersList.nonPurchaseReason' | translate">{{ reasonText(c) }}</p>
                       </div>
                     </div>
                   }

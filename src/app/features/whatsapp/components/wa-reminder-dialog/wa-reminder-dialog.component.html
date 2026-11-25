@@ -1,0 +1,86 @@
+<app-modal
+  [open]="true"
+  [title]="'inboxTools.reminder.title' | translate"
+  icon="fa-solid fa-bell"
+  iconTone="warning"
+  size="md"
+  (closed)="closed.emit()">
+
+  @if (othersAt(); as at) {
+    <p class="rd-others">
+      <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+      {{ 'inboxTools.reminder.others' | translate: { when: (at | cairoDate: 'datetime') } }}
+    </p>
+  }
+
+  <section class="rd-mine" [attr.aria-busy]="loadingMine()">
+    <h4 class="rd-label">{{ 'inboxTools.reminder.existing' | translate }}</h4>
+    @if (loadingMine()) {
+      <div class="rd-mine__state"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span></div>
+    } @else if (mine().length === 0) {
+      <p class="rd-mine__state text-muted">{{ 'inboxTools.reminder.none' | translate }}</p>
+    } @else {
+      <ul class="rd-list" role="list">
+        @for (r of mine(); track r.id) {
+          @let due = isDue(r);
+          <li class="rd-item" [class.is-due]="due">
+            <i class="fa-solid fa-bell rd-item__icon" aria-hidden="true"></i>
+            <div class="rd-item__body">
+              <time class="rd-item__when" [attr.datetime]="r.dueAt">{{ r.dueAt | cairoDate: 'datetime' }}</time>
+              <span class="rd-item__status">
+                {{ (due ? 'inboxTools.reminder.due' : 'inboxTools.reminder.pending') | translate }}
+              </span>
+              @if (r.note) { <p class="rd-item__note" dir="auto">{{ r.note }}</p> }
+            </div>
+            <div class="rd-item__actions">
+              <button type="button" class="btn btn-sm btn-success" [disabled]="busyId() === r.id" (click)="markDone(r)"
+                      [title]="'inboxTools.reminder.doneHint' | translate">
+                <i class="fa-solid fa-check me-1" aria-hidden="true"></i>{{ 'inboxTools.reminder.done' | translate }}
+              </button>
+              <button type="button" class="btn btn-sm btn-icon btn-danger-soft" [disabled]="busyId() === r.id" (click)="remove(r)"
+                      [title]="'inboxTools.reminder.delete' | translate" [attr.aria-label]="'inboxTools.reminder.delete' | translate">
+                <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <div class="rd-form">
+    <span class="rd-label">{{ 'inboxTools.reminder.quick' | translate }}</span>
+    <div class="rd-presets" role="radiogroup" [attr.aria-label]="'inboxTools.reminder.quick' | translate">
+      @for (p of presets; track p) {
+        <button type="button" class="rd-preset" role="radio" [class.is-active]="preset() === p" [attr.aria-checked]="preset() === p"
+                (click)="pick(p)">
+          {{ 'inboxTools.reminder.presets.' + p | translate }}
+        </button>
+      }
+    </div>
+
+    <label class="rd-label" for="rd-when">{{ 'inboxTools.reminder.when' | translate }}</label>
+    <input id="rd-when" type="datetime-local" class="form-control" dir="ltr"
+           [value]="when()" [min]="minWhen" (input)="onWhen($any($event.target).value)" />
+
+    <label class="rd-label" for="rd-note">{{ 'inboxTools.reminder.note' | translate }}</label>
+    <textarea id="rd-note" class="form-control" rows="2" dir="auto" [attr.maxlength]="noteMax"
+              [value]="note()" [placeholder]="'inboxTools.reminder.notePlaceholder' | translate"
+              (input)="note.set($any($event.target).value)"></textarea>
+
+    @if (error(); as msg) {
+      <p class="rd-error" role="alert"><i class="fa-solid fa-circle-exclamation me-1" aria-hidden="true"></i>{{ msg }}</p>
+    }
+  </div>
+
+  <ng-container modal-footer>
+    <div class="btn-row">
+      <button type="button" class="btn btn-light" (click)="closed.emit()">{{ 'inboxTools.reminder.cancel' | translate }}</button>
+      <button type="button" class="btn btn-primary" [disabled]="!canSave()" (click)="save()">
+        @if (saving()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+        @else { <i class="fa-solid fa-bell me-1" aria-hidden="true"></i> }
+        {{ 'inboxTools.reminder.save' | translate }}
+      </button>
+    </div>
+  </ng-container>
+</app-modal>

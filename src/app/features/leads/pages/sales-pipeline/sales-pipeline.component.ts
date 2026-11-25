@@ -45,6 +45,8 @@ import {
 import { CustomersService } from '../../services/customers.service';
 import { SalesPipelineService } from '../../services/sales-pipeline.service';
 import { customerStatusKey, resolveCustomerStatus } from '../../utils/customer-status.util';
+import { formatNotBuyingReason } from '../../utils/not-buying-reason.util';
+import { UNASSIGNED_SALES, salesPersonQuery } from '../../utils/sales-person-query.util';
 
 /** Cards each column loads per request (first load and every "load more"). */
 const PER_COLUMN = 20;
@@ -97,12 +99,15 @@ export class SalesPipelineComponent implements OnInit, OnDestroy {
   readonly sortOptions: SalesPipelineSort[] = ['Newest', 'Oldest', 'StageAge', 'NextFollowUp'];
   /** `null` = let the backend use its own default threshold. */
   readonly staleOptions: (number | null)[] = [null, 3, 7, 14, 30];
+  /** Admin's "بدون موظف" option → `Unassigned=true`. */
+  readonly unassignedSales = UNASSIGNED_SALES;
 
   // ─────────── filters ───────────
   searchTerm = '';
   private readonly searchInput$ = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
   private loadSub?: Subscription;
+  private loadMoreSub?: Subscription;
 
   readonly search = signal('');
   readonly sourceId = signal<number | null>(null);
@@ -177,6 +182,7 @@ export class SalesPipelineComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.loadSub?.unsubscribe();
+    this.loadMoreSub?.unsubscribe();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -209,7 +215,7 @@ export class SalesPipelineComponent implements OnInit, OnDestroy {
       Search: this.search() || undefined,
       SourceId: this.sourceId() ?? undefined,
       ServiceId: this.serviceId() ?? undefined,
-      SalesPersonId: this.salesPersonId() ?? undefined,
+      ...salesPersonQuery(this.isAdmin() ? this.salesPersonId() : null),
       OverdueOnly: this.overdueOnly() || undefined,
       Sort: this.sort(),
       StaleDays: this.staleDays() ?? undefined,
@@ -224,6 +230,9 @@ export class SalesPipelineComponent implements OnInit, OnDestroy {
    */
   reload(force = false, quiet = false): void {
     this.loadSub?.unsubscribe();
+    // A "load more" sent with the previous filters / offsets would append
+    // stale cards to the new board — drop it; `Skip` restarts from the new cards.
+    this.cancelLoadMore();
     if (!quiet) this.loading.set(true);
     this.loadError.set(null);
     this.loadSub = this.pipelineApi.board(this.baseQuery(), force, quiet).subscribe({
@@ -242,7 +251,7 @@ export class SalesPipelineComponent implements OnInit, OnDestroy {
   loadMore(column: SalesPipelineColumn): void {
     if (this.loadingMore() !== null) return;
     this.loadingMore.set(column.statusId);
-    this.pipelineApi
+    this.loadMoreSub = this.pipelineApi
       .board(
         { ...this.baseQuery(), Status: column.statusId, Skip: column.items.length },
         false,
@@ -265,6 +274,12 @@ export class SalesPipelineComponent implements OnInit, OnDestroy {
           this.toast.error(this.t('pipeline.messages.loadFailed'));
         },
       });
+  }
+
+  private cancelLoadMore(): void {
+    this.loadMoreSub?.unsubscribe();
+    this.loadMoreSub = undefined;
+    this.loadingMore.set(null);
   }
 
   /** Keeps the column order fixed and the payload defensive. */
@@ -488,6 +503,11 @@ export class SalesPipelineComponent implements OnInit, OnDestroy {
 
   columnLabel(status: string): string {
     return resolveCustomerStatus(status, this.language.lang(), status);
+  }
+
+  /** "<reason> — <details>" for a not-buyer card. */
+  reasonText(card: SalesPipelineCard): string {
+    return formatNotBuyingReason(card.notBuyingReasonCode, card.notBuyingReason, this.language.lang());
   }
 
   daysLabel(card: SalesPipelineCard): string {

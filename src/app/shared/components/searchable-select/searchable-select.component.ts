@@ -17,6 +17,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FloatingPanel } from '../../utils/floating-panel.util';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, Subject, catchError, forkJoin, of, switchMap } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -203,6 +204,18 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit {
 
   @ViewChild('searchInput') private searchInputRef?: ElementRef<HTMLInputElement>;
   @ViewChild('optionsList') private optionsListRef?: ElementRef<HTMLElement>;
+
+  /** Floats the open panel over modals / scroll containers (moved to <body>). */
+  private readonly floating = new FloatingPanel(
+    () => this.hostRef.nativeElement.querySelector('.ss-trigger'),
+    { listMax: 280, chrome: 100, onEscape: () => this.closePanel() },
+  );
+  readonly panelAbove = this.floating.above;
+  private readonly cleanup = inject(DestroyRef).onDestroy(() => this.floating.destroy());
+
+  @ViewChild('panel') private set panelRef(ref: ElementRef<HTMLElement> | undefined) {
+    this.floating.attach(ref?.nativeElement);
+  }
 
   private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -437,9 +450,10 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as Node | null;
-    if (target && !this.hostRef.nativeElement.contains(target)) {
-      this.closePanel();
-    }
+    if (!target) return;
+    // The panel lives in <body>, so clicks inside it are not inside the host.
+    if (this.hostRef.nativeElement.contains(target) || this.floating.contains(target)) return;
+    this.closePanel();
   }
 
   // ─────────── Private helpers ───────────

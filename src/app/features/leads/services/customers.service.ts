@@ -25,6 +25,7 @@ import {
   CustomerListItem,
   CustomerListQuery,
   CustomerNoteResponse,
+  CustomerResponse,
   CustomerStatus,
   CustomerStatusChange,
   LogContactAttemptRequest,
@@ -190,16 +191,20 @@ export class CustomersService {
 
   // ─────────── mutations ───────────
 
-  create(
-    payload: CreateCustomerRequest,
-  ): Observable<{ id: number; fullName: string }> {
-    return this.api.post<{ id: number; fullName: string }>(
+  /**
+   * `POST Customers/CreateCustomer` → `CustomerResponse` (incl. `createdAt`).
+   * A phone already used by another customer answers `400` with a
+   * user-facing Arabic message — see `duplicate-phone.util.ts`.
+   */
+  create(payload: CreateCustomerRequest): Observable<CustomerResponse> {
+    return this.api.post<CustomerResponse>(
       API_ENDPOINTS.customers.create,
       payload,
       { context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)) },
     );
   }
 
+  /** `PUT Customers/updateCustomer/{id}` — duplicate phone → `400`, only when the phone changed. */
   update(id: number, payload: UpdateCustomerRequest): Observable<unknown> {
     return this.api.put<unknown>(API_ENDPOINTS.customers.update(id), payload, {
       context: withInlineHandling(withCacheInvalidate(CUSTOMER_CACHE_KEYS)),

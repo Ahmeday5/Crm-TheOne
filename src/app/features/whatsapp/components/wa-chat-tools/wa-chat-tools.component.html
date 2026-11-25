@@ -1,0 +1,100 @@
+<div class="ct" role="toolbar" [attr.aria-label]="'inboxTools.tools.aria' | translate">
+  <!-- ── Zone 1: what this chat IS (labels) ── -->
+  <div class="ct-tags">
+    <span class="ct-tags__caption">
+      <i class="fa-solid fa-tag" aria-hidden="true"></i>{{ 'inboxTools.tools.label' | translate }}
+    </span>
+
+    @for (l of labels(); track l.code) {
+      <span class="ct-tag" [attr.data-tone]="l.tone">
+        <i [class]="l.icon" aria-hidden="true"></i>
+        <span class="ct-tag__text">{{ l.key | translate }}</span>
+        <button type="button" class="ct-tag__x" [disabled]="savingLabels()"
+                (click)="removeLabel(l.code)"
+                [title]="'inboxTools.tools.removeLabel' | translate: { name: (l.key | translate) }"
+                [attr.aria-label]="'inboxTools.tools.removeLabel' | translate: { name: (l.key | translate) }">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </span>
+    }
+
+    <div class="ct-labels">
+      <button type="button" class="ct-add" [class.is-on]="menuOpen()" [disabled]="savingLabels()"
+              aria-haspopup="true" [attr.aria-expanded]="menuOpen()"
+              [attr.aria-label]="'inboxTools.tools.labelsMenu' | translate"
+              (click)="menuOpen.set(!menuOpen())">
+        @if (savingLabels()) {
+          <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        } @else {
+          <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        }
+        @if (!labels().length) {
+          <span>{{ 'inboxTools.tools.addLabel' | translate }}</span>
+        }
+      </button>
+      @if (menuOpen()) {
+        <div class="ct-menu" role="menu" [attr.aria-label]="'inboxTools.tools.labelsMenu' | translate">
+          <div class="ct-menu__head">{{ 'inboxTools.tools.labelsMenu' | translate }}</div>
+          @for (l of allLabels; track l.code) {
+            <button type="button" class="ct-menu__item" role="menuitemcheckbox" [attr.aria-checked]="has(l.code)"
+                    (click)="toggleLabel(l.code)">
+              <span class="ct-menu__icon" [attr.data-tone]="l.tone" aria-hidden="true"><i [class]="l.icon"></i></span>
+              <span class="ct-menu__text">{{ l.key | translate }}</span>
+              <span class="ct-menu__box" [class.is-checked]="has(l.code)" aria-hidden="true">
+                <i class="fa-solid fa-check"></i>
+              </span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ── Zone 2: what you can DO (actions) ── -->
+  <div class="ct-actions" role="group">
+    <button type="button" class="ct-act" [class.is-set]="!!chat().nextReminderAt" [class.is-due]="due()"
+            (click)="reminderOpen.set(true)"
+            [title]="chat().nextReminderAt ? ('inboxTools.tools.remindAt' | translate: { when: (chat().nextReminderAt | cairoDate: 'datetime') }) : ('inboxTools.tools.remind' | translate)">
+      <i class="fa-solid fa-bell" [class.fa-shake]="due()" aria-hidden="true"></i>
+      <span class="ct-act__text">
+        @if (chat().nextReminderAt; as at) {
+          {{ at | cairoDate: 'datetime' }}
+        } @else {
+          {{ 'inboxTools.tools.remind' | translate }}
+        }
+      </span>
+    </button>
+
+    <button type="button" class="ct-act" [class.is-on]="notesOpen()" [attr.aria-expanded]="notesOpen()"
+            [title]="'inboxTools.tools.notes' | translate"
+            (click)="notesOpen.set(!notesOpen())">
+      <i class="fa-solid fa-note-sticky" aria-hidden="true"></i>
+      <span class="ct-act__text">{{ 'inboxTools.tools.notes' | translate }}</span>
+      @if (notesCount() > 0) {
+        <span class="ct-count">{{ notesCount() }}</span>
+      }
+    </button>
+
+    @if (canTransfer()) {
+      <span class="ct-tip" [appTip]="linked() ? ('inboxTools.tools.transfer' | translate) : ('inboxTools.tools.needsCustomer' | translate)">
+        <button type="button" class="ct-act" [disabled]="!linked()" (click)="transferOpen.set(true)"
+                [attr.aria-label]="linked() ? ('inboxTools.tools.transfer' | translate) : ('inboxTools.tools.needsCustomer' | translate)">
+          <i class="fa-solid fa-share-from-square" aria-hidden="true"></i>
+          <span class="ct-act__text">{{ 'inboxTools.tools.transfer' | translate }}</span>
+        </button>
+      </span>
+    }
+  </div>
+</div>
+
+@if (notesOpen()) {
+  <app-wa-notes-panel [chat]="chat()" (countChange)="onNotesCount($event)" (closed)="notesOpen.set(false)" />
+}
+
+@if (reminderOpen()) {
+  <app-wa-reminder-dialog [chat]="chat()" (changed)="onReminderChanged($event)" (closed)="reminderOpen.set(false)" />
+}
+
+@if (transferOpen()) {
+  <app-wa-transfer-dialog [chat]="chat()" (transferred)="onTransferred($event)" (closed)="transferOpen.set(false)" />
+}

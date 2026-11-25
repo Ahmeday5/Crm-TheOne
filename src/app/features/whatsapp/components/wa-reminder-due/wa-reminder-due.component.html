@@ -1,0 +1,38 @@
+<div class="rd" role="alert">
+  <span class="rd__icon" aria-hidden="true"><i class="fa-solid fa-bell"></i></span>
+
+  <div class="rd__body">
+    <strong class="rd__title">
+      {{ 'inboxTools.due.title' | translate: { name: name() || ('inboxTools.alerts.someone' | translate) } }}
+    </strong>
+    <span class="rd__meta">
+      @if (current(); as r) {
+        {{ 'inboxTools.due.since' | translate: { when: (r.dueAt | cairoDate: 'datetime') } }}
+        @if (r.note) {
+          <span class="rd__note" dir="auto">«{{ r.note }}»</span>
+        }
+      } @else if (chat().nextReminderAt) {
+        {{ 'inboxTools.due.someoneElse' | translate: { when: (chat().nextReminderAt | cairoDate: 'datetime') } }}
+      }
+    </span>
+  </div>
+
+  @if (current()) {
+    <div class="rd__actions">
+      <button type="button" class="btn btn-sm btn-warning rd__done" [disabled]="busy()" (click)="done()">
+        @if (busy()) {
+          <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+        } @else {
+          <i class="fa-solid fa-check me-1" aria-hidden="true"></i>
+        }
+        {{ 'inboxTools.due.done' | translate }}
+      </button>
+      <button type="button" class="btn btn-sm rd__snooze" [disabled]="busy()" (click)="snooze('in1h')">
+        <i class="fa-regular fa-clock me-1" aria-hidden="true"></i>{{ 'inboxTools.due.snooze1h' | translate }}
+      </button>
+      <button type="button" class="btn btn-sm rd__snooze" [disabled]="busy()" (click)="snooze('tomorrow10')">
+        {{ 'inboxTools.due.snoozeTomorrow' | translate }}
+      </button>
+    </div>
+  }
+</div>

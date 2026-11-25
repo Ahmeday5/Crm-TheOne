@@ -148,6 +148,8 @@ const dashboard: TranslationFile<'dashboard'> = {
       pipelineSeries: 'Customers',
       pipelineYAxis: 'Customers',
       pipelineEmpty: 'No pipeline data to show yet.',
+      pipelineEmptyFiltered: 'No results for these filters',
+      pipelineLoadFailed: 'Could not load the pipeline — please try again.',
       customer: 'customer',
       daysAgo: '{n} days ago',
       loadFailed: 'Could not load sales dashboard — please try again.',

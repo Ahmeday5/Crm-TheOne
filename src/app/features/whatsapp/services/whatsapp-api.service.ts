@@ -125,7 +125,12 @@ export class WhatsAppApiService {
   chats(query: WaChatsQuery): Observable<Pagination<WaChat>> {
     return this.api
       .get<Pagination<WaChat> | null>(this.ep.chats, {
-        params: { ...query, unreadOnly: query.unreadOnly || undefined },
+        params: {
+          ...query,
+          unreadOnly: query.unreadOnly || undefined,
+          awaitingReply: query.awaitingReply || undefined,
+          hasReminder: query.hasReminder || undefined,
+        },
         context: inline(),
       })
       .pipe(
@@ -160,6 +165,16 @@ export class WhatsAppApiService {
 
   markChatRead(chatId: number): Observable<unknown> {
     return this.api.post<unknown>(this.ep.markChatRead(chatId), null, { context: inline() });
+  }
+
+  /**
+   * Links a chat (WhatsApp / Messenger / Instagram) to a CRM customer.
+   * Returns the updated chat, or `null` if the server sent no body.
+   */
+  linkCustomer(chatId: number, customerId: number): Observable<WaChat | null> {
+    return this.api
+      .post<WaChat | null>(this.ep.linkCustomer(chatId), { customerId }, { context: inline() })
+      .pipe(map((chat) => (chat ? normalizeChat(chat) : null)));
   }
 
   /** Soft delete (Admin / the channel's owner). A new customer message brings the chat back. */

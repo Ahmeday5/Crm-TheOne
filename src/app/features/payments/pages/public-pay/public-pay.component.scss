@@ -59,6 +59,14 @@
     ::ng-deep .cb { color: rgba(255, 255, 255, 0.75); }
     ::ng-deep .cb:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
   }
+  &__was {
+    margin-top: -0.1rem !important;
+    font-size: var(--fs-md);
+    font-weight: var(--fw-600);
+    opacity: 0.75;
+    font-variant-numeric: tabular-nums;
+    s { text-decoration-thickness: 2px; }
+  }
   &__for { margin-top: 0.35rem !important; font-size: var(--fs-sm); span:first-child { opacity: 0.75; } }
   &__valid {
     display: inline-flex;

@@ -85,7 +85,11 @@ export interface PaymentRequest {
   id: number;
   /** Unguessable public token — the link is `/pay/{token}`. */
   token: string;
+  /** Net — what the customer pays (= `originalAmount - discount`). */
   amount: number;
+  /** Price before the discount (`= amount` when there is none). §9.4 */
+  originalAmount: number;
+  discount: number;
   currency: 'EGP';
   description: string | null;
   status: PaymentRequestStatus;
@@ -115,7 +119,12 @@ export interface PaymentRequest {
 
 export interface CreatePaymentRequestInput {
   methodId: number;
+  /** Price BEFORE the discount (§9.4). */
   amount: number;
+  /** Optional, ≥ 0 and < amount. The customer pays `amount - discount`. */
+  discount?: number;
+  /** Manager approval code when a non-Admin's discount is above the threshold (§9.3). */
+  approvalCode?: string | null;
   description: string | null;
   /** 1–90 days. */
   validityDays: number;
@@ -136,7 +145,11 @@ export interface PaymentRequestQuery {
 
 /** What the anonymous payer sees on `/pay/:token` — no staff fields. */
 export interface PublicPayment {
+  /** Net — the amount to pay. */
   amount: number;
+  /** Before the discount — shown struck through when it is larger. */
+  originalAmount: number;
+  discount: number;
   currency: 'EGP';
   description: string | null;
   status: PaymentRequestStatus;

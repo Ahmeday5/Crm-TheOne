@@ -1,0 +1,85 @@
+@if (supportOpen() && chat().customerId) {
+  <app-assign-support-dialog
+    [customerId]="chat().customerId!"
+    [customerName]="customerName()"
+    [chatId]="chat().id"
+    [message]="message().trim() || null"
+    (assigned)="onSupportAssigned($event)"
+    (cancel)="supportOpen.set(false)" />
+} @else {
+  <app-modal
+    [open]="true"
+    [title]="'inboxTools.transfer.title' | translate"
+    icon="fa-solid fa-share-from-square"
+    iconTone="info"
+    size="md"
+    (closed)="closed.emit()">
+
+    <div class="td-tabs" role="tablist">
+      <button type="button" role="tab" class="td-tab" [class.is-active]="tab() === 'sales'" [attr.aria-selected]="tab() === 'sales'"
+              (click)="tab.set('sales')">
+        <i class="fa-solid fa-user-tie" aria-hidden="true"></i>{{ 'inboxTools.transfer.tabSales' | translate }}
+      </button>
+      <button type="button" role="tab" class="td-tab" [class.is-active]="tab() === 'support'" [attr.aria-selected]="tab() === 'support'"
+              (click)="tab.set('support')">
+        <i class="fa-solid fa-headset" aria-hidden="true"></i>{{ 'inboxTools.transfer.tabSupport' | translate }}
+      </button>
+    </div>
+
+    @if (tab() === 'sales') {
+      <p class="td-hint">{{ 'inboxTools.transfer.hint' | translate }}</p>
+      <span class="td-label" id="td-reps">{{ 'inboxTools.transfer.pickRep' | translate }}</span>
+      @if (loadingReps()) {
+        <div class="td-state"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span></div>
+      } @else if (repsError()) {
+        <p class="td-state text-muted">{{ 'inboxTools.transfer.repsFailed' | translate }}</p>
+      } @else if (reps().length === 0) {
+        <p class="td-state text-muted">{{ 'inboxTools.transfer.noReps' | translate }}</p>
+      } @else {
+        <div class="td-reps" role="radiogroup" aria-labelledby="td-reps">
+          @for (rep of reps(); track rep.userId) {
+            <label class="td-rep" [class.is-selected]="selectedId() === rep.userId">
+              <input type="radio" name="td-rep" class="form-check-input" [value]="rep.userId"
+                     [checked]="selectedId() === rep.userId" (change)="selectedId.set(rep.userId)" />
+              <app-user-avatar [name]="rep.fullName" [imageUrl]="rep.imageUrl ?? null" [userId]="rep.userId" size="sm" />
+              <span class="td-rep__name" dir="auto">{{ rep.fullName }}</span>
+              @if (rep.userId === currentRepId()) {
+                <span class="td-rep__tag">{{ 'inboxTools.transfer.current' | translate }}</span>
+              }
+            </label>
+          }
+        </div>
+      }
+
+      <label class="td-label" for="td-message">{{ 'inboxTools.transfer.message' | translate }}</label>
+      <textarea id="td-message" class="form-control" rows="2" dir="auto" maxlength="500"
+                [value]="message()" [placeholder]="'inboxTools.transfer.messagePlaceholder' | translate"
+                (input)="message.set($any($event.target).value)"></textarea>
+
+      @if (error(); as msg) {
+        <p class="td-error" role="alert"><i class="fa-solid fa-circle-exclamation me-1" aria-hidden="true"></i>{{ msg }}</p>
+      }
+    } @else {
+      <div class="td-support">
+        <span class="td-support__icon" aria-hidden="true"><i class="fa-solid fa-headset"></i></span>
+        <p class="td-hint mb-0">{{ 'inboxTools.transfer.supportHint' | translate }}</p>
+        <button type="button" class="btn btn-primary" (click)="supportOpen.set(true)">
+          <i class="fa-solid fa-user-gear me-1" aria-hidden="true"></i>{{ 'inboxTools.transfer.openSupport' | translate }}
+        </button>
+      </div>
+    }
+
+    <ng-container modal-footer>
+      <div class="btn-row">
+        <button type="button" class="btn btn-light" (click)="closed.emit()">{{ 'inboxTools.transfer.cancel' | translate }}</button>
+        @if (tab() === 'sales') {
+          <button type="button" class="btn btn-primary" [disabled]="!canSubmit()" (click)="submit()">
+            @if (saving()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+            @else { <i class="fa-solid fa-share me-1" aria-hidden="true"></i> }
+            {{ 'inboxTools.transfer.submit' | translate }}
+          </button>
+        }
+      </div>
+    </ng-container>
+  </app-modal>
+}

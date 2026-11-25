@@ -4,7 +4,16 @@ import { LanguageService } from '../../../../core/services/language.service';
 import { UserAvatarComponent } from '../../../../shared/components/user-avatar/user-avatar.component';
 import { CairoDatePipe } from '../../../../shared/pipes/cairo-date.pipe';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { WaChat } from '../../models/whatsapp.models';
+import { WaChat, WaChatLabel } from '../../models/whatsapp.models';
+import {
+  CHAT_LABELS,
+  ChatLabelMeta,
+  WaitParts,
+  awaitingMinutes,
+  isReminderDue,
+  labelMeta,
+  waitParts,
+} from '../../utils/inbox-tools.util';
 import { ChatsFilter, WhatsAppInboxStore } from '../../state/whatsapp-inbox.store';
 import { WhatsAppSessionStore } from '../../state/whatsapp-session.store';
 import {
@@ -49,7 +58,8 @@ export class WaChatListComponent {
   readonly selected = output<WaChat>();
   readonly newChat = output<void>();
 
-  protected readonly filters: readonly ChatsFilter[] = ['all', 'unread'];
+  protected readonly filters: readonly ChatsFilter[] = ['all', 'unread', 'awaiting', 'followups'];
+  protected readonly allLabels = CHAT_LABELS;
 
   protected readonly term = signal('');
 
@@ -69,6 +79,31 @@ export class WaChatListComponent {
 
   protected setFilter(filter: ChatsFilter): void {
     this.store.setFilter(filter);
+  }
+
+  protected toggleLabel(code: WaChatLabel): void {
+    this.store.setLabel(this.store.label() === code ? null : code);
+  }
+
+  /** Red count on «مستني رد» / «متابعات» (overdue reminders). */
+  protected countFor(filter: ChatsFilter): number {
+    const c = this.store.counters();
+    return filter === 'awaiting' ? c.awaitingReply : filter === 'followups' ? c.overdueReminders : 0;
+  }
+
+  /** How long the customer has waited — only past the threshold (red bar + badge). */
+  protected waiting(chat: WaChat): WaitParts | null {
+    const minutes = awaitingMinutes(chat, this.store.now());
+    return minutes !== null && minutes >= this.store.thresholdMinutes() ? waitParts(minutes) : null;
+  }
+
+  /** The reminder time has come (live, from the store clock). */
+  protected reminderDue(chat: WaChat): boolean {
+    return isReminderDue(chat, this.store.now());
+  }
+
+  protected labelsOf(chat: WaChat): ChatLabelMeta[] {
+    return (chat.labels ?? []).map(labelMeta);
   }
 
   /** Customer → contact → +phone → "Messenger customer". */

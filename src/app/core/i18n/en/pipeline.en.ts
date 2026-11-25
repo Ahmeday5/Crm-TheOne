@@ -16,12 +16,14 @@ const pipeline: TranslationFile<'pipeline'> = {
       buyers: 'Bought',
       closeRate: 'Close rate',
       closeRateHint: 'Buyers ÷ (buyers + not buyers)',
+      totalHint: 'Includes buyers and not buyers',
     },
     filters: {
       search: 'Search by name or phone...',
       allSources: 'All sources',
       allServices: 'All services',
       allSales: 'All sales reps',
+      unassigned: 'No sales rep',
     },
     toolbar: {
       overdueOnly: 'Overdue follow-ups only',
@@ -46,7 +48,7 @@ const pipeline: TranslationFile<'pipeline'> = {
       stale: 'stale',
       followUp: 'Next follow-up',
       followUpOverdue: 'Follow-up overdue',
-      unassigned: 'Unassigned',
+      unassigned: 'No sales rep',
       changeStatus: 'Change status',
       whatsapp: 'WhatsApp',
       call: 'Call',

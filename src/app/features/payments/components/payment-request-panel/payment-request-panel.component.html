@@ -6,10 +6,19 @@
     <!-- Summary -->
     <div class="prp-summary">
       <div>
-        <p class="prp-summary__label">{{ 'payments.panel.amountDue' | translate }}</p>
-        <p class="prp-summary__amount" dir="ltr">
-          <small>EGP</small> {{ amountPreview().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+        <p class="prp-summary__label">
+          {{ (discountPreview() > 0 ? 'discounts.summary.net' : 'payments.panel.amountDue') | translate }}
         </p>
+        <p class="prp-summary__amount" dir="ltr">
+          <small>EGP</small> {{ netPreview().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+        </p>
+        @if (discountPreview() > 0 && amountPreview() > netPreview()) {
+          <p class="prp-summary__was" dir="ltr">
+            <span class="visually-hidden">{{ 'discounts.summary.before' | translate }}</span>
+            <s>EGP {{ amountPreview().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</s>
+            @if (discountPercentText(); as pct) { <span class="prp-summary__pct">&minus;{{ pct }}%</span> }
+          </p>
+        }
       </div>
       <div class="prp-summary__side">
         <app-mock-ribbon area="payments" />
@@ -86,6 +95,29 @@
         <p class="prp-err">{{ 'payments.panel.amountInvalid' | translate }}</p>
       }
 
+      <label class="form-label fw-600 small mt-2" for="prp-discount">
+        <i class="fa-solid fa-percent me-1" aria-hidden="true"></i>{{ 'discounts.field.label' | translate }}
+      </label>
+      <div class="prp-amount prp-amount--sm" [class.is-invalid]="invalid('discount') || discountTooBig()">
+        <span class="prp-amount__cur">EGP</span>
+        <input id="prp-discount" type="number" inputmode="decimal" min="0" step="0.01" dir="ltr"
+               class="prp-amount__input" placeholder="0" formControlName="discount" />
+      </div>
+      @if (invalid('discount') || discountTooBig()) {
+        <p class="prp-err">{{ 'discounts.field.invalid' | translate }}</p>
+      } @else if (discountPercentText()) {
+        <p class="prp-hint">{{ 'discounts.hint' | translate: { percent: discountPercentText() } }}</p>
+      }
+
+      <app-discount-approval-box
+        type="PaymentRequest"
+        [customerId]="context()?.customerId ?? null"
+        [customerName]="customerNamePreview()"
+        [amount]="amountPreview()"
+        [discount]="discountPreview()"
+        [customerRequired]="false"
+        (stateChange)="gate.set($event)" />
+
       <div class="row g-2 mt-1">
         <div class="col-8">
           <label class="form-label fw-600 small" for="prp-desc">{{ 'payments.panel.description' | translate }}</label>
@@ -148,7 +180,8 @@
     <!-- Footer -->
     <div class="prp-footer">
       <button type="button" class="btn btn-light" (click)="close()" [disabled]="submitting()">{{ 'common.cancel' | translate }}</button>
-      <button type="submit" class="btn btn-primary prp-footer__submit" [disabled]="submitting() || !methods().length">
+      <button type="submit" class="btn btn-primary prp-footer__submit" [disabled]="submitting() || !methods().length || !gate().ready"
+              [attr.title]="gate().ready ? null : ('discounts.box.saveBlocked' | translate)">
         @if (submitting()) {
           <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>{{ 'payments.panel.creating' | translate }}
         } @else {

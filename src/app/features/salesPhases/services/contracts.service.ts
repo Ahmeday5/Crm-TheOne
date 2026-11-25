@@ -7,6 +7,7 @@ import {
   withCacheBypass,
   withCacheInvalidate,
   withInlineHandling,
+  withSilentErrors,
   withSkipLoader,
 } from '../../../core/http/http-context.tokens';
 import { ApiService } from '../../../core/services/api.service';
@@ -94,13 +95,18 @@ function normalizeStatistics(raw: Partial<ContractStatistics> | null): ContractS
 export class ContractsService {
   private readonly api = inject(ApiService);
 
-  /** One server page, newest first (server-ordered) — callers must not re-sort. */
-  list(query: ContractListQuery, force = false): Observable<PagedResult<ContractListItem>> {
+  /**
+   * One server page, newest first (server-ordered) — callers must not re-sort.
+   * `silent` suppresses the global error toast (background hints that handle
+   * their own failure).
+   */
+  list(query: ContractListQuery, force = false, silent = false): Observable<PagedResult<ContractListItem>> {
     const cache = withSkipLoader(withCache({ ttlMs: CACHE_TTL.SHORT }));
+    const ctx = force ? withCacheBypass(cache) : cache;
     return this.api
       .get<PagedResult<ContractListItem>>(API_ENDPOINTS.contracts.list, {
         params: toListParams(query),
-        context: force ? withCacheBypass(cache) : cache,
+        context: silent ? withSilentErrors(ctx) : ctx,
       })
       .pipe(
         map((page) => ({

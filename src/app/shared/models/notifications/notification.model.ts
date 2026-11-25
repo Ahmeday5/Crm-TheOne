@@ -52,6 +52,15 @@ export type NotificationType =
   // ── payment links (2026-11-18) — enum 27, entity `PaymentRequest` ──
   /** The customer pressed "I've paid" on `/pay/:token` (to the creator + Admins). */
   | 'PaymentConfirmedByCustomer'
+  // ── inbox v4 (docs/backend-prompt-inbox-v4.md) ──
+  /** A chat reminder is due (to its owner) — entity `WhatsAppChat`. */
+  | 'ChatReminderDue'
+  /** A chat's customer was transferred to you — entity `WhatsAppChat`. */
+  | 'ChatTransferred'
+  /** A rep asked for a discount above the limit (to Admins) — entity `DiscountApproval`. */
+  | 'DiscountApprovalRequested'
+  /** An Admin approved / rejected your discount request — entity `DiscountApproval`. */
+  | 'DiscountApprovalDecided'
   | (string & {});
 
 /**
@@ -146,6 +155,11 @@ export interface AppNotification {
   /** Domain object the notification points at (e.g. `SupportTicket`, `Customer`). */
   relatedEntityType: string | null;
   relatedEntityId: number | null;
+  /**
+   * Type-specific payload (e.g. `ChatReminderDue` → `{ reminderId, chatId, note }`,
+   * `DiscountApprovalDecided` → `{ approvalId, status, code?, validUntil?, reason? }`).
+   */
+  data?: Record<string, unknown> | null;
 }
 
 /** Query params for `GET /Notifications`. */

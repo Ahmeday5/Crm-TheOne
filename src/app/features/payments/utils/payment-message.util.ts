@@ -44,6 +44,9 @@ export function paymentReference(request: Pick<PaymentRequest, 'id'>): string {
  *   لأي استفسار رد على الرسالة دي.
  *   شكراً لثقتك في The One System 🤝
  *
+ * With a discount (§9.4) the amount line shows the original struck through
+ * (`~1,200 ج.م~ *1,000 ج.م*` on WhatsApp, "(بدل 1,200 ج.م)" in plain text).
+ *
  * The URL sits alone on its line so WhatsApp makes it tappable (with a preview).
  */
 export function buildPaymentMessage(request: PaymentRequest, options: PaymentMessageOptions): string {
@@ -68,7 +71,15 @@ export function buildPaymentMessage(request: PaymentRequest, options: PaymentMes
   const lines: string[] = [request.customerName ? t('hello', { name: request.customerName }) : t('helloNoName')];
   if (company) lines.push(agent ? t('intro', { agent, company: b(company) }) : t('introTeam', { company: b(company) }));
 
-  lines.push('', t('title', { ref: b(ref) }), `• ${t('amount', { amount: b(`${formatAmount(request.amount)} ${t('currency')}`) })}`);
+  const money = (n: number) => `${formatAmount(n)} ${t('currency')}`;
+  let amountText = b(money(request.amount));
+  if ((request.originalAmount ?? 0) > request.amount) {
+    const was = money(request.originalAmount);
+    amountText = options.rich
+      ? `~${was}~ ${amountText}`
+      : `${amountText} (${interpolate(resolveKey(dict, 'discounts.message.instead'), { amount: was })})`;
+  }
+  lines.push('', t('title', { ref: b(ref) }), `• ${t('amount', { amount: amountText })}`);
   if (request.description) lines.push(`• ${t('for', { description: request.description })}`);
   lines.push(`• ${holder ? t('viaHolder', { method, holder }) : t('via', { method })}`);
 

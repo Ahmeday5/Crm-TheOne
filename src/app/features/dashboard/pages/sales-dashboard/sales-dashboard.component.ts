@@ -2,22 +2,27 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnInit,
   computed,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { forkJoin } from 'rxjs';
 import { TRANSLATIONS, resolveKey } from '../../../../core/i18n';
 import { LanguageService } from '../../../../core/services/language.service';
+import { isDateRangeActive } from '../../../../core/utils/date-range.util';
+import { CustomerDateRangeFilterComponent } from '../../../../shared/components/customer-date-range-filter/customer-date-range-filter.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { ActiveGoalBannerComponent } from '../../../goals/components/active-goal-banner/active-goal-banner.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import {
+  CustomerDateFilter,
   CustomerListItem,
   SalesDashboardStats,
   SalesStatusCount,
@@ -35,7 +40,8 @@ import { RefreshButtonComponent } from '../../../../shared/components/refresh-bu
  *
  * Three live data sources:
  *   - `GET /Sales/SalesDashboardStatistics`     KPI strip
- *   - `GET /Sales/SalesCustomerStatusCount`     pipeline chart
+ *   - `GET /Sales/SalesCustomerStatusCount`     pipeline chart (own "date
+ *                                                added" range — `From`/`To`)
  *   - `GET /Customers/getSalesCustomers`        "my leads" preview (top N)
  *
  * Static widgets:
@@ -58,6 +64,7 @@ import { RefreshButtonComponent } from '../../../../shared/components/refresh-bu
     LoadErrorComponent,
     EmptyStateComponent,
     ActiveGoalBannerComponent,
+    CustomerDateRangeFilterComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-dashboard.component.html',
@@ -68,6 +75,7 @@ export class SalesDashboardComponent implements OnInit {
   private readonly customersApi = inject(CustomersService);
   private readonly lang = inject(LanguageService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** Number of rows shown in the "my leads" preview card. */
   private readonly MY_LEADS_PREVIEW_LIMIT = 5;
@@ -91,6 +99,17 @@ export class SalesDashboardComponent implements OnInit {
     () => this.loadingStats() || this.loadingPipeline() || this.loadingLeads(),
   );
   readonly loadError = signal<string | null>(null);
+
+  /**
+   * "Date added" range for the pipeline chart only — the KPI strip and the
+   * leads preview have no date contract, so they ignore it.
+   */
+  readonly pipelineDates = signal<CustomerDateFilter>({});
+  readonly pipelineFiltered = computed(() => isDateRangeActive(this.pipelineDates()));
+  /** Inline error for a pipeline-only reload (the page-level one covers the first load). */
+  readonly pipelineError = signal(false);
+  /** Guards against an older, slower pipeline response overwriting a newer range. */
+  private pipelineSeq = 0;
 
   /** Empty-safe view-model for the KPI strip. */
   readonly kpis = computed(() => {
@@ -165,8 +184,8 @@ export class SalesDashboardComponent implements OnInit {
     };
   });
 
-  /** True when the pipeline has at least one bucket. */
-  readonly hasPipeline = computed(() => this.pipeline().length > 0);
+  /** True when at least one status bucket has customers. */
+  readonly hasPipeline = computed(() => this.pipeline().some((r) => r.count > 0));
 
   ngOnInit(): void {
     this.reload();
@@ -177,32 +196,67 @@ export class SalesDashboardComponent implements OnInit {
     this.loadingPipeline.set(true);
     this.loadingLeads.set(true);
     this.loadError.set(null);
+    this.pipelineError.set(false);
+    const seq = ++this.pipelineSeq;
 
     // KPI + pipeline are mutually independent; loading them together keeps
     // the page coherent (no jumpy partial paint).
     forkJoin({
       stats: this.salesApi.dashboardStatistics(),
-      pipeline: this.salesApi.customerStatusCount(),
+      pipeline: this.salesApi.customerStatusCount(this.pipelineDates()),
       leads: this.customersApi.listForSales({
         PageIndex: 1,
         PageSize: this.MY_LEADS_PREVIEW_LIMIT,
       }),
-    }).subscribe({
-      next: ({ stats, pipeline, leads }) => {
-        this.stats.set(stats);
-        this.pipeline.set(pipeline ?? []);
-        this.myLeads.set(leads?.data ?? []);
-        this.loadingStats.set(false);
-        this.loadingPipeline.set(false);
-        this.loadingLeads.set(false);
-      },
-      error: () => {
-        this.loadingStats.set(false);
-        this.loadingPipeline.set(false);
-        this.loadingLeads.set(false);
-        this.loadError.set(this.t('dashboard.sales.loadFailed'));
-      },
-    });
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ stats, pipeline, leads }) => {
+          this.stats.set(stats);
+          this.myLeads.set(leads?.data ?? []);
+          this.loadingStats.set(false);
+          this.loadingLeads.set(false);
+          // A date change mid-flight owns the chart now — leave it to that request.
+          if (seq === this.pipelineSeq) {
+            this.pipeline.set(pipeline ?? []);
+            this.loadingPipeline.set(false);
+          }
+        },
+        error: () => {
+          this.loadingStats.set(false);
+          this.loadingLeads.set(false);
+          if (seq === this.pipelineSeq) this.loadingPipeline.set(false);
+          this.loadError.set(this.t('dashboard.sales.loadFailed'));
+        },
+      });
+  }
+
+  /** Date range changed on the chart card — reload the chart only. */
+  onPipelineDatesChange(range: CustomerDateFilter): void {
+    this.pipelineDates.set(range);
+    this.reloadPipeline();
+  }
+
+  reloadPipeline(): void {
+    const seq = ++this.pipelineSeq;
+    this.loadingPipeline.set(true);
+    this.pipelineError.set(false);
+    this.salesApi
+      .customerStatusCount(this.pipelineDates())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (rows) => {
+          if (seq !== this.pipelineSeq) return;
+          this.pipeline.set(rows ?? []);
+          this.loadingPipeline.set(false);
+        },
+        error: () => {
+          if (seq !== this.pipelineSeq) return;
+          this.pipeline.set([]);
+          this.pipelineError.set(true);
+          this.loadingPipeline.set(false);
+        },
+      });
   }
 
   // ─────────── quick actions ───────────

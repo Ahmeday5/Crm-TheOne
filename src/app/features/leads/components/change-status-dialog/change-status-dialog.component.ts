@@ -25,6 +25,13 @@ import {
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { CustomersService } from '../../services/customers.service';
 import { customerStatusEnumName, customerStatusKey, resolveCustomerStatus } from '../../utils/customer-status.util';
+import {
+  NOT_BUYING_REASON_CODES,
+  NotBuyingReasonCode,
+  notBuyingReasonKey,
+  notBuyingReasonPayload,
+  reasonNeedsDetails,
+} from '../../utils/not-buying-reason.util';
 
 @Component({
   selector: 'app-change-status-dialog',
@@ -54,8 +61,13 @@ export class ChangeStatusDialogComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly selectedId = signal<number | null>(null);
 
-  /** Free-text reason — only required when the selected status is NotBuyer. */
+  /** Optional details under the reason (required for `Other`). */
   readonly notBuyingReason = signal('');
+  /** One-tap fixed reason — required when the selected status is NotBuyer. */
+  readonly reasonCode = signal<NotBuyingReasonCode | null>(null);
+  readonly reasonCodes = NOT_BUYING_REASON_CODES;
+  readonly reasonKey = notBuyingReasonKey;
+  readonly detailsRequired = computed(() => reasonNeedsDetails(this.reasonCode()));
 
   /** True when the currently-selected status maps to `NotBuyer`. */
   readonly requiresReason = computed(() => {
@@ -79,7 +91,10 @@ export class ChangeStatusDialogComponent implements OnInit {
     const id = this.selectedId();
     if (id === null) return false;
     if (this.isUnchanged()) return false;
-    if (this.requiresReason() && !this.notBuyingReason().trim()) return false;
+    if (this.requiresReason()) {
+      if (!this.reasonCode()) return false;
+      if (this.detailsRequired() && !this.notBuyingReason().trim()) return false;
+    }
     return true;
   });
 
@@ -112,7 +127,15 @@ export class ChangeStatusDialogComponent implements OnInit {
     this.errorMessage.set(null);
     // Drop a stale reason whenever the user moves off NotBuyer — keeps the
     // payload clean and the field hidden without leaving an orphan value.
-    if (!this.requiresReason()) this.notBuyingReason.set('');
+    if (!this.requiresReason()) {
+      this.notBuyingReason.set('');
+      this.reasonCode.set(null);
+    }
+  }
+
+  pickReason(code: NotBuyingReasonCode): void {
+    this.reasonCode.set(code);
+    if (this.errorMessage()) this.errorMessage.set(null);
   }
 
   onReasonChange(value: string): void {
@@ -135,8 +158,9 @@ export class ChangeStatusDialogComponent implements OnInit {
     this.errorMessage.set(null);
 
     const payload: ChangeCustomerStatusRequest = { status: enumName };
-    if (this.requiresReason()) {
-      payload.notBuyingReason = this.notBuyingReason().trim();
+    const code = this.reasonCode();
+    if (this.requiresReason() && code) {
+      Object.assign(payload, notBuyingReasonPayload(code, this.notBuyingReason()));
     }
 
     this.customers.changeStatus(this.customerId, payload).subscribe({

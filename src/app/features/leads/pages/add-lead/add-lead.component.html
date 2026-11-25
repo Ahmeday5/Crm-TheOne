@@ -1,19 +1,25 @@
 <div class="flex-1">
-  <app-page-header [title]="'customers.form.addTitle' | translate"
-                   [subtitle]="'customers.welcomeSubtitle' | translate"
-                   icon="fa-solid fa-user-plus"></app-page-header>
+  @if (!embedded()) {
+    <app-page-header [title]="'customers.form.addTitle' | translate"
+                     [subtitle]="'customers.welcomeSubtitle' | translate"
+                     icon="fa-solid fa-user-plus"></app-page-header>
+  }
   <div>
-    <button class="btn btn-light mb-4" (click)="goBack()">
-      <i class="fa-solid fa-arrow-right me-2"></i>{{ 'customers.backToList' | translate }}
-    </button>
+    @if (!embedded()) {
+      <button class="btn btn-light mb-4" (click)="goBack()">
+        <i class="fa-solid fa-arrow-right me-2"></i>{{ 'customers.backToList' | translate }}
+      </button>
+    }
 
-    <div class="card">
-      <div class="card-header d-flex align-items-center gap-2">
-        <span class="icon-tile tone-primary"><i class="fa-solid fa-user-plus"></i></span>
-        <h5 class="mb-0">{{ 'customers.form.addTitle' | translate }}</h5>
-      </div>
-      <div class="card-body">
-        <form [formGroup]="form" id="add-lead-form" novalidate (ngSubmit)="saveOnly()">
+    <div class="card" [class.border-0]="embedded()" [class.shadow-none]="embedded()">
+      @if (!embedded()) {
+        <div class="card-header d-flex align-items-center gap-2">
+          <span class="icon-tile tone-primary"><i class="fa-solid fa-user-plus"></i></span>
+          <h5 class="mb-0">{{ 'customers.form.addTitle' | translate }}</h5>
+        </div>
+      }
+      <div class="card-body" [class.p-0]="embedded()">
+        <form [formGroup]="form" id="add-lead-form" novalidate (ngSubmit)="openSalesModal()">
           <div class="row g-3">
             <!-- Full Name -->
             <div class="col-md-6">
@@ -53,7 +59,7 @@
             <!-- Email -->
             <div class="col-md-6">
               <label for="add-email" class="form-label fw-600">
-                {{ 'customers.form.email' | translate }} <span class="text-danger">*</span>
+                {{ 'customers.form.email' | translate }}
               </label>
               <input id="add-email"
                      class="form-control"
@@ -197,26 +203,20 @@
 
         <!-- Action buttons -->
         <div class="d-flex justify-content-end gap-3 pt-4 mt-4 border-top">
-          <button type="button" class="btn btn-light" (click)="goBack()" [disabled]="submitting()">
+          <button type="button" class="btn btn-light" (click)="cancel()" [disabled]="submitting()">
             {{ 'customers.form.cancel' | translate }}
           </button>
+          <!-- Every new customer gets a sales rep: there is no plain "save". -->
           <button type="submit"
                   form="add-lead-form"
-                  class="btn btn-primary"
+                  class="btn btn-success"
                   [disabled]="submitting()">
             @if (submitting()) {
               <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
             } @else {
-              <i class="fa-solid fa-floppy-disk me-1"></i>
+              <i class="fa-solid fa-user-plus me-1"></i>
             }
-            {{ 'customers.form.save' | translate }}
-          </button>
-          <button type="button"
-                  class="btn btn-success"
-                  [disabled]="submitting()"
-                  (click)="openSalesModal()">
-            <i class="fa-solid fa-user-plus me-1"></i>
-            {{ 'customers.form.saveAndAssign' | translate }}
+            {{ (isSalesRep() ? 'customers.form.saveAndAssignToMe' : 'customers.form.saveAndAssign') | translate }}
           </button>
         </div>
       </div>

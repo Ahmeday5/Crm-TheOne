@@ -4,7 +4,8 @@ import { of } from 'rxjs';
 import { Pagination, WaChat, WaChatsQuery } from '../models/whatsapp.models';
 import { WhatsAppApiService } from '../services/whatsapp-api.service';
 import { WhatsAppRealtimeService } from '../services/whatsapp-realtime.service';
-import { FakeRealtime, makeChat, makeMessage } from '../testing/whatsapp.testing';
+import { INBOX_TOOLS_GATEWAY } from '../data/inbox-tools.gateway';
+import { FakeRealtime, fakeInboxTools, makeChat, makeMessage } from '../testing/whatsapp.testing';
 import { WhatsAppInboxStore } from './whatsapp-inbox.store';
 import { WhatsAppSessionStore } from './whatsapp-session.store';
 
@@ -33,6 +34,7 @@ describe('WhatsAppInboxStore (live merge of hub events)', () => {
         WhatsAppInboxStore,
         { provide: WhatsAppApiService, useValue: api },
         { provide: WhatsAppRealtimeService, useValue: realtime },
+        { provide: INBOX_TOOLS_GATEWAY, useValue: fakeInboxTools() },
         { provide: WhatsAppSessionStore, useValue: { isAdmin: signal(true), noteChats: () => undefined } },
       ],
     });

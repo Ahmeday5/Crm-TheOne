@@ -1,3 +1,4 @@
+@use '../wa-label-tones' as tones;
 :host {
   display: flex;
   flex-direction: column;
@@ -286,4 +287,146 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .wa-sk { animation: none; }
+}
+
+
+// ── inbox v4: awaiting reply, labels, reminder / notes markers ──
+.wa-tabs__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  margin-inline-start: 0.25rem;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.wa-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.wa-labels__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+
+  &:hover { transform: translateY(-1px); }
+  &.is-active { border-color: currentColor; font-weight: 700; }
+}
+
+@include tones.label-tones('.wa-labels__chip');
+
+.wa-chat.is-waiting {
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+[dir='rtl'] .wa-chat.is-waiting {
+  box-shadow: inset -3px 0 0 var(--danger);
+}
+
+.wa-chat__marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.2rem;
+}
+
+.wa-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.wa-mark--wait {
+  background: var(--danger);
+  color: #fff;
+  font-weight: 700;
+}
+
+@include tones.label-tones('.wa-mark--label');
+
+.wa-mark--icon {
+  background: var(--surface-2);
+  color: var(--text-2);
+
+  &.is-due {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+}
+
+
+// ── reminder: scheduled (quiet) vs due (impossible to miss) ──
+.wa-mark--reminder {
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.wa-chat.is-reminder-due {
+  background: var(--warning-soft);
+  box-shadow: inset 4px 0 0 var(--warning);
+
+  &.is-active { background: color-mix(in srgb, var(--warning) 22%, var(--surface-0)); }
+}
+
+[dir='rtl'] .wa-chat.is-reminder-due {
+  box-shadow: inset -4px 0 0 var(--warning);
+}
+
+.wa-chat__due {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: var(--warning);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+
+  i { animation: wa-bell-ring 2.4s ease-in-out infinite; }
+}
+
+@keyframes wa-bell-ring {
+  0%, 70%, 100% { transform: rotate(0); }
+  74% { transform: rotate(14deg); }
+  78% { transform: rotate(-12deg); }
+  82% { transform: rotate(8deg); }
+  86% { transform: rotate(-5deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-chat__due i { animation: none; }
+}
+
+.wa-chat__assigned {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--info);
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
 }

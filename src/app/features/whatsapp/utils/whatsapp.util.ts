@@ -4,6 +4,7 @@ import { APP_TIME_ZONE, parseUtc } from '../../../shared/pipes/cairo-date.pipe';
 import {
   WaChannelType,
   WaChat,
+  WaChatLabel,
   WaInstance,
   WaMessage,
   WaMessageStatus,
@@ -147,7 +148,25 @@ export function normalizeChat(raw: WaChat): WaChat {
     canReply: raw.canReply ?? true,
     replyWindowEndsAt: raw.replyWindowEndsAt ?? null,
     canSendTemplate: raw.canSendTemplate ?? channelType === 'whatsapp_cloud',
+    // Inbox v4 (§10) — absent on older builds.
+    labels: Array.isArray(raw.labels) ? raw.labels.filter(isChatLabel) : [],
+    notesCount: raw.notesCount ?? 0,
+    nextReminderAt: raw.nextReminderAt ?? null,
+    reminderDue: !!raw.reminderDue,
+    lastMessageDirection:
+      raw.lastMessageDirection === 'Incoming' || raw.lastMessageDirection === 'Outgoing' ? raw.lastMessageDirection : null,
+    awaitingReplySince: raw.awaitingReplySince ?? null,
+    assignedUserId: raw.assignedUserId ?? null,
+    assignedUserName: raw.assignedUserName ?? null,
+    assignedAt: raw.assignedAt ?? null,
   };
+}
+
+const CHAT_LABELS: ReadonlySet<string> = new Set<WaChatLabel>(['Interested', 'QuoteSent', 'AwaitingPayment', 'FollowUp', 'Closed']);
+
+/** One of the fixed label codes (§2) — unknown codes from a newer backend are dropped. */
+export function isChatLabel(value: unknown): value is WaChatLabel {
+  return typeof value === 'string' && CHAT_LABELS.has(value);
 }
 
 /** Same idea for channels: an unknown `type` is a WhatsApp number; missing `existsInProvider` = present. */

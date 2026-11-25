@@ -2,8 +2,10 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   HostListener,
+  ViewChild,
   computed,
   effect,
   forwardRef,
@@ -12,6 +14,7 @@ import {
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { FloatingPanel } from '../../utils/floating-panel.util';
 
 export interface MultiSelectOption<T = number | string> {
   id: T;
@@ -73,6 +76,18 @@ export class MultiSelectComponent implements ControlValueAccessor {
   readonly disabledSig = signal(false);
 
   private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /** Floats the open panel over modals / scroll containers (moved to <body>). */
+  private readonly floating = new FloatingPanel(
+    () => this.hostRef.nativeElement.querySelector('.ms-trigger'),
+    { listMax: 260, chrome: 110, gap: 6, onEscape: () => this.close() },
+  );
+  readonly panelAbove = this.floating.above;
+  private readonly cleanup = inject(DestroyRef).onDestroy(() => this.floating.destroy());
+
+  @ViewChild('panel') private set panelRef(ref: ElementRef<HTMLElement> | undefined) {
+    this.floating.attach(ref?.nativeElement);
+  }
 
   // CVA callbacks
   private onChange: (value: Array<number | string>) => void = () => {};
@@ -204,7 +219,8 @@ export class MultiSelectComponent implements ControlValueAccessor {
   onDocClick(event: MouseEvent): void {
     const target = event.target as Node | null;
     if (!target) return;
-    if (!this.hostRef.nativeElement.contains(target)) {
+    // The panel lives in <body>, so clicks inside it are not inside the host.
+    if (!this.hostRef.nativeElement.contains(target) && !this.floating.contains(target)) {
       this.close();
     }
   }

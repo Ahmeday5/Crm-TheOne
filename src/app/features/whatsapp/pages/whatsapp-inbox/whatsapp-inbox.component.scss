@@ -267,3 +267,105 @@
 @media (prefers-reduced-motion: reduce) {
   .wa-live[data-state='connected'] .wa-live__dot { animation: none; }
 }
+
+
+// ── inbox v4: header wrap, new-number banner, customer side panel ──
+.wa-headwrap {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.wa-head__panel.is-active {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.wa-newbanner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  padding: 0.55rem 0.9rem;
+  background: var(--success-soft);
+  color: var(--text-1);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+
+  > i { color: var(--success); }
+}
+
+.wa-newbanner__text {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.wa-newbanner__close {
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.wa-inbox__thread {
+  position: relative;
+}
+
+.wa-inbox__thread-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+// Below 1800px the card slides over the conversation …
+.wa-inbox__panel {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: min(22rem, 100%);
+  z-index: 5;
+  background: var(--surface-0);
+  border-inline-start: 1px solid var(--border);
+  box-shadow: var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.12));
+  overflow-y: auto;
+  animation: wa-panel-in 0.18s ease-out;
+}
+
+// … on very wide screens it is a third column.
+@media (min-width: 1800px) {
+  .wa-inbox__thread.has-panel {
+    flex-direction: row;
+  }
+
+  .wa-inbox__panel {
+    position: static;
+    flex: 0 0 22rem;
+    box-shadow: none;
+    animation: none;
+  }
+}
+
+@keyframes wa-panel-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-inbox__panel { animation: none; }
+}
+
+.wa-assigned {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--info-soft);
+  color: var(--info);
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
